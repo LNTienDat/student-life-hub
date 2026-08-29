@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const prisma = require('../../prismaClient');
+const { guiEmailDatLaiMatKhau } = require('../../utils/email.util');
 
 async function dangKy(req, res) {
   try {
@@ -97,4 +99,87 @@ async function doiMatKhau(req, res) {
   }
 }
 
-module.exports = { dangKy, dangNhap, xemHoSo, suaHoSo, doiMatKhau };
+// CN3 - Bước 1: Yêu cầu đặt lại mật khẩu
+async function quenMatKhau(req, res) {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Vui lòng nhập email' });
+    }
+
+    const nguoiDung = await prisma.nguoiDung.findUnique({ where: { email } });
+
+    // Luôn trả về cùng 1 thông báo dù email có tồn tại hay không (tránh lộ thông tin)
+    const thongBaoChung = {
+      message: 'Nếu email tồn tại trong hệ thống, một liên kết đặt lại mật khẩu đã được gửi.',
+    };
+
+    if (!nguoiDung) {
+      return res.status(200).json(thongBaoChung);
+    }
+
+    const tokenGoc = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(tokenGoc).digest('hex');
+    const hetHan = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
+
+    await prisma.nguoiDung.update({
+      where: { id: nguoiDung.id },
+      data: {
+        resetPasswordToken: tokenHash,
+        resetPasswordExpiry: hetHan,
+      },
+    });
+
+    const resetLink = `${process.env.FRONTEND_URL}/dat-lai-mat-khau?token=${tokenGoc}&email=${encodeURIComponent(email)}`;
+    await guiEmailDatLaiMatKhau(email, nguoiDung.ten, resetLink);
+
+    res.status(200).json(thongBaoChung);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+}
+
+// CN3 - Bước 2: Đặt lại mật khẩu bằng token
+async function datLaiMatKhau(req, res) {
+  try {
+    const { email, token, matKhauMoi } = req.body;
+
+    if (!email || !token || !matKhauMoi) {
+      return res.status(400).json({ message: 'Thiếu thông tin bắt buộc' });
+    }
+    if (matKhauMoi.length < 6) {
+      return res.status(400).json({ message: 'Mật khẩu mới phải có ít nhất 6 ký tự' });
+    }
+
+    const nguoiDung = await prisma.nguoiDung.findUnique({ where: { email } });
+    if (!nguoiDung || !nguoiDung.resetPasswordToken || !nguoiDung.resetPasswordExpiry) {
+      return res.status(400).json({ message: 'Liên kết không hợp lệ hoặc đã hết hạn' });
+    }
+    if (nguoiDung.resetPasswordExpiry < new Date()) {
+      return res.status(400).json({ message: 'Liên kết đã hết hạn, vui lòng yêu cầu lại' });
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    if (tokenHash !== nguoiDung.resetPasswordToken) {
+      return res.status(400).json({ message: 'Liên kết không hợp lệ' });
+    }
+
+    const matKhauMaHoa = await bcrypt.hash(matKhauMoi, 10);
+    await prisma.nguoiDung.update({
+      where: { id: nguoiDung.id },
+      data: {
+        matKhau: matKhauMaHoa,
+        resetPasswordToken: null,
+        resetPasswordExpiry: null,
+      },
+    });
+
+    res.status(200).json({ message: 'Đặt lại mật khẩu thành công, bạn có thể đăng nhập lại' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+}
+
+module.exports = { dangKy, dangNhap, xemHoSo, suaHoSo, doiMatKhau, quenMatKhau, datLaiMatKhau };

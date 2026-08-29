@@ -149,6 +149,24 @@ function TaiChinh() {
     }
   }
 
+  async function xuLyXuatBaoCao() {
+    try {
+      const res = await api.get(`/finance/xuat-bao-cao?thang=${thang}&nam=${nam}`, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `bao-cao-${thang}-${nam}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      alert('Không thể xuất báo cáo. Vui lòng thử lại.');
+    }
+  }
+
   function dinhDangTien(so) {
     return so.toLocaleString('vi-VN') + ' đ';
   }
@@ -156,7 +174,15 @@ function TaiChinh() {
   return (
     <Layout>
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-800 mb-1">Quản lý tài chính</h1>
+        <div className="flex justify-between items-start mb-1">
+          <h1 className="text-2xl font-bold text-gray-800">Quản lý tài chính</h1>
+          <button
+            onClick={xuLyXuatBaoCao}
+            className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 text-sm"
+          >
+            Xuất báo cáo (Excel)
+          </button>
+        </div>
         <p className="text-gray-500 mb-6">Tháng {thang}/{nam}</p>
 
         {dangTai ? (

@@ -10,6 +10,7 @@ const {
   datNganSach,
   kiemTraNganSach,
   xuHuongNThang,
+  xuatBaoCaoTaiChinhExcel,
 } = require('./finance.controller');
 
 router.use(xacThuc);
@@ -25,5 +26,6 @@ router.post('/ngan-sach', datNganSach);
 router.get('/ngan-sach', kiemTraNganSach);
 
 router.get('/xu-huong', xuHuongNThang);
+router.get('/xuat-bao-cao', xuatBaoCaoTaiChinhExcel);
 
 module.exports = router;

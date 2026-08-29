@@ -1,4 +1,5 @@
 const prisma = require('../../prismaClient');
+const ExcelJS = require('exceljs');
 
 // ===== GIAO DỊCH =====
 
@@ -262,6 +263,101 @@ async function xuHuongNThang(req, res) {
   }
 }
 
+// CN37 - Xuất báo cáo tài chính ra file Excel (.xlsx)
+// Query optional: ?thang=8&nam=2026 (không truyền thì xuất toàn bộ giao dịch)
+async function xuatBaoCaoTaiChinhExcel(req, res) {
+  try {
+    const idNguoiDung = req.user.id;
+    const { thang, nam } = req.query;
+
+    const where = { idNguoiDung };
+    if (thang && nam) {
+      const from = new Date(parseInt(nam), parseInt(thang) - 1, 1);
+      const to = new Date(parseInt(nam), parseInt(thang), 1);
+      where.ngayGiaoDich = { gte: from, lt: to };
+    }
+
+    const giaoDichs = await prisma.giaoDich.findMany({
+      where,
+      orderBy: { ngayGiaoDich: 'asc' },
+    });
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Student Life Hub';
+    workbook.created = new Date();
+
+    // Sheet 1: Chi tiết giao dịch
+    const sheet1 = workbook.addWorksheet('Chi tiết giao dịch');
+    sheet1.columns = [
+      { header: 'Ngày', key: 'ngay', width: 14 },
+      { header: 'Loại', key: 'loai', width: 12 },
+      { header: 'Danh mục', key: 'danhMuc', width: 20 },
+      { header: 'Mô tả', key: 'moTa', width: 30 },
+      { header: 'Số tiền', key: 'soTien', width: 16 },
+    ];
+    sheet1.getRow(1).font = { bold: true };
+
+    let tongThu = 0;
+    let tongChi = 0;
+    giaoDichs.forEach((gd) => {
+      sheet1.addRow({
+        ngay: new Date(gd.ngayGiaoDich).toLocaleDateString('vi-VN'),
+        loai: gd.loai === 'thu' ? 'Thu nhập' : 'Chi tiêu',
+        danhMuc: gd.danhMuc,
+        moTa: gd.moTa || '',
+        soTien: gd.soTien,
+      });
+      if (gd.loai === 'thu') tongThu += gd.soTien;
+      else if (gd.loai === 'chi') tongChi += gd.soTien;
+    });
+    sheet1.getColumn('soTien').numFmt = '#,##0" đ"';
+
+    // Sheet 2: Tổng hợp theo danh mục
+    const sheet2 = workbook.addWorksheet('Tổng hợp theo danh mục');
+    sheet2.columns = [
+      { header: 'Danh mục', key: 'danhMuc', width: 24 },
+      { header: 'Loại', key: 'loai', width: 12 },
+      { header: 'Tổng tiền', key: 'tong', width: 16 },
+    ];
+    sheet2.getRow(1).font = { bold: true };
+
+    const theoDanhMuc = {};
+    giaoDichs.forEach((gd) => {
+      const key = `${gd.danhMuc}__${gd.loai}`;
+      theoDanhMuc[key] = (theoDanhMuc[key] || 0) + gd.soTien;
+    });
+    Object.entries(theoDanhMuc).forEach(([key, tong]) => {
+      const [danhMuc, loai] = key.split('__');
+      sheet2.addRow({ danhMuc, loai: loai === 'thu' ? 'Thu nhập' : 'Chi tiêu', tong });
+    });
+    sheet2.getColumn('tong').numFmt = '#,##0" đ"';
+
+    // Sheet 3: Tổng kết
+    const sheet3 = workbook.addWorksheet('Tổng kết');
+    sheet3.addRow(['Kỳ báo cáo', thang && nam ? `Tháng ${thang}/${nam}` : 'Toàn bộ']);
+    sheet3.addRow(['Tổng thu', tongThu]);
+    sheet3.addRow(['Tổng chi', tongChi]);
+    sheet3.addRow(['Số dư', tongThu - tongChi]);
+    sheet3.getColumn(1).width = 20;
+    sheet3.getColumn(2).width = 20;
+    sheet3.getColumn(2).numFmt = '#,##0" đ"';
+    sheet3.getRow(1).font = { bold: true };
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    const tenFile = thang && nam ? `bao-cao-tai-chinh-${thang}-${nam}.xlsx` : 'bao-cao-tai-chinh.xlsx';
+    res.setHeader('Content-Disposition', `attachment; filename="${tenFile}"`);
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Không thể xuất báo cáo tài chính' });
+  }
+}
+
 module.exports = {
   themGiaoDich,
   layDanhSachGiaoDich,
@@ -271,4 +367,5 @@ module.exports = {
   datNganSach,
   kiemTraNganSach,
   xuHuongNThang,
+  xuatBaoCaoTaiChinhExcel,
 };

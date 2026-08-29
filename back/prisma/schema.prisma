@@ -18,6 +18,9 @@ model NguoiDung {
   khoaHoc     String?
   ngayTao     DateTime  @default(now())
 
+  resetPasswordToken  String?
+  resetPasswordExpiry DateTime?
+
   monHocs     MonHoc[]
   deadlines   Deadline[]
   giaoDichs   GiaoDich[]

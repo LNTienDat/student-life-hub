@@ -33,21 +33,23 @@ back/
 │   └── schema.prisma             ✅ 6 models đầy đủ
 └── src/
     ├── prismaClient.js           ✅ Singleton Prisma Client
+    ├── utils/
+    │   └── email.util.js         ✅ Cấu hình gửi mail (Nodemailer)
     ├── middlewares/
     │   └── auth.middleware.js     ✅ Xác thực JWT Bearer token
     └── modules/
-        ├── auth/                  ✅ Controller & Routes (5 hàm: dangKy, dangNhap, xemHoSo, suaHoSo, doiMatKhau)
-        ├── academic/              ✅ Controller & Routes Học tập (9 hàm, thêm gpaTheoKy)
+        ├── auth/                  ✅ Controller & Routes (7 hàm: thêm quenMatKhau, datLaiMatKhau)
+        ├── academic/              ✅ Controller & Routes Học tập (10 hàm: thêm xuatBangDiemPDF)
         ├── deadline/              ✅ Controller & Routes Deadline (6 hàm)
-        └── finance/               ✅ Controller & Routes Tài chính (8 hàm, thêm xuHuongNThang)
+        └── finance/               ✅ Controller & Routes Tài chính (9 hàm: thêm xuatBaoCaoTaiChinhExcel)
 ```
 
 | Module | Tổng số API | Các chức năng chính | Trạng thái |
 |--------|-------------|----------------------|:----------:|
-| **Auth** | 5 | Đăng ký, Đăng nhập, Xem hồ sơ, Sửa hồ sơ, Đổi mật khẩu | ✅ Hoạt động |
-| **Academic** | 9 | CRUD môn học, Thêm điểm, Tính GPA, GPA theo kỳ, Dự đoán, Cảnh báo | ✅ Hoạt động |
+| **Auth** | 7 | Đăng ký, Đăng nhập, Xem hồ sơ, Sửa hồ sơ, Đổi mật khẩu, Quên/Đặt lại mật khẩu | ✅ Hoạt động |
+| **Academic** | 10 | CRUD môn học, Thêm điểm, Tính GPA, GPA theo kỳ, Dự đoán, Cảnh báo, Xuất bảng điểm PDF | ✅ Hoạt động |
 | **Deadline** | 6 | CRUD deadline, Hoàn thành deadline, Lấy deadline sắp tới | ✅ Hoạt động |
-| **Finance** | 8 | CRUD giao dịch, Thống kê tháng, Xu hướng, Đặt ngân sách, Kiểm tra ngân sách | ✅ Hoạt động |
+| **Finance** | 9 | CRUD giao dịch, Thống kê tháng, Xu hướng, Đặt ngân sách, Kiểm tra ngân sách, Xuất báo cáo Excel | ✅ Hoạt động |
 
 ### Database Schema (Prisma — 6 Models)
 
@@ -75,6 +77,8 @@ front/src/
 └── pages/
     ├── Login.jsx                 ✅ Trang đăng nhập
     ├── Register.jsx              ✅ Trang đăng ký
+    ├── QuenMatKhau.jsx           ✅ Quên mật khẩu
+    ├── DatLaiMatKhau.jsx         ✅ Đặt lại mật khẩu
     ├── Dashboard.jsx             ✅ Trang tổng quan (đã ghép đầy đủ cảnh báo, có mini-charts)
     ├── MonHoc.jsx                ✅ Quản lý môn học (CRUD + Sửa + Biểu đồ GPA)
     ├── Deadline.jsx              ✅ Quản lý deadline (CRUD + Sửa + Lịch Calendar)
@@ -101,7 +105,7 @@ front/src/
 ### Module 0: Tài khoản & Xác thực (CN 1–5)
 - [x] CN1: Đăng ký tài khoản (Email, Mật khẩu, Họ tên)
 - [x] CN2: Đăng nhập / Đăng xuất (JWT)
-- [ ] CN3: Khôi phục mật khẩu qua email
+- [x] CN3: Khôi phục mật khẩu qua email
 - [x] CN4: Xem / chỉnh sửa hồ sơ cá nhân
 - [x] CN5: Thay đổi mật khẩu
 
@@ -113,7 +117,7 @@ front/src/
 - [x] CN10: Dự đoán điểm cần đạt
 - [x] CN11: Cảnh báo môn nguy cơ trượt
 - [x] CN12: Biểu đồ GPA theo kỳ
-- [ ] CN13: Xuất bảng điểm PDF/Excel
+- [x] CN13: Xuất bảng điểm PDF/Excel
 
 ### Module 2: Quản lý Deadline & Lịch học (CN 14–20)
 - [x] CN14: CRUD deadline (có nút Sửa trên UI)
@@ -147,7 +151,7 @@ front/src/
 - [ ] CN34: Chatbot hỏi đáp nhanh
 - [ ] CN35: Dark / Light Mode
 - [x] CN36: Responsive Design
-- [ ] CN37: Xuất báo cáo tổng kết PDF
+- [x] CN37: Xuất báo cáo tổng kết PDF/Excel
 
 ---
 
@@ -155,21 +159,17 @@ front/src/
 
 | Chỉ số | Giá trị |
 |--------|---------|
-| **Tiến độ tổng thể** | **~72%** |
-| **Chức năng hoàn thành** | **27 / 37** |
+| **Tiến độ tổng thể** | **~81%** |
+| **Chức năng hoàn thành** | **30 / 37** |
 | **Giai đoạn hoàn thành** | **6 / 8** (GĐ 1-6 ✅, GĐ 7-8 đang làm) |
-| **Backend API routes** | **28 endpoints** (Auth 5, Academic 9, Deadline 6, Finance 8) |
+| **Backend API routes** | **32 endpoints** (Auth 7, Academic 10, Deadline 6, Finance 9) |
 | **Database models** | **6 / 6 model** đều đã có API xử lý |
-| **Frontend pages** | **7 trang** hoàn chỉnh Layout & Router & Biểu đồ |
+| **Frontend pages** | **9 trang** hoàn chỉnh Layout & Router & Biểu đồ (thêm Quên/Đặt lại MK) |
 
 ---
 
 ## 🎯 5. Công việc tiếp theo cần làm
 
-### Ưu tiên trung bình
-1. **CN3 — Khôi phục mật khẩu qua email**: Thiết lập server gửi email (Nodemailer) để reset password.
-2. **CN13 / CN37 — Xuất báo cáo PDF/Excel**: Xuất bảng điểm hoặc báo cáo tài chính tổng kết.
-
-### Ưu tiên thấp (làm sau cùng)
-3. **Hệ thống thông báo (CN31–33)** — In-app + Email Cron Job nhắc deadline/ngân sách.
-4. **Tính năng nâng cao (CN34–35)** — Chatbot hỏi đáp, Dark mode.
+### Ưu tiên (Hệ thống thông báo & Nâng cao)
+1. **Hệ thống thông báo (CN31–33)** — In-app + Email Cron Job nhắc deadline/ngân sách.
+2. **Tính năng nâng cao (CN34–35)** — Chatbot hỏi đáp, Dark mode.

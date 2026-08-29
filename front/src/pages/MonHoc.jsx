@@ -90,6 +90,22 @@ function MonHoc() {
     }
   }
 
+  async function xuLyXuatBangDiem() {
+    try {
+      const res = await api.get('/academic/xuat-bang-diem', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'bang-diem.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      alert('Không thể xuất bảng điểm. Vui lòng thử lại.');
+    }
+  }
+
   function tinhDiemMon(diems) {
     const tongTrongSo = diems.reduce((sum, d) => sum + d.trongSo, 0);
     if (tongTrongSo === 0) return null;
@@ -109,12 +125,20 @@ function MonHoc() {
               </p>
             )}
           </div>
-          <button
-            onClick={moFormThem}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            {hienFormThem ? 'Hủy' : '+ Thêm môn học'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={xuLyXuatBangDiem}
+              className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+            >
+              Xuất bảng điểm (PDF)
+            </button>
+            <button
+              onClick={moFormThem}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              {hienFormThem ? 'Hủy' : '+ Thêm môn học'}
+            </button>
+          </div>
         </div>
 
         {gpaTheoKy.length > 1 && (
