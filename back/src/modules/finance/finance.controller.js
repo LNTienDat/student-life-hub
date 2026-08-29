@@ -30,11 +30,11 @@ async function themGiaoDich(req, res) {
   }
 }
 
-// Lấy danh sách giao dịch (lọc theo tháng/năm nếu có)
+// Lấy danh sách giao dịch (lọc theo tháng/năm, tìm kiếm, phân trang nếu có)
 async function layDanhSachGiaoDich(req, res) {
   try {
     const idNguoiDung = req.user.id;
-    const { thang, nam } = req.query;
+    const { thang, nam, q, loai, danhMuc, trang, soLuong } = req.query;
 
     const where = { idNguoiDung };
 
@@ -44,12 +44,40 @@ async function layDanhSachGiaoDich(req, res) {
       where.ngayGiaoDich = { gte: from, lt: to };
     }
 
-    const danhSach = await prisma.giaoDich.findMany({
-      where,
-      orderBy: { ngayGiaoDich: 'desc' },
-    });
+    if (loai) {
+      where.loai = loai;
+    }
 
-    res.json({ giaoDichs: danhSach });
+    if (danhMuc) {
+      where.danhMuc = danhMuc;
+    }
+
+    if (q) {
+      where.OR = [
+        { moTa: { contains: q, mode: 'insensitive' } },
+        { danhMuc: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+
+    const trangSo = Math.max(parseInt(trang) || 1, 1);
+    const kichThuoc = Math.max(parseInt(soLuong) || 20, 1);
+
+    const [danhSach, tongSo] = await Promise.all([
+      prisma.giaoDich.findMany({
+        where,
+        orderBy: { ngayGiaoDich: 'desc' },
+        skip: (trangSo - 1) * kichThuoc,
+        take: kichThuoc,
+      }),
+      prisma.giaoDich.count({ where }),
+    ]);
+
+    res.json({
+      giaoDichs: danhSach,
+      tongSo,
+      trang: trangSo,
+      soTrang: Math.max(Math.ceil(tongSo / kichThuoc), 1),
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Lỗi server' });
