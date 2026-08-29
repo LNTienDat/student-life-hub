@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model NguoiDung {
+  id          Int       @id @default(autoincrement())
+  email       String    @unique
+  matKhau     String
+  ten         String
+  avatar      String?
+  truong      String?
+  nganh       String?
+  khoaHoc     String?
+  ngayTao     DateTime  @default(now())
+
+  monHocs     MonHoc[]
+  deadlines   Deadline[]
+  giaoDichs   GiaoDich[]
+  nganSachs   NganSach[]
+}
+
+model MonHoc {
+  id          Int       @id @default(autoincrement())
+  idNguoiDung Int
+  ten         String
+  tinChi      Int
+  hocKy       String
+  trangThai   String    @default("active")
+  ngayTao     DateTime  @default(now())
+
+  nguoiDung   NguoiDung @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
+  diems       Diem[]
+  deadlines   Deadline[]
+}
+
+model Diem {
+  id          Int       @id @default(autoincrement())
+  idMonHoc    Int
+  loaiDanhGia String
+  diem        Float
+  trongSo     Float
+  ngayGhiNhan DateTime  @default(now())
+
+  monHoc      MonHoc    @relation(fields: [idMonHoc], references: [id], onDelete: Cascade)
+}
+
+model Deadline {
+  id          Int       @id @default(autoincrement())
+  idNguoiDung Int
+  idMonHoc    Int?
+  tieuDe      String
+  moTa        String?
+  hanChot     DateTime
+  doUuTien    String    @default("binh_thuong")
+  trangThai   String    @default("dang_dien_hanh")
+  ngayTao     DateTime  @default(now())
+
+  nguoiDung   NguoiDung @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
+  monHoc      MonHoc?   @relation(fields: [idMonHoc], references: [id], onDelete: SetNull)
+}
+
+model GiaoDich {
+  id          Int       @id @default(autoincrement())
+  idNguoiDung Int
+  loai        String
+  danhMuc     String
+  soTien      Float
+  moTa        String?
+  ngayGiaoDich DateTime @default(now())
+
+  nguoiDung   NguoiDung @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
+}
+
+model NganSach {
+  id            Int       @id @default(autoincrement())
+  idNguoiDung   Int
+  danhMuc       String
+  soTienToiDa   Float
+  thang         Int
+  nam           Int
+  ngayTao       DateTime  @default(now())
+
+  nguoiDung     NguoiDung @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
+}
