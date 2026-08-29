@@ -25,6 +25,7 @@ model NguoiDung {
   deadlines   Deadline[]
   giaoDichs   GiaoDich[]
   nganSachs   NganSach[]
+  thoiKhoaBieus ThoiKhoaBieu[]
 }
 
 model MonHoc {
@@ -89,4 +90,18 @@ model NganSach {
   ngayTao       DateTime  @default(now())
 
   nguoiDung     NguoiDung @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
+}
+
+model ThoiKhoaBieu {
+  id          Int       @id @default(autoincrement())
+  idNguoiDung Int
+  tenMon      String
+  thu         Int       // 2=Thứ 2 ... 7=Thứ 7, 8=Chủ nhật
+  gioBatDau   String    // "07:00"
+  gioKetThuc  String    // "09:00"
+  phongHoc    String?
+  giangVien   String?
+  ngayTao     DateTime  @default(now())
+
+  nguoiDung   NguoiDung @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
 }

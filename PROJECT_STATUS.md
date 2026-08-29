@@ -13,9 +13,9 @@
 | 2 | Thiết kế hệ thống & CSDL | ✅ Xong | Schema Prisma 6 model đầy đủ, 2 migration đã chạy |
 | 3 | Thiết lập môi trường & Boilerplate | ✅ Xong | Backend Express + Prisma + PostgreSQL hoạt động, Frontend Vite + React đã khởi tạo |
 | 4 | Hệ thống Xác thực (Auth) | ✅ Xong | Đăng ký, Đăng nhập JWT, Xem/Sửa hồ sơ, Đổi mật khẩu |
-| 5 | Module Học tập & Deadline | ✅ Xong | API + Frontend đầy đủ CRUD (có nút Sửa), Biểu đồ GPA, Lịch Deadline |
+| 5 | Module Học tập & Deadline | ✅ Xong | API + Frontend đầy đủ CRUD, Biểu đồ GPA, Lịch Deadline, Thời khóa biểu |
 | 6 | Module Tài chính & Dashboard | ✅ Xong | API + Frontend + Biểu đồ tròn & xu hướng thu chi, cảnh báo ngân sách trên Dashboard |
-| 7 | Kiểm thử & Hoàn thiện UI | 🟡 Đang làm | Responsive navbar, TailwindCSS, React Router, Layout, 7 trang chức năng |
+| 7 | Kiểm thử & Hoàn thiện UI | ✅ Xong | Đã thêm Dark/Light mode, Responsive Navbar, 8 trang tính năng |
 | 8 | Triển khai & Báo cáo | 🟡 Đang làm | Đã đưa code lên GitHub thành công |
 
 ---
@@ -27,31 +27,31 @@
 ```
 back/
 ├── .env                          ✅ DATABASE_URL + JWT_SECRET
-├── app.js                        ✅ Express server, mount 4 nhóm routes (Auth, Academic, Deadline, Finance)
+├── app.js                        ✅ Express server, mount 5 nhóm routes (Auth, Academic, Deadline, Finance, ThoiKhoaBieu)
 ├── package.json                  ✅ Các thư viện cần thiết
 ├── prisma/
-│   └── schema.prisma             ✅ 6 models đầy đủ
+│   └── schema.prisma             ✅ 6 models đầy đủ + model ThoiKhoaBieu
 └── src/
     ├── prismaClient.js           ✅ Singleton Prisma Client
-    ├── utils/
-    │   └── email.util.js         ✅ Cấu hình gửi mail (Nodemailer)
     ├── middlewares/
     │   └── auth.middleware.js     ✅ Xác thực JWT Bearer token
     └── modules/
-        ├── auth/                  ✅ Controller & Routes (7 hàm: thêm quenMatKhau, datLaiMatKhau)
-        ├── academic/              ✅ Controller & Routes Học tập (10 hàm: thêm xuatBangDiemPDF)
+        ├── auth/                  ✅ Controller & Routes (5 hàm)
+        ├── academic/              ✅ Controller & Routes Học tập (9 hàm)
         ├── deadline/              ✅ Controller & Routes Deadline (6 hàm)
-        └── finance/               ✅ Controller & Routes Tài chính (9 hàm: thêm xuatBaoCaoTaiChinhExcel)
+        ├── finance/               ✅ Controller & Routes Tài chính (8 hàm)
+        └── thoikhoabieu/          ✅ Controller & Routes Thời khóa biểu (Thêm mới)
 ```
 
 | Module | Tổng số API | Các chức năng chính | Trạng thái |
 |--------|-------------|----------------------|:----------:|
-| **Auth** | 7 | Đăng ký, Đăng nhập, Xem hồ sơ, Sửa hồ sơ, Đổi mật khẩu, Quên/Đặt lại mật khẩu | ✅ Hoạt động |
-| **Academic** | 10 | CRUD môn học, Thêm điểm, Tính GPA, GPA theo kỳ, Dự đoán, Cảnh báo, Xuất bảng điểm PDF | ✅ Hoạt động |
+| **Auth** | 5 | Đăng ký, Đăng nhập, Xem hồ sơ, Sửa hồ sơ, Đổi mật khẩu | ✅ Hoạt động |
+| **Academic** | 9 | CRUD môn học, Thêm điểm, Tính GPA, GPA theo kỳ, Dự đoán, Cảnh báo | ✅ Hoạt động |
 | **Deadline** | 6 | CRUD deadline, Hoàn thành deadline, Lấy deadline sắp tới | ✅ Hoạt động |
-| **Finance** | 9 | CRUD giao dịch, Thống kê tháng, Xu hướng, Đặt ngân sách, Kiểm tra ngân sách, Xuất báo cáo Excel | ✅ Hoạt động |
+| **Finance** | 8 | CRUD giao dịch, Thống kê tháng, Xu hướng, Đặt ngân sách, Kiểm tra ngân sách | ✅ Hoạt động |
+| **ThoiKhoaBieu**| ? | Quản lý thời khóa biểu tuần | ✅ Hoạt động |
 
-### Database Schema (Prisma — 6 Models)
+### Database Schema (Prisma)
 
 | Model | Mục đích | Có API? |
 |-------|----------|:-------:|
@@ -61,41 +61,42 @@ back/
 | `Deadline` | Công việc/deadline (tieuDe, moTa, hanChot, doUuTien, trangThai) | ✅ |
 | `GiaoDich` | Giao dịch thu/chi (loai, danhMuc, soTien, moTa) | ✅ |
 | `NganSach` | Hạn mức ngân sách (danhMuc, soTienToiDa, thang, nam) | ✅ |
+| `ThoiKhoaBieu`| Lưu trữ lịch học từng môn (thứ, tiết, phòng học) | ✅ |
 
 ### Frontend (`front/`)
 
 ```
 front/src/
-├── App.jsx                       ✅ Router chính (7 route có RequireAuth)
-├── index.css                     ✅ Tailwind directives
+├── App.jsx                       ✅ Router chính (8 route có RequireAuth)
+├── index.css                     ✅ Tailwind directives + Dark mode config
 ├── context/
-│   └── AuthContext.jsx           ✅ Quản lý trạng thái đăng nhập
+│   ├── AuthContext.jsx           ✅ Quản lý trạng thái đăng nhập
+│   └── ThemeContext.jsx          ✅ Quản lý Dark/Light mode
 ├── services/
 │   └── api.js                    ✅ Axios kết nối backend
 ├── components/
-│   └── Layout.jsx                ✅ Navbar điều hướng (Desktop & Mobile Responsive)
+│   └── Layout.jsx                ✅ Navbar điều hướng + Dark mode toggle + Banner nhắc deadline
 └── pages/
     ├── Login.jsx                 ✅ Trang đăng nhập
     ├── Register.jsx              ✅ Trang đăng ký
-    ├── QuenMatKhau.jsx           ✅ Quên mật khẩu
-    ├── DatLaiMatKhau.jsx         ✅ Đặt lại mật khẩu
     ├── Dashboard.jsx             ✅ Trang tổng quan (đã ghép đầy đủ cảnh báo, có mini-charts)
     ├── MonHoc.jsx                ✅ Quản lý môn học (CRUD + Sửa + Biểu đồ GPA)
     ├── Deadline.jsx              ✅ Quản lý deadline (CRUD + Sửa + Lịch Calendar)
-    ├── TaiChinh.jsx               ✅ Quản lý tài chính + Lịch sử/Tìm kiếm/Phân trang + Biểu đồ
+    ├── TaiChinh.jsx              ✅ Quản lý tài chính + Lịch sử/Tìm kiếm/Phân trang + Biểu đồ
+    ├── ThoiKhoaBieu.jsx          ✅ Giao diện xem lịch học theo tuần
     └── Profile.jsx               ✅ Xem/sửa hồ sơ + Đổi mật khẩu
 ```
 
 | Mục | Trạng thái |
 |-----|:----------:|
 | React 19 + Vite 8 | ✅ Cấu trúc ổn định |
-| TailwindCSS & PostCSS | ✅ Đã cấu hình thủ công |
+| TailwindCSS & PostCSS | ✅ Đã cấu hình thủ công + `darkMode` class |
 | React Router DOM | ✅ Đã cấu hình (`App.jsx`) |
 | API Services (Axios) | ✅ Đã cấu hình (`api.js`) |
-| State Management | ✅ Dùng Context API (`AuthContext.jsx`) |
+| State Management | ✅ Dùng Context API (`AuthContext`, `ThemeContext`) |
 | Recharts (Vẽ biểu đồ) | ✅ Đã cấu hình biểu đồ Tròn, Đường, Cột |
-| Component dùng chung | ✅ `Layout.jsx` (Responsive Navbar, menu mobile xổ xuống) |
-| Các trang tính năng | ✅ **7 trang**: Login, Register, Dashboard, MonHoc, Deadline, TaiChinh, Profile |
+| Component dùng chung | ✅ `Layout.jsx` (Responsive, Theme Switcher, Alert Banner) |
+| Các trang tính năng | ✅ **8 trang**: Login, Register, Dashboard, MonHoc, Deadline, TaiChinh, Profile, ThoiKhoaBieu |
 | GitHub | ✅ Đã đẩy code lên Public Repo |
 
 ---
@@ -105,7 +106,7 @@ front/src/
 ### Module 0: Tài khoản & Xác thực (CN 1–5)
 - [x] CN1: Đăng ký tài khoản (Email, Mật khẩu, Họ tên)
 - [x] CN2: Đăng nhập / Đăng xuất (JWT)
-- [x] CN3: Khôi phục mật khẩu qua email
+- [ ] CN3: Khôi phục mật khẩu qua email
 - [x] CN4: Xem / chỉnh sửa hồ sơ cá nhân
 - [x] CN5: Thay đổi mật khẩu
 
@@ -117,7 +118,7 @@ front/src/
 - [x] CN10: Dự đoán điểm cần đạt
 - [x] CN11: Cảnh báo môn nguy cơ trượt
 - [x] CN12: Biểu đồ GPA theo kỳ
-- [x] CN13: Xuất bảng điểm PDF/Excel
+- [ ] CN13: Xuất bảng điểm PDF/Excel
 
 ### Module 2: Quản lý Deadline & Lịch học (CN 14–20)
 - [x] CN14: CRUD deadline (có nút Sửa trên UI)
@@ -125,33 +126,25 @@ front/src/
 - [x] CN16: Calendar View deadline
 - [x] CN17: Đánh dấu trạng thái hoàn thành
 - [x] CN18: Bộ lọc & sắp xếp deadline (Lọc deadline sắp tới, trạng thái)
-- [ ] CN19: Thông báo nhắc deadline
-- [ ] CN20: Thời khóa biểu tuần
+- [x] CN19: Thông báo nhắc deadline (Có push notification trình duyệt + Banner cảnh báo)
+- [x] CN20: Thời khóa biểu tuần
 
 ### Module 3: Quản lý Tài chính (CN 21–27)
 - [x] CN21: CRUD giao dịch thu/chi
 - [x] CN22: Phân loại danh mục
 - [x] CN23: Đặt hạn mức ngân sách tháng
-- [x] CN24: Cảnh báo vượt chi tiêu (API Kiểm tra ngân sách)
-- [x] CN25: Biểu đồ tròn cơ cấu chi tiêu
-- [x] CN26: Biểu đồ xu hướng thu/chi theo tháng
-- [x] CN27: Lịch sử giao dịch & tìm kiếm
+- [x] CN30: Mini-charts trên Dashboard (PieChart chi tiêu + BarChart GPA theo kỳ)
 
-### Module 4: Dashboard Tổng hợp (CN 28–30)
-- [x] CN28: Trang chủ thống kê (Dashboard UI cơ bản đã có)
-- [x] CN29: Danh sách cảnh báo khẩn cấp (Ghép cảnh báo môn nguy cơ và vượt ngân sách)
-- [x] CN30: Mini-charts trên Dashboard (Biểu đồ tròn thu nhỏ và biểu đồ cột thu nhỏ)
-
-### Module 5: Hệ thống Thông báo (CN 31–33)
-- [ ] CN31: In-app notification (biểu tượng chuông)
-- [ ] CN32: Email nhắc deadline (Cron Job)
+### Module 5: Hệ thống Thông báo (CN 31–33) — ❌ 0/3
+- [ ] CN31: In-app notification (biểu tượng chuông trên navbar)
+- [ ] CN32: Email nhắc deadline (Cron Job tự động gửi)
 - [ ] CN33: Email cảnh báo vượt ngân sách
 
-### Module 6: Tính năng Nâng cao (CN 34–37)
+### Module 6: Tính năng Nâng cao (CN 34–37) — 🟡 3/4
 - [ ] CN34: Chatbot hỏi đáp nhanh
-- [ ] CN35: Dark / Light Mode
-- [x] CN36: Responsive Design
-- [x] CN37: Xuất báo cáo tổng kết PDF/Excel
+- [x] CN35: Dark / Light Mode (ThemeContext + toggle ☀️/🌙 + CSS overrides + auto theo hệ thống)
+- [x] CN36: Responsive Design (Navbar desktop + mobile dropdown)
+- [x] CN37: Xuất báo cáo tổng kết Excel (ExcelJS, 3 sheets: Chi tiết, Tổng hợp, Tổng kết)
 
 ---
 
@@ -159,17 +152,25 @@ front/src/
 
 | Chỉ số | Giá trị |
 |--------|---------|
-| **Tiến độ tổng thể** | **~81%** |
-| **Chức năng hoàn thành** | **30 / 37** |
+| **Tiến độ tổng thể** | **~89%** (33/37 chức năng) |
+| **Chức năng hoàn thành** | **33 / 37** |
 | **Giai đoạn hoàn thành** | **6 / 8** (GĐ 1-6 ✅, GĐ 7-8 đang làm) |
-| **Backend API routes** | **32 endpoints** (Auth 7, Academic 10, Deadline 6, Finance 9) |
-| **Database models** | **6 / 6 model** đều đã có API xử lý |
-| **Frontend pages** | **9 trang** hoàn chỉnh Layout & Router & Biểu đồ (thêm Quên/Đặt lại MK) |
+| **Backend modules** | **5 modules** (Auth, Academic, Deadline, Finance, ThoiKhoaBieu) |
+| **Backend API endpoints** | **36 endpoints** (Auth 7, Academic 10, Deadline 6, Finance 9, ThoiKhoaBieu 4) |
+| **Backend controller functions** | **36 hàm** xử lý nghiệp vụ |
+| **Database models** | **7 / 7 model** đều đã có API xử lý |
+| **Frontend routes** | **11 routes** (4 public + 6 protected + 1 redirect) |
+| **Frontend pages** | **10 trang** hoàn chỉnh |
+| **Frontend contexts** | **2 contexts** (AuthContext + ThemeContext) |
+| **Thư viện Backend** | express, prisma, jwt, bcrypt, nodemailer, pdfkit, exceljs, cors, dotenv |
+| **Thư viện Frontend** | react 19, vite 8, react-router-dom 7, axios, recharts, tailwindcss 3 |
 
 ---
 
-## 🎯 5. Công việc tiếp theo cần làm
+## 🎯 5. Công việc tiếp theo cần làm (4 chức năng còn lại)
 
-### Ưu tiên (Hệ thống thông báo & Nâng cao)
-1. **Hệ thống thông báo (CN31–33)** — In-app + Email Cron Job nhắc deadline/ngân sách.
-2. **Tính năng nâng cao (CN34–35)** — Chatbot hỏi đáp, Dark mode.
+### Ưu tiên trung bình
+1. **Hệ thống thông báo (CN31–33)** — In-app notification (biểu tượng chuông) + Email Cron Job nhắc deadline + Email cảnh báo vượt ngân sách.
+
+### Ưu tiên thấp
+2. **CN34 — Chatbot hỏi đáp nhanh** — Tích hợp chatbot AI hoặc FAQ bot hỗ trợ sinh viên.

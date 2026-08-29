@@ -6,6 +6,7 @@ const authRoutes = require('./src/modules/auth/auth.routes');
 const academicRoutes = require('./src/modules/academic/academic.routes');
 const deadlineRoutes = require('./src/modules/deadline/deadline.routes');
 const financeRoutes = require('./src/modules/finance/finance.routes');
+const thoiKhoaBieuRoutes = require('./src/modules/thoikhoabieu/thoikhoabieu.routes');
 
 const app = express();
 app.use(cors());
@@ -19,6 +20,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/academic', academicRoutes);
 app.use('/api/deadline', deadlineRoutes);
 app.use('/api/finance', financeRoutes);
+app.use('/api/thoi-khoa-bieu', thoiKhoaBieuRoutes);
 
 const PORT = 5000;
 app.listen(PORT, () => {
