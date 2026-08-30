@@ -11,6 +11,7 @@ import Deadline from './pages/Deadline';
 import TaiChinh from './pages/TaiChinh';
 import ThoiKhoaBieu from './pages/ThoiKhoaBieu';
 import Profile from './pages/Profile';
+import NotFound from './pages/NotFound';
 
 function RequireAuth({ children }) {
   const { user } = useAuth();
@@ -34,6 +35,7 @@ function App() {
             <Route path="/thoi-khoa-bieu" element={<RequireAuth><ThoiKhoaBieu /></RequireAuth>} />
             <Route path="/ho-so" element={<RequireAuth><Profile /></RequireAuth>} />
             <Route path="/" element={<Navigate to="/dashboard" />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

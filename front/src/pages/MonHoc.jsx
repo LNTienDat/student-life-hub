@@ -11,6 +11,11 @@ function MonHoc() {
   const [hienFormThem, setHienFormThem] = useState(false);
   const [dangSuaId, setDangSuaId] = useState(null);
 
+  const [monThemDiemId, setMonThemDiemId] = useState(null);
+  const [loaiDanhGia, setLoaiDanhGia] = useState('');
+  const [diemSo, setDiemSo] = useState('');
+  const [trongSo, setTrongSo] = useState('');
+
   const [tenMon, setTenMon] = useState('');
   const [tinChi, setTinChi] = useState('');
   const [hocKy, setHocKy] = useState('');
@@ -87,6 +92,29 @@ function MonHoc() {
       taiDuLieu();
     } catch (error) {
       alert('Xóa thất bại');
+    }
+  }
+
+  function moFormThemDiem(id) {
+    setMonThemDiemId(id);
+    setLoaiDanhGia('');
+    setDiemSo('');
+    setTrongSo('');
+  }
+
+  async function xuLyThemDiem(e, idMonHoc) {
+    e.preventDefault();
+    try {
+      await api.post('/academic/diem', {
+        idMonHoc,
+        loaiDanhGia,
+        diem: parseFloat(diemSo),
+        trongSo: parseFloat(trongSo),
+      });
+      setMonThemDiemId(null);
+      taiDuLieu();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Có lỗi xảy ra khi thêm điểm');
     }
   }
 
@@ -229,6 +257,12 @@ function MonHoc() {
                       )}
                       <div className="flex gap-2 mt-1 justify-end">
                         <button
+                          onClick={() => moFormThemDiem(mon.id)}
+                          className="text-green-600 text-xs hover:underline font-medium"
+                        >
+                          + Thêm điểm
+                        </button>
+                        <button
                           onClick={() => moFormSua(mon)}
                           className="text-blue-500 text-xs hover:underline"
                         >
@@ -249,12 +283,62 @@ function MonHoc() {
                       {mon.diems.map((d) => (
                         <span
                           key={d.id}
-                          className="text-xs bg-gray-100 px-2 py-1 rounded"
+                          className="text-xs bg-gray-100 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 px-2 py-1 rounded"
                         >
                           {d.loaiDanhGia}: {d.diem} ({d.trongSo}%)
                         </span>
                       ))}
                     </div>
+                  )}
+
+                  {monThemDiemId === mon.id && (
+                    <form
+                      onSubmit={(e) => xuLyThemDiem(e, mon.id)}
+                      className="mt-3 bg-gray-50 dark:bg-gray-800 p-3 rounded border dark:border-gray-700 text-sm flex flex-col gap-2"
+                    >
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Loại (VD: Giữa kỳ)"
+                          value={loaiDanhGia}
+                          onChange={(e) => setLoaiDanhGia(e.target.value)}
+                          className="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1 flex-1 min-w-[120px]"
+                          required
+                        />
+                        <input
+                          type="number"
+                          step="0.1"
+                          placeholder="Điểm"
+                          value={diemSo}
+                          onChange={(e) => setDiemSo(e.target.value)}
+                          className="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1 w-20"
+                          required
+                        />
+                        <input
+                          type="number"
+                          placeholder="Trọng số %"
+                          value={trongSo}
+                          onChange={(e) => setTrongSo(e.target.value)}
+                          className="border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1 w-24"
+                          required
+                        />
+                      </div>
+                      <div className="flex gap-2 justify-end mt-1">
+                        <button
+                          type="button"
+                          onClick={() => setMonThemDiemId(null)}
+                          className="text-gray-500 hover:underline text-xs"
+                        >
+                          Hủy
+                        </button>
+                        <button
+                          type="submit"
+                          className="text-white bg-green-600 px-3 py-1 rounded hover:bg-green-700 font-medium text-xs"
+                        >
+                          Lưu điểm
+                        </button>
+                      </div>
+                    </form>
                   )}
                 </div>
               );
