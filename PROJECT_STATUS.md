@@ -151,13 +151,13 @@ front/src/
 - [x] CN29: Danh sách cảnh báo khẩn cấp (ghép cảnh báo môn nguy cơ + vượt ngân sách)
 - [x] CN30: Mini-charts trên Dashboard (PieChart chi tiêu + BarChart GPA theo kỳ)
 
-### Module 5: Hệ thống Thông báo (CN 31–33) — ❌ 0/3
-- [ ] CN31: In-app notification (biểu tượng chuông)
-- [ ] CN32: Email nhắc deadline (Cron Job)
-- [ ] CN33: Email cảnh báo vượt ngân sách
+### Module 5: Hệ thống Thông báo (CN 31–33) — ✅ 3/3
+- [x] CN31: In-app notification (biểu tượng chuông, API gộp 3 loại thông báo)
+- [x] CN32: Email nhắc deadline (Cron Job chạy 7h sáng mỗi ngày, gộp theo user)
+- [x] CN33: Email cảnh báo vượt ngân sách (Cron Job chạy 8h sáng mỗi ngày, gộp theo user)
 
-### Module 6: Tính năng Nâng cao (CN 34–37) — ✅ 3/4
-- [ ] CN34: Chatbot hỏi đáp nhanh
+### Module 6: Tính năng Nâng cao (CN 34–37) — ✅ 4/4
+- [x] CN34: Chatbot hỏi đáp nhanh (Gemini 3.6 Flash, có lịch sử hội thoại)
 - [x] CN35: Dark / Light Mode (ThemeContext + TailwindCSS `darkMode: 'class'` + CSS overrides toàn cục)
 - [x] CN36: Responsive Design (Navbar hamburger menu, layout responsive)
 - [x] CN37: Xuất báo cáo tổng kết (ExcelJS, file `.xlsx` gồm 3 trang tính: Chi tiết, Tổng hợp, Tổng kết)
@@ -168,21 +168,14 @@ front/src/
 
 | Chỉ số | Giá trị |
 |--------|---------|
-| **Tiến độ tổng thể** | **~89%** |
-| **Chức năng hoàn thành** | **33 / 37** |
-| **Giai đoạn hoàn thành** | **7 / 8** (GĐ 1-7 ✅, GĐ 8 đang làm) |
-| **Backend API routes** | **36 endpoints nghiệp vụ** (Auth 7, Academic 10, Deadline 6, Finance 9, TKB 4) |
+| **Tiến độ tổng thể** | **100%** |
+| **Chức năng hoàn thành** | **37 / 37** |
+| **Giai đoạn hoàn thành** | **8 / 8** (Toàn bộ dự án đã xong) |
+| **Backend API routes** | **41 endpoints nghiệp vụ** (Auth 7, Academic 10, Deadline 6, Finance 9, TKB 4, ThongBao 3, Chatbot 2) |
 | **Database models** | **7 / 7 model** đều đã có API xử lý |
-| **Frontend pages** | **10 trang** + 11 routes (4 public + 6 protected + 1 redirect) |
+| **Frontend pages** | **10 trang** + Component mở rộng (Chatbot, Layout có chuông thông báo) |
 
 ---
 
-## 🎯 5. Công việc tiếp theo cần làm (Còn 4 tính năng)
-
-### Ưu tiên trung bình — Hệ thống Thông báo
-1. **CN31 — In-app notification (chuông)**: Hiện chỉ có banner + Desktop Notification. Cần thêm biểu tượng chuông trên navbar với badge đếm số thông báo chưa đọc.
-2. **CN32 — Email nhắc deadline (Cron Job)**: Thiết lập cron job gửi email tự động khi deadline sắp hết hạn.
-3. **CN33 — Email cảnh báo vượt ngân sách**: Tương tự, gửi email khi phát hiện chi tiêu vượt hạn mức.
-
-### Ưu tiên thấp — Tính năng nâng cao
-4. **CN34 — Chatbot hỏi đáp nhanh**: Tích hợp chatbot AI hỗ trợ sinh viên tra cứu nhanh thông tin.
+## 🎉 DỰ ÁN ĐÃ HOÀN THÀNH TOÀN BỘ 100% YÊU CẦU!
+Tất cả 37 tính năng trong `roadmap.docx` đã được phát triển xong và tích hợp thành công.
