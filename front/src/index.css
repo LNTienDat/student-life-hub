@@ -1,21 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8fafc;
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
+  }
+}
 
 /* CN35: Dark Mode — override toàn cục để áp dụng nhất quán mà không cần sửa
    từng trang, vì codebase dùng chung 1 bộ tên class Tailwind (bg-white, text-gray-*, ...).
    Dùng giá trị màu trực tiếp (không @apply utility trùng tên) để tránh circular dependency. */
 .dark body {
-  background-color: #111827; /* gray-900 */
+  background-color: #0f172a; /* slate-900 */
 }
 
 .dark .bg-white {
-  background-color: #1f2937; /* gray-800 */
+  background-color: #1e293b; /* slate-800 */
 }
 
 .dark .bg-gray-50,
 .dark .bg-gray-100 {
-  background-color: #111827; /* gray-900 */
+  background-color: #0f172a; /* slate-900 */
 }
 
 .dark .text-gray-800,
