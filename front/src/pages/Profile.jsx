@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import Autocomplete from '../components/Autocomplete';
+import { danhSachTruong, danhSachNganh } from '../data/truongNganh';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { User, Lock, Save, KeyRound, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -111,28 +113,31 @@ function Profile() {
                   required 
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Trường</label>
-                <input 
-                  value={truong} 
-                  onChange={(e) => setTruong(e.target.value)} 
-                  className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 dark:focus:ring-blue-500/30 transition-shadow" 
+              <div className="relative z-20">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Trường đại học</label>
+                <Autocomplete 
+                  value={truong}
+                  onChange={setTruong}
+                  options={danhSachTruong}
+                  placeholder="Nhập hoặc chọn trường..."
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Ngành</label>
-                  <input 
-                    value={nganh} 
-                    onChange={(e) => setNganh(e.target.value)} 
-                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 dark:focus:ring-blue-500/30 transition-shadow" 
+                <div className="relative z-10">
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Ngành học</label>
+                  <Autocomplete 
+                    value={nganh}
+                    onChange={setNganh}
+                    options={danhSachNganh}
+                    placeholder="VD: Công nghệ thông tin"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Khóa học</label>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Khóa học (Năm)</label>
                   <input 
                     value={khoaHoc} 
                     onChange={(e) => setKhoaHoc(e.target.value)} 
+                    placeholder="VD: K65 hoặc 2023-2027"
                     className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 dark:focus:ring-blue-500/30 transition-shadow" 
                   />
                 </div>
