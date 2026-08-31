@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Be+Vietnam+Pro:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,87 +6,153 @@
 
 @layer base {
   body {
-    font-family: 'Inter', sans-serif;
-    background-color: #f8fafc;
-    color: #0f172a;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    background-color: #F6F7FB; /* paper */
+    color: #0f172a; /* slate-900 */
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* Số liệu lớn (GPA, tiền, tiêu đề) dùng font display Sora — xem class .font-display */
+  .font-display {
+    font-family: 'Sora', sans-serif;
+    font-variant-numeric: tabular-nums;
   }
 }
 
-/* CN35: Dark Mode — override toàn cục để áp dụng nhất quán mà không cần sửa
-   từng trang, vì codebase dùng chung 1 bộ tên class Tailwind (bg-white, text-gray-*, ...).
-   Dùng giá trị màu trực tiếp (không @apply utility trùng tên) để tránh circular dependency. */
+/* ============================================================
+   CN35: Dark Mode — override toàn cục trong file này thay vì
+   thêm `dark:` vào từng JSX, vì codebase dùng chung 1 bộ tên
+   class Tailwind (bg-white, text-slate-*, border-slate-*, ...).
+   Cập nhật theo bảng token mới: nền than "paper-dark", chữ mực
+   "ink". Dùng giá trị màu trực tiếp để tránh circular @apply.
+   ============================================================ */
 .dark body {
-  background-color: #0f172a; /* slate-900 */
+  background-color: #15161F; /* paper-dark */
+  color: #E4E6F1;
 }
 
-.dark .bg-white {
-  background-color: #1e293b; /* slate-800 */
+.dark .bg-white,
+.dark .bg-paper {
+  background-color: #1B1D36; /* ink-800, dùng làm surface tối */
 }
 
 .dark .bg-gray-50,
-.dark .bg-gray-100 {
-  background-color: #0f172a; /* slate-900 */
+.dark .bg-gray-100,
+.dark .bg-slate-50,
+.dark .bg-slate-100 {
+  background-color: #15161F; /* paper-dark */
 }
 
+.dark .text-gray-900,
 .dark .text-gray-800,
-.dark .text-gray-700 {
-  color: #f3f4f6; /* gray-100 */
+.dark .text-gray-700,
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-slate-700 {
+  color: #E4E6F1;
 }
 
 .dark .text-gray-600,
-.dark .text-gray-500 {
-  color: #d1d5db; /* gray-300 */
+.dark .text-gray-500,
+.dark .text-slate-600,
+.dark .text-slate-500 {
+  color: #A6ACC7;
 }
 
-.dark .text-gray-400 {
-  color: #9ca3af; /* gray-400 */
+.dark .text-gray-400,
+.dark .text-slate-400 {
+  color: #6B7099;
 }
 
 .dark .border,
 .dark .border-t,
 .dark .border-b,
-.dark .divide-y > * + * {
-  border-color: #374151; /* gray-700 */
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .divide-y > * + *,
+.dark .divide-x > * + * {
+  border-color: #2C2E4D;
 }
 
 .dark input,
 .dark select,
 .dark textarea {
-  background-color: #374151; /* gray-700 */
-  color: #f3f4f6;
-  border-color: #4b5563;
+  background-color: #1B1D36;
+  color: #E4E6F1;
+  border-color: #2C2E4D;
 }
 
-.dark .bg-red-50 {
-  background-color: rgba(127, 29, 29, 0.3);
+/* Ink — màu chủ đạo, sáng hơn 1 bậc trong dark mode để đủ tương phản trên nền tối */
+.dark .bg-ink-600 {
+  background-color: #3D3F72; /* ink-500 */
+}
+.dark .bg-ink-600:hover {
+  background-color: #5F68A0; /* ink-400 */
+}
+.dark .text-ink-600 {
+  color: #8E98CB; /* ink-300 */
+}
+.dark .border-ink-600 {
+  border-color: #5F68A0;
 }
 
+/* Trạng thái màu ngữ nghĩa (nhấn ấm, tích cực, cảnh báo) */
+.dark .bg-amber-50 {
+  background-color: rgba(217, 119, 6, 0.15);
+}
+.dark .text-amber-700,
+.dark .text-amber-600,
+.dark .text-amber-800 {
+  color: #FBBF24;
+}
+.dark .border-amber-200 {
+  border-color: rgba(217, 119, 6, 0.35);
+}
+
+.dark .bg-teal-50 {
+  background-color: rgba(13, 148, 136, 0.15);
+}
+.dark .text-teal-700,
+.dark .text-teal-600 {
+  color: #2DD4BF;
+}
+
+.dark .bg-rose-50,
+.dark .bg-red-50,
 .dark .bg-red-100 {
-  background-color: rgba(127, 29, 29, 0.4);
-  color: #fecaca;
+  background-color: rgba(190, 18, 60, 0.18);
+}
+.dark .text-rose-700,
+.dark .text-rose-600,
+.dark .text-rose-800,
+.dark .text-red-600,
+.dark .text-red-700 {
+  color: #FB7185;
+}
+.dark .border-rose-200 {
+  border-color: rgba(190, 18, 60, 0.35);
 }
 
 .dark .bg-green-100 {
-  background-color: rgba(20, 83, 45, 0.4);
-  color: #bbf7d0;
+  background-color: rgba(13, 148, 136, 0.18);
+  color: #2DD4BF;
 }
 
 .dark .bg-yellow-100 {
-  background-color: rgba(113, 63, 18, 0.4);
-  color: #fef08a;
+  background-color: rgba(217, 119, 6, 0.18);
+  color: #FBBF24;
 }
 
 .dark .bg-blue-50,
 .dark .bg-blue-100 {
-  background-color: rgba(30, 58, 138, 0.3);
-  color: #bfdbfe;
+  background-color: rgba(61, 63, 114, 0.35);
+  color: #8E98CB;
 }
 
 .dark .bg-orange-50,
 .dark .bg-orange-100 {
-  background-color: rgba(124, 45, 18, 0.3);
-  color: #fed7aa;
+  background-color: rgba(217, 119, 6, 0.18);
+  color: #FBBF24;
 }
-
-

@@ -29,59 +29,66 @@ function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h1 className="text-2xl font-bold text-center mb-6 text-blue-600">
-          Đăng nhập
-        </h1>
+    <div className="min-h-screen flex items-center justify-center bg-paper px-4">
+      <div className="w-full max-w-sm">
+        <div className="relative bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          {/* Thanh gáy — điểm nhấn xuyên suốt hệ thống thiết kế, gợi mép trang sổ tay */}
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-ink-600" />
 
-        {loi && (
-          <div className="bg-red-100 text-red-600 p-3 rounded mb-4 text-sm">
-            {loi}
+          <div className="p-8 pl-9">
+            <p className="text-xs font-medium text-slate-400 mb-1">Student Life Hub</p>
+            <h1 className="font-display text-2xl font-bold text-slate-900 mb-6">
+              Đăng nhập
+            </h1>
+
+            {loi && (
+              <div className="bg-rose-50 border border-rose-200 text-rose-700 px-3 py-2 rounded-lg mb-4 text-sm">
+                {loi}
+              </div>
+            )}
+
+            <form onSubmit={xuLySubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
+                  required
+                />
+              </div>
+
+              <div>
+                <div className="flex items-baseline justify-between mb-1">
+                  <label className="block text-sm font-medium text-slate-600">Mật khẩu</label>
+                  <Link to="/quen-mat-khau" className="text-xs text-ink-600 hover:text-ink-700">
+                    Quên mật khẩu?
+                  </Link>
+                </div>
+                <input
+                  type="password"
+                  value={matKhau}
+                  onChange={(e) => setMatKhau(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={dangTai}
+                className="w-full bg-ink-600 text-white font-medium py-2.5 rounded-lg hover:bg-ink-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
+              >
+                {dangTai ? 'Đang xử lý...' : 'Đăng nhập'}
+              </button>
+            </form>
           </div>
-        )}
+        </div>
 
-        <form onSubmit={xuLySubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              required
-            />
-          </div>
-
-          <div className="mb-2">
-            <label className="block text-sm font-medium mb-1">Mật khẩu</label>
-            <input
-              type="password"
-              value={matKhau}
-              onChange={(e) => setMatKhau(e.target.value)}
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              required
-            />
-          </div>
-
-          <div className="text-right mb-6">
-            <Link to="/quen-mat-khau" className="text-sm text-blue-600 hover:underline">
-              Quên mật khẩu?
-            </Link>
-          </div>
-
-          <button
-            type="submit"
-            disabled={dangTai}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
-          >
-            {dangTai ? 'Đang xử lý...' : 'Đăng nhập'}
-          </button>
-        </form>
-
-        <p className="text-center text-sm mt-4">
+        <p className="text-center text-sm text-slate-500 mt-6">
           Chưa có tài khoản?{' '}
-          <Link to="/register" className="text-blue-600 hover:underline">
+          <Link to="/register" className="text-ink-600 hover:text-ink-700 font-medium">
             Đăng ký ngay
           </Link>
         </p>
