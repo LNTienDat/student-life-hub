@@ -39,9 +39,9 @@ function MonHoc() {
         api.get('/academic/gpa'),
         api.get('/academic/gpa-theo-ky'),
       ]);
-      setDanhSach(resMonHoc.data.danhSach || []);
+      setDanhSach(resMonHoc.data.monHocs || []);
       setGpa(resGpa.data.gpa);
-      setGpaTheoKy(resGpaKy.data.gpaTheoKy || []);
+      setGpaTheoKy(resGpaKy.data.theoKy || []);
     } catch (error) {
       console.error(error);
     } finally {
@@ -149,7 +149,7 @@ function MonHoc() {
               <div className="flex flex-col">
                 <span className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">GPA Hiện tại</span>
                 <span className="font-display font-bold text-slate-900 dark:text-white leading-none">
-                  {gpa ? gpa.toFixed(2) : '--'}
+                  {gpa ? Number(gpa).toFixed(2) : '--'}
                 </span>
               </div>
             </div>
