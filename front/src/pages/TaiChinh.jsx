@@ -1,7 +1,22 @@
 import { useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 import Layout from '../components/Layout';
 import api from '../services/api';
+import { 
+  Wallet, 
+  TrendingUp, 
+  TrendingDown, 
+  Plus, 
+  X, 
+  Download, 
+  Search, 
+  Trash2, 
+  ChevronLeft, 
+  ChevronRight,
+  Filter,
+  PieChart as PieChartIcon,
+  Activity
+} from 'lucide-react';
 
 const DANH_MUC = ['an_uong', 'hoc_phi', 'tro', 'giai_tri', 'di_lai', 'khac'];
 const TEN_DANH_MUC = {
@@ -12,6 +27,8 @@ const TEN_DANH_MUC = {
   di_lai: 'Đi lại',
   khac: 'Khác',
 };
+
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'];
 
 function TaiChinh() {
   const now = new Date();
@@ -30,57 +47,53 @@ function TaiChinh() {
   const [soTien, setSoTien] = useState('');
   const [moTa, setMoTa] = useState('');
 
-  const [hienFormNS, setHienFormNS] = useState(false);
-  const [nsDanhMuc, setNsDanhMuc] = useState('an_uong');
-  const [nsSoTien, setNsSoTien] = useState('');
-
-  // Lịch sử giao dịch: tìm kiếm, lọc, phân trang
+  // Pagination & Filter
   const [timKiem, setTimKiem] = useState('');
   const [locLoai, setLocLoai] = useState('');
   const [locDanhMuc, setLocDanhMuc] = useState('');
-  const [chiThangNay, setChiThangNay] = useState(true);
+  const [chiThangNay, setChiThangNay] = useState(false);
+  
   const [trangHienTai, setTrangHienTai] = useState(1);
   const [soTrang, setSoTrang] = useState(1);
   const [tongSoGiaoDich, setTongSoGiaoDich] = useState(0);
   const [dangTaiGD, setDangTaiGD] = useState(false);
 
-  async function taiDuLieu() {
-    setDangTai(true);
-    try {
-      const [resTK, resNS, resXH] = await Promise.all([
-        api.get(`/finance/thong-ke?thang=${thang}&nam=${nam}`),
-        api.get(`/finance/ngan-sach?thang=${thang}&nam=${nam}`),
-        api.get('/finance/xu-huong?soThang=6'),
-      ]);
-      setThongKe(resTK.data);
-      setNganSachs(resNS.data.ketQua || resNS.data.nganSachs || []);
-      setXuHuong(resXH.data.xuHuong);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setDangTai(false);
+  useEffect(() => {
+    async function taiThongKe() {
+      try {
+        const [resTK, resNS, resXH] = await Promise.all([
+          api.get('/finance/thong-ke'),
+          api.get('/finance/ngan-sach'),
+          api.get('/finance/xu-huong')
+        ]);
+        setThongKe(resTK.data);
+        setNganSachs(resNS.data.nganSachs);
+        setXuHuong(resXH.data.xuHuong);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setDangTai(false);
+      }
     }
-  }
+    taiThongKe();
+  }, []);
 
-  async function taiGiaoDich(trang = trangHienTai) {
+  async function taiGiaoDich(page = 1) {
     setDangTaiGD(true);
     try {
-      const params = new URLSearchParams();
-      if (chiThangNay) {
-        params.set('thang', thang);
-        params.set('nam', nam);
-      }
-      if (timKiem.trim()) params.set('q', timKiem.trim());
-      if (locLoai) params.set('loai', locLoai);
-      if (locDanhMuc) params.set('danhMuc', locDanhMuc);
-      params.set('trang', trang);
-      params.set('soLuong', 10);
-
-      const res = await api.get(`/finance/giao-dich?${params.toString()}`);
+      const q = new URLSearchParams({
+        page,
+        limit: 10,
+        timKiem,
+        loai: locLoai,
+        danhMuc: locDanhMuc,
+        chiThangNay
+      });
+      const res = await api.get(`/finance/giao-dich?${q.toString()}`);
       setGiaoDichs(res.data.giaoDichs);
-      setTongSoGiaoDich(res.data.tongSo ?? res.data.giaoDichs.length);
-      setSoTrang(res.data.soTrang ?? 1);
-      setTrangHienTai(res.data.trang ?? trang);
+      setSoTrang(res.data.soTrang);
+      setTrangHienTai(res.data.trangHienTai);
+      setTongSoGiaoDich(res.data.tongSo);
     } catch (error) {
       console.error(error);
     } finally {
@@ -89,410 +102,409 @@ function TaiChinh() {
   }
 
   useEffect(() => {
-    taiDuLieu();
-    taiGiaoDich(1);
-  }, []);
-
-  // Tìm kiếm / lọc thay đổi -> quay về trang 1 và tải lại (debounce cho ô tìm kiếm)
-  useEffect(() => {
     const timer = setTimeout(() => {
       taiGiaoDich(1);
-    }, 350);
+    }, 300);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timKiem, locLoai, locDanhMuc, chiThangNay]);
+
+  function dinhDangTien(so) {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(so || 0);
+  }
 
   async function xuLyThemGiaoDich(e) {
     e.preventDefault();
     try {
       await api.post('/finance/giao-dich', {
+        soTien: parseFloat(soTien),
         loai,
         danhMuc,
-        soTien: parseFloat(soTien),
-        moTa,
+        moTa
       });
       setSoTien('');
       setMoTa('');
       setHienFormGD(false);
-      taiDuLieu();
+      
+      const [resTK, resNS] = await Promise.all([
+        api.get('/finance/thong-ke'),
+        api.get('/finance/ngan-sach'),
+      ]);
+      setThongKe(resTK.data);
+      setNganSachs(resNS.data.nganSachs);
       taiGiaoDich(1);
     } catch (error) {
-      alert(error.response?.data?.message || 'Có lỗi xảy ra');
+      console.error(error);
+      alert('Không thể thêm giao dịch!');
     }
   }
 
   async function xuLyXoaGiaoDich(id) {
-    if (!confirm('Xóa giao dịch này?')) return;
+    if (!window.confirm('Bạn có chắc muốn xóa giao dịch này?')) return;
     try {
       await api.delete(`/finance/giao-dich/${id}`);
-      taiDuLieu();
+      const resTK = await api.get('/finance/thong-ke');
+      setThongKe(resTK.data);
       taiGiaoDich(trangHienTai);
     } catch (error) {
-      alert('Xóa thất bại');
+      console.error(error);
     }
   }
 
-  async function xuLyDatNganSach(e) {
-    e.preventDefault();
-    try {
-      await api.post('/finance/ngan-sach', {
-        danhMuc: nsDanhMuc,
-        soTienToiDa: parseFloat(nsSoTien),
-        thang,
-        nam,
-      });
-      setNsSoTien('');
-      setHienFormNS(false);
-      taiDuLieu();
-    } catch (error) {
-      alert(error.response?.data?.message || 'Có lỗi xảy ra');
-    }
+  async function taoGiaoDichNhanh(danhMuc) {
+    setLoai('chi');
+    setDanhMuc(danhMuc);
+    setSoTien('');
+    setMoTa('');
+    setHienFormGD(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  async function xuLyXuatBaoCao() {
-    try {
-      const res = await api.get(`/finance/xuat-bao-cao?thang=${thang}&nam=${nam}`, {
-        responseType: 'blob',
-      });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `bao-cao-${thang}-${nam}.xlsx`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      alert('Không thể xuất báo cáo. Vui lòng thử lại.');
-    }
-  }
-
-  function dinhDangTien(so) {
-    return so.toLocaleString('vi-VN') + ' đ';
-  }
+  const dataBieuDo = thongKe ? Object.entries(thongKe.chiTheoDanhMuc).map(([key, val]) => ({
+    name: TEN_DANH_MUC[key] || key,
+    value: val
+  })).filter(item => item.value > 0) : [];
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-start mb-1">
-          <h1 className="text-2xl font-bold text-gray-800">Quản lý tài chính</h1>
-          <button
-            onClick={xuLyXuatBaoCao}
-            className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 text-sm"
-          >
-            Xuất báo cáo (Excel)
-          </button>
+      <div className="max-w-6xl mx-auto space-y-6 pb-12">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+          <div>
+            <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+              Quản lý tài chính
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">
+              Tháng {thang}/{nam}
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => alert('Tính năng xuất báo cáo đang được phát triển')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Xuất báo cáo</span>
+            </button>
+            <button
+              onClick={() => setHienFormGD(!hienFormGD)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${
+                hienFormGD 
+                ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                : 'bg-ink-600 dark:bg-blue-600 text-white hover:bg-ink-700 dark:hover:bg-blue-700 shadow-sm shadow-ink-500/20'
+              }`}
+            >
+              {hienFormGD ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+              {hienFormGD ? 'Hủy' : 'Thêm giao dịch'}
+            </button>
+          </div>
         </div>
-        <p className="text-gray-500 mb-6">Tháng {thang}/{nam}</p>
 
         {dangTai ? (
-          <p className="text-gray-500">Đang tải...</p>
+          <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60">
+            <div className="w-8 h-8 border-4 border-ink-200 border-t-ink-600 rounded-full animate-spin"></div>
+            <p className="mt-4 text-slate-500">Đang tải dữ liệu...</p>
+          </div>
         ) : (
           <>
-            {/* Tổng quan */}
-            {thongKe && (
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <p className="text-sm text-gray-500">Tổng thu</p>
-                  <p className="text-xl font-bold text-green-600">{dinhDangTien(thongKe.tongThu)}</p>
+            {/* Thống kê tổng quan */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <TrendingUp className="w-20 h-20 text-emerald-500" />
                 </div>
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <p className="text-sm text-gray-500">Tổng chi</p>
-                  <p className="text-xl font-bold text-red-600">{dinhDangTien(thongKe.tongChi)}</p>
-                </div>
-                <div className="bg-white p-4 rounded-lg shadow">
-                  <p className="text-sm text-gray-500">Số dư</p>
-                  <p className={`text-xl font-bold ${thongKe.soDu >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                    {dinhDangTien(thongKe.soDu)}
-                  </p>
-                </div>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 relative z-10">Tổng thu</p>
+                <p className="font-display text-3xl font-bold text-emerald-600 dark:text-emerald-400 relative z-10">{dinhDangTien(thongKe.tongThu)}</p>
               </div>
-            )}
+              
+              <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <TrendingDown className="w-20 h-20 text-rose-500" />
+                </div>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 relative z-10">Tổng chi</p>
+                <p className="font-display text-3xl font-bold text-rose-600 dark:text-rose-400 relative z-10">{dinhDangTien(thongKe.tongChi)}</p>
+              </div>
 
-            {/* Ngân sách */}
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="font-semibold text-gray-700">Ngân sách tháng này</h2>
-              <button
-                onClick={() => setHienFormNS(!hienFormNS)}
-                className="text-blue-600 text-sm hover:underline"
-              >
-                {hienFormNS ? 'Hủy' : '+ Đặt ngân sách'}
-              </button>
+              <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <Wallet className="w-20 h-20 text-ink-500 dark:text-blue-500" />
+                </div>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 relative z-10">Số dư hiện tại</p>
+                <p className={`font-display text-3xl font-bold relative z-10 ${thongKe.soDu >= 0 ? 'text-ink-600 dark:text-blue-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                  {dinhDangTien(thongKe.soDu)}
+                </p>
+              </div>
             </div>
 
-            {hienFormNS && (
-              <form onSubmit={xuLyDatNganSach} className="bg-white p-4 rounded-lg shadow mb-4 flex gap-3 items-end">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1">Danh mục</label>
-                  <select
-                    value={nsDanhMuc}
-                    onChange={(e) => setNsDanhMuc(e.target.value)}
-                    className="w-full border rounded px-3 py-2"
-                  >
-                    {DANH_MUC.map((dm) => (
-                      <option key={dm} value={dm}>{TEN_DANH_MUC[dm]}</option>
-                    ))}
-                  </select>
+            {/* Layout 2 cột: Ngân sách & Biểu đồ */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Ngân sách */}
+              <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 flex flex-col h-full">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="font-display font-semibold text-lg text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                    <PieChartIcon className="w-5 h-5 text-amber-500" />
+                    Ngân sách tháng này
+                  </h2>
                 </div>
-                <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1">Số tiền tối đa</label>
-                  <input
-                    type="number"
-                    value={nsSoTien}
-                    onChange={(e) => setNsSoTien(e.target.value)}
-                    className="w-full border rounded px-3 py-2"
-                    required
-                  />
-                </div>
-                <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                  Lưu
-                </button>
-              </form>
-            )}
 
-            {nganSachs.length === 0 ? (
-              <p className="text-gray-400 text-sm mb-6">Chưa đặt ngân sách nào.</p>
-            ) : (
-              <div className="grid gap-3 mb-6">
-                {nganSachs.map((ns, i) => (
-                  <div key={i} className="bg-white p-4 rounded-lg shadow">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium">{TEN_DANH_MUC[ns.danhMuc] || ns.danhMuc}</span>
-                      <span className={`text-sm font-semibold ${ns.vuotNganSach ? 'text-red-600' : 'text-green-600'}`}>
-                        {dinhDangTien(ns.daChi)} / {dinhDangTien(ns.soTienToiDa)}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${ns.vuotNganSach ? 'bg-red-500' : 'bg-blue-500'}`}
-                        style={{
-                          width: `${Math.min((ns.daChi / ns.soTienToiDa) * 100, 100)}%`,
-                        }}
-                      />
-                    </div>
-                    {ns.vuotNganSach && (
-                      <p className="text-xs text-red-500 mt-1">⚠ Đã vượt ngân sách</p>
-                    )}
-                  </div>
-                ))}
+                <div className="space-y-5 flex-1">
+                  {nganSachs.map((ns) => {
+                    const daChi = thongKe.chiTheoDanhMuc[ns.danhMuc] || 0;
+                    const phanTram = ns.hanMuc > 0 ? (daChi / ns.hanMuc) * 100 : 0;
+                    const vuotNgay = phanTram > 100;
+                    const canhBao = phanTram >= 80 && !vuotNgay;
+
+                    return (
+                      <div key={ns.id} className="group cursor-pointer" onClick={() => taoGiaoDichNhanh(ns.danhMuc)}>
+                        <div className="flex justify-between text-sm mb-1.5">
+                          <span className="font-medium text-slate-700 dark:text-slate-200 group-hover:text-ink-600 dark:group-hover:text-blue-400 transition-colors">
+                            {TEN_DANH_MUC[ns.danhMuc] || ns.danhMuc}
+                          </span>
+                          <span className={`font-medium ${vuotNgay ? 'text-rose-600 dark:text-rose-400' : canhBao ? 'text-amber-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                            {dinhDangTien(daChi)} / {dinhDangTien(ns.hanMuc)}
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-100 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden">
+                          <div
+                            className={`h-2.5 rounded-full ${
+                              vuotNgay ? 'bg-rose-500' : canhBao ? 'bg-amber-400' : 'bg-emerald-500'
+                            }`}
+                            style={{ width: `${Math.min(phanTram, 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            )}
 
-            {/* Biểu đồ chi tiêu */}
-            {thongKe && Object.keys(thongKe.theoDanhMuc).length > 0 && (
-              <div className="bg-white p-4 rounded-lg shadow mb-6">
-                <h2 className="font-semibold text-gray-700 mb-3">Cơ cấu chi tiêu</h2>
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={Object.entries(thongKe.theoDanhMuc).map(([name, value]) => ({
-                        name: TEN_DANH_MUC[name] || name,
-                        value,
-                      }))}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      label
-                    >
-                      {Object.keys(thongKe.theoDanhMuc).map((_, index) => (
-                        <Cell
-                          key={index}
-                          fill={['#3b82f6', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#ec4899'][index % 6]}
+              {/* Biểu đồ xu hướng */}
+              <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 flex flex-col h-full">
+                <h2 className="font-display font-semibold text-lg text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-indigo-500" />
+                  Xu hướng thu/chi 6 tháng
+                </h2>
+                
+                <div className="flex-1 w-full min-h-[250px]">
+                  {xuHuong.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={xuHuong} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
+                        <XAxis dataKey="thang" fontSize={12} tickLine={false} axisLine={false} tick={{ fill: '#64748b' }} />
+                        <YAxis 
+                          fontSize={12} 
+                          tickLine={false} 
+                          axisLine={false} 
+                          tick={{ fill: '#64748b' }}
+                          tickFormatter={(value) => value >= 1000000 ? `${(value/1000000).toFixed(1)}tr` : `${value/1000}k`}
                         />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => value.toLocaleString('vi-VN') + ' đ'} />
-                  </PieChart>
-                </ResponsiveContainer>
+                        <Tooltip 
+                          formatter={(value) => dinhDangTien(value)}
+                          contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        />
+                        <Line type="monotone" dataKey="thu" stroke="#10b981" name="Thu" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                        <Line type="monotone" dataKey="chi" stroke="#ef4444" name="Chi" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-slate-400">Chưa đủ dữ liệu</div>
+                  )}
+                </div>
               </div>
-            )}
-
-            {xuHuong.length > 0 && (
-              <div className="bg-white p-4 rounded-lg shadow mb-6">
-                <h2 className="font-semibold text-gray-700 mb-3">Xu hướng thu/chi 6 tháng</h2>
-                <ResponsiveContainer width="100%" height={250}>
-                  <LineChart data={xuHuong}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="thang" fontSize={12} />
-                    <YAxis fontSize={12} />
-                    <Tooltip formatter={(value) => value.toLocaleString('vi-VN') + ' đ'} />
-                    <Legend />
-                    <Line type="monotone" dataKey="thu" stroke="#10b981" name="Thu" strokeWidth={2} />
-                    <Line type="monotone" dataKey="chi" stroke="#ef4444" name="Chi" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
+            </div>
 
             {/* Lịch sử giao dịch */}
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="font-semibold text-gray-700">Lịch sử giao dịch</h2>
-              <button
-                onClick={() => setHienFormGD(!hienFormGD)}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
-              >
-                {hienFormGD ? 'Hủy' : '+ Thêm giao dịch'}
-              </button>
-            </div>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 overflow-hidden">
+              
+              {/* Form thêm giao dịch (Collapse) */}
+              {hienFormGD && (
+                <div className="p-6 border-b border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-900/30">
+                  <h3 className="font-display font-semibold text-slate-800 dark:text-slate-200 mb-4">Thêm giao dịch mới</h3>
+                  <form onSubmit={xuLyThemGiaoDich} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Loại</label>
+                        <select
+                          value={loai}
+                          onChange={(e) => setLoai(e.target.value)}
+                          className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
+                        >
+                          <option value="chi">Chi tiêu</option>
+                          <option value="thu">Thu nhập</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Danh mục</label>
+                        <select
+                          value={danhMuc}
+                          onChange={(e) => setDanhMuc(e.target.value)}
+                          className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
+                        >
+                          {DANH_MUC.map((dm) => (
+                            <option key={dm} value={dm}>{TEN_DANH_MUC[dm]}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Số tiền</label>
+                        <input
+                          type="number"
+                          value={soTien}
+                          onChange={(e) => setSoTien(e.target.value)}
+                          placeholder="Ví dụ: 50000"
+                          className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Mô tả (Không bắt buộc)</label>
+                      <input
+                        type="text"
+                        value={moTa}
+                        onChange={(e) => setMoTa(e.target.value)}
+                        placeholder="Mua sách, tiền điện..."
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
+                      />
+                    </div>
+                    <div className="flex justify-end pt-2">
+                      <button type="submit" className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition-colors">
+                        Lưu giao dịch
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
 
-            {hienFormGD && (
-              <form onSubmit={xuLyThemGiaoDich} className="bg-white p-4 rounded-lg shadow mb-4 space-y-3">
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium mb-1">Loại</label>
-                    <select
-                      value={loai}
-                      onChange={(e) => setLoai(e.target.value)}
-                      className="w-full border rounded px-3 py-2"
-                    >
-                      <option value="chi">Chi tiêu</option>
-                      <option value="thu">Thu nhập</option>
-                    </select>
+              {/* Bộ lọc */}
+              <div className="p-4 md:p-6 border-b border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800">
+                <div className="flex flex-col md:flex-row gap-4 items-end">
+                  <div className="flex-1 w-full relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search className="h-4 w-4 text-slate-400" />
+                    </div>
+                    <input
+                      type="text"
+                      value={timKiem}
+                      onChange={(e) => setTimKiem(e.target.value)}
+                      placeholder="Tìm kiếm giao dịch..."
+                      className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
+                    />
                   </div>
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium mb-1">Danh mục</label>
+                  <div className="flex gap-4 w-full md:w-auto">
                     <select
-                      value={danhMuc}
-                      onChange={(e) => setDanhMuc(e.target.value)}
-                      className="w-full border rounded px-3 py-2"
+                      value={locLoai}
+                      onChange={(e) => setLocLoai(e.target.value)}
+                      className="w-full md:w-auto bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
                     >
+                      <option value="">Tất cả loại</option>
+                      <option value="thu">Thu nhập</option>
+                      <option value="chi">Chi tiêu</option>
+                    </select>
+                    <select
+                      value={locDanhMuc}
+                      onChange={(e) => setLocDanhMuc(e.target.value)}
+                      className="w-full md:w-auto bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
+                    >
+                      <option value="">Tất cả danh mục</option>
                       {DANH_MUC.map((dm) => (
                         <option key={dm} value={dm}>{TEN_DANH_MUC[dm]}</option>
                       ))}
                     </select>
                   </div>
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium mb-1">Số tiền</label>
+                  <label className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-full md:w-auto">
                     <input
-                      type="number"
-                      value={soTien}
-                      onChange={(e) => setSoTien(e.target.value)}
-                      className="w-full border rounded px-3 py-2"
-                      required
+                      type="checkbox"
+                      checked={chiThangNay}
+                      onChange={(e) => setChiThangNay(e.target.checked)}
+                      className="rounded border-slate-300 text-ink-600 focus:ring-ink-500"
                     />
+                    Chỉ tháng này
+                  </label>
+                </div>
+              </div>
+
+              {/* Danh sách */}
+              <div className="min-h-[300px]">
+                {dangTaiGD ? (
+                  <div className="flex items-center justify-center h-40">
+                    <div className="w-6 h-6 border-2 border-slate-200 border-t-ink-500 rounded-full animate-spin"></div>
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Mô tả</label>
-                  <input
-                    type="text"
-                    value={moTa}
-                    onChange={(e) => setMoTa(e.target.value)}
-                    className="w-full border rounded px-3 py-2"
-                  />
-                </div>
-                <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                  Lưu
-                </button>
-              </form>
-            )}
-
-            {/* Thanh tìm kiếm & bộ lọc */}
-            <div className="bg-white p-4 rounded-lg shadow mb-4 flex flex-wrap gap-3 items-end">
-              <div className="flex-1 min-w-[180px]">
-                <label className="block text-sm font-medium mb-1">Tìm kiếm</label>
-                <input
-                  type="text"
-                  value={timKiem}
-                  onChange={(e) => setTimKiem(e.target.value)}
-                  placeholder="Tìm theo mô tả, danh mục..."
-                  className="w-full border rounded px-3 py-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Loại</label>
-                <select
-                  value={locLoai}
-                  onChange={(e) => setLocLoai(e.target.value)}
-                  className="border rounded px-3 py-2"
-                >
-                  <option value="">Tất cả</option>
-                  <option value="thu">Thu nhập</option>
-                  <option value="chi">Chi tiêu</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Danh mục</label>
-                <select
-                  value={locDanhMuc}
-                  onChange={(e) => setLocDanhMuc(e.target.value)}
-                  className="border rounded px-3 py-2"
-                >
-                  <option value="">Tất cả</option>
-                  {DANH_MUC.map((dm) => (
-                    <option key={dm} value={dm}>{TEN_DANH_MUC[dm]}</option>
-                  ))}
-                </select>
-              </div>
-              <label className="flex items-center gap-2 text-sm text-gray-600 pb-2">
-                <input
-                  type="checkbox"
-                  checked={chiThangNay}
-                  onChange={(e) => setChiThangNay(e.target.checked)}
-                />
-                Chỉ tháng này
-              </label>
-            </div>
-
-            {dangTaiGD ? (
-              <p className="text-gray-400 text-sm">Đang tải giao dịch...</p>
-            ) : giaoDichs.length === 0 ? (
-              <p className="text-gray-400 text-sm">Không tìm thấy giao dịch nào phù hợp.</p>
-            ) : (
-              <>
-                <div className="bg-white rounded-lg shadow divide-y">
-                  {giaoDichs.map((gd) => (
-                    <div key={gd.id} className="p-4 flex justify-between items-center">
-                      <div>
-                        <p className="font-medium">
-                          {TEN_DANH_MUC[gd.danhMuc] || gd.danhMuc}
-                          {gd.moTa && <span className="text-gray-400 font-normal"> · {gd.moTa}</span>}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {new Date(gd.ngayGiaoDich).toLocaleDateString('vi-VN')}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className={`font-semibold ${gd.loai === 'thu' ? 'text-green-600' : 'text-red-600'}`}>
-                          {gd.loai === 'thu' ? '+' : '-'}{dinhDangTien(gd.soTien)}
-                        </span>
-                        <button
-                          onClick={() => xuLyXoaGiaoDich(gd.id)}
-                          className="text-red-400 text-xs hover:underline"
-                        >
-                          Xóa
-                        </button>
-                      </div>
+                ) : giaoDichs.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center p-12 text-center">
+                    <div className="w-12 h-12 bg-slate-50 dark:bg-slate-900/50 rounded-full flex items-center justify-center mb-3">
+                      <Filter className="w-6 h-6 text-slate-400" />
                     </div>
-                  ))}
-                </div>
+                    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Không tìm thấy giao dịch</h3>
+                    <p className="text-xs text-slate-500 mt-1">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
+                    {giaoDichs.map((gd) => (
+                      <div key={gd.id} className="p-4 md:p-6 flex justify-between items-center hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${gd.loai === 'thu' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'}`}>
+                            {gd.loai === 'thu' ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-900 dark:text-white">
+                              {TEN_DANH_MUC[gd.danhMuc] || gd.danhMuc}
+                            </p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2">
+                              <span>{new Date(gd.ngayGiaoDich).toLocaleDateString('vi-VN')}</span>
+                              {gd.moTa && (
+                                <>
+                                  <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                  <span className="truncate max-w-[150px] md:max-w-xs">{gd.moTa}</span>
+                                </>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className={`font-display font-bold ${gd.loai === 'thu' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                            {gd.loai === 'thu' ? '+' : '-'}{dinhDangTien(gd.soTien)}
+                          </span>
+                          <button
+                            onClick={() => xuLyXoaGiaoDich(gd.id)}
+                            className="text-slate-400 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                            title="Xóa giao dịch"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-                {/* Phân trang */}
-                <div className="flex justify-between items-center mt-4 text-sm text-gray-600">
-                  <span>
-                    Trang {trangHienTai}/{soTrang} · {tongSoGiaoDich} giao dịch
+              {/* Phân trang */}
+              {soTrang > 1 && (
+                <div className="p-4 md:p-6 border-t border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-900/30 flex justify-between items-center">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                    Trang <span className="font-semibold text-slate-900 dark:text-white">{trangHienTai}</span> / {soTrang}
                   </span>
                   <div className="flex gap-2">
                     <button
                       onClick={() => taiGiaoDich(trangHienTai - 1)}
                       disabled={trangHienTai <= 1}
-                      className="px-3 py-1 rounded border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+                      className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 transition-colors"
                     >
-                      ← Trước
+                      <ChevronLeft className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => taiGiaoDich(trangHienTai + 1)}
                       disabled={trangHienTai >= soTrang}
-                      className="px-3 py-1 rounded border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+                      className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 transition-colors"
                     >
-                      Sau →
+                      <ChevronRight className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
-              </>
-            )}
+              )}
+
+            </div>
           </>
         )}
       </div>
