@@ -159,7 +159,7 @@ function TaiChinh() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  const dataBieuDo = thongKe ? Object.entries(thongKe.chiTheoDanhMuc).map(([key, val]) => ({
+  const dataBieuDo = thongKe && thongKe.theoDanhMuc ? Object.entries(thongKe.theoDanhMuc).map(([key, val]) => ({
     name: TEN_DANH_MUC[key] || key,
     value: val
   })).filter(item => item.value > 0) : [];
@@ -203,6 +203,10 @@ function TaiChinh() {
           <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60">
             <div className="w-8 h-8 border-4 border-ink-200 border-t-ink-600 rounded-full animate-spin"></div>
             <p className="mt-4 text-slate-500">Đang tải dữ liệu...</p>
+          </div>
+        ) : !thongKe ? (
+          <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60">
+            <p className="text-rose-500">Lỗi tải dữ liệu thống kê!</p>
           </div>
         ) : (
           <>
@@ -249,7 +253,7 @@ function TaiChinh() {
 
                 <div className="space-y-5 flex-1">
                   {nganSachs.map((ns) => {
-                    const daChi = thongKe.chiTheoDanhMuc[ns.danhMuc] || 0;
+                    const daChi = (thongKe.theoDanhMuc && thongKe.theoDanhMuc[ns.danhMuc]) || 0;
                     const phanTram = ns.hanMuc > 0 ? (daChi / ns.hanMuc) * 100 : 0;
                     const vuotNgay = phanTram > 100;
                     const canhBao = phanTram >= 80 && !vuotNgay;
