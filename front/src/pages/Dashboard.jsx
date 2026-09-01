@@ -228,14 +228,14 @@ function Dashboard() {
                   </Link>
                 </div>
                 <div className="px-5 flex-1">
-                  {!thongKeTaiChinh || Object.keys(thongKeTaiChinh.theoDanhMuc).length === 0 ? (
+                  {!thongKeTaiChinh || Object.keys(thongKeTaiChinh?.theoDanhMuc || {}).length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-slate-400 py-10">
                       <Inbox className="w-8 h-8 mb-2 opacity-50" />
                       <p className="text-sm">Chưa có chi tiêu nào tháng này.</p>
                     </div>
                   ) : (
                     <div className="divide-y divide-slate-100">
-                      {Object.entries(thongKeTaiChinh.theoDanhMuc).map(([danhMuc, soTien]) => (
+                      {Object.entries(thongKeTaiChinh?.theoDanhMuc || {}).map(([danhMuc, soTien]) => (
                         <div key={danhMuc} className="flex justify-between items-center text-sm py-3">
                           <span className="capitalize text-slate-700 font-medium">
                             {danhMuc.replace('_', ' ')}
@@ -256,7 +256,7 @@ function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
                 <h2 className="font-semibold text-slate-800 mb-6">Cơ cấu chi tiêu</h2>
-                {!thongKeTaiChinh || Object.keys(thongKeTaiChinh.theoDanhMuc).length === 0 ? (
+                {!thongKeTaiChinh || Object.keys(thongKeTaiChinh?.theoDanhMuc || {}).length === 0 ? (
                   <div className="h-40 flex items-center justify-center text-slate-400 text-sm">
                     Chưa có dữ liệu.
                   </div>
@@ -264,7 +264,7 @@ function Dashboard() {
                   <ResponsiveContainer width="100%" height={180}>
                     <PieChart>
                       <Pie
-                        data={Object.entries(thongKeTaiChinh.theoDanhMuc).map(([name, value]) => ({
+                        data={Object.entries(thongKeTaiChinh?.theoDanhMuc || {}).map(([name, value]) => ({
                           name: name.replace('_', ' '),
                           value,
                         }))}
