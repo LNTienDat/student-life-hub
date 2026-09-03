@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { GraduationCap, CalendarDays, Wallet } from 'lucide-react';
+import { GraduationCap, CalendarDays, Wallet, Eye, EyeOff } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import NotebookLines from '../components/NotebookLines';
@@ -18,6 +18,7 @@ const bienTheField = {
 function Login() {
   const [email, setEmail] = useState('');
   const [matKhau, setMatKhau] = useState('');
+  const [hienMatKhau, setHienMatKhau] = useState(false);
   const [loi, setLoi] = useState('');
   const [dangTai, setDangTai] = useState(false);
 
@@ -145,13 +146,24 @@ function Login() {
                   Quên mật khẩu?
                 </Link>
               </div>
-              <input
-                type="password"
-                value={matKhau}
-                onChange={(e) => setMatKhau(e.target.value)}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={hienMatKhau ? 'text' : 'password'}
+                  value={matKhau}
+                  onChange={(e) => setMatKhau(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg pl-3 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setHienMatKhau(!hienMatKhau)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                  title={hienMatKhau ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                  tabIndex={-1}
+                >
+                  {hienMatKhau ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </motion.div>
 
             <motion.div custom={3} initial="an" animate="hien" variants={bienTheField}>
