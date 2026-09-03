@@ -1,6 +1,18 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { GraduationCap, CalendarDays, Wallet } from 'lucide-react';
 import api from '../services/api';
+import NotebookLines from '../components/NotebookLines';
+
+const bienTheField = {
+  an: { opacity: 0, y: 12 },
+  hien: (i) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: 0.15 + i * 0.08, duration: 0.5, ease: 'easeOut' },
+  }),
+};
 
 function Register() {
   const [ten, setTen] = useState('');
@@ -27,67 +39,153 @@ function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h1 className="text-2xl font-bold text-center mb-6 text-blue-600">
-          Đăng ký
-        </h1>
+    <div className="min-h-screen flex bg-paper">
+      {/* Panel thương hiệu — ẩn trên mobile, họa tiết dòng kẻ sổ tay + 3 lá ghi chú xếp chồng */}
+      <div className="hidden lg:flex lg:w-[46%] relative bg-ink-600 overflow-hidden flex-col justify-between p-12">
+        <NotebookLines className="absolute inset-0 w-full h-full opacity-60" />
 
-        {loi && (
-          <div className="bg-red-100 text-red-600 p-3 rounded mb-4 text-sm">
-            {loi}
-          </div>
-        )}
+        <div className="relative z-10">
+          <span className="font-display text-lg font-bold text-white">Student Life Hub</span>
+        </div>
 
-        <form onSubmit={xuLySubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Họ tên</label>
-            <input
-              type="text"
-              value={ten}
-              onChange={(e) => setTen(e.target.value)}
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              required
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              required
-            />
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-1">Mật khẩu</label>
-            <input
-              type="password"
-              value={matKhau}
-              onChange={(e) => setMatKhau(e.target.value)}
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={dangTai}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+        <div className="relative z-10 my-auto py-16">
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            className="font-display text-3xl font-bold text-white leading-snug max-w-sm"
           >
-            {dangTai ? 'Đang xử lý...' : 'Đăng ký'}
-          </button>
-        </form>
+            Bắt đầu hành trình sinh viên thông minh và ngăn nắp.
+          </motion.h1>
 
-        <p className="text-center text-sm mt-4">
-          Đã có tài khoản?{' '}
-          <Link to="/login" className="text-blue-600 hover:underline">
-            Đăng nhập
-          </Link>
-        </p>
+          {/* 3 lá ghi chú xếp chồng */}
+          <div className="relative h-56 mt-14 max-w-xs">
+            <motion.div
+              initial={{ opacity: 0, y: 24, rotate: -10 }}
+              animate={{ opacity: 1, y: 0, rotate: -8 }}
+              transition={{ delay: 0.3, duration: 0.55, ease: 'easeOut' }}
+              className="absolute left-2 top-6 w-56 bg-white rounded-xl shadow-lg p-4"
+            >
+              <div className="flex items-center gap-2 text-slate-400 mb-1.5">
+                <Wallet className="w-3.5 h-3.5" />
+                <span className="text-[11px] font-medium">Số dư tháng này</span>
+              </div>
+              <p className="font-display text-xl font-bold text-teal-600">850.000 đ</p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 24, rotate: 8 }}
+              animate={{ opacity: 1, y: 0, rotate: 5 }}
+              transition={{ delay: 0.42, duration: 0.55, ease: 'easeOut' }}
+              className="absolute left-24 top-16 w-56 bg-white rounded-xl shadow-lg p-4"
+            >
+              <div className="flex items-center gap-2 text-slate-400 mb-1.5">
+                <CalendarDays className="w-3.5 h-3.5" />
+                <span className="text-[11px] font-medium">Deadline gần nhất</span>
+              </div>
+              <p className="text-sm font-semibold text-slate-800">Đồ án — còn 2 ngày</p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 24, rotate: -3 }}
+              animate={{ opacity: 1, y: 0, rotate: -2 }}
+              transition={{ delay: 0.54, duration: 0.55, ease: 'easeOut' }}
+              className="absolute left-10 top-28 w-56 bg-white rounded-xl shadow-xl p-4"
+            >
+              <div className="flex items-center gap-2 text-slate-400 mb-1.5">
+                <GraduationCap className="w-3.5 h-3.5" />
+                <span className="text-[11px] font-medium">GPA hiện tại</span>
+              </div>
+              <p className="font-display text-xl font-bold text-ink-600">3.42 / 4.0</p>
+            </motion.div>
+          </div>
+        </div>
+
+        <p className="relative z-10 text-xs text-white/50">© 2026 Student Life Hub</p>
+      </div>
+
+      {/* Form đăng ký */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-sm">
+          <motion.div initial="an" animate="hien" custom={0} variants={bienTheField}>
+            <p className="lg:hidden text-sm text-slate-400 mb-1">Student Life Hub</p>
+            <h1 className="font-display text-2xl font-bold text-slate-900 mb-1">Tạo tài khoản</h1>
+            <p className="text-sm text-slate-500 mb-7">Đăng ký để đồng bộ toàn bộ việc học và chi tiêu.</p>
+          </motion.div>
+
+          {loi && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="bg-rose-50 border border-rose-200 text-rose-700 px-3 py-2 rounded-lg mb-4 text-sm overflow-hidden"
+            >
+              {loi}
+            </motion.div>
+          )}
+
+          <form onSubmit={xuLySubmit} className="space-y-4">
+            <motion.div custom={1} initial="an" animate="hien" variants={bienTheField}>
+              <label className="block text-sm font-medium text-slate-600 mb-1">Họ tên</label>
+              <input
+                type="text"
+                value={ten}
+                onChange={(e) => setTen(e.target.value)}
+                placeholder="Nguyễn Văn A"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
+                required
+              />
+            </motion.div>
+
+            <motion.div custom={2} initial="an" animate="hien" variants={bienTheField}>
+              <label className="block text-sm font-medium text-slate-600 mb-1">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="student@example.com"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
+                required
+              />
+            </motion.div>
+
+            <motion.div custom={3} initial="an" animate="hien" variants={bienTheField}>
+              <label className="block text-sm font-medium text-slate-600 mb-1">Mật khẩu</label>
+              <input
+                type="password"
+                value={matKhau}
+                onChange={(e) => setMatKhau(e.target.value)}
+                placeholder="Tối thiểu 6 ký tự"
+                minLength={6}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
+                required
+              />
+            </motion.div>
+
+            <motion.div custom={4} initial="an" animate="hien" variants={bienTheField}>
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={dangTai}
+                className="w-full bg-ink-600 text-white font-medium py-2.5 rounded-lg hover:bg-ink-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors shadow-sm"
+              >
+                {dangTai ? 'Đang tạo tài khoản...' : 'Đăng ký ngay'}
+              </motion.button>
+            </motion.div>
+          </form>
+
+          <motion.p
+            custom={5}
+            initial="an"
+            animate="hien"
+            variants={bienTheField}
+            className="text-center text-sm text-slate-500 mt-6"
+          >
+            Đã có tài khoản?{' '}
+            <Link to="/login" className="text-ink-600 hover:text-ink-700 font-medium">
+              Đăng nhập
+            </Link>
+          </motion.p>
+        </div>
       </div>
     </div>
   );
