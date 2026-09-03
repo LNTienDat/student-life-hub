@@ -67,8 +67,8 @@ function TaiChinh() {
           api.get('/finance/xu-huong')
         ]);
         setThongKe(resTK.data);
-        setNganSachs(resNS.data.nganSachs);
-        setXuHuong(resXH.data.xuHuong);
+        setNganSachs(resNS.data.ketQua || []);
+        setXuHuong(resXH.data.xuHuong || []);
       } catch (error) {
         console.error(error);
       } finally {
