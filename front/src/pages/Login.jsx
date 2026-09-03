@@ -60,45 +60,46 @@ function Login() {
             Deadline, điểm số và tiền bạc — gọn trong một trang sổ.
           </motion.h1>
 
-          {/* 3 lá ghi chú xếp chồng — hình minh họa gắn trực tiếp với 3 trụ cột của app */}
-          <div className="relative h-56 mt-14 max-w-xs">
+          {/* 3 lá ghi chú xếp tầng — hình minh họa gắn trực tiếp với 3 trụ cột của app.
+              Khoảng lệch được tính để phần chữ không bao giờ bị thẻ trên đè lên. */}
+          <div className="relative h-64 mt-14 max-w-sm">
             <motion.div
               initial={{ opacity: 0, y: 24, rotate: -10 }}
               animate={{ opacity: 1, y: 0, rotate: -8 }}
               transition={{ delay: 0.3, duration: 0.55, ease: 'easeOut' }}
-              className="absolute left-2 top-6 w-56 bg-white rounded-xl shadow-lg p-4"
+              className="absolute top-0 left-0 w-52 bg-white rounded-xl shadow-lg p-4"
             >
               <div className="flex items-center gap-2 text-slate-400 mb-1.5">
                 <Wallet className="w-3.5 h-3.5" />
                 <span className="text-[11px] font-medium">Số dư tháng này</span>
               </div>
-              <p className="font-display text-xl font-bold text-teal-600">850.000 đ</p>
+              <p className="font-display text-xl font-bold text-teal-600 whitespace-nowrap">850.000 đ</p>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 24, rotate: 8 }}
               animate={{ opacity: 1, y: 0, rotate: 5 }}
               transition={{ delay: 0.42, duration: 0.55, ease: 'easeOut' }}
-              className="absolute left-24 top-16 w-56 bg-white rounded-xl shadow-lg p-4"
+              className="absolute top-[76px] left-16 w-52 bg-white rounded-xl shadow-lg p-4"
             >
               <div className="flex items-center gap-2 text-slate-400 mb-1.5">
                 <CalendarDays className="w-3.5 h-3.5" />
                 <span className="text-[11px] font-medium">Deadline gần nhất</span>
               </div>
-              <p className="text-sm font-semibold text-slate-800">Đồ án — còn 2 ngày</p>
+              <p className="text-sm font-semibold text-slate-800 whitespace-nowrap">Đồ án — còn 2 ngày</p>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 24, rotate: -3 }}
               animate={{ opacity: 1, y: 0, rotate: -2 }}
               transition={{ delay: 0.54, duration: 0.55, ease: 'easeOut' }}
-              className="absolute left-10 top-28 w-56 bg-white rounded-xl shadow-xl p-4"
+              className="absolute top-[152px] left-4 w-52 bg-white rounded-xl shadow-xl p-4"
             >
               <div className="flex items-center gap-2 text-slate-400 mb-1.5">
                 <GraduationCap className="w-3.5 h-3.5" />
                 <span className="text-[11px] font-medium">GPA hiện tại</span>
               </div>
-              <p className="font-display text-xl font-bold text-ink-600">3.42 / 4.0</p>
+              <p className="font-display text-xl font-bold text-ink-600 whitespace-nowrap">3.42 / 4.0</p>
             </motion.div>
           </div>
         </div>
