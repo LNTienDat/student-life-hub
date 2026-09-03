@@ -127,7 +127,7 @@ function Layout({ children }) {
           <div className="flex h-20 items-center gap-4">
             
             {/* Cột trái (Logo) */}
-            <div className="flex items-center gap-2 w-48 sm:w-60 flex-shrink-0 min-w-0">
+            <div className="flex items-center gap-2 w-56 sm:w-60 xl:w-72 flex-shrink-0 min-w-0">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
                 <BookOpen className="w-5 h-5 text-white" />
               </div>
@@ -141,92 +141,95 @@ function Layout({ children }) {
               <GlowingNav menu={menu} />
             </div>
 
-            {/* Cột phải (User, Chuông) */}
-            <div className="hidden md:flex items-center gap-3 w-48 sm:w-60 flex-shrink-0 justify-end min-w-0">
-              {/* Notifications */}
-              <div className="relative" ref={chuongRef}>
-                <button
-                  onClick={moChuong}
-                  className="relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
-                  title="Thông báo"
-                >
-                  <Bell className="w-5 h-5" />
-                  {soChuaXem > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-800"></span>
-                  )}
-                </button>
+            {/* Cột phải (User, Chuông, Theme) - justify-between giúp neo vị trí icon tiện ích cố định, tên dài không làm xê dịch icon */}
+            <div className="hidden md:flex items-center justify-between w-56 sm:w-60 xl:w-72 flex-shrink-0 min-w-0">
+              {/* Nhóm icon tiện ích: Thông báo & Theme - Vị trí hoàn toàn ổn định không phụ thuộc độ dài tên */}
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {/* Notifications */}
+                <div className="relative" ref={chuongRef}>
+                  <button
+                    onClick={moChuong}
+                    className="relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
+                    title="Thông báo"
+                  >
+                    <Bell className="w-5 h-5" />
+                    {soChuaXem > 0 && (
+                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-800"></span>
+                    )}
+                  </button>
 
-                {chuongMo && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 z-50 overflow-hidden transform opacity-100 scale-100 transition-all duration-200">
-                    <div className="flex justify-between items-center px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50">
-                      <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">Thông báo ({soChuaXem})</span>
-                      {thongBaos.length > 0 && (
-                        <button
-                          onClick={danhDauTatCaDaXem}
-                          className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-                        >
-                          Đọc tất cả
-                        </button>
-                      )}
-                    </div>
-                    <div className="max-h-80 overflow-y-auto">
-                      {thongBaos.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center p-8 text-center">
-                          <Bell className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" />
-                          <p className="text-sm text-slate-500 dark:text-slate-400">Không có thông báo nào</p>
-                        </div>
-                      ) : (
-                        thongBaos.map((tb) => (
-                          <div
-                            key={tb.id}
-                            onClick={() => danhDauDaXem(tb.id)}
-                            className={`flex gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 cursor-pointer transition-colors ${
-                              !daXemId.includes(tb.id) ? 'bg-blue-50/50 dark:bg-blue-500/5 hover:bg-blue-50 dark:hover:bg-blue-500/10' : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'
-                            }`}
+                  {chuongMo && (
+                    <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 z-50 overflow-hidden transform opacity-100 scale-100 transition-all duration-200">
+                      <div className="flex justify-between items-center px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50">
+                        <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">Thông báo ({soChuaXem})</span>
+                        {thongBaos.length > 0 && (
+                          <button
+                            onClick={danhDauTatCaDaXem}
+                            className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                           >
-                            <div className="mt-0.5 flex-shrink-0">
-                              {getIconLoai(tb.loai)}
-                            </div>
-                            <div>
-                              <p className={`text-sm ${!daXemId.includes(tb.id) ? 'font-semibold text-slate-900 dark:text-slate-100' : 'font-medium text-slate-700 dark:text-slate-300'}`}>
-                                {tb.tieuDe}
-                              </p>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{tb.moTa}</p>
-                            </div>
-                            {!daXemId.includes(tb.id) && (
-                              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-1.5 flex-shrink-0"></div>
-                            )}
+                            Đọc tất cả
+                          </button>
+                        )}
+                      </div>
+                      <div className="max-h-80 overflow-y-auto">
+                        {thongBaos.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center p-8 text-center">
+                            <Bell className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" />
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Không có thông báo nào</p>
                           </div>
-                        ))
-                      )}
+                        ) : (
+                          thongBaos.map((tb) => (
+                            <div
+                              key={tb.id}
+                              onClick={() => danhDauDaXem(tb.id)}
+                              className={`flex gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 cursor-pointer transition-colors ${
+                                !daXemId.includes(tb.id) ? 'bg-blue-50/50 dark:bg-blue-500/5 hover:bg-blue-50 dark:hover:bg-blue-500/10' : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'
+                              }`}
+                            >
+                              <div className="mt-0.5 flex-shrink-0">
+                                {getIconLoai(tb.loai)}
+                              </div>
+                              <div>
+                                <p className={`text-sm ${!daXemId.includes(tb.id) ? 'font-semibold text-slate-900 dark:text-slate-100' : 'font-medium text-slate-700 dark:text-slate-300'}`}>
+                                  {tb.tieuDe}
+                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{tb.moTa}</p>
+                              </div>
+                              {!daXemId.includes(tb.id) && (
+                                <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-1.5 flex-shrink-0"></div>
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
 
-              {/* Theme Toggle */}
-              <button
-                onClick={doiTheme}
-                title={theme === 'dark' ? 'Giao diện sáng' : 'Giao diện tối'}
-                className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
-              >
-                {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              </button>
+                {/* Theme Toggle */}
+                <button
+                  onClick={doiTheme}
+                  title={theme === 'dark' ? 'Giao diện sáng' : 'Giao diện tối'}
+                  className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
+                >
+                  {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                </button>
+              </div>
               
-              {/* Profile Menu */}
-              <div className="flex items-center gap-2 pl-3 ml-2 border-l border-slate-200 dark:border-slate-700">
-                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300">
+              {/* Profile Menu: Avatar, Tên, Đăng xuất - Cố định ở góc phải, có giới hạn độ dài tên */}
+              <div className="flex items-center gap-2 pl-3 border-l border-slate-200 dark:border-slate-700 min-w-0 flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 flex-shrink-0">
                   {user?.ten?.charAt(0).toUpperCase()}
                 </div>
                 <span 
-                  className="text-sm font-medium text-slate-700 dark:text-slate-200 hidden lg:block max-w-[100px] truncate" 
+                  className="text-sm font-medium text-slate-700 dark:text-slate-200 hidden lg:block max-w-[80px] xl:max-w-[105px] truncate" 
                   title={user?.ten}
                 >
                   {user?.ten}
                 </span>
                 <button 
                   onClick={xuLyDangXuat} 
-                  className="p-1.5 ml-1 text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-lg transition-colors"
+                  className="p-1.5 text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-lg transition-colors flex-shrink-0"
                   title="Đăng xuất"
                 >
                   <LogOut className="w-4 h-4" />

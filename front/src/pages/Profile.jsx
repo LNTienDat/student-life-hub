@@ -108,6 +108,7 @@ function Profile() {
                 <input 
                   value={ten} 
                   onChange={(e) => setTen(e.target.value)} 
+                  maxLength={30}
                   className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 dark:focus:ring-blue-500/30 transition-shadow" 
                   required 
                 />

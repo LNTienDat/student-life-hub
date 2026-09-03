@@ -132,6 +132,7 @@ function Register() {
                 value={ten}
                 onChange={(e) => setTen(e.target.value)}
                 placeholder="Nguyễn Văn A"
+                maxLength={30}
                 className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
                 required
               />
