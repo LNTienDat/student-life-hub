@@ -126,8 +126,8 @@ function Layout({ children }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-20 items-center gap-4">
             
-            {/* Cột trái (Logo) - chiếm không gian linh hoạt bằng flex-1 */}
-            <div className="flex items-center gap-2 flex-1 min-w-0">
+            {/* Cột trái (Logo) */}
+            <div className="flex items-center gap-2 w-48 sm:w-60 flex-shrink-0 min-w-0">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
                 <BookOpen className="w-5 h-5 text-white" />
               </div>
@@ -136,13 +136,13 @@ function Layout({ children }) {
               </span>
             </div>
 
-            {/* Menu desktop (GlowingNav) - Cột giữa */}
-            <div className="hidden md:flex justify-center flex-shrink-0">
+            {/* Menu desktop (GlowingNav) - Luôn nằm cố định chính giữa tuyệt đối */}
+            <div className="hidden md:flex flex-1 justify-center items-center">
               <GlowingNav menu={menu} />
             </div>
 
-            {/* Cột phải (User, Chuông) - chiếm không gian bằng flex-1 và căn phải */}
-            <div className="hidden md:flex items-center gap-3 flex-1 justify-end min-w-0">
+            {/* Cột phải (User, Chuông) */}
+            <div className="hidden md:flex items-center gap-3 w-48 sm:w-60 flex-shrink-0 justify-end min-w-0">
               {/* Notifications */}
               <div className="relative" ref={chuongRef}>
                 <button
@@ -311,7 +311,7 @@ function Layout({ children }) {
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full transition-all">
+      <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full">
         <motion.div
           key={location.pathname}
           initial={{ opacity: 0.85, y: 3 }}

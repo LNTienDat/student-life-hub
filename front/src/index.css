@@ -5,6 +5,11 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+  }
+
   body {
     font-family: 'Be Vietnam Pro', sans-serif;
     background-color: #F6F7FB; /* paper */
