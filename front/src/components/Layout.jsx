@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import api from '../services/api';
@@ -310,7 +311,16 @@ function Layout({ children }) {
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full transition-all">{children}</main>
+      <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full transition-all">
+        <motion.div
+          key={location.pathname}
+          initial={{ opacity: 0.85, y: 3 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.15, ease: 'easeOut' }}
+        >
+          {children || <Outlet />}
+        </motion.div>
+      </main>
 
       <Chatbot />
     </div>

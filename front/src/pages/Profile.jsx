@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import Layout from '../components/Layout';
 import Autocomplete from '../components/Autocomplete';
 import { danhSachTruong, danhSachNganh } from '../data/truongNganh';
 import api from '../services/api';
@@ -70,7 +69,7 @@ function Profile() {
   }
 
   return (
-    <Layout>
+    <>
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="mb-8">
           <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
@@ -213,7 +212,7 @@ function Profile() {
 
         </div>
       </div>
-    </Layout>
+    </>
   );
 }
 

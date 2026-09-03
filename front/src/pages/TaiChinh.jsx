@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
-import Layout from '../components/Layout';
 import api from '../services/api';
+import { getCache, setCache } from '../services/apiCache';
 import { 
   Wallet, 
   TrendingUp, 
@@ -35,11 +35,12 @@ function TaiChinh() {
   const [thang] = useState(now.getMonth() + 1);
   const [nam] = useState(now.getFullYear());
 
+  const cached = getCache('finance_cache');
   const [giaoDichs, setGiaoDichs] = useState([]);
-  const [thongKe, setThongKe] = useState(null);
-  const [nganSachs, setNganSachs] = useState([]);
-  const [xuHuong, setXuHuong] = useState([]);
-  const [dangTai, setDangTai] = useState(true);
+  const [thongKe, setThongKe] = useState(cached?.thongKe ?? null);
+  const [nganSachs, setNganSachs] = useState(cached?.nganSachs ?? []);
+  const [xuHuong, setXuHuong] = useState(cached?.xuHuong ?? []);
+  const [dangTai, setDangTai] = useState(!cached);
 
   const [hienFormGD, setHienFormGD] = useState(false);
   const [loai, setLoai] = useState('chi');
@@ -66,9 +67,15 @@ function TaiChinh() {
           api.get('/finance/ngan-sach'),
           api.get('/finance/xu-huong')
         ]);
-        setThongKe(resTK.data);
-        setNganSachs(resNS.data.ketQua || []);
-        setXuHuong(resXH.data.xuHuong || []);
+        const data = {
+          thongKe: resTK.data,
+          nganSachs: resNS.data.ketQua || [],
+          xuHuong: resXH.data.xuHuong || []
+        };
+        setThongKe(data.thongKe);
+        setNganSachs(data.nganSachs);
+        setXuHuong(data.xuHuong);
+        setCache('finance_cache', data);
       } catch (error) {
         console.error(error);
       } finally {
@@ -165,7 +172,7 @@ function TaiChinh() {
   })).filter(item => item.value > 0) : [];
 
   return (
-    <Layout>
+    <>
       <div className="max-w-6xl mx-auto space-y-6 pb-12">
         <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
           <div>
@@ -512,7 +519,7 @@ function TaiChinh() {
           </>
         )}
       </div>
-    </Layout>
+    </>
   );
 }
 

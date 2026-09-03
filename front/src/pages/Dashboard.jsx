@@ -13,8 +13,8 @@ import {
   YAxis,
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
-import Layout from '../components/Layout';
 import api from '../services/api';
+import { getCache, setCache } from '../services/apiCache';
 import {
   GraduationCap,
   CalendarDays,
@@ -51,13 +51,14 @@ const itemVariants = {
 
 function Dashboard() {
   const { user } = useAuth();
-  const [gpa, setGpa] = useState(null);
-  const [deadlinesSapToi, setDeadlinesSapToi] = useState([]);
-  const [monNguyCo, setMonNguyCo] = useState([]);
-  const [nganSachVuot, setNganSachVuot] = useState([]);
-  const [thongKeTaiChinh, setThongKeTaiChinh] = useState(null);
-  const [gpaTheoKy, setGpaTheoKy] = useState([]);
-  const [dangTai, setDangTai] = useState(true);
+  const cached = getCache('dashboard_cache');
+  const [gpa, setGpa] = useState(cached?.gpa ?? null);
+  const [deadlinesSapToi, setDeadlinesSapToi] = useState(cached?.deadlinesSapToi ?? []);
+  const [monNguyCo, setMonNguyCo] = useState(cached?.monNguyCo ?? []);
+  const [nganSachVuot, setNganSachVuot] = useState(cached?.nganSachVuot ?? []);
+  const [thongKeTaiChinh, setThongKeTaiChinh] = useState(cached?.thongKeTaiChinh ?? null);
+  const [gpaTheoKy, setGpaTheoKy] = useState(cached?.gpaTheoKy ?? []);
+  const [dangTai, setDangTai] = useState(!cached);
 
   useEffect(() => {
     async function taiDuLieu() {
@@ -71,12 +72,21 @@ function Dashboard() {
             api.get('/finance/ngan-sach'),
             api.get('/academic/gpa-theo-ky'),
           ]);
-        setGpa(resGpa.data.gpa);
-        setDeadlinesSapToi(resDeadline.data.deadlines);
-        setMonNguyCo(resCanhBao.data.monNguyCo);
-        setThongKeTaiChinh(resTaiChinh.data);
-        setNganSachVuot(resNganSach.data.ketQua.filter((ns) => ns.vuotNganSach));
-        setGpaTheoKy(resGpaKy.data.theoKy);
+        const data = {
+          gpa: resGpa.data.gpa,
+          deadlinesSapToi: resDeadline.data.deadlines || [],
+          monNguyCo: resCanhBao.data.monNguyCo || [],
+          thongKeTaiChinh: resTaiChinh.data,
+          nganSachVuot: resNganSach.data?.ketQua?.filter((ns) => ns.vuotNganSach) || [],
+          gpaTheoKy: resGpaKy.data?.theoKy || [],
+        };
+        setGpa(data.gpa);
+        setDeadlinesSapToi(data.deadlinesSapToi);
+        setMonNguyCo(data.monNguyCo);
+        setThongKeTaiChinh(data.thongKeTaiChinh);
+        setNganSachVuot(data.nganSachVuot);
+        setGpaTheoKy(data.gpaTheoKy);
+        setCache('dashboard_cache', data);
       } catch (error) {
         console.error(error);
       } finally {
@@ -103,7 +113,7 @@ function Dashboard() {
   const soDuDuong = thongKeTaiChinh?.soDu >= 0;
 
   return (
-    <Layout>
+    <>
       <div className="max-w-6xl mx-auto space-y-7 pb-10">
         {/* Header Chào Mừng */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-ink-900 via-ink-800 to-ink-700 text-white p-6 sm:p-8 rounded-3xl shadow-lg relative overflow-hidden">
@@ -123,9 +133,10 @@ function Dashboard() {
           <div className="relative z-10 flex items-center gap-3">
             <Link
               to="/deadline"
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-ink-900 hover:bg-slate-100 font-semibold text-sm shadow-sm transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              style={{ backgroundColor: '#ffffff', color: '#141527' }}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 text-ink-900" />
               <span>Thêm việc cần làm</span>
             </Link>
           </div>
@@ -171,14 +182,18 @@ function Dashboard() {
                     <span className="font-display text-4xl font-extrabold text-slate-900 group-hover:text-ink-600 transition-colors">
                       {gpa !== null && gpa !== undefined ? Number(gpa).toFixed(2) : '--'}
                     </span>
-                    <span className="text-sm font-medium text-slate-400">/ 4.0</span>
+                    <span className="text-sm font-medium text-slate-400">
+                      / {Number(gpa) > 4 ? '10' : '4.0'}
+                    </span>
                   </div>
 
                   <div className="relative z-10 mt-4 pt-4 border-t border-slate-50 flex items-center justify-between text-xs text-slate-500">
                     <span className="flex items-center gap-1 font-medium text-ink-600">
                       Chi tiết môn học <ArrowUpRight className="w-3.5 h-3.5" />
                     </span>
-                    <span className="text-slate-400">Thang 4</span>
+                    <span className="text-slate-400">
+                      {Number(gpa) > 4 ? 'Thang 10' : 'Thang 4'}
+                    </span>
                   </div>
                 </Link>
               </motion.div>
@@ -540,7 +555,7 @@ function Dashboard() {
           </motion.div>
         )}
       </div>
-    </Layout>
+    </>
   );
 }
 

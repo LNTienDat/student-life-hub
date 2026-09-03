@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import Layout from '../components/Layout';
 import api from '../services/api';
 import { 
   BookOpen, 
@@ -131,7 +130,7 @@ function MonHoc() {
   }
 
   return (
-    <Layout>
+    <>
       <div className="max-w-5xl mx-auto space-y-6 pb-12">
         <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
           <div>
@@ -390,7 +389,7 @@ function MonHoc() {
           </div>
         )}
       </div>
-    </Layout>
+    </>
   );
 }
 

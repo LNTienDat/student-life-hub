@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import Layout from '../components/Layout';
 import api from '../services/api';
 import { 
   Calendar as CalendarIcon, 
@@ -166,7 +165,7 @@ function Deadline() {
     : [];
 
   return (
-    <Layout>
+    <>
       <div className="max-w-5xl mx-auto space-y-6 pb-12">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
@@ -539,7 +538,7 @@ function Deadline() {
           </>
         )}
       </div>
-    </Layout>
+    </>
   );
 }
 

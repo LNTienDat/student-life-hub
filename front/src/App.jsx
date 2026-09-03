@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import QuenMatKhau from './pages/QuenMatKhau';
@@ -13,9 +14,14 @@ import ThoiKhoaBieu from './pages/ThoiKhoaBieu';
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 
-function RequireAuth({ children }) {
+function AuthenticatedLayout() {
   const { user } = useAuth();
-  return user ? children : <Navigate to="/login" />;
+  if (!user) return <Navigate to="/login" />;
+  return (
+    <Layout>
+      <Outlet />
+    </Layout>
+  );
 }
 
 function App() {
@@ -28,12 +34,14 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/quen-mat-khau" element={<QuenMatKhau />} />
             <Route path="/dat-lai-mat-khau" element={<DatLaiMatKhau />} />
-            <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-            <Route path="/mon-hoc" element={<RequireAuth><MonHoc /></RequireAuth>} />
-            <Route path="/deadline" element={<RequireAuth><Deadline /></RequireAuth>} />
-            <Route path="/tai-chinh" element={<RequireAuth><TaiChinh /></RequireAuth>} />
-            <Route path="/thoi-khoa-bieu" element={<RequireAuth><ThoiKhoaBieu /></RequireAuth>} />
-            <Route path="/ho-so" element={<RequireAuth><Profile /></RequireAuth>} />
+            <Route element={<AuthenticatedLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/mon-hoc" element={<MonHoc />} />
+              <Route path="/deadline" element={<Deadline />} />
+              <Route path="/tai-chinh" element={<TaiChinh />} />
+              <Route path="/thoi-khoa-bieu" element={<ThoiKhoaBieu />} />
+              <Route path="/ho-so" element={<Profile />} />
+            </Route>
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
