@@ -99,6 +99,53 @@ async function doiMatKhau(req, res) {
   }
 }
 
+// Đổi email (yêu cầu mật khẩu xác thực)
+async function doiEmail(req, res) {
+  try {
+    const { emailMoi, matKhau } = req.body;
+    if (!emailMoi || !matKhau) {
+      return res.status(400).json({ message: 'Vui lòng nhập đầy đủ email mới và mật khẩu xác nhận' });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailMoi)) {
+      return res.status(400).json({ message: 'Định dạng email mới không hợp lệ' });
+    }
+
+    const nguoiDung = await prisma.nguoiDung.findUnique({ where: { id: req.user.id } });
+    if (!nguoiDung) {
+      return res.status(404).json({ message: 'Người dùng không tồn tại' });
+    }
+
+    const dung = await bcrypt.compare(matKhau, nguoiDung.matKhau);
+    if (!dung) {
+      return res.status(400).json({ message: 'Mật khẩu xác nhận không chính xác' });
+    }
+
+    if (emailMoi.toLowerCase() === nguoiDung.email.toLowerCase()) {
+      return res.status(400).json({ message: 'Email mới phải khác email hiện tại' });
+    }
+
+    const daTonTai = await prisma.nguoiDung.findUnique({
+      where: { email: emailMoi.toLowerCase() },
+    });
+    if (daTonTai) {
+      return res.status(400).json({ message: 'Email này đã được sử dụng bởi tài khoản khác' });
+    }
+
+    const capNhat = await prisma.nguoiDung.update({
+      where: { id: req.user.id },
+      data: { email: emailMoi.toLowerCase() },
+    });
+
+    const { matKhau: _, ...thongTin } = capNhat;
+    res.json({ message: 'Đổi email thành công', user: thongTin });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+}
+
 // CN3 - Bước 1: Yêu cầu đặt lại mật khẩu
 async function quenMatKhau(req, res) {
   try {
@@ -182,4 +229,4 @@ async function datLaiMatKhau(req, res) {
   }
 }
 
-module.exports = { dangKy, dangNhap, xemHoSo, suaHoSo, doiMatKhau, quenMatKhau, datLaiMatKhau };
+module.exports = { dangKy, dangNhap, xemHoSo, suaHoSo, doiMatKhau, doiEmail, quenMatKhau, datLaiMatKhau };
