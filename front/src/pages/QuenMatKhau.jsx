@@ -100,7 +100,7 @@ function QuenMatKhau() {
           </div>
         </div>
 
-        <p className="relative z-10 text-xs text-white/50">© 2026 Student Life Hub</p>
+        
       </div>
 
       {/* Form quên mật khẩu */}
@@ -179,5 +179,6 @@ function QuenMatKhau() {
 }
 
 export default QuenMatKhau;
+
 
 

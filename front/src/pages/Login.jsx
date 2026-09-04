@@ -105,7 +105,7 @@ function Login() {
           </div>
         </div>
 
-        <p className="relative z-10 text-xs text-white/50">© 2026 Student Life Hub</p>
+        
       </div>
 
       {/* Form đăng nhập */}
@@ -197,5 +197,6 @@ function Login() {
 }
 
 export default Login;
+
 
 

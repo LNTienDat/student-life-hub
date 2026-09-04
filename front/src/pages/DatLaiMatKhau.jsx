@@ -116,7 +116,7 @@ function DatLaiMatKhau() {
           </div>
         </div>
 
-        <p className="relative z-10 text-xs text-white/50">© 2026 Student Life Hub</p>
+        
       </div>
 
       {/* Form đặt lại mật khẩu */}
@@ -211,5 +211,6 @@ function DatLaiMatKhau() {
 }
 
 export default DatLaiMatKhau;
+
 
 
