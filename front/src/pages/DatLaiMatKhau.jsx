@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { GraduationCap, CalendarDays, Wallet, ArrowLeft, ShieldCheck, KeyRound } from 'lucide-react';
+import { GraduationCap, CalendarDays, Wallet, ArrowLeft, ShieldCheck, KeyRound, Cloud } from 'lucide-react';
 import api from '../services/api';
 import NotebookLines from '../components/NotebookLines';
 
@@ -74,29 +74,42 @@ function DatLaiMatKhau() {
 
           <div className="relative h-64 mt-8 max-w-sm">
             <motion.div
-              initial={{ opacity: 0, y: 24, rotate: -5 }}
-              animate={{ opacity: 1, y: 0, rotate: -3 }}
+              initial={{ opacity: 0, y: 24, rotate: -10 }}
+              animate={{ opacity: 1, y: 0, rotate: -8 }}
               transition={{ delay: 0.3, duration: 0.55, ease: 'easeOut' }}
-              className="absolute top-4 left-8 w-60 bg-white rounded-xl shadow-lg p-5"
+              className="absolute top-0 left-0 w-52 bg-white rounded-xl shadow-lg p-4"
             >
-              <div className="flex items-center gap-2 text-slate-400 mb-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                <span className="text-xs font-medium text-emerald-600">Bảo mật thông tin</span>
+              <div className="flex items-center gap-2 text-slate-400 mb-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                <span className="text-[11px] font-medium text-emerald-600">Bảo mật thông tin</span>
               </div>
-              <p className="font-display text-lg font-bold text-emerald-700 whitespace-nowrap">Bảo vệ điểm & quỹ cá nhân</p>
+              <p className="font-display text-[17px] font-bold text-emerald-600 whitespace-nowrap">Dữ liệu an toàn</p>
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, y: 24, rotate: 6 }}
-              animate={{ opacity: 1, y: 0, rotate: 4 }}
-              transition={{ delay: 0.45, duration: 0.55, ease: 'easeOut' }}
-              className="absolute top-[108px] left-12 w-60 bg-white rounded-xl shadow-xl p-5"
+              initial={{ opacity: 0, y: 24, rotate: 8 }}
+              animate={{ opacity: 1, y: 0, rotate: 5 }}
+              transition={{ delay: 0.42, duration: 0.55, ease: 'easeOut' }}
+              className="absolute top-[76px] left-16 w-52 bg-white rounded-xl shadow-lg p-4"
             >
-              <div className="flex items-center gap-2 text-slate-400 mb-2">
-                <KeyRound className="w-4 h-4 text-ink-500" />
-                <span className="text-xs font-medium text-ink-600">Phục hồi dễ dàng</span>
+              <div className="flex items-center gap-2 text-slate-400 mb-1.5">
+                <KeyRound className="w-3.5 h-3.5 text-ink-500" />
+                <span className="text-[11px] font-medium text-ink-600">Phục hồi tài khoản</span>
               </div>
-              <p className="font-display text-[17px] font-bold text-ink-700 whitespace-nowrap">Nhận link qua Email</p>
+              <p className="font-display text-[17px] font-bold text-ink-700 whitespace-nowrap">Link gửi qua Email</p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 24, rotate: -3 }}
+              animate={{ opacity: 1, y: 0, rotate: -2 }}
+              transition={{ delay: 0.54, duration: 0.55, ease: 'easeOut' }}
+              className="absolute top-[152px] left-4 w-52 bg-white rounded-xl shadow-xl p-4"
+            >
+              <div className="flex items-center gap-2 text-slate-400 mb-1.5">
+                <Cloud className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-[11px] font-medium text-blue-600">Lưu trữ đám mây</span>
+              </div>
+              <p className="font-display text-[17px] font-bold text-blue-600 whitespace-nowrap">Không mất dữ liệu</p>
             </motion.div>
           </div>
         </div>
