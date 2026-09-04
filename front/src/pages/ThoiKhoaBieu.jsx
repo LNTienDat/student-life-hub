@@ -287,7 +287,7 @@ function ThoiKhoaBieu() {
             <div className="hidden md:grid grid-cols-7 border-b border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-900/50">
               {CAC_THU.map((t) => (
                 <div key={t.gia} className="text-center py-4 border-r last:border-r-0 border-slate-200 dark:border-slate-700/60">
-                  <span className="font-display font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-sm">{t.ten}</span>
+                  <span className="font-display font-semibold text-slate-700 dark:text-slate-300 text-sm">{t.ten}</span>
                 </div>
               ))}
             </div>

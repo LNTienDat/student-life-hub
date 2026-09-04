@@ -146,7 +146,7 @@ function MonHoc() {
             <div className="bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700/60 flex items-center gap-2">
               <Target className="w-5 h-5 text-emerald-500" />
               <div className="flex flex-col">
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">GPA Hiện tại</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">GPA hiện tại</span>
                 <span className="font-display font-bold text-slate-900 dark:text-white leading-none">
                   {gpa ? Number(gpa).toFixed(2) : '--'}
                 </span>
@@ -278,12 +278,12 @@ function MonHoc() {
                       {diemMon ? (
                         <div className={`flex flex-col items-end ${quaMon ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                           <span className="font-display text-2xl font-bold leading-none">{diemMon}</span>
-                          <span className="text-[10px] uppercase font-bold tracking-wider mt-1">{quaMon ? 'Đạt' : 'Chưa đạt'}</span>
+                          <span className="text-[11px] font-semibold mt-0.5">{quaMon ? 'Đạt' : 'Chưa đạt'}</span>
                         </div>
                       ) : (
                         <div className="flex flex-col items-end text-slate-400">
                           <span className="font-display text-2xl font-bold leading-none">--</span>
-                          <span className="text-[10px] uppercase font-bold tracking-wider mt-1">Chưa có</span>
+                          <span className="text-[11px] font-medium mt-0.5">Chưa có</span>
                         </div>
                       )}
                     </div>

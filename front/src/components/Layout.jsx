@@ -106,7 +106,7 @@ function Layout({ children }) {
     switch(loai) {
       case 'deadline': return <Clock className="w-4 h-4 text-amber-500" />;
       case 'hoc_tap': return <BookOpen className="w-4 h-4 text-ink-500 dark:text-ink-400" />;
-      case 'ngan_sach': return <Wallet className="w-4 h-4 text-red-500" />;
+      case 'ngan_sach': return <Wallet className="w-4 h-4 text-rose-500" />;
       default: return <Bell className="w-4 h-4 text-slate-500" />;
     }
   };
@@ -154,7 +154,7 @@ function Layout({ children }) {
                   >
                     <Bell className="w-5 h-5" />
                     {soChuaXem > 0 && (
-                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-800"></span>
+                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-800"></span>
                     )}
                   </button>
 
@@ -229,7 +229,7 @@ function Layout({ children }) {
                 </span>
                 <button 
                   onClick={xuLyDangXuat} 
-                  className="p-1.5 text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-lg transition-colors flex-shrink-0"
+                  className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors flex-shrink-0"
                   title="Đăng xuất"
                 >
                   <LogOut className="w-4 h-4" />
@@ -242,7 +242,7 @@ function Layout({ children }) {
               <button onClick={moChuong} className="p-2 relative text-slate-500 dark:text-slate-400">
                 <Bell className="w-5 h-5" />
                 {soChuaXem > 0 && (
-                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-800"></span>
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-800"></span>
                 )}
               </button>
               <button onClick={doiTheme} className="p-2 text-slate-500 dark:text-slate-400">
@@ -289,7 +289,7 @@ function Layout({ children }) {
               </div>
               <button 
                 onClick={xuLyDangXuat} 
-                className="flex items-center gap-2 text-sm font-medium text-red-600 dark:text-red-400 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                className="flex items-center gap-2 text-sm font-medium text-rose-600 dark:text-rose-400 p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
                 Đăng xuất

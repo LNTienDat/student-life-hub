@@ -315,7 +315,7 @@ function Deadline() {
                 >
                   <ChevronLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                 </button>
-                <h2 className="font-display text-lg font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
+                <h2 className="font-display text-lg font-bold text-slate-800 dark:text-slate-200">
                   Tháng {thangXemLich.getMonth() + 1} - {thangXemLich.getFullYear()}
                 </h2>
                 <button
@@ -413,7 +413,7 @@ function Deadline() {
                             <h4 className={`font-semibold truncate ${d.trangThai === 'hoan_thanh' ? 'text-slate-400 line-through' : 'text-slate-800 dark:text-slate-200'}`}>
                               {d.tieuDe}
                             </h4>
-                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full whitespace-nowrap ${badgeUuTien(d.doUuTien)}`}>
+                            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${badgeUuTien(d.doUuTien)}`}>
                               {textUuTien(d.doUuTien)}
                             </span>
                           </div>
@@ -469,7 +469,7 @@ function Deadline() {
                             <div>
                               <div className="flex items-center gap-2">
                                 <h3 className="font-semibold text-slate-900 dark:text-white text-base">{d.tieuDe}</h3>
-                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${badgeUuTien(d.doUuTien)}`}>
+                                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${badgeUuTien(d.doUuTien)}`}>
                                   {textUuTien(d.doUuTien)}
                                 </span>
                               </div>

@@ -116,7 +116,7 @@ function Dashboard() {
     <>
       <div className="max-w-6xl mx-auto space-y-7 pb-10">
         {/* Header Chào Mừng */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-ink-900 via-ink-800 to-ink-700 text-white p-6 sm:p-8 rounded-3xl shadow-lg relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-ink-600 dark:bg-ink-800 border border-ink-500/20 text-white p-6 sm:p-8 rounded-3xl shadow-sm relative overflow-hidden">
           <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-white/5 rounded-full blur-2xl pointer-events-none" />
           <div className="relative z-10 space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white/90 text-xs font-medium backdrop-blur-md">
@@ -168,7 +168,7 @@ function Dashboard() {
                   <div className="absolute top-0 right-0 w-24 h-24 bg-ink-50 rounded-bl-full -z-0 group-hover:scale-110 transition-transform duration-300" />
                   <div className="relative z-10 flex items-start justify-between">
                     <div>
-                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      <span className="text-xs font-medium text-slate-400">
                         Học tập
                       </span>
                       <h3 className="text-base font-semibold text-slate-800 mt-0.5">GPA hiện tại</h3>
@@ -210,7 +210,7 @@ function Dashboard() {
                   <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-bl-full -z-0 group-hover:scale-110 transition-transform duration-300" />
                   <div className="relative z-10 flex items-start justify-between">
                     <div>
-                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      <span className="text-xs font-medium text-slate-400">
                         Tiến độ
                       </span>
                       <h3 className="text-base font-semibold text-slate-800 mt-0.5">Deadline sắp tới</h3>
@@ -248,7 +248,7 @@ function Dashboard() {
                   <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-bl-full -z-0 group-hover:scale-110 transition-transform duration-300" />
                   <div className="relative z-10 flex items-start justify-between">
                     <div>
-                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      <span className="text-xs font-medium text-slate-400">
                         Ngân sách
                       </span>
                       <h3 className="text-base font-semibold text-slate-800 mt-0.5">Số dư tháng này</h3>
