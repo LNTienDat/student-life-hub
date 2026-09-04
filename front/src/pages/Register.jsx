@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { GraduationCap, CalendarDays, Wallet, Eye, EyeOff } from 'lucide-react';
+import { GraduationCap, CalendarDays, Wallet, Eye, EyeOff, Trophy, PiggyBank, Target } from 'lucide-react';
 import api from '../services/api';
 import NotebookLines from '../components/NotebookLines';
 
@@ -56,11 +56,9 @@ function Register() {
             transition={{ duration: 0.6, ease: 'easeOut' }}
             className="font-display text-3xl font-bold text-white leading-snug max-w-sm"
           >
-            Bắt đầu hành trình sinh viên thông minh và ngăn nắp.
+            Bắt đầu hành trình kiểm soát cuộc sống sinh viên của bạn.
           </motion.h1>
 
-          {/* 3 lá ghi chú xếp tầng — hình minh họa gắn trực tiếp với 3 trụ cột của app.
-              Khoảng lệch được tính để phần chữ không bao giờ bị thẻ trên đè lên. */}
           <div className="relative h-64 mt-8 max-w-sm">
             <motion.div
               initial={{ opacity: 0, y: 24, rotate: -10 }}
@@ -69,10 +67,10 @@ function Register() {
               className="absolute top-0 left-0 w-52 bg-white rounded-xl shadow-lg p-4"
             >
               <div className="flex items-center gap-2 text-slate-400 mb-1.5">
-                <Wallet className="w-3.5 h-3.5" />
-                <span className="text-[11px] font-medium">Số dư tháng này</span>
+                <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-[11px] font-medium text-amber-600">Mục tiêu học tập</span>
               </div>
-              <p className="font-display text-xl font-bold text-teal-600 whitespace-nowrap">850.000 đ</p>
+              <p className="font-display text-[17px] font-bold text-amber-600 whitespace-nowrap">Học bổng xuất sắc</p>
             </motion.div>
 
             <motion.div
@@ -82,10 +80,10 @@ function Register() {
               className="absolute top-[76px] left-16 w-52 bg-white rounded-xl shadow-lg p-4"
             >
               <div className="flex items-center gap-2 text-slate-400 mb-1.5">
-                <CalendarDays className="w-3.5 h-3.5" />
-                <span className="text-[11px] font-medium">Deadline gần nhất</span>
+                <PiggyBank className="w-3.5 h-3.5 text-rose-500" />
+                <span className="text-[11px] font-medium text-rose-600">Mục tiêu tài chính</span>
               </div>
-              <p className="text-sm font-semibold text-slate-800 whitespace-nowrap">Đồ án — còn 2 ngày</p>
+              <p className="text-[15px] font-bold text-rose-600 whitespace-nowrap">Tiết kiệm 500k / tháng</p>
             </motion.div>
 
             <motion.div
@@ -95,10 +93,10 @@ function Register() {
               className="absolute top-[152px] left-4 w-52 bg-white rounded-xl shadow-xl p-4"
             >
               <div className="flex items-center gap-2 text-slate-400 mb-1.5">
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span className="text-[11px] font-medium">GPA hiện tại</span>
+                <Target className="w-3.5 h-3.5 text-emerald-500" />
+                <span className="text-[11px] font-medium text-emerald-600">Kỷ luật bản thân</span>
               </div>
-              <p className="font-display text-xl font-bold text-ink-600 whitespace-nowrap">3.42 / 4.0</p>
+              <p className="font-display text-lg font-bold text-emerald-600 whitespace-nowrap">Không trễ Deadline</p>
             </motion.div>
           </div>
         </div>

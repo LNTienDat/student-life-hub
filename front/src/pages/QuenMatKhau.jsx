@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { GraduationCap, CalendarDays, Wallet, ArrowLeft } from 'lucide-react';
+import { GraduationCap, CalendarDays, Wallet, ArrowLeft, ShieldCheck, KeyRound } from 'lucide-react';
 import api from '../services/api';
 import NotebookLines from '../components/NotebookLines';
 
@@ -53,49 +53,34 @@ function QuenMatKhau() {
             transition={{ duration: 0.6, ease: 'easeOut' }}
             className="font-display text-3xl font-bold text-white leading-snug max-w-sm"
           >
-            Đừng lo lắng, chúng tôi sẽ giúp bạn lấy lại quyền truy cập sổ tay.
+            Đừng lo lắng, dữ liệu của bạn luôn được bảo vệ an toàn.
           </motion.h1>
 
-          {/* 3 lá ghi chú xếp tầng — hình minh họa gắn trực tiếp với 3 trụ cột của app.
-              Khoảng lệch được tính để phần chữ không bao giờ bị thẻ trên đè lên. */}
           <div className="relative h-64 mt-8 max-w-sm">
             <motion.div
-              initial={{ opacity: 0, y: 24, rotate: -10 }}
-              animate={{ opacity: 1, y: 0, rotate: -8 }}
+              initial={{ opacity: 0, y: 24, rotate: -5 }}
+              animate={{ opacity: 1, y: 0, rotate: -3 }}
               transition={{ delay: 0.3, duration: 0.55, ease: 'easeOut' }}
-              className="absolute top-0 left-0 w-52 bg-white rounded-xl shadow-lg p-4"
+              className="absolute top-4 left-8 w-60 bg-white rounded-xl shadow-lg p-5"
             >
-              <div className="flex items-center gap-2 text-slate-400 mb-1.5">
-                <Wallet className="w-3.5 h-3.5" />
-                <span className="text-[11px] font-medium">Số dư tháng này</span>
+              <div className="flex items-center gap-2 text-slate-400 mb-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                <span className="text-xs font-medium text-emerald-600">Bảo mật tuyệt đối</span>
               </div>
-              <p className="font-display text-xl font-bold text-teal-600 whitespace-nowrap">850.000 đ</p>
+              <p className="font-display text-lg font-bold text-emerald-700 whitespace-nowrap">Mã hóa dữ liệu 256-bit</p>
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, y: 24, rotate: 8 }}
-              animate={{ opacity: 1, y: 0, rotate: 5 }}
-              transition={{ delay: 0.42, duration: 0.55, ease: 'easeOut' }}
-              className="absolute top-[76px] left-16 w-52 bg-white rounded-xl shadow-lg p-4"
+              initial={{ opacity: 0, y: 24, rotate: 6 }}
+              animate={{ opacity: 1, y: 0, rotate: 4 }}
+              transition={{ delay: 0.45, duration: 0.55, ease: 'easeOut' }}
+              className="absolute top-[108px] left-12 w-60 bg-white rounded-xl shadow-xl p-5"
             >
-              <div className="flex items-center gap-2 text-slate-400 mb-1.5">
-                <CalendarDays className="w-3.5 h-3.5" />
-                <span className="text-[11px] font-medium">Deadline gần nhất</span>
+              <div className="flex items-center gap-2 text-slate-400 mb-2">
+                <KeyRound className="w-4 h-4 text-ink-500" />
+                <span className="text-xs font-medium text-ink-600">Phục hồi dễ dàng</span>
               </div>
-              <p className="text-sm font-semibold text-slate-800 whitespace-nowrap">Đồ án — còn 2 ngày</p>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 24, rotate: -3 }}
-              animate={{ opacity: 1, y: 0, rotate: -2 }}
-              transition={{ delay: 0.54, duration: 0.55, ease: 'easeOut' }}
-              className="absolute top-[152px] left-4 w-52 bg-white rounded-xl shadow-xl p-4"
-            >
-              <div className="flex items-center gap-2 text-slate-400 mb-1.5">
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span className="text-[11px] font-medium">GPA hiện tại</span>
-              </div>
-              <p className="font-display text-xl font-bold text-ink-600 whitespace-nowrap">3.42 / 4.0</p>
+              <p className="font-display text-[17px] font-bold text-ink-700 whitespace-nowrap">Lấy lại quyền truy cập qua Email</p>
             </motion.div>
           </div>
         </div>
