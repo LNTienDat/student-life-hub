@@ -52,7 +52,7 @@ export default function Autocomplete({
   return (
     <div ref={wrapperRef} className="relative w-full">
       <div 
-        className="relative flex items-center w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl transition-shadow focus-within:ring-2 focus-within:ring-ink-500/30 dark:focus-within:ring-blue-500/30"
+        className="relative flex items-center w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl transition-shadow focus-within:ring-2 focus-within:ring-ink-500/30 dark:focus-within:ring-ink-400/40"
       >
         <input
           type="text"

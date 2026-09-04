@@ -51,7 +51,7 @@ function Chatbot() {
       {moChat && (
         <div className="mb-3 w-80 sm:w-96 h-[28rem] bg-white dark:bg-gray-800 rounded-xl shadow-2xl border dark:border-gray-700 flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="bg-blue-600 text-white px-4 py-3 flex justify-between items-center">
+          <div className="bg-ink-600 dark:bg-ink-500 text-white px-4 py-3 flex justify-between items-center">
             <span className="font-semibold text-sm">🤖 SLH Bot</span>
             <button onClick={() => setMoChat(false)} className="hover:opacity-80">✕</button>
           </div>
@@ -66,7 +66,7 @@ function Chatbot() {
                 <div
                   className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
                     tin.vaiTro === 'user'
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-ink-600 dark:bg-ink-500 text-white'
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100'
                   }`}
                 >
@@ -90,13 +90,13 @@ function Chatbot() {
               value={noiDungNhap}
               onChange={(e) => setNoiDungNhap(e.target.value)}
               placeholder="Nhập câu hỏi..."
-              className="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-full px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-full px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-400"
               disabled={dangGui}
             />
             <button
               type="submit"
               disabled={dangGui || !noiDungNhap.trim()}
-              className="bg-blue-600 text-white rounded-full w-9 h-9 flex items-center justify-center hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 flex-shrink-0"
+              className="bg-ink-600 dark:bg-ink-500 text-white rounded-full w-9 h-9 flex items-center justify-center hover:bg-ink-700 dark:hover:bg-ink-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 flex-shrink-0"
             >
               ➤
             </button>
@@ -107,7 +107,7 @@ function Chatbot() {
       {/* Nút bong bóng nổi */}
       <button
         onClick={() => setMoChat(!moChat)}
-        className="w-14 h-14 rounded-full bg-blue-600 text-white text-2xl shadow-lg hover:bg-blue-700 flex items-center justify-center transition-transform hover:scale-105"
+        className="w-14 h-14 rounded-full bg-ink-600 dark:bg-ink-500 text-white text-2xl shadow-lg hover:bg-ink-700 dark:hover:bg-ink-600 flex items-center justify-center transition-transform hover:scale-105"
         title="Hỏi đáp nhanh"
       >
         {moChat ? '✕' : '💬'}

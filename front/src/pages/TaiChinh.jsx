@@ -197,7 +197,7 @@ function TaiChinh() {
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${
                 hienFormGD 
                 ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                : 'bg-ink-600 dark:bg-blue-600 text-white hover:bg-ink-700 dark:hover:bg-blue-700 shadow-sm shadow-ink-500/20'
+                : 'bg-ink-600 dark:bg-ink-500 text-white hover:bg-ink-700 dark:hover:bg-ink-400 shadow-sm shadow-ink-500/20'
               }`}
             >
               {hienFormGD ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -237,10 +237,10 @@ function TaiChinh() {
 
               <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <Wallet className="w-20 h-20 text-ink-500 dark:text-blue-500" />
+                  <Wallet className="w-20 h-20 text-ink-500 dark:text-ink-400" />
                 </div>
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 relative z-10">Số dư hiện tại</p>
-                <p className={`font-display text-3xl font-bold relative z-10 ${thongKe.soDu >= 0 ? 'text-ink-600 dark:text-blue-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                <p className={`font-display text-3xl font-bold relative z-10 ${thongKe.soDu >= 0 ? 'text-ink-600 dark:text-ink-300' : 'text-rose-600 dark:text-rose-400'}`}>
                   {dinhDangTien(thongKe.soDu)}
                 </p>
               </div>
@@ -268,7 +268,7 @@ function TaiChinh() {
                     return (
                       <div key={ns.id} className="group cursor-pointer" onClick={() => taoGiaoDichNhanh(ns.danhMuc)}>
                         <div className="flex justify-between text-sm mb-1.5">
-                          <span className="font-medium text-slate-700 dark:text-slate-200 group-hover:text-ink-600 dark:group-hover:text-blue-400 transition-colors">
+                          <span className="font-medium text-slate-700 dark:text-slate-200 group-hover:text-ink-600 dark:group-hover:text-ink-300 transition-colors">
                             {TEN_DANH_MUC[ns.danhMuc] || ns.danhMuc}
                           </span>
                           <span className={`font-medium ${vuotNgay ? 'text-rose-600 dark:text-rose-400' : canhBao ? 'text-amber-500' : 'text-emerald-600 dark:text-emerald-400'}`}>

@@ -183,7 +183,7 @@ function Deadline() {
               onClick={() => setCheDoXem('list')}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 cheDoXem === 'list' 
-                ? 'bg-white dark:bg-slate-700 text-ink-600 dark:text-blue-400 shadow-sm' 
+                ? 'bg-white dark:bg-slate-700 text-ink-600 dark:text-ink-200 shadow-sm' 
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               }`}
             >
@@ -193,7 +193,7 @@ function Deadline() {
               onClick={() => setCheDoXem('calendar')}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 cheDoXem === 'calendar' 
-                ? 'bg-white dark:bg-slate-700 text-ink-600 dark:text-blue-400 shadow-sm' 
+                ? 'bg-white dark:bg-slate-700 text-ink-600 dark:text-ink-200 shadow-sm' 
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               }`}
             >
@@ -205,7 +205,7 @@ function Deadline() {
         {/* Nút thêm mới */}
         <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60">
           <span className="font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-ink-500 dark:text-blue-400" />
+            <Clock className="w-5 h-5 text-ink-500 dark:text-ink-300" />
             Sắp xếp công việc hiệu quả
           </span>
           <button
@@ -213,7 +213,7 @@ function Deadline() {
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
               hienFormThem 
               ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-              : 'bg-ink-600 dark:bg-blue-600 text-white hover:bg-ink-700 dark:hover:bg-blue-700 shadow-sm shadow-ink-500/20'
+              : 'bg-ink-600 dark:bg-ink-500 text-white hover:bg-ink-700 dark:hover:bg-ink-400 shadow-sm shadow-ink-500/20'
             }`}
           >
             {hienFormThem ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -225,9 +225,9 @@ function Deadline() {
         {hienFormThem && (
           <form
             onSubmit={xuLySubmit}
-            className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-ink-200 dark:border-blue-500/30 relative overflow-hidden"
+            className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-ink-200 dark:border-ink-500/40 relative overflow-hidden"
           >
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-ink-600 dark:bg-blue-500" />
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-ink-600 dark:bg-ink-400" />
             <h3 className="font-display font-semibold text-lg text-slate-800 dark:text-slate-200 mb-5 ml-2">
               {dangSuaId ? 'Cập nhật Deadline' : 'Tạo Deadline mới'}
             </h3>
@@ -346,7 +346,7 @@ function Deadline() {
                       key={i}
                       onClick={() => setNgayDuocChon(ngay)}
                       className={`min-h-[100px] p-2 border-b border-r border-slate-100 dark:border-slate-700/30 text-left align-top hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors ${
-                        dangDuocChon ? 'bg-ink-50/50 dark:bg-blue-900/20 border-ink-200 dark:border-blue-800 ring-1 ring-inset ring-ink-400' : ''
+                        dangDuocChon ? 'bg-ink-50/50 dark:bg-ink-900/30 border-ink-200 dark:border-ink-700 ring-1 ring-inset ring-ink-400' : ''
                       } ${khacThang ? 'bg-slate-50/50 dark:bg-slate-900/20' : 'bg-white dark:bg-slate-800'}`}
                     >
                       <span
@@ -426,7 +426,7 @@ function Deadline() {
                           </div>
                         </div>
                         <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => moFormSua(d)} className="p-1.5 text-slate-400 hover:text-ink-600 dark:hover:text-blue-400 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600">
+                          <button onClick={() => moFormSua(d)} className="p-1.5 text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600">
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button onClick={() => xuLyXoa(d.id)} className="p-1.5 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600">
@@ -459,7 +459,7 @@ function Deadline() {
                 ) : (
                   <div className="grid gap-3">
                     {dangDienHanh.map((d) => (
-                      <div key={d.id} className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 flex items-start gap-4 group hover:border-ink-300 dark:hover:border-blue-700 transition-colors">
+                      <div key={d.id} className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 flex items-start gap-4 group hover:border-ink-300 dark:hover:border-ink-500 transition-colors">
                         <button onClick={() => xuLyHoanThanh(d.id, false)} className="mt-0.5 flex-shrink-0" title="Đánh dấu hoàn thành">
                           <Circle className="w-6 h-6 text-slate-300 dark:text-slate-600 hover:text-emerald-500 hover:fill-emerald-50 transition-all" />
                         </button>
@@ -486,7 +486,7 @@ function Deadline() {
                           
                           {d.monHoc && (
                             <div className="mt-3 inline-block">
-                              <span className="text-xs bg-ink-50 text-ink-700 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded-md font-medium border border-ink-100 dark:border-blue-800">
+                              <span className="text-xs bg-ink-50 text-ink-700 dark:bg-ink-900/40 dark:text-ink-200 px-2 py-1 rounded-md font-medium border border-ink-100 dark:border-ink-700/60">
                                 Môn: {d.monHoc.ten}
                               </span>
                             </div>
@@ -494,7 +494,7 @@ function Deadline() {
                         </div>
 
                         <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
-                          <button onClick={() => moFormSua(d)} className="p-2 text-slate-400 hover:text-ink-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Sửa">
+                          <button onClick={() => moFormSua(d)} className="p-2 text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Sửa">
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button onClick={() => xuLyXoa(d.id)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors" title="Xóa">

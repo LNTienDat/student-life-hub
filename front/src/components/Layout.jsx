@@ -105,7 +105,7 @@ function Layout({ children }) {
   const getIconLoai = (loai) => {
     switch(loai) {
       case 'deadline': return <Clock className="w-4 h-4 text-amber-500" />;
-      case 'hoc_tap': return <BookOpen className="w-4 h-4 text-blue-500" />;
+      case 'hoc_tap': return <BookOpen className="w-4 h-4 text-ink-500 dark:text-ink-400" />;
       case 'ngan_sach': return <Wallet className="w-4 h-4 text-red-500" />;
       default: return <Bell className="w-4 h-4 text-slate-500" />;
     }
@@ -128,11 +128,11 @@ function Layout({ children }) {
             
             {/* Cột trái (Logo) */}
             <div className="flex items-center gap-2 w-56 sm:w-60 xl:w-72 flex-shrink-0 min-w-0">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
+              <div className="w-8 h-8 bg-ink-600 dark:bg-ink-500 rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
                 <BookOpen className="w-5 h-5 text-white" />
               </div>
               <span className="font-bold text-slate-900 dark:text-white text-xl tracking-tight hidden sm:block truncate">
-                Life<span className="text-blue-600 dark:text-blue-500">Hub</span>
+                Life<span className="text-ink-600 dark:text-ink-400">Hub</span>
               </span>
             </div>
 
@@ -165,7 +165,7 @@ function Layout({ children }) {
                         {thongBaos.length > 0 && (
                           <button
                             onClick={danhDauTatCaDaXem}
-                            className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                            className="text-xs font-medium text-ink-600 dark:text-ink-400 hover:text-ink-700 dark:hover:text-ink-300 transition-colors"
                           >
                             Đọc tất cả
                           </button>
@@ -183,7 +183,7 @@ function Layout({ children }) {
                               key={tb.id}
                               onClick={() => danhDauDaXem(tb.id)}
                               className={`flex gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 cursor-pointer transition-colors ${
-                                !daXemId.includes(tb.id) ? 'bg-blue-50/50 dark:bg-blue-500/5 hover:bg-blue-50 dark:hover:bg-blue-500/10' : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'
+                                !daXemId.includes(tb.id) ? 'bg-ink-50/50 dark:bg-ink-500/10 hover:bg-ink-50 dark:hover:bg-ink-500/20' : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'
                               }`}
                             >
                               <div className="mt-0.5 flex-shrink-0">
@@ -196,7 +196,7 @@ function Layout({ children }) {
                                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{tb.moTa}</p>
                               </div>
                               {!daXemId.includes(tb.id) && (
-                                <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-1.5 flex-shrink-0"></div>
+                                <div className="w-1.5 h-1.5 bg-ink-600 dark:bg-ink-400 rounded-full mt-1.5 flex-shrink-0"></div>
                               )}
                             </div>
                           ))
@@ -268,7 +268,7 @@ function Layout({ children }) {
                 onClick={() => setMenuMoMobile(false)}
                 className={`block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   location.pathname === item.path
-                    ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400'
+                    ? 'bg-ink-50 dark:bg-ink-500/10 text-ink-700 dark:text-ink-400'
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50'
                 }`}
               >

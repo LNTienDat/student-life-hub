@@ -106,10 +106,10 @@ function DatLaiMatKhau() {
               className="absolute top-[152px] left-4 w-52 bg-white rounded-xl shadow-xl p-4"
             >
               <div className="flex items-center gap-2 text-slate-400 mb-1.5">
-                <Cloud className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-[11px] font-medium text-blue-600">Lưu trữ đám mây</span>
+                <Cloud className="w-3.5 h-3.5 text-teal-500" />
+                <span className="text-[11px] font-medium text-teal-600">Lưu trữ đám mây</span>
               </div>
-              <p className="font-display text-[17px] font-bold text-blue-600 whitespace-nowrap">Không mất dữ liệu</p>
+              <p className="font-display text-[17px] font-bold text-teal-600 whitespace-nowrap">Không mất dữ liệu</p>
             </motion.div>
           </div>
         </div>

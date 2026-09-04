@@ -117,11 +117,11 @@ function Profile() {
         
         {/* Cột 1: Thông tin cá nhân */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 relative overflow-hidden flex flex-col h-full justify-between">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-ink-600 dark:bg-blue-500" />
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-ink-600 dark:bg-ink-400" />
           
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-2.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl">
+              <div className="p-2.5 bg-ink-50 dark:bg-ink-500/20 text-ink-600 dark:text-ink-300 rounded-xl">
                 <User className="w-5 h-5" />
               </div>
               <div>
@@ -147,7 +147,7 @@ function Profile() {
                   onChange={(e) => setTen(e.target.value)} 
                   maxLength={30}
                   placeholder="Nhập họ và tên..."
-                  className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 dark:focus:ring-blue-500/30 transition-shadow" 
+                  className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 dark:focus:ring-ink-500/30 transition-shadow" 
                   required 
                 />
               </div>
@@ -156,7 +156,7 @@ function Profile() {
                 <button 
                   type="submit" 
                   disabled={dangTai}
-                  className="w-full flex items-center justify-center gap-2 bg-ink-600 dark:bg-blue-600 text-white font-medium px-4 py-2.5 rounded-xl hover:bg-ink-700 dark:hover:bg-blue-700 disabled:opacity-70 transition-colors shadow-sm"
+                  className="w-full flex items-center justify-center gap-2 bg-ink-600 dark:bg-ink-500 text-white font-medium px-4 py-2.5 rounded-xl hover:bg-ink-700 dark:hover:bg-ink-400 disabled:opacity-70 transition-colors shadow-sm"
                 >
                   <Save className="w-4 h-4" />
                   {dangTai ? 'Đang lưu...' : 'Lưu họ tên'}
@@ -171,7 +171,7 @@ function Profile() {
                 <button
                   type="button"
                   onClick={() => { setHienFormEmail(!hienFormEmail); setThongBaoEmail(null); }}
-                  className="text-xs font-semibold text-ink-600 dark:text-blue-400 hover:text-ink-700 dark:hover:text-blue-300 transition-colors"
+                  className="text-xs font-semibold text-ink-600 dark:text-ink-300 hover:text-ink-700 dark:hover:text-ink-200 transition-colors"
                 >
                   {hienFormEmail ? 'Hủy đổi email' : 'Đổi email'}
                 </button>
@@ -190,7 +190,7 @@ function Profile() {
               {hienFormEmail && (
                 <form onSubmit={xuLyDoiEmail} className="mt-3 p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-3">
                   <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 pb-1 border-b border-slate-200 dark:border-slate-700/50">
-                    <ShieldCheck className="w-4 h-4 text-ink-600 dark:text-blue-400" />
+                    <ShieldCheck className="w-4 h-4 text-ink-600 dark:text-ink-300" />
                     <span>Xác thực bảo mật để đổi Email</span>
                   </div>
 
@@ -208,7 +208,7 @@ function Profile() {
                       value={emailMoi}
                       onChange={(e) => setEmailMoi(e.target.value)}
                       placeholder="vidu@student.edu.vn"
-                      className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ink-500/30 dark:focus:ring-blue-500/30"
+                      className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ink-500/30 dark:focus:ring-ink-500/30"
                       required
                     />
                   </div>
@@ -221,7 +221,7 @@ function Profile() {
                         value={matKhauXacNhan}
                         onChange={(e) => setMatKhauXacNhan(e.target.value)}
                         placeholder="Nhập mật khẩu để bảo vệ tài khoản"
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg pl-3 pr-8 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ink-500/30 dark:focus:ring-blue-500/30"
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg pl-3 pr-8 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ink-500/30 dark:focus:ring-ink-500/30"
                         required
                       />
                       <button
@@ -239,7 +239,7 @@ function Profile() {
                     <button
                       type="submit"
                       disabled={dangTaiEmail}
-                      className="flex-1 bg-ink-600 dark:bg-blue-600 text-white text-xs font-medium py-2 rounded-lg hover:bg-ink-700 dark:hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
+                      className="flex-1 bg-ink-600 dark:bg-ink-500 text-white text-xs font-medium py-2 rounded-lg hover:bg-ink-700 dark:hover:bg-ink-400 disabled:opacity-50 transition-colors shadow-sm"
                     >
                       {dangTaiEmail ? 'Đang xác thực...' : 'Xác nhận đổi email'}
                     </button>

@@ -157,7 +157,7 @@ function MonHoc() {
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${
                 hienFormThem 
                 ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                : 'bg-ink-600 dark:bg-blue-600 text-white hover:bg-ink-700 dark:hover:bg-blue-700 shadow-sm shadow-ink-500/20'
+                : 'bg-ink-600 dark:bg-ink-500 text-white hover:bg-ink-700 dark:hover:bg-ink-400 shadow-sm shadow-ink-500/20'
               }`}
             >
               {hienFormThem ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -169,7 +169,7 @@ function MonHoc() {
         {gpaTheoKy.length > 1 && (
           <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60">
             <h2 className="font-display font-semibold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
-              <BarChart className="w-5 h-5 text-ink-500 dark:text-blue-400" />
+              <BarChart className="w-5 h-5 text-ink-500 dark:text-ink-300" />
               Biểu đồ GPA theo học kỳ
             </h2>
             <ResponsiveContainer width="100%" height={240}>
@@ -189,9 +189,9 @@ function MonHoc() {
         {hienFormThem && (
           <form
             onSubmit={xuLySubmit}
-            className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-ink-200 dark:border-blue-500/30 flex flex-col md:flex-row gap-4 items-end relative overflow-hidden"
+            className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-ink-200 dark:border-ink-500/40 flex flex-col md:flex-row gap-4 items-end relative overflow-hidden"
           >
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-ink-600 dark:bg-blue-500" />
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-ink-600 dark:bg-ink-400" />
             <div className="flex-1 w-full pl-2">
               <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Tên môn học</label>
               <input
@@ -350,7 +350,7 @@ function MonHoc() {
                           </button>
                           <button
                             type="submit"
-                            className="flex-1 text-white bg-ink-600 hover:bg-ink-700 dark:bg-blue-600 dark:hover:bg-blue-700 py-1.5 rounded-lg font-medium text-xs transition-colors"
+                            className="flex-1 text-white bg-ink-600 hover:bg-ink-700 dark:bg-ink-500 dark:hover:bg-ink-400 py-1.5 rounded-lg font-medium text-xs transition-colors"
                           >
                             Lưu điểm
                           </button>
@@ -360,14 +360,14 @@ function MonHoc() {
                       <div className="flex items-center justify-between">
                         <button
                           onClick={() => moFormThemDiem(mon.id)}
-                          className="text-ink-600 dark:text-blue-400 text-xs font-medium hover:text-ink-800 dark:hover:text-blue-300 flex items-center gap-1"
+                          className="text-ink-600 dark:text-ink-300 text-xs font-medium hover:text-ink-800 dark:hover:text-ink-200 flex items-center gap-1"
                         >
                           <Plus className="w-3.5 h-3.5" /> Thêm điểm
                         </button>
                         <div className="flex gap-3">
                           <button
                             onClick={() => moFormSua(mon)}
-                            className="text-slate-400 hover:text-ink-600 dark:hover:text-blue-400 transition-colors"
+                            className="text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 transition-colors"
                             title="Sửa môn học"
                           >
                             <Edit2 className="w-4 h-4" />

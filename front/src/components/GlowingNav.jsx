@@ -14,7 +14,7 @@ export default function GlowingNav({ menu }) {
             to={item.path}
             className={`relative px-4 py-2 rounded-xl text-sm font-medium transition-colors duration-150 flex items-center justify-center z-10 select-none whitespace-nowrap ${
               isActive
-                ? 'text-blue-700 dark:text-white font-semibold'
+                ? 'text-ink-700 dark:text-ink-100 font-semibold'
                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
@@ -23,7 +23,7 @@ export default function GlowingNav({ menu }) {
                 {/* Vòng sáng (Glow border) bao quanh tab active */}
                 <motion.div
                   layoutId="glowBorder"
-                  className="absolute inset-0 rounded-xl border border-blue-400/50 dark:border-blue-500/80 bg-blue-50 dark:bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.2)] dark:shadow-[0_0_15px_rgba(59,130,246,0.4)]"
+                  className="absolute inset-0 rounded-xl border border-ink-300/70 dark:border-ink-400/50 bg-ink-50/80 dark:bg-ink-500/20 shadow-[0_0_15px_rgba(46,49,89,0.15)] dark:shadow-[0_0_15px_rgba(142,152,203,0.25)]"
                   transition={{
                     type: 'spring',
                     stiffness: 350,

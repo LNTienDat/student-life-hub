@@ -23,7 +23,7 @@ const CAC_THU = [
 ];
 
 const MAU_MON = [
-  'bg-blue-50/80 border-blue-200 text-blue-800 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300',
+  'bg-ink-50/80 border-ink-200 text-ink-800 dark:bg-ink-900/30 dark:border-ink-800 dark:text-ink-300',
   'bg-emerald-50/80 border-emerald-200 text-emerald-800 dark:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-300',
   'bg-violet-50/80 border-violet-200 text-violet-800 dark:bg-violet-900/30 dark:border-violet-800 dark:text-violet-300',
   'bg-amber-50/80 border-amber-200 text-amber-800 dark:bg-amber-900/30 dark:border-amber-800 dark:text-amber-300',
@@ -155,7 +155,7 @@ function ThoiKhoaBieu() {
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
                 hienForm 
                 ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                : 'bg-ink-600 dark:bg-blue-600 text-white hover:bg-ink-700 dark:hover:bg-blue-700 shadow-sm shadow-ink-500/20'
+                : 'bg-ink-600 dark:bg-ink-500 text-white hover:bg-ink-700 dark:hover:bg-ink-400 shadow-sm shadow-ink-500/20'
               }`}
             >
               {hienForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -168,9 +168,9 @@ function ThoiKhoaBieu() {
         {hienForm && (
           <form
             onSubmit={xuLySubmit}
-            className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-ink-200 dark:border-blue-500/30 relative overflow-hidden"
+            className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-ink-200 dark:border-ink-500/40 relative overflow-hidden"
           >
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-ink-600 dark:bg-blue-500" />
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-ink-600 dark:bg-ink-400" />
             <h3 className="font-display font-semibold text-lg text-slate-800 dark:text-slate-200 mb-5 ml-2">
               {dangSuaId ? 'Cập nhật buổi học' : 'Thêm buổi học mới'}
             </h3>
