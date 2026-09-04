@@ -42,14 +42,14 @@ function Register() {
   return (
     <div className="min-h-screen flex bg-paper">
       {/* Panel thương hiệu — ẩn trên mobile, họa tiết dòng kẻ sổ tay + 3 lá ghi chú xếp chồng */}
-      <div className="hidden lg:flex lg:w-[46%] relative bg-ink-600 overflow-hidden flex-col justify-between p-12">
+      <div className="hidden lg:flex lg:w-[46%] relative bg-ink-600 overflow-hidden flex-col justify-between p-8">
         <NotebookLines className="absolute inset-0 w-full h-full opacity-60" />
 
         <div className="relative z-10">
           <span className="font-display text-lg font-bold text-white">Student Life Hub</span>
         </div>
 
-        <div className="relative z-10 my-auto py-16">
+        <div className="relative z-10 my-auto py-8">
           <motion.h1
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -61,7 +61,7 @@ function Register() {
 
           {/* 3 lá ghi chú xếp tầng — hình minh họa gắn trực tiếp với 3 trụ cột của app.
               Khoảng lệch được tính để phần chữ không bao giờ bị thẻ trên đè lên. */}
-          <div className="relative h-64 mt-14 max-w-sm">
+          <div className="relative h-64 mt-8 max-w-sm">
             <motion.div
               initial={{ opacity: 0, y: 24, rotate: -10 }}
               animate={{ opacity: 1, y: 0, rotate: -8 }}
@@ -107,12 +107,12 @@ function Register() {
       </div>
 
       {/* Form đăng ký */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12">
+      <div className="flex-1 flex items-center justify-center px-6 py-8">
         <div className="w-full max-w-sm">
           <motion.div initial="an" animate="hien" custom={0} variants={bienTheField}>
             <p className="lg:hidden text-sm text-slate-400 mb-1">Student Life Hub</p>
             <h1 className="font-display text-2xl font-bold text-slate-900 mb-1">Tạo tài khoản</h1>
-            <p className="text-sm text-slate-500 mb-7">Đăng ký để đồng bộ toàn bộ việc học và chi tiêu.</p>
+            <p className="text-sm text-slate-600 mb-7">Đăng ký để đồng bộ toàn bộ việc học và chi tiêu.</p>
           </motion.div>
 
           {loi && (
@@ -192,7 +192,7 @@ function Register() {
             initial="an"
             animate="hien"
             variants={bienTheField}
-            className="text-center text-sm text-slate-500 mt-6"
+            className="text-center text-sm text-slate-600 mt-6"
           >
             Đã có tài khoản?{' '}
             <Link to="/login" className="text-ink-600 hover:text-ink-700 font-medium">
@@ -206,3 +206,5 @@ function Register() {
 }
 
 export default Register;
+
+
