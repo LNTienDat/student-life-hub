@@ -81,9 +81,9 @@ function DatLaiMatKhau() {
             >
               <div className="flex items-center gap-2 text-slate-400 mb-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                <span className="text-xs font-medium text-emerald-600">Bảo mật tuyệt đối</span>
+                <span className="text-xs font-medium text-emerald-600">Bảo mật thông tin</span>
               </div>
-              <p className="font-display text-lg font-bold text-emerald-700 whitespace-nowrap">Mã hóa dữ liệu 256-bit</p>
+              <p className="font-display text-lg font-bold text-emerald-700 whitespace-nowrap">Bảo vệ điểm & quỹ cá nhân</p>
             </motion.div>
 
             <motion.div
@@ -96,7 +96,7 @@ function DatLaiMatKhau() {
                 <KeyRound className="w-4 h-4 text-ink-500" />
                 <span className="text-xs font-medium text-ink-600">Phục hồi dễ dàng</span>
               </div>
-              <p className="font-display text-[17px] font-bold text-ink-700 whitespace-nowrap">Lấy lại quyền truy cập qua Email</p>
+              <p className="font-display text-[17px] font-bold text-ink-700 whitespace-nowrap">Nhận link qua Email</p>
             </motion.div>
           </div>
         </div>
