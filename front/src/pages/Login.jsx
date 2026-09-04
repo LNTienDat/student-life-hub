@@ -70,11 +70,11 @@ function Login() {
               transition={{ delay: 0.3, duration: 0.55, ease: 'easeOut' }}
               className="absolute top-0 left-0 w-52 bg-white rounded-xl shadow-lg p-4"
             >
-              <div className="flex items-center gap-2 text-slate-400 mb-1.5">
-                <Wallet className="w-3.5 h-3.5" />
-                <span className="text-[11px] font-medium">Số dư tháng này</span>
+              <div className="flex items-center gap-2 mb-1.5">
+                <Wallet className="w-3.5 h-3.5 text-teal-500" />
+                <span className="text-[11px] font-medium text-teal-600 dark:text-teal-400">Số dư tháng này</span>
               </div>
-              <p className="font-display text-xl font-bold text-teal-600 whitespace-nowrap">850.000 đ</p>
+              <p className="font-display text-xl font-bold text-teal-600 dark:text-teal-400 whitespace-nowrap">850.000 đ</p>
             </motion.div>
 
             <motion.div
@@ -83,11 +83,11 @@ function Login() {
               transition={{ delay: 0.42, duration: 0.55, ease: 'easeOut' }}
               className="absolute top-[76px] left-16 w-52 bg-white rounded-xl shadow-lg p-4"
             >
-              <div className="flex items-center gap-2 text-slate-400 mb-1.5">
-                <CalendarDays className="w-3.5 h-3.5" />
-                <span className="text-[11px] font-medium">Deadline gần nhất</span>
+              <div className="flex items-center gap-2 mb-1.5">
+                <CalendarDays className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">Deadline gần nhất</span>
               </div>
-              <p className="text-sm font-semibold text-slate-800 whitespace-nowrap">Đồ án — còn 2 ngày</p>
+              <p className="text-sm font-semibold text-amber-600 dark:text-amber-400 whitespace-nowrap">Đồ án — còn 2 ngày</p>
             </motion.div>
 
             <motion.div
@@ -96,11 +96,11 @@ function Login() {
               transition={{ delay: 0.54, duration: 0.55, ease: 'easeOut' }}
               className="absolute top-[152px] left-4 w-52 bg-white rounded-xl shadow-xl p-4"
             >
-              <div className="flex items-center gap-2 text-slate-400 mb-1.5">
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span className="text-[11px] font-medium">GPA hiện tại</span>
+              <div className="flex items-center gap-2 mb-1.5">
+                <GraduationCap className="w-3.5 h-3.5 text-violet-500" />
+                <span className="text-[11px] font-medium text-violet-600 dark:text-violet-400">GPA hiện tại</span>
               </div>
-              <p className="font-display text-xl font-bold text-ink-600 whitespace-nowrap">3.42 / 4.0</p>
+              <p className="font-display text-xl font-bold text-violet-600 dark:text-violet-400 whitespace-nowrap">3.42 / 4.0</p>
             </motion.div>
           </div>
         </div>

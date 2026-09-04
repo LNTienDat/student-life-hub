@@ -63,11 +63,11 @@ function QuenMatKhau() {
               transition={{ delay: 0.3, duration: 0.55, ease: 'easeOut' }}
               className="absolute top-0 left-0 w-52 bg-white rounded-xl shadow-lg p-4"
             >
-              <div className="flex items-center gap-2 text-slate-400 mb-1.5">
+              <div className="flex items-center gap-2 mb-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-[11px] font-medium text-emerald-600">Bảo mật thông tin</span>
+                <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">Bảo mật thông tin</span>
               </div>
-              <p className="font-display text-[17px] font-bold text-emerald-600 whitespace-nowrap">Dữ liệu an toàn</p>
+              <p className="font-display text-[17px] font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">Dữ liệu an toàn</p>
             </motion.div>
 
             <motion.div
@@ -76,11 +76,11 @@ function QuenMatKhau() {
               transition={{ delay: 0.42, duration: 0.55, ease: 'easeOut' }}
               className="absolute top-[76px] left-16 w-52 bg-white rounded-xl shadow-lg p-4"
             >
-              <div className="flex items-center gap-2 text-slate-400 mb-1.5">
-                <KeyRound className="w-3.5 h-3.5 text-ink-500" />
-                <span className="text-[11px] font-medium text-ink-600">Phục hồi tài khoản</span>
+              <div className="flex items-center gap-2 mb-1.5">
+                <KeyRound className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">Phục hồi tài khoản</span>
               </div>
-              <p className="font-display text-[17px] font-bold text-ink-700 whitespace-nowrap">Link gửi qua Email</p>
+              <p className="font-display text-[17px] font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">Link gửi qua Email</p>
             </motion.div>
 
             <motion.div
@@ -89,11 +89,11 @@ function QuenMatKhau() {
               transition={{ delay: 0.54, duration: 0.55, ease: 'easeOut' }}
               className="absolute top-[152px] left-4 w-52 bg-white rounded-xl shadow-xl p-4"
             >
-              <div className="flex items-center gap-2 text-slate-400 mb-1.5">
-                <Cloud className="w-3.5 h-3.5 text-teal-500" />
-                <span className="text-[11px] font-medium text-teal-600">Lưu trữ đám mây</span>
+              <div className="flex items-center gap-2 mb-1.5">
+                <Cloud className="w-3.5 h-3.5 text-sky-500" />
+                <span className="text-[11px] font-medium text-sky-600 dark:text-sky-400">Lưu trữ đám mây</span>
               </div>
-              <p className="font-display text-[17px] font-bold text-teal-600 whitespace-nowrap">Không mất dữ liệu</p>
+              <p className="font-display text-[17px] font-bold text-sky-600 dark:text-sky-400 whitespace-nowrap">Không mất dữ liệu</p>
             </motion.div>
           </div>
         </div>
