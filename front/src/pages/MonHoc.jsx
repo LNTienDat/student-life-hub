@@ -81,7 +81,7 @@ function MonHoc() {
       taiDuLieu();
     } catch (error) {
       console.error(error);
-      alert('Có lỗi xảy ra!');
+      alert(error.response?.data?.message || 'Có lỗi xảy ra! Hãy kiểm tra kết nối Backend.');
     }
   }
 
