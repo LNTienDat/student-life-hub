@@ -40,6 +40,8 @@ model MonHoc {
   nguoiDung   NguoiDung @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
   diems       Diem[]
   deadlines   Deadline[]
+
+  @@index([idNguoiDung])
 }
 
 model Diem {
@@ -51,6 +53,8 @@ model Diem {
   ngayGhiNhan DateTime  @default(now())
 
   monHoc      MonHoc    @relation(fields: [idMonHoc], references: [id], onDelete: Cascade)
+
+  @@index([idMonHoc])
 }
 
 model Deadline {
@@ -66,6 +70,9 @@ model Deadline {
 
   nguoiDung   NguoiDung @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
   monHoc      MonHoc?   @relation(fields: [idMonHoc], references: [id], onDelete: SetNull)
+
+  @@index([idNguoiDung])
+  @@index([idNguoiDung, hanChot])
 }
 
 model GiaoDich {
@@ -78,6 +85,9 @@ model GiaoDich {
   ngayGiaoDich DateTime @default(now())
 
   nguoiDung   NguoiDung @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
+
+  @@index([idNguoiDung])
+  @@index([idNguoiDung, ngayGiaoDich])
 }
 
 model NganSach {
@@ -90,6 +100,9 @@ model NganSach {
   ngayTao       DateTime  @default(now())
 
   nguoiDung     NguoiDung @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
+
+  @@index([idNguoiDung])
+  @@index([idNguoiDung, thang, nam])
 }
 
 model ThoiKhoaBieu {
@@ -104,4 +117,6 @@ model ThoiKhoaBieu {
   ngayTao     DateTime  @default(now())
 
   nguoiDung   NguoiDung @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
+
+  @@index([idNguoiDung])
 }
