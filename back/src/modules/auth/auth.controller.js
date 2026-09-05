@@ -4,10 +4,22 @@ const crypto = require('crypto');
 const prisma = require('../../prismaClient');
 const { guiEmailDatLaiMatKhau } = require('../../utils/email.util');
 
+const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 async function dangKy(req, res) {
   try {
     const { email, matKhau, ten } = req.body;
-    
+
+    if (!email || !matKhau || !ten) {
+      return res.status(400).json({ message: 'Vui lòng nhập đầy đủ email, mật khẩu và họ tên' });
+    }
+    if (!REGEX_EMAIL.test(email)) {
+      return res.status(400).json({ message: 'Email không đúng định dạng' });
+    }
+    if (matKhau.length < 6) {
+      return res.status(400).json({ message: 'Mật khẩu phải có ít nhất 6 ký tự' });
+    }
+
     const tonTai = await prisma.nguoiDung.findUnique({ where: { email } });
     if (tonTai) return res.status(400).json({ message: 'Email đã tồn tại' });
 
