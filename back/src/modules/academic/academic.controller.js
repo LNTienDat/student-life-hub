@@ -40,17 +40,23 @@ async function layDanhSachMonHoc(req, res) {
   }
 }
 
-// Sửa môn học
+// Sửa môn học — chỉ cho sửa nếu môn học thuộc về đúng người đang đăng nhập
 async function suaMonHoc(req, res) {
   try {
     const { id } = req.params;
+    const idNguoiDung = req.user.id;
     const { ten, tinChi, hocKy, trangThai } = req.body;
 
-    const monHoc = await prisma.monHoc.update({
-      where: { id: parseInt(id) },
+    const ketQua = await prisma.monHoc.updateMany({
+      where: { id: parseInt(id), idNguoiDung },
       data: { ten, tinChi: tinChi ? parseInt(tinChi) : undefined, hocKy, trangThai },
     });
 
+    if (ketQua.count === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy môn học hoặc bạn không có quyền sửa' });
+    }
+
+    const monHoc = await prisma.monHoc.findUnique({ where: { id: parseInt(id) } });
     res.json({ message: 'Cập nhật thành công', monHoc });
   } catch (error) {
     console.error(error);
@@ -58,11 +64,17 @@ async function suaMonHoc(req, res) {
   }
 }
 
-// Xóa môn học
+// Xóa môn học — chỉ cho xóa nếu môn học thuộc về đúng người đang đăng nhập
 async function xoaMonHoc(req, res) {
   try {
     const { id } = req.params;
-    await prisma.monHoc.delete({ where: { id: parseInt(id) } });
+    const idNguoiDung = req.user.id;
+
+    const ketQua = await prisma.monHoc.deleteMany({ where: { id: parseInt(id), idNguoiDung } });
+
+    if (ketQua.count === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy môn học hoặc bạn không có quyền xóa' });
+    }
     res.json({ message: 'Xóa môn học thành công' });
   } catch (error) {
     console.error(error);
@@ -70,13 +82,21 @@ async function xoaMonHoc(req, res) {
   }
 }
 
-// Thêm điểm cho môn học
+// Thêm điểm cho môn học — chỉ cho thêm nếu môn học thuộc về đúng người đang đăng nhập
 async function themDiem(req, res) {
   try {
+    const idNguoiDung = req.user.id;
     const { idMonHoc, loaiDanhGia, diem, trongSo } = req.body;
 
     if (!idMonHoc || !loaiDanhGia || diem === undefined || trongSo === undefined) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin điểm' });
+    }
+
+    const monHoc = await prisma.monHoc.findFirst({
+      where: { id: parseInt(idMonHoc), idNguoiDung },
+    });
+    if (!monHoc) {
+      return res.status(404).json({ message: 'Không tìm thấy môn học hoặc bạn không có quyền thêm điểm' });
     }
 
     const diemMoi = await prisma.diem.create({

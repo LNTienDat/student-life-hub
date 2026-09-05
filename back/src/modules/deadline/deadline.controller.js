@@ -54,10 +54,11 @@ async function layDanhSachDeadline(req, res) {
 async function suaDeadline(req, res) {
   try {
     const { id } = req.params;
+    const idNguoiDung = req.user.id;
     const { tieuDe, moTa, hanChot, doUuTien, trangThai } = req.body;
 
-    const deadline = await prisma.deadline.update({
-      where: { id: parseInt(id) },
+    const ketQua = await prisma.deadline.updateMany({
+      where: { id: parseInt(id), idNguoiDung },
       data: {
         tieuDe,
         moTa,
@@ -67,6 +68,11 @@ async function suaDeadline(req, res) {
       },
     });
 
+    if (ketQua.count === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy deadline hoặc bạn không có quyền sửa' });
+    }
+
+    const deadline = await prisma.deadline.findUnique({ where: { id: parseInt(id) } });
     res.json({ message: 'Cập nhật thành công', deadline });
   } catch (error) {
     console.error(error);
@@ -78,12 +84,18 @@ async function suaDeadline(req, res) {
 async function hoanThanhDeadline(req, res) {
   try {
     const { id } = req.params;
+    const idNguoiDung = req.user.id;
 
-    const deadline = await prisma.deadline.update({
-      where: { id: parseInt(id) },
+    const ketQua = await prisma.deadline.updateMany({
+      where: { id: parseInt(id), idNguoiDung },
       data: { trangThai: 'hoan_thanh' },
     });
 
+    if (ketQua.count === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy deadline hoặc bạn không có quyền cập nhật' });
+    }
+
+    const deadline = await prisma.deadline.findUnique({ where: { id: parseInt(id) } });
     res.json({ message: 'Đã đánh dấu hoàn thành', deadline });
   } catch (error) {
     console.error(error);
@@ -95,7 +107,13 @@ async function hoanThanhDeadline(req, res) {
 async function xoaDeadline(req, res) {
   try {
     const { id } = req.params;
-    await prisma.deadline.delete({ where: { id: parseInt(id) } });
+    const idNguoiDung = req.user.id;
+
+    const ketQua = await prisma.deadline.deleteMany({ where: { id: parseInt(id), idNguoiDung } });
+
+    if (ketQua.count === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy deadline hoặc bạn không có quyền xóa' });
+    }
     res.json({ message: 'Xóa deadline thành công' });
   } catch (error) {
     console.error(error);

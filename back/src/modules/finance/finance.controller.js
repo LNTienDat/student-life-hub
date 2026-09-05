@@ -89,10 +89,11 @@ async function layDanhSachGiaoDich(req, res) {
 async function suaGiaoDich(req, res) {
   try {
     const { id } = req.params;
+    const idNguoiDung = req.user.id;
     const { loai, danhMuc, soTien, moTa } = req.body;
 
-    const giaoDich = await prisma.giaoDich.update({
-      where: { id: parseInt(id) },
+    const ketQua = await prisma.giaoDich.updateMany({
+      where: { id: parseInt(id), idNguoiDung },
       data: {
         loai,
         danhMuc,
@@ -101,6 +102,11 @@ async function suaGiaoDich(req, res) {
       },
     });
 
+    if (ketQua.count === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy giao dịch hoặc bạn không có quyền sửa' });
+    }
+
+    const giaoDich = await prisma.giaoDich.findUnique({ where: { id: parseInt(id) } });
     res.json({ message: 'Cập nhật thành công', giaoDich });
   } catch (error) {
     console.error(error);
@@ -112,7 +118,13 @@ async function suaGiaoDich(req, res) {
 async function xoaGiaoDich(req, res) {
   try {
     const { id } = req.params;
-    await prisma.giaoDich.delete({ where: { id: parseInt(id) } });
+    const idNguoiDung = req.user.id;
+
+    const ketQua = await prisma.giaoDich.deleteMany({ where: { id: parseInt(id), idNguoiDung } });
+
+    if (ketQua.count === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy giao dịch hoặc bạn không có quyền xóa' });
+    }
     res.json({ message: 'Xóa giao dịch thành công' });
   } catch (error) {
     console.error(error);

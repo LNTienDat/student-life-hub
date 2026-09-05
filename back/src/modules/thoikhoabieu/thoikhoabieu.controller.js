@@ -48,10 +48,11 @@ async function layThoiKhoaBieu(req, res) {
 async function suaBuoiHoc(req, res) {
   try {
     const { id } = req.params;
+    const idNguoiDung = req.user.id;
     const { tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien } = req.body;
 
-    const buoiHoc = await prisma.thoiKhoaBieu.update({
-      where: { id: parseInt(id) },
+    const ketQua = await prisma.thoiKhoaBieu.updateMany({
+      where: { id: parseInt(id), idNguoiDung },
       data: {
         tenMon,
         thu: thu !== undefined ? parseInt(thu) : undefined,
@@ -62,6 +63,11 @@ async function suaBuoiHoc(req, res) {
       },
     });
 
+    if (ketQua.count === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy buổi học hoặc bạn không có quyền sửa' });
+    }
+
+    const buoiHoc = await prisma.thoiKhoaBieu.findUnique({ where: { id: parseInt(id) } });
     res.json({ message: 'Cập nhật thành công', buoiHoc });
   } catch (error) {
     console.error(error);
@@ -73,7 +79,13 @@ async function suaBuoiHoc(req, res) {
 async function xoaBuoiHoc(req, res) {
   try {
     const { id } = req.params;
-    await prisma.thoiKhoaBieu.delete({ where: { id: parseInt(id) } });
+    const idNguoiDung = req.user.id;
+
+    const ketQua = await prisma.thoiKhoaBieu.deleteMany({ where: { id: parseInt(id), idNguoiDung } });
+
+    if (ketQua.count === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy buổi học hoặc bạn không có quyền xóa' });
+    }
     res.json({ message: 'Xóa buổi học thành công' });
   } catch (error) {
     console.error(error);
