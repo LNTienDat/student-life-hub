@@ -154,14 +154,15 @@ async function tinhGPA(req, res) {
 async function duDoanDiem(req, res) {
   try {
     const { idMonHoc } = req.params;
+    const idNguoiDung = req.user.id;
     const { mucTieu, trongSoConLai } = req.body;
 
     if (mucTieu === undefined || trongSoConLai === undefined) {
       return res.status(400).json({ message: 'Vui lòng nhập mục tiêu và trọng số còn lại' });
     }
 
-    const monHoc = await prisma.monHoc.findUnique({
-      where: { id: parseInt(idMonHoc) },
+    const monHoc = await prisma.monHoc.findFirst({
+      where: { id: parseInt(idMonHoc), idNguoiDung },
       include: { diems: true },
     });
 
