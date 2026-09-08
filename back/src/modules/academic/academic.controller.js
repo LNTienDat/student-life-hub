@@ -10,6 +10,9 @@ async function themMonHoc(req, res) {
     if (!ten || !tinChi || !hocKy) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ tên môn, tín chỉ, học kỳ' });
     }
+    if (isNaN(parseInt(tinChi)) || parseInt(tinChi) <= 0 || parseInt(tinChi) > 20) {
+      return res.status(400).json({ message: 'Số tín chỉ phải là số nguyên dương hợp lý (tối đa 20)' });
+    }
 
     const monHoc = await prisma.monHoc.create({
       data: { ten, tinChi: parseInt(tinChi), hocKy, idNguoiDung },
@@ -46,6 +49,10 @@ async function suaMonHoc(req, res) {
     const { id } = req.params;
     const idNguoiDung = req.user.id;
     const { ten, tinChi, hocKy, trangThai } = req.body;
+
+    if (tinChi !== undefined && (isNaN(parseInt(tinChi)) || parseInt(tinChi) <= 0 || parseInt(tinChi) > 20)) {
+      return res.status(400).json({ message: 'Số tín chỉ phải là số nguyên dương hợp lý (tối đa 20)' });
+    }
 
     const ketQua = await prisma.monHoc.updateMany({
       where: { id: parseInt(id), idNguoiDung },
@@ -92,6 +99,12 @@ async function themDiem(req, res) {
     if (!idMonHoc || !loaiDanhGia || diem === undefined || trongSo === undefined) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin điểm' });
     }
+    if (isNaN(parseFloat(diem)) || parseFloat(diem) < 0 || parseFloat(diem) > 10) {
+      return res.status(400).json({ message: 'Điểm phải nằm trong khoảng 0 đến 10' });
+    }
+    if (isNaN(parseFloat(trongSo)) || parseFloat(trongSo) <= 0 || parseFloat(trongSo) > 100) {
+      return res.status(400).json({ message: 'Trọng số phải nằm trong khoảng 0 đến 100' });
+    }
 
     const monHoc = await prisma.monHoc.findFirst({
       where: { id: parseInt(idMonHoc), idNguoiDung },
@@ -122,6 +135,13 @@ async function suaDiem(req, res) {
     const { id } = req.params;
     const idNguoiDung = req.user.id;
     const { loaiDanhGia, diem, trongSo } = req.body;
+
+    if (diem !== undefined && (isNaN(parseFloat(diem)) || parseFloat(diem) < 0 || parseFloat(diem) > 10)) {
+      return res.status(400).json({ message: 'Điểm phải nằm trong khoảng 0 đến 10' });
+    }
+    if (trongSo !== undefined && (isNaN(parseFloat(trongSo)) || parseFloat(trongSo) <= 0 || parseFloat(trongSo) > 100)) {
+      return res.status(400).json({ message: 'Trọng số phải nằm trong khoảng 0 đến 100' });
+    }
 
     const diemHienTai = await prisma.diem.findFirst({
       where: {

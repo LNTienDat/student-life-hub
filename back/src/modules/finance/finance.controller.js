@@ -201,6 +201,12 @@ async function datNganSach(req, res) {
     if (!danhMuc || soTienToiDa === undefined || !thang || !nam) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin ngân sách' });
     }
+    if (isNaN(parseFloat(soTienToiDa)) || parseFloat(soTienToiDa) <= 0) {
+      return res.status(400).json({ message: 'Hạn mức ngân sách phải là số dương' });
+    }
+    if (isNaN(parseInt(thang)) || parseInt(thang) < 1 || parseInt(thang) > 12) {
+      return res.status(400).json({ message: 'Tháng không hợp lệ (phải từ 1 đến 12)' });
+    }
 
     const nganSach = await prisma.nganSach.create({
       data: {

@@ -9,12 +9,30 @@ async function themDeadline(req, res) {
     if (!tieuDe || !hanChot) {
       return res.status(400).json({ message: 'Vui lòng nhập tiêu đề và hạn chót' });
     }
+    const hanChotDate = new Date(hanChot);
+    if (isNaN(hanChotDate.getTime())) {
+      return res.status(400).json({ message: 'Hạn chót không hợp lệ' });
+    }
+    if (doUuTien && !['thap', 'binh_thuong', 'cao'].includes(doUuTien)) {
+      return res.status(400).json({ message: 'Độ ưu tiên không hợp lệ' });
+    }
+
+    // Nếu có gắn môn học, kiểm tra môn đó phải thuộc về đúng người dùng —
+    // tránh gắn deadline vào môn học của người khác.
+    if (idMonHoc) {
+      const monHoc = await prisma.monHoc.findFirst({
+        where: { id: parseInt(idMonHoc), idNguoiDung },
+      });
+      if (!monHoc) {
+        return res.status(404).json({ message: 'Không tìm thấy môn học hoặc bạn không có quyền gắn deadline vào môn này' });
+      }
+    }
 
     const deadline = await prisma.deadline.create({
       data: {
         tieuDe,
         moTa,
-        hanChot: new Date(hanChot),
+        hanChot: hanChotDate,
         idMonHoc: idMonHoc ? parseInt(idMonHoc) : null,
         doUuTien: doUuTien || 'binh_thuong',
         idNguoiDung,
@@ -56,6 +74,13 @@ async function suaDeadline(req, res) {
     const { id } = req.params;
     const idNguoiDung = req.user.id;
     const { tieuDe, moTa, hanChot, doUuTien, trangThai } = req.body;
+
+    if (hanChot && isNaN(new Date(hanChot).getTime())) {
+      return res.status(400).json({ message: 'Hạn chót không hợp lệ' });
+    }
+    if (doUuTien && !['thap', 'binh_thuong', 'cao'].includes(doUuTien)) {
+      return res.status(400).json({ message: 'Độ ưu tiên không hợp lệ' });
+    }
 
     const ketQua = await prisma.deadline.updateMany({
       where: { id: parseInt(id), idNguoiDung },
