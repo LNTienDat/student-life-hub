@@ -7,6 +7,8 @@ const {
   suaMonHoc,
   xoaMonHoc,
   themDiem,
+  suaDiem,
+  xoaDiem,
   tinhGPA,
   duDoanDiem,
   canhBaoMonNguyCo,
@@ -21,6 +23,9 @@ router.get('/mon-hoc', layDanhSachMonHoc);
 router.put('/mon-hoc/:id', suaMonHoc);
 router.delete('/mon-hoc/:id', xoaMonHoc);
 router.post('/diem', themDiem);
+router.post('/mon-hoc/:idMonHoc/diem', themDiem);
+router.put('/diem/:id', suaDiem);
+router.delete('/diem/:id', xoaDiem);
 router.get('/gpa', tinhGPA);
 router.post('/mon-hoc/:idMonHoc/du-doan', duDoanDiem);
 router.get('/canh-bao', canhBaoMonNguyCo);

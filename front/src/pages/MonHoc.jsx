@@ -22,6 +22,7 @@ function MonHoc() {
   const [dangSuaId, setDangSuaId] = useState(null);
 
   const [monThemDiemId, setMonThemDiemId] = useState(null);
+  const [dangSuaDiemId, setDangSuaDiemId] = useState(null);
   const [loaiDanhGia, setLoaiDanhGia] = useState('');
   const [diemSo, setDiemSo] = useState('');
   const [trongSo, setTrongSo] = useState('');
@@ -107,25 +108,58 @@ function MonHoc() {
   }
 
   function moFormThemDiem(monId) {
-    setMonThemDiemId(monThemDiemId === monId ? null : monId);
+    if (monThemDiemId === monId && !dangSuaDiemId) {
+      setMonThemDiemId(null);
+    } else {
+      setMonThemDiemId(monId);
+    }
+    setDangSuaDiemId(null);
     setLoaiDanhGia('');
     setDiemSo('');
     setTrongSo('');
   }
 
-  async function xuLyThemDiem(e, monId) {
+  function moFormSuaDiem(monId, diem) {
+    setMonThemDiemId(monId);
+    setDangSuaDiemId(diem.id);
+    setLoaiDanhGia(diem.loaiDanhGia);
+    setDiemSo(diem.diem);
+    setTrongSo(diem.trongSo);
+  }
+
+  async function xuLyLuuDiem(e, monId) {
     e.preventDefault();
     try {
-      await api.post(`/academic/mon-hoc/${monId}/diem`, {
-        loaiDanhGia,
-        diem: parseFloat(diemSo),
-        trongSo: parseFloat(trongSo)
-      });
+      if (dangSuaDiemId) {
+        await api.put(`/academic/diem/${dangSuaDiemId}`, {
+          loaiDanhGia,
+          diem: parseFloat(diemSo),
+          trongSo: parseFloat(trongSo)
+        });
+      } else {
+        await api.post(`/academic/mon-hoc/${monId}/diem`, {
+          loaiDanhGia,
+          diem: parseFloat(diemSo),
+          trongSo: parseFloat(trongSo)
+        });
+      }
       setMonThemDiemId(null);
+      setDangSuaDiemId(null);
       taiDuLieu();
     } catch (error) {
       console.error(error);
-      alert('Không thể lưu điểm!');
+      alert(error.response?.data?.message || 'Không thể lưu điểm! Hãy kiểm tra kết nối Backend.');
+    }
+  }
+
+  async function xuLyXoaDiem(diemId) {
+    if (!window.confirm('Bạn có chắc muốn xóa cột điểm này?')) return;
+    try {
+      await api.delete(`/academic/diem/${diemId}`);
+      taiDuLieu();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || 'Không thể xóa điểm! Hãy kiểm tra kết nối Backend.');
     }
   }
 
@@ -295,12 +329,30 @@ function MonHoc() {
                         {mon.diems.map((d) => (
                           <span
                             key={d.id}
-                            className="text-xs bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-lg flex items-center gap-1"
+                            className="group text-xs bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-lg flex items-center gap-1.5 transition-all hover:border-ink-300 dark:hover:border-slate-600"
                           >
                             <span className="font-medium text-slate-700 dark:text-slate-200">{d.loaiDanhGia}</span> 
                             <span className="text-slate-400">|</span> 
-                            <span className="font-bold">{d.diem}</span> 
+                            <span className="font-bold text-slate-900 dark:text-white">{d.diem}</span> 
                             <span className="text-slate-400 text-[10px]">({d.trongSo}%)</span>
+                            <span className="flex items-center gap-0.5 ml-1 border-l border-slate-200 dark:border-slate-700 pl-1">
+                              <button
+                                type="button"
+                                onClick={() => moFormSuaDiem(mon.id, d)}
+                                className="text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 p-0.5 rounded transition-colors"
+                                title="Sửa điểm này"
+                              >
+                                <Edit2 className="w-3 h-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => xuLyXoaDiem(d.id)}
+                                className="text-slate-400 hover:text-rose-500 p-0.5 rounded transition-colors"
+                                title="Xóa điểm này"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </span>
                           </span>
                         ))}
                       </div>
@@ -310,9 +362,14 @@ function MonHoc() {
                   <div className="border-t border-slate-100 dark:border-slate-700/50 pt-3 mt-auto">
                     {monThemDiemId === mon.id ? (
                       <form
-                        onSubmit={(e) => xuLyThemDiem(e, mon.id)}
+                        onSubmit={(e) => xuLyLuuDiem(e, mon.id)}
                         className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm flex flex-col gap-2.5"
                       >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            {dangSuaDiemId ? '✏️ Chỉnh sửa điểm' : '+ Thêm cột điểm mới'}
+                          </span>
+                        </div>
                         <input
                           type="text"
                           placeholder="Loại điểm (VD: Giữa kỳ)"
@@ -343,7 +400,10 @@ function MonHoc() {
                         <div className="flex gap-2 mt-1">
                           <button
                             type="button"
-                            onClick={() => setMonThemDiemId(null)}
+                            onClick={() => {
+                              setMonThemDiemId(null);
+                              setDangSuaDiemId(null);
+                            }}
                             className="flex-1 py-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors font-medium text-xs"
                           >
                             Hủy
@@ -352,7 +412,7 @@ function MonHoc() {
                             type="submit"
                             className="flex-1 text-white bg-ink-600 hover:bg-ink-700 dark:bg-ink-500 dark:hover:bg-ink-400 py-1.5 rounded-lg font-medium text-xs transition-colors"
                           >
-                            Lưu điểm
+                            {dangSuaDiemId ? 'Cập nhật điểm' : 'Lưu điểm'}
                           </button>
                         </div>
                       </form>

@@ -86,7 +86,8 @@ async function xoaMonHoc(req, res) {
 async function themDiem(req, res) {
   try {
     const idNguoiDung = req.user.id;
-    const { idMonHoc, loaiDanhGia, diem, trongSo } = req.body;
+    const idMonHoc = req.body.idMonHoc || req.params.idMonHoc;
+    const { loaiDanhGia, diem, trongSo } = req.body;
 
     if (!idMonHoc || !loaiDanhGia || diem === undefined || trongSo === undefined) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin điểm' });
@@ -109,6 +110,68 @@ async function themDiem(req, res) {
     });
 
     res.status(201).json({ message: 'Thêm điểm thành công', diem: diemMoi });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+}
+
+// Sửa điểm — chỉ cho sửa nếu môn học của điểm đó thuộc về đúng người đang đăng nhập
+async function suaDiem(req, res) {
+  try {
+    const { id } = req.params;
+    const idNguoiDung = req.user.id;
+    const { loaiDanhGia, diem, trongSo } = req.body;
+
+    const diemHienTai = await prisma.diem.findFirst({
+      where: {
+        id: parseInt(id),
+        monHoc: { idNguoiDung },
+      },
+    });
+
+    if (!diemHienTai) {
+      return res.status(404).json({ message: 'Không tìm thấy điểm hoặc bạn không có quyền sửa' });
+    }
+
+    const diemCapNhat = await prisma.diem.update({
+      where: { id: parseInt(id) },
+      data: {
+        loaiDanhGia: loaiDanhGia !== undefined ? loaiDanhGia : undefined,
+        diem: diem !== undefined ? parseFloat(diem) : undefined,
+        trongSo: trongSo !== undefined ? parseFloat(trongSo) : undefined,
+      },
+    });
+
+    res.json({ message: 'Cập nhật điểm thành công', diem: diemCapNhat });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+}
+
+// Xóa điểm — chỉ cho xóa nếu môn học của điểm đó thuộc về đúng người đang đăng nhập
+async function xoaDiem(req, res) {
+  try {
+    const { id } = req.params;
+    const idNguoiDung = req.user.id;
+
+    const diemHienTai = await prisma.diem.findFirst({
+      where: {
+        id: parseInt(id),
+        monHoc: { idNguoiDung },
+      },
+    });
+
+    if (!diemHienTai) {
+      return res.status(404).json({ message: 'Không tìm thấy điểm hoặc bạn không có quyền xóa' });
+    }
+
+    await prisma.diem.delete({
+      where: { id: parseInt(id) },
+    });
+
+    res.json({ message: 'Xóa điểm thành công' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Lỗi server' });
@@ -353,6 +416,8 @@ module.exports = {
   suaMonHoc,
   xoaMonHoc,
   themDiem,
+  suaDiem,
+  xoaDiem,
   tinhGPA,
   duDoanDiem,
   canhBaoMonNguyCo,
