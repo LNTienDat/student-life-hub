@@ -82,22 +82,24 @@ async function layThongBao(req, res) {
   }
 }
 
-// Kích hoạt thủ công cron nhắc deadline — dùng để test gửi email không cần chờ tới giờ đã lên lịch
+// Kích hoạt thủ công cron nhắc deadline — dùng để test gửi email không cần chờ tới giờ đã lên lịch.
+// Chỉ chạy cho đúng người gọi API (không phải toàn hệ thống), tránh 1 tài khoản
+// bất kỳ có thể lợi dụng để spam email tới mọi người dùng khác.
 async function testCronDeadline(req, res) {
   try {
-    await nhacDeadlineQuaEmail();
-    res.json({ message: 'Đã chạy thử job nhắc deadline. Kiểm tra console/email.' });
+    await nhacDeadlineQuaEmail(req.user.id);
+    res.json({ message: 'Đã chạy thử job nhắc deadline cho tài khoản của bạn. Kiểm tra console/email.' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Lỗi server' });
   }
 }
 
-// Kích hoạt thủ công cron cảnh báo ngân sách — dùng để test gửi email không cần chờ tới giờ đã lên lịch
+// Kích hoạt thủ công cron cảnh báo ngân sách — tương tự, chỉ chạy cho người gọi API.
 async function testCronNganSach(req, res) {
   try {
-    await canhBaoNganSachQuaEmail();
-    res.json({ message: 'Đã chạy thử job cảnh báo ngân sách. Kiểm tra console/email.' });
+    await canhBaoNganSachQuaEmail(req.user.id);
+    res.json({ message: 'Đã chạy thử job cảnh báo ngân sách cho tài khoản của bạn. Kiểm tra console/email.' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Lỗi server' });

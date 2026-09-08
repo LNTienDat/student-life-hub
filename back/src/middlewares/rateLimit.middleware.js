@@ -11,4 +11,26 @@ const gioiHanDangNhap = rateLimit({
   message: { message: 'Bạn đã thử quá nhiều lần, vui lòng thử lại sau ít phút.' },
 });
 
-module.exports = { gioiHanDangNhap };
+// Giới hạn gọi Chatbot — API Gemini tính phí theo lượng dùng, cần chặn
+// việc gọi lặp lại liên tục (vô tình do bug frontend hoặc cố ý spam).
+// 20 tin nhắn / 5 phút / mỗi IP là đủ thoải mái cho 1 phiên chat bình thường.
+const gioiHanChatbot = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Bạn nhắn hơi nhanh, vui lòng chờ một chút rồi thử lại.' },
+});
+
+// Giới hạn API kích hoạt thủ công cron (test gửi email) — dù đã scope theo
+// người dùng, vẫn nên chặn vòng lặp gọi liên tục để tránh spam hộp thư
+// chính mình hoặc chạm giới hạn gửi email của nhà cung cấp SMTP.
+const gioiHanTestCron = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Bạn đã test quá nhiều lần, vui lòng thử lại sau ít phút.' },
+});
+
+module.exports = { gioiHanDangNhap, gioiHanChatbot, gioiHanTestCron };

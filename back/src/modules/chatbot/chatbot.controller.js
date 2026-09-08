@@ -21,6 +21,9 @@ async function guiTinNhan(req, res) {
     if (!tinNhan || !tinNhan.trim()) {
       return res.status(400).json({ message: 'Vui lòng nhập nội dung tin nhắn' });
     }
+    if (tinNhan.length > 2000) {
+      return res.status(400).json({ message: 'Tin nhắn quá dài, vui lòng rút gọn lại (tối đa 2000 ký tự)' });
+    }
 
     if (!process.env.GEMINI_API_KEY) {
       return res.status(200).json({

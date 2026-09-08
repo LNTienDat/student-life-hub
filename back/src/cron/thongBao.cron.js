@@ -3,14 +3,17 @@ const prisma = require('../prismaClient');
 const { guiEmail } = require('../utils/email.util');
 
 // CN32: Email nhắc deadline sắp hết hạn trong 24h tới.
-// Chạy mỗi ngày lúc 07:00 sáng (giờ server).
-async function nhacDeadlineQuaEmail() {
+// Chạy mỗi ngày lúc 07:00 sáng (giờ server) — quét toàn hệ thống, không tham số.
+// Có thể truyền idNguoiDungLoc để chỉ chạy cho 1 người dùng (dùng khi test thủ công
+// qua API, tránh việc 1 tài khoản bất kỳ có thể spam email tới TẤT CẢ người dùng).
+async function nhacDeadlineQuaEmail(idNguoiDungLoc = null) {
   try {
     const now = new Date();
     const gioiHan = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
     const deadlines = await prisma.deadline.findMany({
       where: {
+        ...(idNguoiDungLoc ? { idNguoiDung: idNguoiDungLoc } : {}),
         trangThai: 'dang_dien_hanh',
         hanChot: { gte: now, lte: gioiHan },
       },
@@ -72,15 +75,20 @@ async function nhacDeadlineQuaEmail() {
 }
 
 // CN33: Email cảnh báo vượt ngân sách trong tháng hiện tại.
-// Chạy mỗi ngày lúc 08:00 sáng (giờ server).
-async function canhBaoNganSachQuaEmail() {
+// Chạy mỗi ngày lúc 08:00 sáng (giờ server) — quét toàn hệ thống, không tham số.
+// Có thể truyền idNguoiDungLoc để chỉ chạy cho 1 người dùng (dùng khi test thủ công).
+async function canhBaoNganSachQuaEmail(idNguoiDungLoc = null) {
   try {
     const now = new Date();
     const thang = now.getMonth() + 1;
     const nam = now.getFullYear();
 
     const nganSachs = await prisma.nganSach.findMany({
-      where: { thang, nam },
+      where: {
+        ...(idNguoiDungLoc ? { idNguoiDung: idNguoiDungLoc } : {}),
+        thang,
+        nam,
+      },
       include: { nguoiDung: true },
     });
 
