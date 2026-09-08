@@ -367,17 +367,25 @@ function MonHoc() {
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                            {dangSuaDiemId ? '✏️ Chỉnh sửa điểm' : '+ Thêm cột điểm mới'}
+                            {dangSuaDiemId ? (
+                              <span>
+                                ✏️ Sửa điểm: <strong className="text-ink-600 dark:text-ink-400 font-bold">{loaiDanhGia}</strong>
+                              </span>
+                            ) : (
+                              '+ Thêm cột điểm mới'
+                            )}
                           </span>
                         </div>
-                        <input
-                          type="text"
-                          placeholder="Loại điểm (VD: Giữa kỳ)"
-                          value={loaiDanhGia}
-                          onChange={(e) => setLoaiDanhGia(e.target.value)}
-                          className="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ink-500/30"
-                          required
-                        />
+                        {!dangSuaDiemId && (
+                          <input
+                            type="text"
+                            placeholder="Loại điểm (VD: Giữa kỳ)"
+                            value={loaiDanhGia}
+                            onChange={(e) => setLoaiDanhGia(e.target.value)}
+                            className="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ink-500/30"
+                            required
+                          />
+                        )}
                         <div className="flex gap-2">
                           <input
                             type="number"

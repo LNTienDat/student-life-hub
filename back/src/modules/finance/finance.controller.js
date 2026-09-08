@@ -12,6 +12,12 @@ async function themGiaoDich(req, res) {
     if (!loai || !danhMuc || soTien === undefined) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ loại, danh mục, số tiền' });
     }
+    if (!['thu', 'chi'].includes(loai)) {
+      return res.status(400).json({ message: 'Loại giao dịch không hợp lệ (chỉ nhận "thu" hoặc "chi")' });
+    }
+    if (isNaN(parseFloat(soTien)) || parseFloat(soTien) <= 0) {
+      return res.status(400).json({ message: 'Số tiền phải là số dương' });
+    }
 
     const giaoDich = await prisma.giaoDich.create({
       data: {
@@ -61,7 +67,9 @@ async function layDanhSachGiaoDich(req, res) {
     }
 
     const trangSo = Math.max(parseInt(trang) || 1, 1);
-    const kichThuoc = Math.max(parseInt(soLuong) || 20, 1);
+    // Giới hạn tối đa 100 bản ghi/trang — tránh ai đó truyền soLuong=999999999
+    // khiến server phải truy vấn/trả về một lượng dữ liệu khổng lồ.
+    const kichThuoc = Math.min(Math.max(parseInt(soLuong) || 20, 1), 100);
 
     const [danhSach, tongSo] = await Promise.all([
       prisma.giaoDich.findMany({
@@ -91,6 +99,13 @@ async function suaGiaoDich(req, res) {
     const { id } = req.params;
     const idNguoiDung = req.user.id;
     const { loai, danhMuc, soTien, moTa } = req.body;
+
+    if (loai !== undefined && !['thu', 'chi'].includes(loai)) {
+      return res.status(400).json({ message: 'Loại giao dịch không hợp lệ (chỉ nhận "thu" hoặc "chi")' });
+    }
+    if (soTien !== undefined && (isNaN(parseFloat(soTien)) || parseFloat(soTien) <= 0)) {
+      return res.status(400).json({ message: 'Số tiền phải là số dương' });
+    }
 
     const ketQua = await prisma.giaoDich.updateMany({
       where: { id: parseInt(id), idNguoiDung },
