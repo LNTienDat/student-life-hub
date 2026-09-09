@@ -8,8 +8,8 @@ router.post('/dang-ky', gioiHanDangNhap, dangKy);
 router.post('/dang-nhap', gioiHanDangNhap, dangNhap);
 router.get('/ho-so', xacThuc, xemHoSo);
 router.put('/ho-so', xacThuc, suaHoSo);
-router.put('/doi-mat-khau', xacThuc, doiMatKhau);
-router.put('/doi-email', xacThuc, doiEmail);
+router.put('/doi-mat-khau', xacThuc, gioiHanDangNhap, doiMatKhau);
+router.put('/doi-email', xacThuc, gioiHanDangNhap, doiEmail);
 router.post('/quen-mat-khau', gioiHanDangNhap, quenMatKhau);
 router.post('/dat-lai-mat-khau', gioiHanDangNhap, datLaiMatKhau);
 

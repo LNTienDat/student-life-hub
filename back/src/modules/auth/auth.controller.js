@@ -109,12 +109,22 @@ async function doiMatKhau(req, res) {
     }
 
     const matKhauMaHoa = await bcrypt.hash(matKhauMoi, 10);
+    const thoiDiemDoi = new Date();
     await prisma.nguoiDung.update({
       where: { id: req.user.id },
-      data: { matKhau: matKhauMaHoa, matKhauDoiLuc: new Date() },
+      data: { matKhau: matKhauMaHoa, matKhauDoiLuc: thoiDiemDoi },
     });
 
-    res.json({ message: 'Đổi mật khẩu thành công' });
+    // Cấp lại token mới cho chính phiên đổi mật khẩu này, để người dùng tiếp tục
+    // sử dụng bình thường mà không bị middleware coi là phiên hết hạn.
+    // Trong khi đó, toàn bộ token cũ ở các thiết bị khác vẫn bị vô hiệu hóa.
+    const tokenMoi = jwt.sign(
+      { id: nguoiDung.id, matKhauDoiLuc: thoiDiemDoi.getTime() },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({ message: 'Đổi mật khẩu thành công', token: tokenMoi });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Lỗi server' });

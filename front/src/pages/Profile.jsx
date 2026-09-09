@@ -91,7 +91,10 @@ function Profile() {
     setThongBaoMK(null);
     setDangTaiMK(true);
     try {
-      await api.put('/auth/doi-mat-khau', { matKhauCu, matKhauMoi });
+      const res = await api.put('/auth/doi-mat-khau', { matKhauCu, matKhauMoi });
+      if (res.data.token) {
+        localStorage.setItem('token', res.data.token);
+      }
       setMatKhauCu('');
       setMatKhauMoi('');
       setThongBaoMK({ loai: 'success', text: 'Đổi mật khẩu thành công!' });
