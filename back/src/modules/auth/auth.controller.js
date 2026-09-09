@@ -38,16 +38,23 @@ async function dangKy(req, res) {
 async function dangNhap(req, res) {
   try {
     const { email, matKhau } = req.body;
-    
+
     const nguoiDung = await prisma.nguoiDung.findUnique({ where: { email } });
-    if (!nguoiDung) return res.status(400).json({ message: 'Email không đúng' });
+    if (!nguoiDung) return res.status(400).json({ message: 'Email hoặc mật khẩu không đúng' });
 
     const dungMatKhau = await bcrypt.compare(matKhau, nguoiDung.matKhau);
-    if (!dungMatKhau) return res.status(400).json({ message: 'Mật khẩu không đúng' });
+    if (!dungMatKhau) return res.status(400).json({ message: 'Email hoặc mật khẩu không đúng' });
 
-    const token = jwt.sign({ id: nguoiDung.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    // Nhúng mốc thời gian đổi mật khẩu gần nhất vào token — nếu sau này mật
+    // khẩu bị đổi (do người dùng chủ động hoặc do lộ tài khoản), mọi token
+    // cấp trước đó sẽ tự động bị coi là hết hạn dù chữ ký JWT vẫn hợp lệ.
+    const token = jwt.sign(
+      { id: nguoiDung.id, matKhauDoiLuc: nguoiDung.matKhauDoiLuc.getTime() },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
     const { matKhau: _, ...thongTin } = nguoiDung;
-    
+
     res.json({ token, user: thongTin });
   } catch (error) {
     console.error(error);
@@ -91,6 +98,9 @@ async function doiMatKhau(req, res) {
     if (!matKhauCu || !matKhauMoi) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ mật khẩu cũ và mới' });
     }
+    if (matKhauMoi.length < 6) {
+      return res.status(400).json({ message: 'Mật khẩu mới phải có ít nhất 6 ký tự' });
+    }
 
     const nguoiDung = await prisma.nguoiDung.findUnique({ where: { id: req.user.id } });
     const dung = await bcrypt.compare(matKhauCu, nguoiDung.matKhau);
@@ -101,7 +111,7 @@ async function doiMatKhau(req, res) {
     const matKhauMaHoa = await bcrypt.hash(matKhauMoi, 10);
     await prisma.nguoiDung.update({
       where: { id: req.user.id },
-      data: { matKhau: matKhauMaHoa },
+      data: { matKhau: matKhauMaHoa, matKhauDoiLuc: new Date() },
     });
 
     res.json({ message: 'Đổi mật khẩu thành công' });
@@ -229,6 +239,7 @@ async function datLaiMatKhau(req, res) {
       where: { id: nguoiDung.id },
       data: {
         matKhau: matKhauMaHoa,
+        matKhauDoiLuc: new Date(),
         resetPasswordToken: null,
         resetPasswordExpiry: null,
       },

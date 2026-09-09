@@ -17,6 +17,7 @@ model NguoiDung {
   nganh       String?
   khoaHoc     String?
   ngayTao     DateTime  @default(now())
+  matKhauDoiLuc DateTime @default(now())
 
   resetPasswordToken  String?
   resetPasswordExpiry DateTime?
