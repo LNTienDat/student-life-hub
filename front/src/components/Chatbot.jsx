@@ -49,11 +49,17 @@ function Chatbot() {
   return (
     <div className="fixed bottom-5 right-5 z-50">
       {moChat && (
-        <div className="mb-3 w-80 sm:w-96 h-[28rem] bg-white dark:bg-gray-800 rounded-xl shadow-2xl border dark:border-gray-700 flex flex-col overflow-hidden">
+        <div className="w-80 sm:w-96 h-[30rem] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border dark:border-gray-700 flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="bg-ink-600 dark:bg-ink-500 text-white px-4 py-3 flex justify-between items-center">
+          <div className="bg-ink-600 dark:bg-ink-500 text-white px-4 py-3 flex justify-between items-center shadow-sm">
             <span className="font-semibold text-sm">🤖 SLH Bot</span>
-            <button onClick={() => setMoChat(false)} className="hover:opacity-80">✕</button>
+            <button 
+              onClick={() => setMoChat(false)} 
+              className="w-7 h-7 rounded-lg hover:bg-white/20 flex items-center justify-center transition-colors text-white text-base font-bold"
+              title="Đóng chat"
+            >
+              ✕
+            </button>
           </div>
 
           {/* Danh sách tin nhắn */}
@@ -104,14 +110,16 @@ function Chatbot() {
         </div>
       )}
 
-      {/* Nút bong bóng nổi */}
-      <button
-        onClick={() => setMoChat(!moChat)}
-        className="w-14 h-14 rounded-full bg-ink-600 dark:bg-ink-500 text-white text-2xl shadow-lg hover:bg-ink-700 dark:hover:bg-ink-600 flex items-center justify-center transition-transform hover:scale-105"
-        title="Hỏi đáp nhanh"
-      >
-        {moChat ? '✕' : '💬'}
-      </button>
+      {/* Nút bong bóng nổi - chỉ hiển thị khi chatbox đang đóng */}
+      {!moChat && (
+        <button
+          onClick={() => setMoChat(true)}
+          className="w-14 h-14 rounded-full bg-ink-600 dark:bg-ink-500 text-white text-2xl shadow-xl hover:bg-ink-700 dark:hover:bg-ink-600 flex items-center justify-center transition-all hover:scale-105"
+          title="Hỏi đáp nhanh cùng SLH Bot"
+        >
+          💬
+        </button>
+      )}
     </div>
   );
 }

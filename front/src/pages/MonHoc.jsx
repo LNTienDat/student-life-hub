@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../services/api';
+import ConfirmModal from '../components/ConfirmModal';
+import Toast from '../components/Toast';
 import { 
   BookOpen, 
   GraduationCap, 
@@ -30,6 +32,30 @@ function MonHoc() {
   const [tenMon, setTenMon] = useState('');
   const [tinChi, setTinChi] = useState('');
   const [hocKy, setHocKy] = useState('');
+
+  // State modal xác nhận hiện đại
+  const [modalXacNhan, setModalXacNhan] = useState({
+    isOpen: false,
+    title: '',
+    subTitle: '',
+    itemInfo: null,
+    message: '',
+    confirmText: 'Xóa',
+    cancelText: 'Hủy bỏ',
+    type: 'danger',
+    isLoading: false,
+    onConfirm: () => {}
+  });
+
+  // State toast thông báo trực quan
+  const [toast, setToast] = useState(null);
+
+  const hienToast = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => {
+      setToast(null);
+    }, 3500);
+  };
 
   async function taiDuLieu() {
     setDangTai(true);
@@ -75,24 +101,48 @@ function MonHoc() {
     try {
       if (dangSuaId) {
         await api.put(`/academic/mon-hoc/${dangSuaId}`, { ten: tenMon, tinChi: Number(tinChi), hocKy });
+        hienToast('success', `Đã cập nhật môn "${tenMon}" thành công!`);
       } else {
         await api.post('/academic/mon-hoc', { ten: tenMon, tinChi: Number(tinChi), hocKy });
+        hienToast('success', `Đã thêm môn "${tenMon}" thành công!`);
       }
       setHienFormThem(false);
       taiDuLieu();
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.message || 'Có lỗi xảy ra! Hãy kiểm tra kết nối Backend.');
+      hienToast('error', error.response?.data?.message || 'Có lỗi xảy ra! Hãy kiểm tra kết nối Backend.');
     }
   }
 
-  async function xuLyXoaMon(id) {
-    if (!window.confirm('Bạn có chắc muốn xóa môn này không? Dữ liệu điểm sẽ bị mất.')) return;
+  function yeuCauXoaMon(mon) {
+    setModalXacNhan({
+      isOpen: true,
+      title: 'Xác nhận xóa môn học',
+      subTitle: mon.ten,
+      itemInfo: {
+        label: mon.ten,
+        value: `${mon.tinChi} tín chỉ`,
+        extra: mon.hocKy || 'Chưa xếp kỳ'
+      },
+      message: 'Bạn có chắc muốn xóa môn học này không? Toàn bộ dữ liệu điểm số của môn sẽ bị mất vĩnh viễn.',
+      confirmText: 'Xác nhận xóa môn',
+      cancelText: 'Hủy bỏ',
+      type: 'danger',
+      onConfirm: () => thucHienXoaMon(mon.id, mon.ten)
+    });
+  }
+
+  async function thucHienXoaMon(id, tenMon) {
     try {
+      setModalXacNhan(prev => ({ ...prev, isLoading: true }));
       await api.delete(`/academic/mon-hoc/${id}`);
+      setModalXacNhan(prev => ({ ...prev, isOpen: false, isLoading: false }));
+      hienToast('success', `Đã xóa môn "${tenMon}" thành công!`);
       taiDuLieu();
     } catch (error) {
       console.error(error);
+      setModalXacNhan(prev => ({ ...prev, isLoading: false }));
+      hienToast('error', error.response?.data?.message || 'Không thể xóa môn học! Hãy thử lại.');
     }
   }
 
@@ -136,30 +186,53 @@ function MonHoc() {
           diem: parseFloat(diemSo),
           trongSo: parseFloat(trongSo)
         });
+        hienToast('success', `Đã cập nhật điểm "${loaiDanhGia}" thành công!`);
       } else {
         await api.post(`/academic/mon-hoc/${monId}/diem`, {
           loaiDanhGia,
           diem: parseFloat(diemSo),
           trongSo: parseFloat(trongSo)
         });
+        hienToast('success', `Đã thêm cột điểm "${loaiDanhGia}" thành công!`);
       }
       setMonThemDiemId(null);
       setDangSuaDiemId(null);
       taiDuLieu();
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.message || 'Không thể lưu điểm! Hãy kiểm tra kết nối Backend.');
+      hienToast('error', error.response?.data?.message || 'Không thể lưu điểm! Hãy kiểm tra lại dữ liệu.');
     }
   }
 
-  async function xuLyXoaDiem(diemId) {
-    if (!window.confirm('Bạn có chắc muốn xóa cột điểm này?')) return;
+  function yeuCauXoaDiem(mon, diem) {
+    setModalXacNhan({
+      isOpen: true,
+      title: 'Xác nhận xóa cột điểm',
+      subTitle: `Môn: ${mon.ten}`,
+      itemInfo: {
+        label: diem.loaiDanhGia,
+        value: `${diem.diem} điểm`,
+        extra: `Trọng số ${diem.trongSo}%`
+      },
+      message: 'Bạn có chắc muốn xóa cột điểm này? Thao tác này sẽ tự động cập nhật lại điểm trung bình (GPA) của môn học.',
+      confirmText: 'Xác nhận xóa điểm',
+      cancelText: 'Hủy bỏ',
+      type: 'danger',
+      onConfirm: () => thucHienXoaDiem(diem.id, diem.loaiDanhGia)
+    });
+  }
+
+  async function thucHienXoaDiem(diemId, loaiDanhGia) {
     try {
+      setModalXacNhan(prev => ({ ...prev, isLoading: true }));
       await api.delete(`/academic/diem/${diemId}`);
+      setModalXacNhan(prev => ({ ...prev, isOpen: false, isLoading: false }));
+      hienToast('success', `Đã xóa cột điểm "${loaiDanhGia}" thành công!`);
       taiDuLieu();
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.message || 'Không thể xóa điểm! Hãy kiểm tra kết nối Backend.');
+      setModalXacNhan(prev => ({ ...prev, isLoading: false }));
+      hienToast('error', error.response?.data?.message || 'Không thể xóa điểm! Hãy thử lại.');
     }
   }
 
@@ -346,7 +419,7 @@ function MonHoc() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => xuLyXoaDiem(d.id)}
+                                onClick={() => yeuCauXoaDiem(mon, d)}
                                 className="text-slate-400 hover:text-rose-500 p-0.5 rounded transition-colors"
                                 title="Xóa điểm này"
                               >
@@ -441,7 +514,7 @@ function MonHoc() {
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => xuLyXoaMon(mon.id)}
+                            onClick={() => yeuCauXoaMon(mon)}
                             className="text-slate-400 hover:text-rose-500 transition-colors"
                             title="Xóa môn học"
                           >
@@ -457,6 +530,24 @@ function MonHoc() {
           </div>
         )}
       </div>
+
+      {/* Modal xác nhận xóa hiện đại */}
+      <ConfirmModal
+        isOpen={modalXacNhan.isOpen}
+        onClose={() => setModalXacNhan(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={modalXacNhan.onConfirm}
+        title={modalXacNhan.title}
+        subTitle={modalXacNhan.subTitle}
+        itemInfo={modalXacNhan.itemInfo}
+        message={modalXacNhan.message}
+        confirmText={modalXacNhan.confirmText}
+        cancelText={modalXacNhan.cancelText}
+        type={modalXacNhan.type}
+        isLoading={modalXacNhan.isLoading}
+      />
+
+      {/* Thông báo Toast hiện đại */}
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </>
   );
 }
