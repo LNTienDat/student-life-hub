@@ -1,5 +1,10 @@
 const prisma = require('../../prismaClient');
 const PDFDocument = require('pdfkit');
+const fs = require('fs');
+
+const arialPath = 'C:\\Windows\\Fonts\\arial.ttf';
+const arialBoldPath = 'C:\\Windows\\Fonts\\arialbd.ttf';
+const coFontViet = fs.existsSync(arialPath) && fs.existsSync(arialBoldPath);
 
 // Thêm môn học mới
 async function themMonHoc(req, res) {
@@ -376,13 +381,19 @@ async function xuatBangDiemPDF(req, res) {
     const gpa = tongTinChi > 0 ? (tongDiemTinChi / tongTinChi).toFixed(2) : null;
 
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    if (coFontViet) {
+      doc.registerFont('FontViet', arialPath);
+      doc.registerFont('FontViet-Bold', arialBoldPath);
+      doc.font('FontViet');
+    }
+
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="bang-diem.pdf"`);
     doc.pipe(res);
 
-    doc.fontSize(18).text('BẢNG ĐIỂM SINH VIÊN', { align: 'center' });
+    doc.fontSize(18).font(coFontViet ? 'FontViet-Bold' : 'Helvetica-Bold').text('BẢNG ĐIỂM SINH VIÊN', { align: 'center' });
     doc.moveDown(0.5);
-    doc.fontSize(11).text(`Họ tên: ${nguoiDung?.ten || ''}`);
+    doc.fontSize(11).font(coFontViet ? 'FontViet' : 'Helvetica').text(`Họ tên: ${nguoiDung?.ten || ''}`);
     doc.text(`Email: ${nguoiDung?.email || ''}`);
     if (nguoiDung?.truong) doc.text(`Trường: ${nguoiDung.truong}`);
     if (nguoiDung?.nganh) doc.text(`Ngành: ${nguoiDung.nganh}`);
@@ -391,14 +402,14 @@ async function xuatBangDiemPDF(req, res) {
 
     const startX = 40;
     const colWidths = [220, 60, 90, 90];
-    doc.fontSize(10).font('Helvetica-Bold');
+    doc.fontSize(10).font(coFontViet ? 'FontViet-Bold' : 'Helvetica-Bold');
     let y = doc.y;
     ['Môn học', 'Tín chỉ', 'Học kỳ', 'Điểm (thang 10)'].forEach((h, i) => {
       const x = startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
       doc.text(h, x, y, { width: colWidths[i] });
     });
     doc.moveDown(0.5);
-    doc.font('Helvetica');
+    doc.font(coFontViet ? 'FontViet' : 'Helvetica');
 
     hangMonHoc.forEach((mon) => {
       y = doc.y;
@@ -420,7 +431,7 @@ async function xuatBangDiemPDF(req, res) {
     });
 
     doc.moveDown();
-    doc.font('Helvetica-Bold').fontSize(12).text(`GPA tích lũy (thang 10): ${gpa ?? 'Chưa có dữ liệu'}`);
+    doc.font(coFontViet ? 'FontViet-Bold' : 'Helvetica-Bold').fontSize(12).text(`GPA tích lũy (thang 10): ${gpa ?? 'Chưa có dữ liệu'}`);
     doc.text(`Tổng số tín chỉ đã tính: ${tongTinChi}`);
 
     doc.end();

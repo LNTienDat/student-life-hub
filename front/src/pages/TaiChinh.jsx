@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 import api from '../services/api';
 import { getCache, setCache } from '../services/apiCache';
+import ConfirmModal from '../components/ConfirmModal';
+import Toast from '../components/Toast';
 import { 
   Wallet, 
   TrendingUp, 
@@ -58,6 +60,30 @@ function TaiChinh() {
   const [soTrang, setSoTrang] = useState(1);
   const [tongSoGiaoDich, setTongSoGiaoDich] = useState(0);
   const [dangTaiGD, setDangTaiGD] = useState(false);
+
+  // State modal xác nhận và toast hiện đại
+  const [modalXacNhan, setModalXacNhan] = useState({
+    isOpen: false,
+    title: '',
+    subTitle: '',
+    itemInfo: null,
+    message: '',
+    confirmText: 'Xóa',
+    cancelText: 'Hủy bỏ',
+    type: 'danger',
+    isLoading: false,
+    onConfirm: () => {}
+  });
+
+  const [toast, setToast] = useState(null);
+  const [dangXuatExcel, setDangXuatExcel] = useState(false);
+
+  const hienToast = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => {
+      setToast(null);
+    }, 3500);
+  };
 
   useEffect(() => {
     async function taiThongKe() {
@@ -139,21 +165,67 @@ function TaiChinh() {
       setThongKe(resTK.data);
       setNganSachs(resNS.data.nganSachs);
       taiGiaoDich(1);
+      hienToast('success', 'Thêm giao dịch thành công!');
     } catch (error) {
       console.error(error);
-      alert('Không thể thêm giao dịch!');
+      hienToast('error', error.response?.data?.message || 'Không thể thêm giao dịch!');
     }
   }
 
-  async function xuLyXoaGiaoDich(id) {
-    if (!window.confirm('Bạn có chắc muốn xóa giao dịch này?')) return;
+  function yeuCauXoaGiaoDich(gd) {
+    setModalXacNhan({
+      isOpen: true,
+      title: 'Xác nhận xóa giao dịch',
+      subTitle: `Ngày: ${new Date(gd.ngayGiaoDich).toLocaleDateString('vi-VN')}`,
+      itemInfo: {
+        label: gd.moTa || TEN_DANH_MUC[gd.danhMuc] || gd.danhMuc,
+        value: `${gd.loai === 'thu' ? '+' : '-'}${gd.soTien.toLocaleString('vi-VN')} đ`,
+        extra: gd.loai === 'thu' ? 'Thu nhập' : 'Chi tiêu'
+      },
+      message: 'Bạn có chắc chắn muốn xóa giao dịch này không? Số dư và biểu đồ sẽ tự động được cập nhật lại.',
+      confirmText: 'Xác nhận xóa',
+      cancelText: 'Hủy bỏ',
+      type: 'danger',
+      onConfirm: () => thucHienXoaGiaoDich(gd.id)
+    });
+  }
+
+  async function thucHienXoaGiaoDich(id) {
     try {
+      setModalXacNhan(prev => ({ ...prev, isLoading: true }));
       await api.delete(`/finance/giao-dich/${id}`);
+      setModalXacNhan(prev => ({ ...prev, isOpen: false, isLoading: false }));
+      hienToast('success', 'Đã xóa giao dịch thành công!');
       const resTK = await api.get('/finance/thong-ke');
       setThongKe(resTK.data);
       taiGiaoDich(trangHienTai);
     } catch (error) {
       console.error(error);
+      setModalXacNhan(prev => ({ ...prev, isLoading: false }));
+      hienToast('error', error.response?.data?.message || 'Không thể xóa giao dịch!');
+    }
+  }
+
+  async function xuLyXuatExcel() {
+    try {
+      setDangXuatExcel(true);
+      const res = await api.get(`/finance/xuat-bao-cao?thang=${thang}&nam=${nam}`, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `bao-cao-tai-chinh-${thang}-${nam}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      hienToast('success', `Đã tải về báo cáo tài chính tháng ${thang}/${nam}!`);
+    } catch (error) {
+      console.error(error);
+      hienToast('error', 'Không thể tải báo cáo tài chính. Hãy thử lại!');
+    } finally {
+      setDangXuatExcel(false);
     }
   }
 
@@ -186,11 +258,13 @@ function TaiChinh() {
           
           <div className="flex items-center gap-3">
             <button
-              onClick={() => alert('Tính năng xuất báo cáo đang được phát triển')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              onClick={xuLyXuatExcel}
+              disabled={dangXuatExcel}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+              title="Xuất báo cáo Excel"
             >
               <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Xuất báo cáo</span>
+              <span className="hidden sm:inline">{dangXuatExcel ? 'Đang xuất...' : 'Xuất Excel'}</span>
             </button>
             <button
               onClick={() => setHienFormGD(!hienFormGD)}
@@ -477,7 +551,7 @@ function TaiChinh() {
                             {gd.loai === 'thu' ? '+' : '-'}{dinhDangTien(gd.soTien)}
                           </span>
                           <button
-                            onClick={() => xuLyXoaGiaoDich(gd.id)}
+                            onClick={() => yeuCauXoaGiaoDich(gd)}
                             className="text-slate-400 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                             title="Xóa giao dịch"
                           >
@@ -519,6 +593,24 @@ function TaiChinh() {
           </>
         )}
       </div>
+
+      {/* Modal xác nhận xóa hiện đại */}
+      <ConfirmModal
+        isOpen={modalXacNhan.isOpen}
+        onClose={() => setModalXacNhan(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={modalXacNhan.onConfirm}
+        title={modalXacNhan.title}
+        subTitle={modalXacNhan.subTitle}
+        itemInfo={modalXacNhan.itemInfo}
+        message={modalXacNhan.message}
+        confirmText={modalXacNhan.confirmText}
+        cancelText={modalXacNhan.cancelText}
+        type={modalXacNhan.type}
+        isLoading={modalXacNhan.isLoading}
+      />
+
+      {/* Thông báo Toast hiện đại */}
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </>
   );
 }

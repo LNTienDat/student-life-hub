@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import ConfirmModal from '../components/ConfirmModal';
+import Toast from '../components/Toast';
 import { 
   Calendar as CalendarIcon, 
   Plus, 
@@ -57,6 +59,30 @@ function ThoiKhoaBieu() {
   const [phongHoc, setPhongHoc] = useState('');
   const [giangVien, setGiangVien] = useState('');
 
+  // State modal xác nhận hiện đại
+  const [modalXacNhan, setModalXacNhan] = useState({
+    isOpen: false,
+    title: '',
+    subTitle: '',
+    itemInfo: null,
+    message: '',
+    confirmText: 'Xác nhận xóa',
+    cancelText: 'Hủy bỏ',
+    type: 'danger',
+    isLoading: false,
+    onConfirm: () => {}
+  });
+
+  // State toast thông báo trực quan
+  const [toast, setToast] = useState(null);
+
+  const hienToast = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => {
+      setToast(null);
+    }, 3500);
+  };
+
   async function taiDuLieu() {
     setDangTai(true);
     try {
@@ -99,30 +125,54 @@ function ThoiKhoaBieu() {
   async function xuLySubmit(e) {
     e.preventDefault();
     if (gioSangPhut(gioKetThuc) <= gioSangPhut(gioBatDau)) {
-      alert('Giờ kết thúc phải sau giờ bắt đầu');
+      hienToast('error', 'Giờ kết thúc phải sau giờ bắt đầu');
       return;
     }
     try {
       const data = { tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien };
       if (dangSuaId) {
         await api.put(`/thoi-khoa-bieu/${dangSuaId}`, data);
+        hienToast('success', 'Cập nhật buổi học thành công!');
       } else {
         await api.post('/thoi-khoa-bieu', data);
+        hienToast('success', 'Thêm buổi học mới thành công!');
       }
       setHienForm(false);
       taiDuLieu();
     } catch (error) {
-      alert(error.response?.data?.message || 'Có lỗi xảy ra');
+      hienToast('error', error.response?.data?.message || 'Có lỗi xảy ra');
     }
   }
 
-  async function xuLyXoa(id) {
-    if (!window.confirm('Xóa buổi học này khỏi thời khóa biểu?')) return;
+  function yeuCauXoa(bh) {
+    const thuHoc = CAC_THU.find(t => t.gia === bh.thu)?.ten || '';
+    setModalXacNhan({
+      isOpen: true,
+      title: 'Xóa buổi học?',
+      subTitle: 'Hành động này sẽ xóa buổi học khỏi thời khóa biểu của bạn.',
+      itemInfo: {
+        title: bh.tenMon,
+        subtitle: `${thuHoc} • ${bh.gioBatDau} - ${bh.gioKetThuc}${bh.phongHoc ? ` • Phòng ${bh.phongHoc}` : ''}`
+      },
+      message: 'Bạn có chắc chắn muốn xóa buổi học này không? Dữ liệu đã xóa không thể hoàn tác.',
+      confirmText: 'Xác nhận xóa',
+      cancelText: 'Hủy bỏ',
+      type: 'danger',
+      isLoading: false,
+      onConfirm: () => thucHienXoa(bh.id)
+    });
+  }
+
+  async function thucHienXoa(id) {
+    setModalXacNhan(prev => ({ ...prev, isLoading: true }));
     try {
       await api.delete(`/thoi-khoa-bieu/${id}`);
+      setModalXacNhan(prev => ({ ...prev, isOpen: false, isLoading: false }));
+      hienToast('success', 'Đã xóa buổi học thành công!');
       taiDuLieu();
     } catch (error) {
-      alert('Xóa thất bại');
+      setModalXacNhan(prev => ({ ...prev, isLoading: false }));
+      hienToast('error', error.response?.data?.message || 'Xóa buổi học thất bại');
     }
   }
 
@@ -332,7 +382,7 @@ function ThoiKhoaBieu() {
                             <button onClick={() => moFormSua(bh)} className="p-1 bg-white/50 hover:bg-white dark:bg-black/20 dark:hover:bg-black/40 rounded shadow-sm text-slate-700 dark:text-slate-200">
                               <Edit2 className="w-3 h-3" />
                             </button>
-                            <button onClick={() => xuLyXoa(bh.id)} className="p-1 bg-white/50 hover:bg-white dark:bg-black/20 dark:hover:bg-black/40 rounded shadow-sm text-rose-600 dark:text-rose-400">
+                            <button onClick={() => yeuCauXoa(bh)} className="p-1 bg-white/50 hover:bg-white dark:bg-black/20 dark:hover:bg-black/40 rounded shadow-sm text-rose-600 dark:text-rose-400">
                               <Trash2 className="w-3 h-3" />
                             </button>
                           </div>
@@ -368,7 +418,7 @@ function ThoiKhoaBieu() {
                               <button onClick={() => moFormSua(bh)} className="p-1.5 bg-white/50 dark:bg-black/20 rounded shadow-sm">
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
-                              <button onClick={() => xuLyXoa(bh.id)} className="p-1.5 bg-white/50 dark:bg-black/20 rounded shadow-sm text-rose-600 dark:text-rose-400">
+                              <button onClick={() => yeuCauXoa(bh)} className="p-1.5 bg-white/50 dark:bg-black/20 rounded shadow-sm text-rose-600 dark:text-rose-400">
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
@@ -401,6 +451,24 @@ function ThoiKhoaBieu() {
           </div>
         )}
       </div>
+
+      {/* Modal xác nhận xóa hiện đại */}
+      <ConfirmModal
+        isOpen={modalXacNhan.isOpen}
+        onClose={() => setModalXacNhan(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={modalXacNhan.onConfirm}
+        title={modalXacNhan.title}
+        subTitle={modalXacNhan.subTitle}
+        itemInfo={modalXacNhan.itemInfo}
+        message={modalXacNhan.message}
+        confirmText={modalXacNhan.confirmText}
+        cancelText={modalXacNhan.cancelText}
+        type={modalXacNhan.type}
+        isLoading={modalXacNhan.isLoading}
+      />
+
+      {/* Thông báo Toast trực quan */}
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </>
   );
 }

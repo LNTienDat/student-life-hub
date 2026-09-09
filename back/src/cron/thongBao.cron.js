@@ -1,6 +1,6 @@
 const cron = require('node-cron');
 const prisma = require('../prismaClient');
-const { guiEmail } = require('../utils/email.util');
+const { guiEmail, escapeHtml } = require('../utils/email.util');
 
 // CN32: Email nhắc deadline sắp hết hạn trong 24h tới.
 // Chạy mỗi ngày lúc 07:00 sáng (giờ server) — quét toàn hệ thống, không tham số.
@@ -42,7 +42,7 @@ async function nhacDeadlineQuaEmail(idNguoiDungLoc = null) {
         .map(
           (d) => `
             <li style="margin-bottom:8px;">
-              <strong>${d.tieuDe}</strong>${d.monHoc ? ` (${d.monHoc.ten})` : ''}<br/>
+              <strong>${escapeHtml(d.tieuDe)}</strong>${d.monHoc ? ` (${escapeHtml(d.monHoc.ten)})` : ''}<br/>
               Hạn chót: ${new Date(d.hanChot).toLocaleString('vi-VN')}
             </li>`
         )
@@ -51,7 +51,7 @@ async function nhacDeadlineQuaEmail(idNguoiDungLoc = null) {
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
           <h2 style="color:#2563eb;">Student Life Hub</h2>
-          <p>Xin chào <strong>${nguoiDung.ten}</strong>,</p>
+          <p>Xin chào <strong>${escapeHtml(nguoiDung.ten)}</strong>,</p>
           <p>Bạn có <strong>${ds.length}</strong> deadline sắp hết hạn trong 24 giờ tới:</p>
           <ul>${danhSachHtml}</ul>
           <p>Hãy vào ứng dụng để kiểm tra và hoàn thành đúng hạn nhé!</p>
@@ -131,7 +131,7 @@ async function canhBaoNganSachQuaEmail(idNguoiDungLoc = null) {
         .map(
           (ns) => `
             <li style="margin-bottom:8px;">
-              <strong>${ns.danhMuc.replace('_', ' ')}</strong>: đã chi
+              <strong>${escapeHtml(ns.danhMuc.replace('_', ' '))}</strong>: đã chi
               ${ns.daChi.toLocaleString('vi-VN')}đ / hạn mức ${ns.soTienToiDa.toLocaleString('vi-VN')}đ
             </li>`
         )
@@ -140,7 +140,7 @@ async function canhBaoNganSachQuaEmail(idNguoiDungLoc = null) {
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
           <h2 style="color:#ea580c;">Student Life Hub</h2>
-          <p>Xin chào <strong>${nguoiDung.ten}</strong>,</p>
+          <p>Xin chào <strong>${escapeHtml(nguoiDung.ten)}</strong>,</p>
           <p>Bạn đã <strong>vượt hạn mức ngân sách</strong> ở ${vuot.length} danh mục trong tháng ${thang}/${nam}:</p>
           <ul>${danhSachHtml}</ul>
           <p>Hãy vào ứng dụng để xem chi tiết và điều chỉnh chi tiêu nhé!</p>

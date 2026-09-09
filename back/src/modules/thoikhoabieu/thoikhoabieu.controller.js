@@ -3,7 +3,16 @@ const prisma = require('../../prismaClient');
 // Kiểm tra thứ (2=Thứ 2 ... 8=Chủ nhật) và giờ kết thúc phải sau giờ bắt đầu.
 // Frontend đã tự kiểm tra việc này, nhưng phải kiểm tra lại ở backend vì ai
 // đó có thể gọi thẳng API mà bỏ qua frontend.
-function validateBuoiHoc({ thu, gioBatDau, gioKetThuc }) {
+function validateBuoiHoc({ tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien }) {
+  if (tenMon && tenMon.length > 100) {
+    return 'Tên môn học không được vượt quá 100 ký tự';
+  }
+  if (phongHoc && phongHoc.length > 50) {
+    return 'Phòng học không được vượt quá 50 ký tự';
+  }
+  if (giangVien && giangVien.length > 100) {
+    return 'Tên giảng viên không được vượt quá 100 ký tự';
+  }
   if (thu !== undefined) {
     const thuSo = parseInt(thu);
     if (isNaN(thuSo) || thuSo < 2 || thuSo > 8) {
@@ -26,7 +35,7 @@ async function themBuoiHoc(req, res) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ tên môn, thứ, giờ bắt đầu/kết thúc' });
     }
 
-    const loiValidate = validateBuoiHoc({ thu, gioBatDau, gioKetThuc });
+    const loiValidate = validateBuoiHoc({ tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien });
     if (loiValidate) {
       return res.status(400).json({ message: loiValidate });
     }
@@ -72,7 +81,7 @@ async function suaBuoiHoc(req, res) {
     const idNguoiDung = req.user.id;
     const { tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien } = req.body;
 
-    const loiValidate = validateBuoiHoc({ thu, gioBatDau, gioKetThuc });
+    const loiValidate = validateBuoiHoc({ tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien });
     if (loiValidate) {
       return res.status(400).json({ message: loiValidate });
     }

@@ -19,11 +19,22 @@ async function guiEmail({ to, subject, html }) {
   });
 }
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 async function guiEmailDatLaiMatKhau(to, ten, resetLink) {
+  const tenAnToan = escapeHtml(ten || '');
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
       <h2 style="color:#2563eb;">Student Life Hub</h2>
-      <p>Xin chào <strong>${ten || ''}</strong>,</p>
+      <p>Xin chào <strong>${tenAnToan}</strong>,</p>
       <p>Bạn (hoặc ai đó) vừa yêu cầu đặt lại mật khẩu cho tài khoản này.</p>
       <p>Nhấn vào nút bên dưới để đặt lại mật khẩu. Liên kết có hiệu lực trong <strong>15 phút</strong>.</p>
       <p style="text-align:center; margin: 24px 0;">
@@ -39,4 +50,4 @@ async function guiEmailDatLaiMatKhau(to, ten, resetLink) {
   return guiEmail({ to, subject: 'Đặt lại mật khẩu - Student Life Hub', html });
 }
 
-module.exports = { guiEmail, guiEmailDatLaiMatKhau };
+module.exports = { guiEmail, guiEmailDatLaiMatKhau, escapeHtml };

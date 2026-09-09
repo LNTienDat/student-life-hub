@@ -18,6 +18,9 @@ async function themGiaoDich(req, res) {
     if (isNaN(parseFloat(soTien)) || parseFloat(soTien) <= 0) {
       return res.status(400).json({ message: 'Số tiền phải là số dương' });
     }
+    if (ngayGiaoDich && isNaN(new Date(ngayGiaoDich).getTime())) {
+      return res.status(400).json({ message: 'Ngày giao dịch không hợp lệ' });
+    }
 
     const giaoDich = await prisma.giaoDich.create({
       data: {

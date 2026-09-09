@@ -236,6 +236,31 @@ function MonHoc() {
     }
   }
 
+  const [dangXuatPDF, setDangXuatPDF] = useState(false);
+
+  async function xuLyXuatBangDiem() {
+    try {
+      setDangXuatPDF(true);
+      const res = await api.get('/academic/xuat-bang-diem', {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'bang-diem.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      hienToast('success', 'Đã tải bảng điểm PDF thành công!');
+    } catch (error) {
+      console.error(error);
+      hienToast('error', 'Không thể tải bảng điểm. Hãy thử lại!');
+    } finally {
+      setDangXuatPDF(false);
+    }
+  }
+
   return (
     <>
       <div className="max-w-5xl mx-auto space-y-6 pb-12">
@@ -259,6 +284,15 @@ function MonHoc() {
                 </span>
               </div>
             </div>
+            <button
+              onClick={xuLyXuatBangDiem}
+              disabled={dangXuatPDF || danhSach.length === 0}
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 text-sm"
+              title="Xuất bảng điểm PDF"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">{dangXuatPDF ? 'Đang xuất...' : 'Xuất PDF'}</span>
+            </button>
             <button
               onClick={moFormThem}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${

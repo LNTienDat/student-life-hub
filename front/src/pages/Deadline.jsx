@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import ConfirmModal from '../components/ConfirmModal';
+import Toast from '../components/Toast';
 import { 
   Calendar as CalendarIcon, 
   List, 
@@ -35,6 +37,29 @@ function Deadline() {
   const [moTa, setMoTa] = useState('');
   const [hanChot, setHanChot] = useState('');
   const [doUuTien, setDoUuTien] = useState('binh_thuong');
+
+  // State modal xác nhận và toast hiện đại
+  const [modalXacNhan, setModalXacNhan] = useState({
+    isOpen: false,
+    title: '',
+    subTitle: '',
+    itemInfo: null,
+    message: '',
+    confirmText: 'Xóa',
+    cancelText: 'Hủy bỏ',
+    type: 'danger',
+    isLoading: false,
+    onConfirm: () => {}
+  });
+
+  const [toast, setToast] = useState(null);
+
+  const hienToast = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => {
+      setToast(null);
+    }, 3500);
+  };
 
   async function taiDuLieu() {
     setDangTai(true);
@@ -77,33 +102,59 @@ function Deadline() {
       const data = { tieuDe, moTa, hanChot: new Date(hanChot).toISOString(), doUuTien };
       if (dangSuaId) {
         await api.put(`/deadline/${dangSuaId}`, data);
+        hienToast('success', `Đã cập nhật deadline "${tieuDe}"!`);
       } else {
         await api.post('/deadline', data);
+        hienToast('success', `Đã tạo deadline "${tieuDe}"!`);
       }
       setHienFormThem(false);
       taiDuLieu();
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.message || 'Có lỗi xảy ra! Hãy kiểm tra kết nối Backend.');
+      hienToast('error', error.response?.data?.message || 'Có lỗi xảy ra! Hãy kiểm tra kết nối Backend.');
     }
   }
 
-  async function xuLyXoa(id) {
-    if (!window.confirm('Bạn có chắc muốn xóa deadline này?')) return;
+  function yeuCauXoa(d) {
+    setModalXacNhan({
+      isOpen: true,
+      title: 'Xác nhận xóa deadline',
+      subTitle: d.monHoc?.ten ? `Môn: ${d.monHoc.ten}` : '',
+      itemInfo: {
+        label: d.tieuDe,
+        value: dinhDangNgay(d.hanChot),
+        extra: d.doUuTien === 'cao' ? 'Ưu tiên cao' : d.doUuTien === 'thap' ? 'Ưu tiên thấp' : 'Bình thường'
+      },
+      message: 'Bạn có chắc chắn muốn xóa deadline này không? Thao tác này không thể hoàn tác.',
+      confirmText: 'Xác nhận xóa',
+      cancelText: 'Hủy bỏ',
+      type: 'danger',
+      onConfirm: () => thucHienXoa(d.id)
+    });
+  }
+
+  async function thucHienXoa(id) {
     try {
+      setModalXacNhan(prev => ({ ...prev, isLoading: true }));
       await api.delete(`/deadline/${id}`);
+      setModalXacNhan(prev => ({ ...prev, isOpen: false, isLoading: false }));
+      hienToast('success', 'Đã xóa deadline thành công!');
       taiDuLieu();
     } catch (error) {
       console.error(error);
+      setModalXacNhan(prev => ({ ...prev, isLoading: false }));
+      hienToast('error', error.response?.data?.message || 'Không thể xóa deadline!');
     }
   }
 
   async function xuLyHoanThanh(id, dangHoanThanh) {
     try {
       await api.put(`/deadline/${id}`, { trangThai: dangHoanThanh ? 'cho_xu_ly' : 'hoan_thanh' });
+      hienToast('success', dangHoanThanh ? 'Đã hoàn tác trạng thái deadline' : 'Chúc mừng bạn đã hoàn thành deadline! 🎉');
       taiDuLieu();
     } catch (error) {
       console.error(error);
+      hienToast('error', 'Không thể cập nhật trạng thái deadline');
     }
   }
 
@@ -429,7 +480,7 @@ function Deadline() {
                           <button onClick={() => moFormSua(d)} className="p-1.5 text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600">
                             <Edit2 className="w-4 h-4" />
                           </button>
-                          <button onClick={() => xuLyXoa(d.id)} className="p-1.5 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600">
+                          <button onClick={() => yeuCauXoa(d)} className="p-1.5 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600" title="Xóa">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -497,7 +548,7 @@ function Deadline() {
                           <button onClick={() => moFormSua(d)} className="p-2 text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Sửa">
                             <Edit2 className="w-4 h-4" />
                           </button>
-                          <button onClick={() => xuLyXoa(d.id)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors" title="Xóa">
+                          <button onClick={() => yeuCauXoa(d)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors" title="Xóa">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -526,7 +577,7 @@ function Deadline() {
                         <div className="text-xs text-slate-400 flex-shrink-0 mr-4">
                           {dinhDangNgay(d.hanChot)}
                         </div>
-                        <button onClick={() => xuLyXoa(d.id)} className="p-1.5 text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                        <button onClick={() => yeuCauXoa(d)} className="p-1.5 text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" title="Xóa">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -538,6 +589,24 @@ function Deadline() {
           </>
         )}
       </div>
+
+      {/* Modal xác nhận xóa hiện đại */}
+      <ConfirmModal
+        isOpen={modalXacNhan.isOpen}
+        onClose={() => setModalXacNhan(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={modalXacNhan.onConfirm}
+        title={modalXacNhan.title}
+        subTitle={modalXacNhan.subTitle}
+        itemInfo={modalXacNhan.itemInfo}
+        message={modalXacNhan.message}
+        confirmText={modalXacNhan.confirmText}
+        cancelText={modalXacNhan.cancelText}
+        type={modalXacNhan.type}
+        isLoading={modalXacNhan.isLoading}
+      />
+
+      {/* Thông báo Toast hiện đại */}
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </>
   );
 }

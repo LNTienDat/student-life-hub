@@ -81,6 +81,9 @@ async function suaDeadline(req, res) {
     if (doUuTien && !['thap', 'binh_thuong', 'cao'].includes(doUuTien)) {
       return res.status(400).json({ message: 'Độ ưu tiên không hợp lệ' });
     }
+    if (trangThai && !['dang_dien_hanh', 'hoan_thanh', 'cho_xu_ly'].includes(trangThai)) {
+      return res.status(400).json({ message: 'Trạng thái deadline không hợp lệ' });
+    }
 
     const ketQua = await prisma.deadline.updateMany({
       where: { id: parseInt(id), idNguoiDung },
