@@ -35,15 +35,22 @@ async function dangKy(req, res) {
   }
 }
 
+// Hash "rác" dùng để so sánh khi email không tồn tại — bcrypt.compare() vẫn
+// chạy đủ thời gian như bình thường, tránh lộ email nào đã đăng ký qua
+// việc đo thời gian phản hồi (response bị trả về nhanh hơn hẳn nếu bỏ qua
+// bước so sánh khi không tìm thấy user).
+const HASH_RAC = '$2b$10$0z6ZmsvwVE.WaeOXRnf5Ve8J3MjQ63wJUUThJK1/omh1jpWRBlm5K';
+
 async function dangNhap(req, res) {
   try {
     const { email, matKhau } = req.body;
 
     const nguoiDung = await prisma.nguoiDung.findUnique({ where: { email } });
-    if (!nguoiDung) return res.status(400).json({ message: 'Email hoặc mật khẩu không đúng' });
+    const dungMatKhau = await bcrypt.compare(matKhau, nguoiDung ? nguoiDung.matKhau : HASH_RAC);
 
-    const dungMatKhau = await bcrypt.compare(matKhau, nguoiDung.matKhau);
-    if (!dungMatKhau) return res.status(400).json({ message: 'Email hoặc mật khẩu không đúng' });
+    if (!nguoiDung || !dungMatKhau) {
+      return res.status(400).json({ message: 'Email hoặc mật khẩu không đúng' });
+    }
 
     // Nhúng mốc thời gian đổi mật khẩu gần nhất vào token — nếu sau này mật
     // khẩu bị đổi (do người dùng chủ động hoặc do lộ tài khoản), mọi token

@@ -1,6 +1,18 @@
 const prisma = require('../../prismaClient');
 const ExcelJS = require('exceljs');
 
+// Chống Formula/CSV Injection khi xuất Excel: nếu chuỗi bắt đầu bằng =, +,
+// -, @ (hoặc tab/CR), Excel có thể hiểu nhầm thành công thức khi mở file —
+// thêm dấu nháy đơn phía trước để ép hiển thị như văn bản thuần túy.
+function chongCongThuc(chuoi) {
+  if (typeof chuoi !== 'string') return chuoi;
+  return /^[=+\-@\t\r]/.test(chuoi) ? `'${chuoi}` : chuoi;
+}
+
+// Danh mục hợp lệ — khớp đúng danh sách dropdown ở front/src/pages/TaiChinh.jsx.
+// Backend phải tự kiểm tra lại, không chỉ tin frontend.
+const DANH_MUC_HOP_LE = ['an_uong', 'hoc_phi', 'tro', 'giai_tri', 'di_lai', 'khac'];
+
 // ===== GIAO DỊCH =====
 
 // Thêm giao dịch mới
@@ -14,6 +26,9 @@ async function themGiaoDich(req, res) {
     }
     if (!['thu', 'chi'].includes(loai)) {
       return res.status(400).json({ message: 'Loại giao dịch không hợp lệ (chỉ nhận "thu" hoặc "chi")' });
+    }
+    if (!DANH_MUC_HOP_LE.includes(danhMuc)) {
+      return res.status(400).json({ message: 'Danh mục không hợp lệ' });
     }
     if (isNaN(parseFloat(soTien)) || parseFloat(soTien) <= 0) {
       return res.status(400).json({ message: 'Số tiền phải là số dương' });
@@ -105,6 +120,9 @@ async function suaGiaoDich(req, res) {
 
     if (loai !== undefined && !['thu', 'chi'].includes(loai)) {
       return res.status(400).json({ message: 'Loại giao dịch không hợp lệ (chỉ nhận "thu" hoặc "chi")' });
+    }
+    if (danhMuc !== undefined && !DANH_MUC_HOP_LE.includes(danhMuc)) {
+      return res.status(400).json({ message: 'Danh mục không hợp lệ' });
     }
     if (soTien !== undefined && (isNaN(parseFloat(soTien)) || parseFloat(soTien) <= 0)) {
       return res.status(400).json({ message: 'Số tiền phải là số dương' });
@@ -203,6 +221,9 @@ async function datNganSach(req, res) {
 
     if (!danhMuc || soTienToiDa === undefined || !thang || !nam) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin ngân sách' });
+    }
+    if (!DANH_MUC_HOP_LE.includes(danhMuc)) {
+      return res.status(400).json({ message: 'Danh mục không hợp lệ' });
     }
     if (isNaN(parseFloat(soTienToiDa)) || parseFloat(soTienToiDa) <= 0) {
       return res.status(400).json({ message: 'Hạn mức ngân sách phải là số dương' });
@@ -339,8 +360,8 @@ async function xuatBaoCaoTaiChinhExcel(req, res) {
       sheet1.addRow({
         ngay: new Date(gd.ngayGiaoDich).toLocaleDateString('vi-VN'),
         loai: gd.loai === 'thu' ? 'Thu nhập' : 'Chi tiêu',
-        danhMuc: gd.danhMuc,
-        moTa: gd.moTa || '',
+        danhMuc: chongCongThuc(gd.danhMuc),
+        moTa: chongCongThuc(gd.moTa || ''),
         soTien: gd.soTien,
       });
       if (gd.loai === 'thu') tongThu += gd.soTien;
@@ -364,7 +385,7 @@ async function xuatBaoCaoTaiChinhExcel(req, res) {
     });
     Object.entries(theoDanhMuc).forEach(([key, tong]) => {
       const [danhMuc, loai] = key.split('__');
-      sheet2.addRow({ danhMuc, loai: loai === 'thu' ? 'Thu nhập' : 'Chi tiêu', tong });
+      sheet2.addRow({ danhMuc: chongCongThuc(danhMuc), loai: loai === 'thu' ? 'Thu nhập' : 'Chi tiêu', tong });
     });
     sheet2.getColumn('tong').numFmt = '#,##0" đ"';
 
