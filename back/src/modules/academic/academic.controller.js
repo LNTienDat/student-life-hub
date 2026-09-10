@@ -1,10 +1,13 @@
 const prisma = require('../../prismaClient');
 const PDFDocument = require('pdfkit');
-const fs = require('fs');
+const path = require('path');
 
-const arialPath = 'C:\\Windows\\Fonts\\arial.ttf';
-const arialBoldPath = 'C:\\Windows\\Fonts\\arialbd.ttf';
-const coFontViet = fs.existsSync(arialPath) && fs.existsSync(arialBoldPath);
+// Font Unicode nhúng sẵn trong project (không phụ thuộc hệ điều hành) —
+// bản trước dùng đường dẫn font hệ thống Windows (C:\Windows\Fonts\...),
+// chỉ chạy đúng trên máy Windows của người viết code, còn deploy lên
+// server Linux thật (Render, Railway...) sẽ âm thầm mất dấu tiếng Việt.
+const duongDanFontThuong = path.join(__dirname, '../../assets/fonts/BeVietnamPro-Regular.ttf');
+const duongDanFontDam = path.join(__dirname, '../../assets/fonts/BeVietnamPro-Bold.ttf');
 
 // Thêm môn học mới
 async function themMonHoc(req, res) {
@@ -381,19 +384,17 @@ async function xuatBangDiemPDF(req, res) {
     const gpa = tongTinChi > 0 ? (tongDiemTinChi / tongTinChi).toFixed(2) : null;
 
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
-    if (coFontViet) {
-      doc.registerFont('FontViet', arialPath);
-      doc.registerFont('FontViet-Bold', arialBoldPath);
-      doc.font('FontViet');
-    }
+    doc.registerFont('FontViet', duongDanFontThuong);
+    doc.registerFont('FontViet-Bold', duongDanFontDam);
+    doc.font('FontViet');
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="bang-diem.pdf"`);
     doc.pipe(res);
 
-    doc.fontSize(18).font(coFontViet ? 'FontViet-Bold' : 'Helvetica-Bold').text('BẢNG ĐIỂM SINH VIÊN', { align: 'center' });
+    doc.fontSize(18).font('FontViet-Bold').text('BẢNG ĐIỂM SINH VIÊN', { align: 'center' });
     doc.moveDown(0.5);
-    doc.fontSize(11).font(coFontViet ? 'FontViet' : 'Helvetica').text(`Họ tên: ${nguoiDung?.ten || ''}`);
+    doc.fontSize(11).font('FontViet').text(`Họ tên: ${nguoiDung?.ten || ''}`);
     doc.text(`Email: ${nguoiDung?.email || ''}`);
     if (nguoiDung?.truong) doc.text(`Trường: ${nguoiDung.truong}`);
     if (nguoiDung?.nganh) doc.text(`Ngành: ${nguoiDung.nganh}`);
@@ -402,14 +403,14 @@ async function xuatBangDiemPDF(req, res) {
 
     const startX = 40;
     const colWidths = [220, 60, 90, 90];
-    doc.fontSize(10).font(coFontViet ? 'FontViet-Bold' : 'Helvetica-Bold');
+    doc.fontSize(10).font('FontViet-Bold');
     let y = doc.y;
     ['Môn học', 'Tín chỉ', 'Học kỳ', 'Điểm (thang 10)'].forEach((h, i) => {
       const x = startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
       doc.text(h, x, y, { width: colWidths[i] });
     });
     doc.moveDown(0.5);
-    doc.font(coFontViet ? 'FontViet' : 'Helvetica');
+    doc.font('FontViet');
 
     hangMonHoc.forEach((mon) => {
       y = doc.y;
@@ -431,7 +432,7 @@ async function xuatBangDiemPDF(req, res) {
     });
 
     doc.moveDown();
-    doc.font(coFontViet ? 'FontViet-Bold' : 'Helvetica-Bold').fontSize(12).text(`GPA tích lũy (thang 10): ${gpa ?? 'Chưa có dữ liệu'}`);
+    doc.font('FontViet-Bold').fontSize(12).text(`GPA tích lũy (thang 10): ${gpa ?? 'Chưa có dữ liệu'}`);
     doc.text(`Tổng số tín chỉ đã tính: ${tongTinChi}`);
 
     doc.end();
