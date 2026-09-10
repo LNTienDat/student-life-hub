@@ -164,14 +164,17 @@ async function canhBaoNganSachQuaEmail(idNguoiDungLoc = null) {
 }
 
 // Khởi động các cron job. Gọi hàm này 1 lần khi server start (trong app.js).
+// Luôn chỉ định rõ timezone 'Asia/Ho_Chi_Minh' — nếu không, node-cron sẽ
+// chạy theo giờ hệ thống của SERVER (thường là UTC khi deploy lên
+// Render/Railway...), khiến "07:00" thực tế chạy lúc 14:00 giờ Việt Nam.
 function khoiDongCronJobs() {
-  // Mỗi ngày lúc 07:00 - nhắc deadline sắp hết hạn (CN32)
-  cron.schedule('0 7 * * *', nhacDeadlineQuaEmail);
+  // Mỗi ngày lúc 07:00 (giờ Việt Nam) - nhắc deadline sắp hết hạn (CN32)
+  cron.schedule('0 7 * * *', nhacDeadlineQuaEmail, { timezone: 'Asia/Ho_Chi_Minh' });
 
-  // Mỗi ngày lúc 08:00 - cảnh báo vượt ngân sách (CN33)
-  cron.schedule('0 8 * * *', canhBaoNganSachQuaEmail);
+  // Mỗi ngày lúc 08:00 (giờ Việt Nam) - cảnh báo vượt ngân sách (CN33)
+  cron.schedule('0 8 * * *', canhBaoNganSachQuaEmail, { timezone: 'Asia/Ho_Chi_Minh' });
 
-  console.log('[Cron] Đã khởi động lịch nhắc deadline (07:00) và cảnh báo ngân sách (08:00) mỗi ngày.');
+  console.log('[Cron] Đã khởi động lịch nhắc deadline (07:00) và cảnh báo ngân sách (08:00) mỗi ngày (giờ VN).');
 }
 
 module.exports = { khoiDongCronJobs, nhacDeadlineQuaEmail, canhBaoNganSachQuaEmail };
