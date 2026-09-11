@@ -14,6 +14,18 @@ const { khoiDongCronJobs } = require('./src/cron/thongBao.cron');
 
 const app = express();
 
+// Chỉ tin header X-Forwarded-For khi THẬT SỰ chạy sau 1 lớp reverse proxy
+// (Render, Railway, Heroku, nginx...) — set TRUST_PROXY=true trong .env khi
+// deploy. TUYỆT ĐỐI không bật khi chạy local/không có proxy thật ở giữa:
+// nếu không có proxy mà vẫn bật, bất kỳ ai cũng tự giả mạo header này để
+// "đội lốt" IP ngẫu nhiên, vô hiệu hóa hoàn toàn rate-limit chống brute-force.
+// Ngược lại, deploy sau proxy thật mà KHÔNG bật thì mọi người dùng bị coi là
+// chung 1 IP (IP của proxy), khiến rate-limit áp dụng nhầm cho tất cả mọi
+// người thay vì từng người riêng lẻ.
+if (process.env.TRUST_PROXY === 'true') {
+  app.set('trust proxy', 1);
+}
+
 // Đặt các HTTP header bảo mật cơ bản (chặn MIME-sniffing, ẩn X-Powered-By, v.v.)
 app.use(helmet());
 
