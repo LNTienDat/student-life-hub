@@ -8,7 +8,11 @@ const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function dangKy(req, res) {
   try {
-    const { email, matKhau, ten } = req.body;
+    const { matKhau, ten } = req.body;
+    // Chuẩn hóa email: bỏ khoảng trắng thừa + về chữ thường, tránh
+    // "Test@Gmail.com" và "test@gmail.com" bị coi là 2 tài khoản khác nhau
+    // trong khi thực tế cùng 1 hộp thư.
+    const email = req.body.email ? req.body.email.trim().toLowerCase() : req.body.email;
 
     if (!email || !matKhau || !ten) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ email, mật khẩu và họ tên' });
@@ -43,7 +47,8 @@ const HASH_RAC = '$2b$10$0z6ZmsvwVE.WaeOXRnf5Ve8J3MjQ63wJUUThJK1/omh1jpWRBlm5K';
 
 async function dangNhap(req, res) {
   try {
-    const { email, matKhau } = req.body;
+    const { matKhau } = req.body;
+    const email = req.body.email ? req.body.email.trim().toLowerCase() : req.body.email;
 
     const nguoiDung = await prisma.nguoiDung.findUnique({ where: { email } });
     const dungMatKhau = await bcrypt.compare(matKhau, nguoiDung ? nguoiDung.matKhau : HASH_RAC);
@@ -188,10 +193,10 @@ async function doiEmail(req, res) {
 // CN3 - Bước 1: Yêu cầu đặt lại mật khẩu
 async function quenMatKhau(req, res) {
   try {
-    const { email } = req.body;
-    if (!email) {
+    if (!req.body.email) {
       return res.status(400).json({ message: 'Vui lòng nhập email' });
     }
+    const email = req.body.email.trim().toLowerCase();
 
     const nguoiDung = await prisma.nguoiDung.findUnique({ where: { email } });
 
