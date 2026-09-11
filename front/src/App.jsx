@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Layout from './components/Layout';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Code-splitting (Lazy loading) các trang để giảm dung lượng bundle ban đầu
 const Login = lazy(() => import('./pages/Login'));
@@ -38,30 +39,32 @@ function AuthenticatedLayout() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/quen-mat-khau" element={<QuenMatKhau />} />
-              <Route path="/dat-lai-mat-khau" element={<DatLaiMatKhau />} />
-              <Route element={<AuthenticatedLayout />}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/mon-hoc" element={<MonHoc />} />
-                <Route path="/deadline" element={<Deadline />} />
-                <Route path="/tai-chinh" element={<TaiChinh />} />
-                <Route path="/thoi-khoa-bieu" element={<ThoiKhoaBieu />} />
-                <Route path="/ho-so" element={<Profile />} />
-              </Route>
-              <Route path="/" element={<Navigate to="/dashboard" />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/quen-mat-khau" element={<QuenMatKhau />} />
+                <Route path="/dat-lai-mat-khau" element={<DatLaiMatKhau />} />
+                <Route element={<AuthenticatedLayout />}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/mon-hoc" element={<MonHoc />} />
+                  <Route path="/deadline" element={<Deadline />} />
+                  <Route path="/tai-chinh" element={<TaiChinh />} />
+                  <Route path="/thoi-khoa-bieu" element={<ThoiKhoaBieu />} />
+                  <Route path="/ho-so" element={<Profile />} />
+                </Route>
+                <Route path="/" element={<Navigate to="/dashboard" />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

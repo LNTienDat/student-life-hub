@@ -306,9 +306,10 @@ async function canhBaoMonNguyCo(req, res) {
           (sum, d) => sum + d.diem * (d.trongSo / 100),
           0
         );
+        const diemQuyDoi = tongTrongSoDaCham > 0 ? (diemHienTai / (tongTrongSoDaCham / 100)) : 0;
         return {
           ten: mon.ten,
-          diemHienTai: diemHienTai.toFixed(2),
+          diemHienTai: diemQuyDoi.toFixed(2),
           tongTrongSoDaCham,
         };
       })

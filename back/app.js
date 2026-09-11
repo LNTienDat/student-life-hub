@@ -37,7 +37,7 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: '500kb' }));
 
 app.get('/', (req, res) => {
   res.send('Backend đang chạy ngon lành!');
@@ -59,7 +59,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Đã có lỗi xảy ra ở server' });
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server đang chạy tại http://localhost:${PORT}`);
   khoiDongCronJobs();

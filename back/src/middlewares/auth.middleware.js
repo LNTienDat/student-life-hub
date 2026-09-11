@@ -26,7 +26,7 @@ async function xacThuc(req, res, next) {
     }
 
     if (
-      decoded.matKhauDoiLuc !== undefined &&
+      !decoded.matKhauDoiLuc ||
       nguoiDung.matKhauDoiLuc.getTime() > decoded.matKhauDoiLuc
     ) {
       return res.status(403).json({ message: 'Phiên đăng nhập đã hết hạn do mật khẩu vừa được đổi, vui lòng đăng nhập lại' });

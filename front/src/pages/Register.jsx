@@ -18,6 +18,7 @@ function Register() {
   const [ten, setTen] = useState('');
   const [email, setEmail] = useState('');
   const [matKhau, setMatKhau] = useState('');
+  const [xacNhanMatKhau, setXacNhanMatKhau] = useState('');
   const [hienMatKhau, setHienMatKhau] = useState(false);
   const [loi, setLoi] = useState('');
   const [dangTai, setDangTai] = useState(false);
@@ -27,6 +28,12 @@ function Register() {
   async function xuLySubmit(e) {
     e.preventDefault();
     setLoi('');
+
+    if (matKhau !== xacNhanMatKhau) {
+      setLoi('Mật khẩu xác nhận không khớp');
+      return;
+    }
+
     setDangTai(true);
 
     try {
@@ -174,6 +181,21 @@ function Register() {
             </motion.div>
 
             <motion.div custom={4} initial="an" animate="hien" variants={bienTheField}>
+              <label className="block text-sm font-medium text-slate-600 mb-1">Xác nhận mật khẩu</label>
+              <div className="relative">
+                <input
+                  type={hienMatKhau ? 'text' : 'password'}
+                  value={xacNhanMatKhau}
+                  onChange={(e) => setXacNhanMatKhau(e.target.value)}
+                  placeholder="Nhập lại mật khẩu"
+                  minLength={6}
+                  className="w-full border border-slate-300 rounded-lg pl-3 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
+                  required
+                />
+              </div>
+            </motion.div>
+
+            <motion.div custom={5} initial="an" animate="hien" variants={bienTheField}>
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 type="submit"
@@ -186,7 +208,7 @@ function Register() {
           </form>
 
           <motion.p
-            custom={5}
+            custom={6}
             initial="an"
             animate="hien"
             variants={bienTheField}

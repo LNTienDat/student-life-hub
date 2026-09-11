@@ -28,7 +28,8 @@ async function layThongBao(req, res) {
       .map((mon) => {
         const tongTrongSoDaCham = mon.diems.reduce((sum, d) => sum + d.trongSo, 0);
         const diemHienTai = mon.diems.reduce((sum, d) => sum + d.diem * (d.trongSo / 100), 0);
-        return { ten: mon.ten, diemHienTai: diemHienTai.toFixed(2), tongTrongSoDaCham };
+        const diemQuyDoi = tongTrongSoDaCham > 0 ? (diemHienTai / (tongTrongSoDaCham / 100)) : 0;
+        return { ten: mon.ten, diemHienTai: diemQuyDoi.toFixed(2), tongTrongSoDaCham };
       })
       .filter((mon) => mon.tongTrongSoDaCham > 0 && parseFloat(mon.diemHienTai) < 5.0);
 

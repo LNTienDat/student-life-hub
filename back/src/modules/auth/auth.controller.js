@@ -65,7 +65,7 @@ async function dangNhap(req, res) {
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
-    const { matKhau: _, ...thongTin } = nguoiDung;
+    const { matKhau: _, resetPasswordToken: __, resetPasswordExpiry: ___, ...thongTin } = nguoiDung;
 
     res.json({ token, user: thongTin });
   } catch (error) {
@@ -79,7 +79,7 @@ async function xemHoSo(req, res) {
     const nguoiDung = await prisma.nguoiDung.findUnique({
       where: { id: req.user.id },
     });
-    const { matKhau: _, ...thongTin } = nguoiDung;
+    const { matKhau: _, resetPasswordToken: __, resetPasswordExpiry: ___, ...thongTin } = nguoiDung;
     res.json({ user: thongTin });
   } catch (error) {
     console.error(error);
@@ -95,7 +95,7 @@ async function suaHoSo(req, res) {
       where: { id: req.user.id },
       data: { ten, truong, nganh, khoaHoc, avatar },
     });
-    const { matKhau: _, ...thongTin } = nguoiDung;
+    const { matKhau: _, resetPasswordToken: __, resetPasswordExpiry: ___, ...thongTin } = nguoiDung;
     res.json({ message: 'Cập nhật hồ sơ thành công', user: thongTin });
   } catch (error) {
     console.error(error);
@@ -182,7 +182,7 @@ async function doiEmail(req, res) {
       data: { email: emailMoi.toLowerCase() },
     });
 
-    const { matKhau: _, ...thongTin } = capNhat;
+    const { matKhau: _, resetPasswordToken: __, resetPasswordExpiry: ___, ...thongTin } = capNhat;
     res.json({ message: 'Đổi email thành công', user: thongTin });
   } catch (error) {
     console.error(error);

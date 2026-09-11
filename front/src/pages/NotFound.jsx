@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './NotFound.css';
 
 function NotFound() {
@@ -71,6 +72,14 @@ function NotFound() {
           <div className="text_4041">4</div>
           <div className="text_4042">0</div>
           <div className="text_4043">4</div>
+        </div>
+        <div className="text-center mt-12 relative z-10 flex justify-center">
+          <Link
+            to="/"
+            className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-ink-600 hover:bg-ink-700 text-white font-semibold rounded-xl shadow-lg transition-all hover:-translate-y-0.5"
+          >
+            ← Quay về trang chủ
+          </Link>
         </div>
       </div>
     </div>

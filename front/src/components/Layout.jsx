@@ -71,7 +71,7 @@ function Layout({ children }) {
 
   useEffect(() => {
     function xuLyClickNgoai(e) {
-      if (chuongRef.current && !chuongRef.current.contains(e.target)) {
+      if (chuongRef.current && !chuongRef.current.contains(e.target) && !e.target.closest('.btn-chuong')) {
         setChuongMo(false);
       }
     }
@@ -146,10 +146,10 @@ function Layout({ children }) {
               {/* Nhóm icon tiện ích: Thông báo & Theme - Vị trí hoàn toàn ổn định không phụ thuộc độ dài tên */}
               <div className="flex items-center gap-1 flex-shrink-0">
                 {/* Notifications */}
-                <div className="relative" ref={chuongRef}>
+                <div className="relative">
                   <button
                     onClick={moChuong}
-                    className="relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
+                    className="btn-chuong relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
                     title="Thông báo"
                   >
                     <Bell className="w-5 h-5" />
@@ -157,53 +157,6 @@ function Layout({ children }) {
                       <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-800"></span>
                     )}
                   </button>
-
-                  {chuongMo && (
-                    <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 z-50 overflow-hidden transform opacity-100 scale-100 transition-all duration-200">
-                      <div className="flex justify-between items-center px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50">
-                        <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">Thông báo ({soChuaXem})</span>
-                        {thongBaos.length > 0 && (
-                          <button
-                            onClick={danhDauTatCaDaXem}
-                            className="text-xs font-medium text-ink-600 dark:text-ink-400 hover:text-ink-700 dark:hover:text-ink-300 transition-colors"
-                          >
-                            Đọc tất cả
-                          </button>
-                        )}
-                      </div>
-                      <div className="max-h-80 overflow-y-auto">
-                        {thongBaos.length === 0 ? (
-                          <div className="flex flex-col items-center justify-center p-8 text-center">
-                            <Bell className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" />
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Không có thông báo nào</p>
-                          </div>
-                        ) : (
-                          thongBaos.map((tb) => (
-                            <div
-                              key={tb.id}
-                              onClick={() => danhDauDaXem(tb.id)}
-                              className={`flex gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 cursor-pointer transition-colors ${
-                                !daXemId.includes(tb.id) ? 'bg-ink-50/50 dark:bg-ink-500/10 hover:bg-ink-50 dark:hover:bg-ink-500/20' : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'
-                              }`}
-                            >
-                              <div className="mt-0.5 flex-shrink-0">
-                                {getIconLoai(tb.loai)}
-                              </div>
-                              <div>
-                                <p className={`text-sm ${!daXemId.includes(tb.id) ? 'font-semibold text-slate-900 dark:text-slate-100' : 'font-medium text-slate-700 dark:text-slate-300'}`}>
-                                  {tb.tieuDe}
-                                </p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{tb.moTa}</p>
-                              </div>
-                              {!daXemId.includes(tb.id) && (
-                                <div className="w-1.5 h-1.5 bg-ink-600 dark:bg-ink-400 rounded-full mt-1.5 flex-shrink-0"></div>
-                              )}
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Theme Toggle */}
@@ -239,7 +192,7 @@ function Layout({ children }) {
 
             {/* Mobile menu button */}
             <div className="md:hidden flex items-center gap-1">
-              <button onClick={moChuong} className="p-2 relative text-slate-500 dark:text-slate-400">
+              <button onClick={moChuong} className="btn-chuong p-2 relative text-slate-500 dark:text-slate-400">
                 <Bell className="w-5 h-5" />
                 {soChuaXem > 0 && (
                   <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-800"></span>
@@ -257,6 +210,54 @@ function Layout({ children }) {
             </div>
           </div>
         </div>
+
+        {/* Dropdown Thông báo */}
+        {chuongMo && (
+          <div ref={chuongRef} className="absolute right-4 sm:right-6 lg:right-8 top-16 mt-2 w-80 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 z-50 overflow-hidden transform opacity-100 scale-100 transition-all duration-200">
+            <div className="flex justify-between items-center px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50">
+              <span className="font-semibold text-sm text-slate-800 dark:text-slate-200">Thông báo ({soChuaXem})</span>
+              {thongBaos.length > 0 && (
+                <button
+                  onClick={danhDauTatCaDaXem}
+                  className="text-xs font-medium text-ink-600 dark:text-ink-400 hover:text-ink-700 dark:hover:text-ink-300 transition-colors"
+                >
+                  Đọc tất cả
+                </button>
+              )}
+            </div>
+            <div className="max-h-80 overflow-y-auto">
+              {thongBaos.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center">
+                  <Bell className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" />
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Không có thông báo nào</p>
+                </div>
+              ) : (
+                thongBaos.map((tb) => (
+                  <div
+                    key={tb.id}
+                    onClick={() => danhDauDaXem(tb.id)}
+                    className={`flex gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 cursor-pointer transition-colors ${
+                      !daXemId.includes(tb.id) ? 'bg-ink-50/50 dark:bg-ink-500/10 hover:bg-ink-50 dark:hover:bg-ink-500/20' : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'
+                    }`}
+                  >
+                    <div className="mt-0.5 flex-shrink-0">
+                      {getIconLoai(tb.loai)}
+                    </div>
+                    <div>
+                      <p className={`text-sm ${!daXemId.includes(tb.id) ? 'font-semibold text-slate-900 dark:text-slate-100' : 'font-medium text-slate-700 dark:text-slate-300'}`}>
+                        {tb.tieuDe}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{tb.moTa}</p>
+                    </div>
+                    {!daXemId.includes(tb.id) && (
+                      <div className="w-1.5 h-1.5 bg-ink-600 dark:bg-ink-400 rounded-full mt-1.5 flex-shrink-0"></div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Mobile dropdown */}
         {menuMoMobile && (
