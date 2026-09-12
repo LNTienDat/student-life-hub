@@ -74,3 +74,21 @@ app.listen(PORT, () => {
   console.log(`Server đang chạy tại http://localhost:${PORT}`);
   khoiDongCronJobs();
 });
+
+// Lớp bảo vệ cuối cùng ở cấp process — khác với middleware lỗi Express ở
+// trên (chỉ bắt lỗi xảy ra trong vòng đời request/response), 2 handler này
+// bắt lỗi xảy ra NGOÀI luồng HTTP (VD: lỗi sâu bên trong thư viện bên thứ 3
+// như Prisma/nodemailer/node-cron). Node hiện đại (v15+) mặc định CRASH
+// toàn bộ process với bất kỳ unhandledRejection nào — nếu không bắt, cả
+// server sập hoàn toàn dù lỗi chỉ liên quan 1 tác vụ nhỏ.
+process.on('unhandledRejection', (reason) => {
+  console.error('[Process] Unhandled Rejection:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[Process] Uncaught Exception:', err);
+  // uncaughtException để lại process ở trạng thái không rõ ràng — thoát có
+  // kiểm soát để trình quản lý tiến trình (PM2, Docker, hosting...) tự khởi
+  // động lại sạch, thay vì tiếp tục chạy ngầm ở trạng thái có thể đã hỏng.
+  process.exit(1);
+});
