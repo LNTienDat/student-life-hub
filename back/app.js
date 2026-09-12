@@ -55,15 +55,18 @@ app.use('/api/thoi-khoa-bieu', thoiKhoaBieuRoutes);
 app.use('/api/thong-bao', thongBaoRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 
+// 404 handler cho các route API không tồn tại
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ message: 'Đường dẫn không tồn tại' });
+  }
+  next();
+});
+
 // Middleware xử lý lỗi tập trung
 app.use((err, req, res, next) => {
   console.error('Lỗi chưa xử lý:', err);
   res.status(500).json({ message: 'Đã có lỗi xảy ra ở server' });
-});
-
-// 404 handler cho các route không tồn tại
-app.use('/api/*', (req, res) => {
-  res.status(404).json({ message: 'Đường dẫn không tồn tại' });
 });
 
 const PORT = process.env.PORT || 5000;
