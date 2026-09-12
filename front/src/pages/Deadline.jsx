@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { clearCache } from '../services/apiCache';
 import ConfirmModal from '../components/ConfirmModal';
 import Toast from '../components/Toast';
 import { 
@@ -20,6 +21,7 @@ import {
 
 function Deadline() {
   const [danhSach, setDanhSach] = useState([]);
+  const [danhSachMonHoc, setDanhSachMonHoc] = useState([]);
   const [dangTai, setDangTai] = useState(true);
   const [hienFormThem, setHienFormThem] = useState(false);
   const [dangSuaId, setDangSuaId] = useState(null);
@@ -37,6 +39,7 @@ function Deadline() {
   const [moTa, setMoTa] = useState('');
   const [hanChot, setHanChot] = useState('');
   const [doUuTien, setDoUuTien] = useState('binh_thuong');
+  const [idMonHoc, setIdMonHoc] = useState('');
 
   // State modal xác nhận và toast hiện đại
   const [modalXacNhan, setModalXacNhan] = useState({
@@ -64,8 +67,12 @@ function Deadline() {
   async function taiDuLieu() {
     setDangTai(true);
     try {
-      const res = await api.get('/deadline');
-      setDanhSach(res.data.deadlines || []);
+      const [resDeadline, resMon] = await Promise.all([
+        api.get('/deadline'),
+        api.get('/academic/mon-hoc'),
+      ]);
+      setDanhSachMonHoc(resMon.data.monHocs || []);
+      setDanhSach(resDeadline.data.deadlines || []);
     } catch (error) {
       console.error(error);
     } finally {
@@ -82,6 +89,7 @@ function Deadline() {
     setMoTa('');
     setHanChot('');
     setDoUuTien('binh_thuong');
+    setIdMonHoc('');
     setDangSuaId(null);
     setHienFormThem(!hienFormThem);
   }
@@ -91,6 +99,7 @@ function Deadline() {
     setMoTa(d.moTa || '');
     setHanChot(new Date(d.hanChot).toISOString().slice(0, 16));
     setDoUuTien(d.doUuTien);
+    setIdMonHoc(d.idMonHoc ? String(d.idMonHoc) : '');
     setDangSuaId(d.id);
     setHienFormThem(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -99,7 +108,13 @@ function Deadline() {
   async function xuLySubmit(e) {
     e.preventDefault();
     try {
-      const data = { tieuDe, moTa, hanChot: new Date(hanChot).toISOString(), doUuTien };
+      const data = { 
+        tieuDe, 
+        moTa, 
+        hanChot: new Date(hanChot).toISOString(), 
+        doUuTien,
+        idMonHoc: idMonHoc ? parseInt(idMonHoc) : null 
+      };
       if (dangSuaId) {
         await api.put(`/deadline/${dangSuaId}`, data);
         hienToast('success', `Đã cập nhật deadline "${tieuDe}"!`);
@@ -107,6 +122,7 @@ function Deadline() {
         await api.post('/deadline', data);
         hienToast('success', `Đã tạo deadline "${tieuDe}"!`);
       }
+      clearCache('dashboard_cache');
       setHienFormThem(false);
       taiDuLieu();
     } catch (error) {
@@ -139,6 +155,7 @@ function Deadline() {
       await api.delete(`/deadline/${id}`);
       setModalXacNhan(prev => ({ ...prev, isOpen: false, isLoading: false }));
       hienToast('success', 'Đã xóa deadline thành công!');
+      clearCache('dashboard_cache');
       taiDuLieu();
     } catch (error) {
       console.error(error);
@@ -151,6 +168,7 @@ function Deadline() {
     try {
       await api.put(`/deadline/${id}`, { trangThai: dangHoanThanh ? 'cho_xu_ly' : 'hoan_thanh' });
       hienToast('success', dangHoanThanh ? 'Đã hoàn tác trạng thái deadline' : 'Chúc mừng bạn đã hoàn thành deadline! 🎉');
+      clearCache('dashboard_cache');
       taiDuLieu();
     } catch (error) {
       console.error(error);
@@ -305,6 +323,20 @@ function Deadline() {
                   className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 transition-shadow"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Môn học (Tùy chọn)</label>
+                <select
+                  value={idMonHoc}
+                  onChange={(e) => setIdMonHoc(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 transition-shadow"
+                >
+                  <option value="">-- Không gắn môn học --</option>
+                  {danhSachMonHoc.map((m) => (
+                    <option key={m.id} value={m.id}>{m.ten} ({m.hocKy})</option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -476,7 +508,7 @@ function Deadline() {
                             </span>
                           </div>
                         </div>
-                        <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex flex-col gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           <button onClick={() => moFormSua(d)} className="p-1.5 text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600">
                             <Edit2 className="w-4 h-4" />
                           </button>
@@ -544,7 +576,7 @@ function Deadline() {
                           )}
                         </div>
 
-                        <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
+                        <div className="flex flex-col gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
                           <button onClick={() => moFormSua(d)} className="p-2 text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Sửa">
                             <Edit2 className="w-4 h-4" />
                           </button>
@@ -577,7 +609,7 @@ function Deadline() {
                         <div className="text-xs text-slate-400 flex-shrink-0 mr-4">
                           {dinhDangNgay(d.hanChot)}
                         </div>
-                        <button onClick={() => yeuCauXoa(d)} className="p-1.5 text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" title="Xóa">
+                        <button onClick={() => yeuCauXoa(d)} className="p-1.5 text-slate-400 hover:text-rose-500 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0" title="Xóa">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>

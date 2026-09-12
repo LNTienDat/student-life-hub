@@ -59,40 +59,44 @@ function Dashboard() {
   const [thongKeTaiChinh, setThongKeTaiChinh] = useState(cached?.thongKeTaiChinh ?? null);
   const [gpaTheoKy, setGpaTheoKy] = useState(cached?.gpaTheoKy ?? []);
   const [dangTai, setDangTai] = useState(!cached);
+  const [loiTai, setLoiTai] = useState(false);
+
+  const taiDuLieu = async () => {
+    setLoiTai(false);
+    try {
+      const [resGpa, resDeadline, resCanhBao, resTaiChinh, resNganSach, resGpaKy] =
+        await Promise.all([
+          api.get('/academic/gpa'),
+          api.get('/deadline/sap-toi?soNgay=7'),
+          api.get('/academic/canh-bao'),
+          api.get('/finance/thong-ke'),
+          api.get('/finance/ngan-sach'),
+          api.get('/academic/gpa-theo-ky'),
+        ]);
+      const data = {
+        gpa: resGpa.data.gpa,
+        deadlinesSapToi: resDeadline.data.deadlines || [],
+        monNguyCo: resCanhBao.data.monNguyCo || [],
+        thongKeTaiChinh: resTaiChinh.data,
+        nganSachVuot: resNganSach.data?.ketQua?.filter((ns) => ns.vuotNganSach) || [],
+        gpaTheoKy: resGpaKy.data?.theoKy || [],
+      };
+      setGpa(data.gpa);
+      setDeadlinesSapToi(data.deadlinesSapToi);
+      setMonNguyCo(data.monNguyCo);
+      setThongKeTaiChinh(data.thongKeTaiChinh);
+      setNganSachVuot(data.nganSachVuot);
+      setGpaTheoKy(data.gpaTheoKy);
+      setCache('dashboard_cache', data);
+    } catch (error) {
+      console.error(error);
+      setLoiTai(true);
+    } finally {
+      setDangTai(false);
+    }
+  };
 
   useEffect(() => {
-    async function taiDuLieu() {
-      try {
-        const [resGpa, resDeadline, resCanhBao, resTaiChinh, resNganSach, resGpaKy] =
-          await Promise.all([
-            api.get('/academic/gpa'),
-            api.get('/deadline/sap-toi?soNgay=7'),
-            api.get('/academic/canh-bao'),
-            api.get('/finance/thong-ke'),
-            api.get('/finance/ngan-sach'),
-            api.get('/academic/gpa-theo-ky'),
-          ]);
-        const data = {
-          gpa: resGpa.data.gpa,
-          deadlinesSapToi: resDeadline.data.deadlines || [],
-          monNguyCo: resCanhBao.data.monNguyCo || [],
-          thongKeTaiChinh: resTaiChinh.data,
-          nganSachVuot: resNganSach.data?.ketQua?.filter((ns) => ns.vuotNganSach) || [],
-          gpaTheoKy: resGpaKy.data?.theoKy || [],
-        };
-        setGpa(data.gpa);
-        setDeadlinesSapToi(data.deadlinesSapToi);
-        setMonNguyCo(data.monNguyCo);
-        setThongKeTaiChinh(data.thongKeTaiChinh);
-        setNganSachVuot(data.nganSachVuot);
-        setGpaTheoKy(data.gpaTheoKy);
-        setCache('dashboard_cache', data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setDangTai(false);
-      }
-    }
     taiDuLieu();
   }, []);
 
@@ -142,7 +146,20 @@ function Dashboard() {
           </div>
         </div>
 
-        {dangTai ? (
+        {loiTai ? (
+          <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+            <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center">
+              <span className="text-3xl">⚠️</span>
+            </div>
+            <p className="text-slate-600 dark:text-slate-400 text-center">Không thể tải dữ liệu. Vui lòng kiểm tra kết nối mạng.</p>
+            <button
+              onClick={() => { setDangTai(true); taiDuLieu(); }}
+              className="px-5 py-2.5 bg-ink-600 hover:bg-ink-700 text-white font-semibold rounded-xl transition-all"
+            >
+              Thử lại
+            </button>
+          </div>
+        ) : dangTai ? (
           <div className="flex flex-col items-center justify-center py-24">
             <div className="w-10 h-10 border-3 border-ink-200 border-t-ink-600 rounded-full animate-spin" />
             <p className="text-slate-500 mt-4 text-sm font-medium">Đang đồng bộ dữ liệu của bạn...</p>

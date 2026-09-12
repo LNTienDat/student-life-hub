@@ -13,6 +13,8 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+let dangChuyenHuong = false;
+
 // Tự động xử lý khi phiên đăng nhập hết hạn hoặc token bị thu hồi
 api.interceptors.response.use(
   (response) => response,
@@ -23,8 +25,10 @@ api.interceptors.response.use(
 
     if (
       (status === 401 || status === 403) &&
-      !publicPaths.some((p) => currentPath.startsWith(p))
+      !publicPaths.some((p) => currentPath.startsWith(p)) &&
+      !dangChuyenHuong
     ) {
+      dangChuyenHuong = true;
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 import api from '../services/api';
-import { getCache, setCache } from '../services/apiCache';
+import { getCache, setCache, clearCache } from '../services/apiCache';
 import ConfirmModal from '../components/ConfirmModal';
 import Toast from '../components/Toast';
 import { 
@@ -49,6 +49,7 @@ function TaiChinh() {
   const [danhMuc, setDanhMuc] = useState('an_uong');
   const [soTien, setSoTien] = useState('');
   const [moTa, setMoTa] = useState('');
+  const [ngayGiaoDich, setNgayGiaoDich] = useState('');
 
   // Pagination & Filter
   const [timKiem, setTimKiem] = useState('');
@@ -152,10 +153,12 @@ function TaiChinh() {
         soTien: parseFloat(soTien),
         loai,
         danhMuc,
-        moTa
+        moTa,
+        ngayGiaoDich: ngayGiaoDich || undefined
       });
       setSoTien('');
       setMoTa('');
+      setNgayGiaoDich('');
       setHienFormGD(false);
       
       const [resTK, resNS] = await Promise.all([
@@ -164,6 +167,7 @@ function TaiChinh() {
       ]);
       setThongKe(resTK.data);
       setNganSachs(resNS.data.nganSachs);
+      clearCache('dashboard_cache');
       taiGiaoDich(1);
       hienToast('success', 'Thêm giao dịch thành công!');
     } catch (error) {
@@ -198,6 +202,7 @@ function TaiChinh() {
       hienToast('success', 'Đã xóa giao dịch thành công!');
       const resTK = await api.get('/finance/thong-ke');
       setThongKe(resTK.data);
+      clearCache('dashboard_cache');
       taiGiaoDich(trangHienTai);
     } catch (error) {
       console.error(error);
@@ -234,6 +239,7 @@ function TaiChinh() {
     setDanhMuc(danhMuc);
     setSoTien('');
     setMoTa('');
+    setNgayGiaoDich('');
     setHienFormGD(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -452,6 +458,17 @@ function TaiChinh() {
                         className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
                       />
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Ngày giao dịch (Tùy chọn)</label>
+                      <input
+                        type="date"
+                        value={ngayGiaoDich}
+                        onChange={(e) => setNgayGiaoDich(e.target.value)}
+                        max={new Date().toISOString().slice(0, 10)}
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 transition-shadow"
+                      />
+                      <p className="text-xs text-slate-400 mt-1">Để trống = lấy ngày hôm nay</p>
+                    </div>
                     <div className="flex justify-end pt-2">
                       <button type="submit" className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition-colors">
                         Lưu giao dịch
@@ -552,7 +569,7 @@ function TaiChinh() {
                           </span>
                           <button
                             onClick={() => yeuCauXoaGiaoDich(gd)}
-                            className="text-slate-400 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                            className="text-slate-400 hover:text-rose-500 transition-colors sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100"
                             title="Xóa giao dịch"
                           >
                             <Trash2 className="w-4 h-4" />

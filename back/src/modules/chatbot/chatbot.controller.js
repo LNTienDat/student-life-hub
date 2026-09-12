@@ -45,9 +45,13 @@ async function guiTinNhan(req, res) {
     }
     contents.push({ role: 'user', parts: [{ text: tinNhan } ] });
 
-    const response = await fetch(`${GEMINI_API_URL(GEMINI_MODEL)}?key=${process.env.GEMINI_API_KEY}`, {
+    const response = await fetch(GEMINI_API_URL(GEMINI_MODEL), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(15000),
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-goog-api-key': process.env.GEMINI_API_KEY,
+      },
       body: JSON.stringify({
         contents,
         systemInstruction: {

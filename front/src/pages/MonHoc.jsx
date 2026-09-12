@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../services/api';
+import { clearCache } from '../services/apiCache';
 import ConfirmModal from '../components/ConfirmModal';
 import Toast from '../components/Toast';
 import { 
@@ -106,6 +107,7 @@ function MonHoc() {
         await api.post('/academic/mon-hoc', { ten: tenMon, tinChi: Number(tinChi), hocKy });
         hienToast('success', `Đã thêm môn "${tenMon}" thành công!`);
       }
+      clearCache('dashboard_cache');
       setHienFormThem(false);
       taiDuLieu();
     } catch (error) {
@@ -138,6 +140,7 @@ function MonHoc() {
       await api.delete(`/academic/mon-hoc/${id}`);
       setModalXacNhan(prev => ({ ...prev, isOpen: false, isLoading: false }));
       hienToast('success', `Đã xóa môn "${tenMon}" thành công!`);
+      clearCache('dashboard_cache');
       taiDuLieu();
     } catch (error) {
       console.error(error);
@@ -195,6 +198,7 @@ function MonHoc() {
         });
         hienToast('success', `Đã thêm cột điểm "${loaiDanhGia}" thành công!`);
       }
+      clearCache('dashboard_cache');
       setMonThemDiemId(null);
       setDangSuaDiemId(null);
       taiDuLieu();
@@ -228,6 +232,7 @@ function MonHoc() {
       await api.delete(`/academic/diem/${diemId}`);
       setModalXacNhan(prev => ({ ...prev, isOpen: false, isLoading: false }));
       hienToast('success', `Đã xóa cột điểm "${loaiDanhGia}" thành công!`);
+      clearCache('dashboard_cache');
       taiDuLieu();
     } catch (error) {
       console.error(error);
@@ -351,6 +356,7 @@ function MonHoc() {
                 value={tinChi}
                 onChange={(e) => setTinChi(e.target.value)}
                 min="1"
+                max="20"
                 className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 transition-shadow"
                 required
               />
@@ -500,6 +506,8 @@ function MonHoc() {
                             placeholder="Điểm"
                             value={diemSo}
                             onChange={(e) => setDiemSo(e.target.value)}
+                            min="0"
+                            max="10"
                             className="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ink-500/30"
                             required
                           />
@@ -508,6 +516,8 @@ function MonHoc() {
                             placeholder="Trọng số (%)"
                             value={trongSo}
                             onChange={(e) => setTrongSo(e.target.value)}
+                            min="1"
+                            max="100"
                             className="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ink-500/30"
                             required
                           />

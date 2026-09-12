@@ -34,6 +34,9 @@ async function dangKy(req, res) {
 
     res.status(201).json({ message: 'Đăng ký thành công' });
   } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(400).json({ message: 'Email này đã được sử dụng' });
+    }
     console.error(error);
     res.status(500).json({ message: 'Lỗi server' });
   }
@@ -185,6 +188,9 @@ async function doiEmail(req, res) {
     const { matKhau: _, resetPasswordToken: __, resetPasswordExpiry: ___, ...thongTin } = capNhat;
     res.json({ message: 'Đổi email thành công', user: thongTin });
   } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(400).json({ message: 'Email này đã được sử dụng' });
+    }
     console.error(error);
     res.status(500).json({ message: 'Lỗi server' });
   }

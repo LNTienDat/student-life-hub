@@ -17,7 +17,7 @@ async function nhacDeadlineQuaEmail(idNguoiDungLoc = null) {
         trangThai: 'dang_dien_hanh',
         hanChot: { gte: now, lte: gioiHan },
       },
-      include: { nguoiDung: true, monHoc: true },
+      include: { nguoiDung: { select: { id: true, ten: true, email: true } }, monHoc: true },
       orderBy: { hanChot: 'asc' },
     });
 
@@ -89,7 +89,7 @@ async function canhBaoNganSachQuaEmail(idNguoiDungLoc = null) {
         thang,
         nam,
       },
-      include: { nguoiDung: true },
+      include: { nguoiDung: { select: { id: true, ten: true, email: true } } },
     });
 
     if (nganSachs.length === 0) {
@@ -109,18 +109,27 @@ async function canhBaoNganSachQuaEmail(idNguoiDungLoc = null) {
       theoNguoiDung[ns.idNguoiDung].nganSachs.push(ns);
     });
 
+    // Lấy tất cả giao dịch chi của TẤT CẢ người dùng trong 1 query
+    const userIds = Object.keys(theoNguoiDung).map(Number);
+    const tatCaGiaoDichs = await prisma.giaoDich.findMany({
+      where: { idNguoiDung: { in: userIds }, loai: 'chi', ngayGiaoDich: { gte: from, lt: to } },
+      select: { idNguoiDung: true, danhMuc: true, soTien: true },
+    });
+
+    // Tạo map: idNguoiDung -> danhMuc -> tongChi
+    const chiMap = {};
+    tatCaGiaoDichs.forEach((g) => {
+      if (!chiMap[g.idNguoiDung]) chiMap[g.idNguoiDung] = {};
+      chiMap[g.idNguoiDung][g.danhMuc] = (chiMap[g.idNguoiDung][g.danhMuc] || 0) + g.soTien;
+    });
+
     for (const idNguoiDung of Object.keys(theoNguoiDung)) {
       const { nguoiDung, nganSachs: dsNganSach } = theoNguoiDung[idNguoiDung];
-
-      const giaoDichs = await prisma.giaoDich.findMany({
-        where: { idNguoiDung: parseInt(idNguoiDung), loai: 'chi', ngayGiaoDich: { gte: from, lt: to } },
-      });
+      const uid = parseInt(idNguoiDung);
 
       const vuot = dsNganSach
         .map((ns) => {
-          const daChi = giaoDichs
-            .filter((g) => g.danhMuc === ns.danhMuc)
-            .reduce((sum, g) => sum + g.soTien, 0);
+          const daChi = (chiMap[uid] && chiMap[uid][ns.danhMuc]) ? chiMap[uid][ns.danhMuc] : 0;
           return { danhMuc: ns.danhMuc, soTienToiDa: ns.soTienToiDa, daChi };
         })
         .filter((ns) => ns.daChi > ns.soTienToiDa);

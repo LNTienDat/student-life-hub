@@ -292,28 +292,40 @@ async function kiemTraNganSach(req, res) {
 async function xuHuongNThang(req, res) {
   try {
     const idNguoiDung = req.user.id;
-    const soThang = parseInt(req.query.soThang) || 6;
+    // Giới hạn soThang trong khoảng [1, 24]
+    const soThang = Math.min(Math.max(parseInt(req.query.soThang) || 6, 1), 24);
     const now = new Date();
 
-    const ketQua = [];
+    // Tính khoảng thời gian bao phủ toàn bộ N tháng
+    const from = new Date(now.getFullYear(), now.getMonth() - (soThang - 1), 1);
+    const to = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    // 1 query duy nhất thay vì N queries tuần tự
+    const giaoDichs = await prisma.giaoDich.findMany({
+      where: { idNguoiDung, ngayGiaoDich: { gte: from, lt: to } },
+      select: { loai: true, soTien: true, ngayGiaoDich: true },
+    });
+
+    // Tạo map kết quả khởi tạo sẵn cho tất cả N tháng
+    const thangMap = {};
     for (let i = soThang - 1; i >= 0; i--) {
       const thoiDiem = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const thang = thoiDiem.getMonth() + 1;
       const nam = thoiDiem.getFullYear();
-      const from = new Date(nam, thang - 1, 1);
-      const to = new Date(nam, thang, 1);
-
-      const giaoDichs = await prisma.giaoDich.findMany({
-        where: { idNguoiDung, ngayGiaoDich: { gte: from, lt: to } },
-      });
-
-      const tongThu = giaoDichs.filter((g) => g.loai === 'thu').reduce((s, g) => s + g.soTien, 0);
-      const tongChi = giaoDichs.filter((g) => g.loai === 'chi').reduce((s, g) => s + g.soTien, 0);
-
-      ketQua.push({ thang: `${thang}/${nam}`, thu: tongThu, chi: tongChi });
+      thangMap[`${thang}/${nam}`] = { thang: `${thang}/${nam}`, thu: 0, chi: 0 };
     }
 
-    res.json({ xuHuong: ketQua });
+    // Gom nhóm trong bộ nhớ
+    giaoDichs.forEach((g) => {
+      const d = new Date(g.ngayGiaoDich);
+      const key = `${d.getMonth() + 1}/${d.getFullYear()}`;
+      if (thangMap[key]) {
+        if (g.loai === 'thu') thangMap[key].thu += g.soTien;
+        else thangMap[key].chi += g.soTien;
+      }
+    });
+
+    res.json({ xuHuong: Object.values(thangMap) });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Lỗi server' });

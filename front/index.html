@@ -1,10 +1,22 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>front</title>
+    <meta name="description" content="Student Life Hub - Quản lý học tập, deadline, điểm số GPA và tài chính cá nhân dành cho sinh viên." />
+    <meta name="theme-color" content="#15161F" />
+    <title>Student Life Hub</title>
+    <!-- Chống chớp giao diện tối (FOUT): áp dụng class dark trước khi React mount -->
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('theme');
+          var isDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) document.documentElement.classList.add('dark');
+        } catch(e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
