@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { GraduationCap, CalendarDays, Wallet, ArrowLeft, ShieldCheck, KeyRound, Cloud } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, KeyRound, Cloud } from 'lucide-react';
 import api from '../services/api';
 import NotebookLines from '../components/NotebookLines';
 

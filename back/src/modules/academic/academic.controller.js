@@ -206,6 +206,8 @@ async function xoaDiem(req, res) {
   }
 }
 
+const { tinhDiemMon, quyDoiHe4 } = require('../../utils/grade.util');
+
 // Tính GPA của user
 async function tinhGPA(req, res) {
   try {
@@ -220,11 +222,9 @@ async function tinhGPA(req, res) {
     let tongTinChi = 0;
 
     const chiTiet = monHocs.map((mon) => {
-      let diemMon = 0;
-      const tongTrongSo = mon.diems.reduce((sum, d) => sum + d.trongSo, 0);
+      const { diemTrungBinh: diemMon, tongTrongSo } = tinhDiemMon(mon.diems);
 
       if (tongTrongSo > 0) {
-        diemMon = mon.diems.reduce((sum, d) => sum + d.diem * (d.trongSo / 100), 0);
         tongDiemTinChi += diemMon * mon.tinChi;
         tongTinChi += mon.tinChi;
       }
@@ -301,11 +301,7 @@ async function canhBaoMonNguyCo(req, res) {
 
     const monNguyCo = monHocs
       .map((mon) => {
-        const tongTrongSoDaCham = mon.diems.reduce((sum, d) => sum + d.trongSo, 0);
-        const diemHienTai = mon.diems.reduce(
-          (sum, d) => sum + d.diem * (d.trongSo / 100),
-          0
-        );
+        const { diemTrungBinh: diemHienTai, tongTrongSo: tongTrongSoDaCham } = tinhDiemMon(mon.diems);
         const diemQuyDoi = tongTrongSoDaCham > 0 ? (diemHienTai / (tongTrongSoDaCham / 100)) : 0;
         return {
           ten: mon.ten,
@@ -333,10 +329,8 @@ async function gpaTheoKy(req, res) {
 
     const theoKy = {};
     monHocs.forEach((mon) => {
-      const tongTrongSo = mon.diems.reduce((sum, d) => sum + d.trongSo, 0);
+      const { diemTrungBinh: diemMon, tongTrongSo } = tinhDiemMon(mon.diems);
       if (tongTrongSo === 0) return;
-
-      const diemMon = mon.diems.reduce((sum, d) => sum + d.diem * (d.trongSo / 100), 0);
 
       if (!theoKy[mon.hocKy]) {
         theoKy[mon.hocKy] = { tongDiemTinChi: 0, tongTinChi: 0 };
@@ -373,10 +367,10 @@ async function xuatBangDiemPDF(req, res) {
     let tongDiemTinChi = 0;
     let tongTinChi = 0;
     const hangMonHoc = monHocs.map((mon) => {
-      const tongTrongSo = mon.diems.reduce((sum, d) => sum + d.trongSo, 0);
+      const { diemTrungBinh: tempDiem, tongTrongSo } = tinhDiemMon(mon.diems);
       let diemMon = null;
       if (tongTrongSo > 0) {
-        diemMon = mon.diems.reduce((sum, d) => sum + d.diem * (d.trongSo / 100), 0);
+        diemMon = tempDiem;
         tongDiemTinChi += diemMon * mon.tinChi;
         tongTinChi += mon.tinChi;
       }

@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import { clearCache } from '../services/apiCache';
 import ConfirmModal from '../components/ConfirmModal';
-import Toast from '../components/Toast';
+import { useToast } from '../context/ToastContext';
 import { 
   Calendar as CalendarIcon, 
   List, 
@@ -55,14 +55,7 @@ function Deadline() {
     onConfirm: () => {}
   });
 
-  const [toast, setToast] = useState(null);
-
-  const hienToast = (type, message) => {
-    setToast({ type, message });
-    setTimeout(() => {
-      setToast(null);
-    }, 3500);
-  };
+  const { hienToast } = useToast();
 
   async function taiDuLieu() {
     setDangTai(true);
@@ -223,6 +216,8 @@ function Deadline() {
     }
     return lich;
   };
+
+  const lichDuocMemo = useMemo(() => taoLich(thangXemLich), [thangXemLich]);
 
   const khoaNgay = (date) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
   const homNay = new Date();
@@ -418,7 +413,7 @@ function Deadline() {
               </div>
 
               <div className="grid grid-cols-7">
-                {taoLich(thangXemLich).map((ngay, i) => {
+                {lichDuocMemo.map((ngay, i) => {
                   const ds = danhSach.filter((d) => khoaNgay(new Date(d.hanChot)) === khoaNgay(ngay));
                   const laHomNay = khoaNgay(ngay) === khoaNgay(homNay);
                   const dangDuocChon = ngayDuocChon && khoaNgay(ngay) === khoaNgay(ngayDuocChon);
@@ -636,9 +631,6 @@ function Deadline() {
         type={modalXacNhan.type}
         isLoading={modalXacNhan.isLoading}
       />
-
-      {/* Thông báo Toast hiện đại */}
-      <Toast toast={toast} onClose={() => setToast(null)} />
     </>
   );
 }

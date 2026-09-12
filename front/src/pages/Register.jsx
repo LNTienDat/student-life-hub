@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { GraduationCap, CalendarDays, Wallet, Eye, EyeOff, Trophy, PiggyBank, Target } from 'lucide-react';
+import { Eye, EyeOff, Trophy, PiggyBank, Target } from 'lucide-react';
 import api from '../services/api';
 import NotebookLines from '../components/NotebookLines';
 

@@ -1,5 +1,6 @@
 const prisma = require('../../prismaClient');
 const { nhacDeadlineQuaEmail, canhBaoNganSachQuaEmail } = require('../../cron/thongBao.cron');
+const { tinhDiemMon } = require('../../utils/grade.util');
 
 // CN31: Tổng hợp thông báo in-app (chuông) — gộp 3 nguồn: deadline sắp hết hạn,
 // môn học nguy cơ điểm thấp, và danh mục vượt ngân sách tháng này.
@@ -8,40 +9,40 @@ async function layThongBao(req, res) {
     const idNguoiDung = req.user.id;
     const now = new Date();
     const gioiHan = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const thang = now.getMonth() + 1;
+    const nam = now.getFullYear();
+    const from = new Date(nam, thang - 1, 1);
+    const to = new Date(nam, thang, 1);
 
-    // 1. Deadline sắp hết hạn trong 24h
-    const deadlines = await prisma.deadline.findMany({
-      where: {
-        idNguoiDung,
-        trangThai: 'dang_dien_hanh',
-        hanChot: { gte: now, lte: gioiHan },
-      },
-      orderBy: { hanChot: 'asc' },
-    });
+    const [deadlines, monHocs, nganSachs, giaoDichs] = await Promise.all([
+      prisma.deadline.findMany({
+        where: {
+          idNguoiDung,
+          trangThai: 'dang_dien_hanh',
+          hanChot: { gte: now, lte: gioiHan },
+        },
+        orderBy: { hanChot: 'asc' },
+      }),
+      prisma.monHoc.findMany({
+        where: { idNguoiDung },
+        include: { diems: true },
+      }),
+      prisma.nganSach.findMany({ where: { idNguoiDung, thang, nam } }),
+      prisma.giaoDich.findMany({
+        where: { idNguoiDung, loai: 'chi', ngayGiaoDich: { gte: from, lt: to } },
+      }),
+    ]);
 
     // 2. Môn học nguy cơ điểm thấp
-    const monHocs = await prisma.monHoc.findMany({
-      where: { idNguoiDung },
-      include: { diems: true },
-    });
     const monNguyCo = monHocs
       .map((mon) => {
-        const tongTrongSoDaCham = mon.diems.reduce((sum, d) => sum + d.trongSo, 0);
-        const diemHienTai = mon.diems.reduce((sum, d) => sum + d.diem * (d.trongSo / 100), 0);
+        const { diemTrungBinh: diemHienTai, tongTrongSo: tongTrongSoDaCham } = tinhDiemMon(mon.diems);
         const diemQuyDoi = tongTrongSoDaCham > 0 ? (diemHienTai / (tongTrongSoDaCham / 100)) : 0;
         return { ten: mon.ten, diemHienTai: diemQuyDoi.toFixed(2), tongTrongSoDaCham };
       })
       .filter((mon) => mon.tongTrongSoDaCham > 0 && parseFloat(mon.diemHienTai) < 5.0);
 
     // 3. Danh mục vượt ngân sách tháng hiện tại
-    const thang = now.getMonth() + 1;
-    const nam = now.getFullYear();
-    const nganSachs = await prisma.nganSach.findMany({ where: { idNguoiDung, thang, nam } });
-    const from = new Date(nam, thang - 1, 1);
-    const to = new Date(nam, thang, 1);
-    const giaoDichs = await prisma.giaoDich.findMany({
-      where: { idNguoiDung, loai: 'chi', ngayGiaoDich: { gte: from, lt: to } },
-    });
     const nganSachVuot = nganSachs
       .map((ns) => {
         const daChi = giaoDichs

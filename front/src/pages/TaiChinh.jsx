@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 import api from '../services/api';
 import { getCache, setCache, clearCache } from '../services/apiCache';
 import ConfirmModal from '../components/ConfirmModal';
-import Toast from '../components/Toast';
+import { useToast } from '../context/ToastContext';
 import { 
   Wallet, 
   TrendingUp, 
@@ -29,8 +29,6 @@ const TEN_DANH_MUC = {
   di_lai: 'Đi lại',
   khac: 'Khác',
 };
-
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'];
 
 function TaiChinh() {
   const now = new Date();
@@ -76,15 +74,8 @@ function TaiChinh() {
     onConfirm: () => {}
   });
 
-  const [toast, setToast] = useState(null);
+  const { hienToast } = useToast();
   const [dangXuatExcel, setDangXuatExcel] = useState(false);
-
-  const hienToast = (type, message) => {
-    setToast({ type, message });
-    setTimeout(() => {
-      setToast(null);
-    }, 3500);
-  };
 
   useEffect(() => {
     async function taiThongKe() {
@@ -243,11 +234,6 @@ function TaiChinh() {
     setHienFormGD(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-
-  const dataBieuDo = thongKe && thongKe.theoDanhMuc ? Object.entries(thongKe.theoDanhMuc).map(([key, val]) => ({
-    name: TEN_DANH_MUC[key] || key,
-    value: val
-  })).filter(item => item.value > 0) : [];
 
   return (
     <>
@@ -625,9 +611,6 @@ function TaiChinh() {
         type={modalXacNhan.type}
         isLoading={modalXacNhan.isLoading}
       />
-
-      {/* Thông báo Toast hiện đại */}
-      <Toast toast={toast} onClose={() => setToast(null)} />
     </>
   );
 }

@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import ConfirmModal from '../components/ConfirmModal';
-import Toast from '../components/Toast';
+import { useToast } from '../context/ToastContext';
 import { 
   Calendar as CalendarIcon, 
   Plus, 
@@ -73,15 +73,7 @@ function ThoiKhoaBieu() {
     onConfirm: () => {}
   });
 
-  // State toast thông báo trực quan
-  const [toast, setToast] = useState(null);
-
-  const hienToast = (type, message) => {
-    setToast({ type, message });
-    setTimeout(() => {
-      setToast(null);
-    }, 3500);
-  };
+  const { hienToast } = useToast();
 
   async function taiDuLieu() {
     setDangTai(true);
@@ -176,12 +168,14 @@ function ThoiKhoaBieu() {
     }
   }
 
-  const buoiTheoThu = CAC_THU.reduce((map, t) => {
-    map[t.gia] = danhSach
-      .filter((bh) => bh.thu === t.gia)
-      .sort((a, b) => gioSangPhut(a.gioBatDau) - gioSangPhut(b.gioBatDau));
-    return map;
-  }, {});
+  const buoiTheoThu = useMemo(() => {
+    return CAC_THU.reduce((map, t) => {
+      map[t.gia] = danhSach
+        .filter((bh) => bh.thu === t.gia)
+        .sort((a, b) => gioSangPhut(a.gioBatDau) - gioSangPhut(b.gioBatDau));
+      return map;
+    }, {});
+  }, [danhSach]);
 
   const soMonHoc = danhSach.length;
 
@@ -466,9 +460,6 @@ function ThoiKhoaBieu() {
         type={modalXacNhan.type}
         isLoading={modalXacNhan.isLoading}
       />
-
-      {/* Thông báo Toast trực quan */}
-      <Toast toast={toast} onClose={() => setToast(null)} />
     </>
   );
 }

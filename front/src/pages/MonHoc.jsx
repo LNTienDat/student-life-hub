@@ -3,11 +3,9 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import api from '../services/api';
 import { clearCache } from '../services/apiCache';
 import ConfirmModal from '../components/ConfirmModal';
-import Toast from '../components/Toast';
+import { useToast } from '../context/ToastContext';
 import { 
   BookOpen, 
-  GraduationCap, 
-  FileText, 
   Plus, 
   X, 
   Edit2, 
@@ -48,15 +46,7 @@ function MonHoc() {
     onConfirm: () => {}
   });
 
-  // State toast thông báo trực quan
-  const [toast, setToast] = useState(null);
-
-  const hienToast = (type, message) => {
-    setToast({ type, message });
-    setTimeout(() => {
-      setToast(null);
-    }, 3500);
-  };
+  const { hienToast } = useToast();
 
   async function taiDuLieu() {
     setDangTai(true);
@@ -589,9 +579,6 @@ function MonHoc() {
         type={modalXacNhan.type}
         isLoading={modalXacNhan.isLoading}
       />
-
-      {/* Thông báo Toast hiện đại */}
-      <Toast toast={toast} onClose={() => setToast(null)} />
     </>
   );
 }
