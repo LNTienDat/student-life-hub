@@ -12,6 +12,7 @@ const thoiKhoaBieuRoutes = require('./src/modules/thoikhoabieu/thoikhoabieu.rout
 const thongBaoRoutes = require('./src/modules/thongbao/thongbao.routes');
 const chatbotRoutes = require('./src/modules/chatbot/chatbot.routes');
 const { khoiDongCronJobs } = require('./src/cron/thongBao.cron');
+const prisma = require('./src/prismaClient');
 
 const app = express();
 
@@ -70,10 +71,27 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server đang chạy tại http://localhost:${PORT}`);
   khoiDongCronJobs();
 });
+
+// Đóng tắt êm (graceful shutdown) — khi hosting/Docker gửi tín hiệu dừng
+// (VD: trước khi deploy bản mới), dừng nhận request mới, để request đang
+// dở hoàn tất, rồi mới đóng kết nối database sạch sẽ. Không có bước này,
+// process có thể bị ngắt đột ngột giữa chừng 1 request hoặc để lại kết nối
+// DB không đóng đúng cách.
+function tatEm(tinHieu) {
+  console.log(`[Shutdown] Nhận tín hiệu ${tinHieu}, đang đóng server êm...`);
+  server.close(async () => {
+    await prisma.$disconnect();
+    console.log('[Shutdown] Đã đóng server và ngắt kết nối database.');
+    process.exit(0);
+  });
+}
+
+process.on('SIGTERM', () => tatEm('SIGTERM'));
+process.on('SIGINT', () => tatEm('SIGINT'));
 
 // Lớp bảo vệ cuối cùng ở cấp process — khác với middleware lỗi Express ở
 // trên (chỉ bắt lỗi xảy ra trong vòng đời request/response), 2 handler này

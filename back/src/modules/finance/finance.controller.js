@@ -349,6 +349,10 @@ async function xuatBaoCaoTaiChinhExcel(req, res) {
     const giaoDichs = await prisma.giaoDich.findMany({
       where,
       orderBy: { ngayGiaoDich: 'asc' },
+      // Giới hạn an toàn — nếu không, sau nhiều năm sử dụng thực tế, xuất
+      // Excel không giới hạn ngày có thể tải hàng chục nghìn bản ghi cùng
+      // lúc vào bộ nhớ, chậm hoặc tốn tài nguyên server không cần thiết.
+      take: 10000,
     });
 
     const workbook = new ExcelJS.Workbook();
