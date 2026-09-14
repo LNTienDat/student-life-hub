@@ -244,6 +244,13 @@ async function datNganSach(req, res) {
 
     res.status(201).json({ message: 'Đặt ngân sách thành công', nganSach });
   } catch (error) {
+    // P2002 = vi phạm ràng buộc unique (đã đặt ngân sách cho đúng danh mục +
+    // tháng + năm này rồi) — trả về thông báo rõ ràng thay vì "Lỗi server"
+    // chung chung, vì đây là thao tác người dùng rất dễ gặp phải khi thao
+    // tác nhanh hoặc bấm nút 2 lần.
+    if (error.code === 'P2002') {
+      return res.status(409).json({ message: 'Bạn đã đặt ngân sách cho danh mục này trong tháng rồi' });
+    }
     console.error(error);
     res.status(500).json({ message: 'Lỗi server' });
   }
