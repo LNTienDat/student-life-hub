@@ -23,6 +23,9 @@ async function dangKy(req, res) {
     if (matKhau.length < 6) {
       return res.status(400).json({ message: 'Mật khẩu phải có ít nhất 6 ký tự' });
     }
+    if (ten.length > 100) {
+      return res.status(400).json({ message: 'Họ tên không được vượt quá 100 ký tự' });
+    }
 
     const tonTai = await prisma.nguoiDung.findUnique({ where: { email } });
     if (tonTai) return res.status(400).json({ message: 'Email đã tồn tại' });
@@ -94,6 +97,23 @@ async function xemHoSo(req, res) {
 async function suaHoSo(req, res) {
   try {
     const { ten, truong, nganh, khoaHoc, avatar } = req.body;
+
+    if (ten !== undefined && ten.length > 100) {
+      return res.status(400).json({ message: 'Họ tên không được vượt quá 100 ký tự' });
+    }
+    if (truong !== undefined && truong.length > 200) {
+      return res.status(400).json({ message: 'Tên trường không được vượt quá 200 ký tự' });
+    }
+    if (nganh !== undefined && nganh.length > 200) {
+      return res.status(400).json({ message: 'Tên ngành không được vượt quá 200 ký tự' });
+    }
+    if (khoaHoc !== undefined && khoaHoc.length > 50) {
+      return res.status(400).json({ message: 'Khóa học không được vượt quá 50 ký tự' });
+    }
+    if (avatar !== undefined && avatar.length > 500) {
+      return res.status(400).json({ message: 'Đường dẫn avatar quá dài' });
+    }
+
     const nguoiDung = await prisma.nguoiDung.update({
       where: { id: req.user.id },
       data: { ten, truong, nganh, khoaHoc, avatar },
