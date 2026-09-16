@@ -251,9 +251,10 @@ function TaiChinh() {
           <div className="flex items-center gap-3">
             <button
               onClick={xuLyXuatExcel}
-              disabled={dangXuatExcel}
+              disabled={dangXuatExcel || giaoDichs.length === 0}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
               title="Xuất báo cáo Excel"
+              aria-label="Xuất báo cáo tài chính ra file Excel"
             >
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">{dangXuatExcel ? 'Đang xuất...' : 'Xuất Excel'}</span>
@@ -400,8 +401,9 @@ function TaiChinh() {
                   <form onSubmit={xuLyThemGiaoDich} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Loại</label>
+                        <label htmlFor="finance-type" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Loại</label>
                         <select
+                          id="finance-type"
                           value={loai}
                           onChange={(e) => setLoai(e.target.value)}
                           className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
@@ -411,8 +413,9 @@ function TaiChinh() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Danh mục</label>
+                        <label htmlFor="finance-category" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Danh mục</label>
                         <select
+                          id="finance-category"
                           value={danhMuc}
                           onChange={(e) => setDanhMuc(e.target.value)}
                           className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
@@ -423,8 +426,9 @@ function TaiChinh() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Số tiền</label>
+                        <label htmlFor="finance-amount" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Số tiền</label>
                         <input
+                          id="finance-amount"
                           type="number"
                           value={soTien}
                           onChange={(e) => setSoTien(e.target.value)}
@@ -435,8 +439,9 @@ function TaiChinh() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Mô tả (Không bắt buộc)</label>
+                      <label htmlFor="finance-desc" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Mô tả (Không bắt buộc)</label>
                       <input
+                        id="finance-desc"
                         type="text"
                         value={moTa}
                         onChange={(e) => setMoTa(e.target.value)}
@@ -445,8 +450,9 @@ function TaiChinh() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Ngày giao dịch (Tùy chọn)</label>
+                      <label htmlFor="finance-date" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Ngày giao dịch (Tùy chọn)</label>
                       <input
+                        id="finance-date"
                         type="date"
                         value={ngayGiaoDich}
                         onChange={(e) => setNgayGiaoDich(e.target.value)}
@@ -557,6 +563,7 @@ function TaiChinh() {
                             onClick={() => yeuCauXoaGiaoDich(gd)}
                             className="text-slate-400 hover:text-rose-500 transition-colors sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100"
                             title="Xóa giao dịch"
+                            aria-label={`Xóa giao dịch ${TEN_DANH_MUC[gd.danhMuc] || gd.danhMuc} số tiền ${dinhDangTien(gd.soTien)}`}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -577,6 +584,7 @@ function TaiChinh() {
                     <button
                       onClick={() => taiGiaoDich(trangHienTai - 1)}
                       disabled={trangHienTai <= 1}
+                      aria-label="Trang trước"
                       className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 transition-colors"
                     >
                       <ChevronLeft className="w-5 h-5" />
@@ -584,6 +592,7 @@ function TaiChinh() {
                     <button
                       onClick={() => taiGiaoDich(trangHienTai + 1)}
                       disabled={trangHienTai >= soTrang}
+                      aria-label="Trang sau"
                       className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 transition-colors"
                     >
                       <ChevronRight className="w-5 h-5" />

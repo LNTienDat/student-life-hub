@@ -284,6 +284,7 @@ function MonHoc() {
               disabled={dangXuatPDF || danhSach.length === 0}
               className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 text-sm"
               title="Xuất bảng điểm PDF"
+              aria-label="Xuất bảng điểm ra file PDF"
             >
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">{dangXuatPDF ? 'Đang xuất...' : 'Xuất PDF'}</span>
@@ -329,8 +330,9 @@ function MonHoc() {
           >
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-ink-600 dark:bg-ink-400" />
             <div className="flex-1 w-full pl-2">
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Tên môn học</label>
+              <label htmlFor="subject-name" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Tên môn học</label>
               <input
+                id="subject-name"
                 type="text"
                 value={tenMon}
                 onChange={(e) => setTenMon(e.target.value)}
@@ -340,8 +342,9 @@ function MonHoc() {
               />
             </div>
             <div className="w-full md:w-28">
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Tín chỉ</label>
+              <label htmlFor="subject-credits" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Tín chỉ</label>
               <input
+                id="subject-credits"
                 type="number"
                 value={tinChi}
                 onChange={(e) => setTinChi(e.target.value)}
@@ -352,8 +355,9 @@ function MonHoc() {
               />
             </div>
             <div className="w-full md:w-48">
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Học kỳ</label>
+              <label htmlFor="subject-semester" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Học kỳ</label>
               <input
+                id="subject-semester"
                 type="text"
                 value={hocKy}
                 onChange={(e) => setHocKy(e.target.value)}
@@ -444,6 +448,7 @@ function MonHoc() {
                                 onClick={() => moFormSuaDiem(mon.id, d)}
                                 className="text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 p-0.5 rounded transition-colors"
                                 title="Sửa điểm này"
+                                aria-label={`Sửa điểm ${d.loaiDanhGia} môn ${mon.ten}`}
                               >
                                 <Edit2 className="w-3 h-3" />
                               </button>
@@ -452,6 +457,7 @@ function MonHoc() {
                                 onClick={() => yeuCauXoaDiem(mon, d)}
                                 className="text-slate-400 hover:text-rose-500 p-0.5 rounded transition-colors"
                                 title="Xóa điểm này"
+                                aria-label={`Xóa điểm ${d.loaiDanhGia} môn ${mon.ten}`}
                               >
                                 <Trash2 className="w-3 h-3" />
                               </button>
@@ -483,6 +489,7 @@ function MonHoc() {
                           <input
                             type="text"
                             placeholder="Loại điểm (VD: Giữa kỳ)"
+                            aria-label="Loại đánh giá"
                             value={loaiDanhGia}
                             onChange={(e) => setLoaiDanhGia(e.target.value)}
                             className="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ink-500/30"
@@ -494,6 +501,7 @@ function MonHoc() {
                             type="number"
                             step="0.1"
                             placeholder="Điểm"
+                            aria-label="Điểm số"
                             value={diemSo}
                             onChange={(e) => setDiemSo(e.target.value)}
                             min="0"
@@ -504,6 +512,7 @@ function MonHoc() {
                           <input
                             type="number"
                             placeholder="Trọng số (%)"
+                            aria-label="Trọng số phần trăm"
                             value={trongSo}
                             onChange={(e) => setTrongSo(e.target.value)}
                             min="1"
@@ -535,6 +544,7 @@ function MonHoc() {
                       <div className="flex items-center justify-between">
                         <button
                           onClick={() => moFormThemDiem(mon.id)}
+                          aria-label={`Thêm điểm cho môn ${mon.ten}`}
                           className="text-ink-600 dark:text-ink-300 text-xs font-medium hover:text-ink-800 dark:hover:text-ink-200 flex items-center gap-1"
                         >
                           <Plus className="w-3.5 h-3.5" /> Thêm điểm
@@ -544,6 +554,7 @@ function MonHoc() {
                             onClick={() => moFormSua(mon)}
                             className="text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 transition-colors"
                             title="Sửa môn học"
+                            aria-label={`Sửa môn học ${mon.ten}`}
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
@@ -551,6 +562,7 @@ function MonHoc() {
                             onClick={() => yeuCauXoaMon(mon)}
                             className="text-slate-400 hover:text-rose-500 transition-colors"
                             title="Xóa môn học"
+                            aria-label={`Xóa môn học ${mon.ten}`}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>

@@ -132,8 +132,9 @@ function QuenMatKhau() {
 
           <form onSubmit={xuLySubmit} className="space-y-4">
             <motion.div custom={1} initial="an" animate="hien" variants={bienTheField}>
-              <label className="block text-sm font-medium text-slate-600 mb-1">Email của bạn</label>
+              <label htmlFor="forgot-email" className="block text-sm font-medium text-slate-600 mb-1">Email của bạn</label>
               <input
+                id="forgot-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

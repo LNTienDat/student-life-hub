@@ -245,6 +245,8 @@ function Deadline() {
           <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
             <button
               onClick={() => setCheDoXem('list')}
+              aria-label="Xem dạng danh sách"
+              aria-pressed={cheDoXem === 'list'}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 cheDoXem === 'list' 
                 ? 'bg-white dark:bg-slate-700 text-ink-600 dark:text-ink-200 shadow-sm' 
@@ -255,6 +257,8 @@ function Deadline() {
             </button>
             <button
               onClick={() => setCheDoXem('calendar')}
+              aria-label="Xem dạng lịch"
+              aria-pressed={cheDoXem === 'calendar'}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 cheDoXem === 'calendar' 
                 ? 'bg-white dark:bg-slate-700 text-ink-600 dark:text-ink-200 shadow-sm' 
@@ -298,8 +302,9 @@ function Deadline() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 ml-2">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Tiêu đề công việc</label>
+                <label htmlFor="deadline-title" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Tiêu đề công việc</label>
                 <input
+                  id="deadline-title"
                   type="text"
                   value={tieuDe}
                   onChange={(e) => setTieuDe(e.target.value)}
@@ -310,8 +315,9 @@ function Deadline() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Hạn chót</label>
+                <label htmlFor="deadline-due" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Hạn chót</label>
                 <input
+                  id="deadline-due"
                   type="datetime-local"
                   value={hanChot}
                   onChange={(e) => setHanChot(e.target.value)}
@@ -321,8 +327,9 @@ function Deadline() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Môn học (Tùy chọn)</label>
+                <label htmlFor="deadline-subject" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Môn học (Tùy chọn)</label>
                 <select
+                  id="deadline-subject"
                   value={idMonHoc}
                   onChange={(e) => setIdMonHoc(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 transition-shadow"
@@ -335,8 +342,9 @@ function Deadline() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Độ ưu tiên</label>
+                <label htmlFor="deadline-priority" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Độ ưu tiên</label>
                 <select
+                  id="deadline-priority"
                   value={doUuTien}
                   onChange={(e) => setDoUuTien(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 transition-shadow"
@@ -348,8 +356,9 @@ function Deadline() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Mô tả thêm (Tùy chọn)</label>
+                <label htmlFor="deadline-desc" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Mô tả thêm (Tùy chọn)</label>
                 <textarea
+                  id="deadline-desc"
                   value={moTa}
                   onChange={(e) => setMoTa(e.target.value)}
                   placeholder="Ghi chú thêm chi tiết, link tài liệu..."
@@ -389,6 +398,7 @@ function Deadline() {
               <div className="flex justify-between items-center p-4 md:p-6 border-b border-slate-200 dark:border-slate-700/60">
                 <button
                   onClick={() => setThangXemLich(new Date(thangXemLich.getFullYear(), thangXemLich.getMonth() - 1, 1))}
+                  aria-label="Xem tháng trước"
                   className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
                 >
                   <ChevronLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
@@ -398,6 +408,7 @@ function Deadline() {
                 </h2>
                 <button
                   onClick={() => setThangXemLich(new Date(thangXemLich.getFullYear(), thangXemLich.getMonth() + 1, 1))}
+                  aria-label="Xem tháng sau"
                   className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
                 >
                   <ChevronRight className="w-5 h-5 text-slate-600 dark:text-slate-400" />
@@ -538,7 +549,12 @@ function Deadline() {
                   <div className="grid gap-3">
                     {dangDienHanh.map((d) => (
                       <div key={d.id} className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 flex items-start gap-4 group hover:border-ink-300 dark:hover:border-ink-500 transition-colors">
-                        <button onClick={() => xuLyHoanThanh(d.id, false)} className="mt-0.5 flex-shrink-0" title="Đánh dấu hoàn thành">
+                        <button 
+                          onClick={() => xuLyHoanThanh(d.id, false)} 
+                          className="mt-0.5 flex-shrink-0" 
+                          title="Đánh dấu hoàn thành"
+                          aria-label={`Đánh dấu hoàn thành: ${d.tieuDe}`}
+                        >
                           <Circle className="w-6 h-6 text-slate-300 dark:text-slate-600 hover:text-emerald-500 hover:fill-emerald-50 transition-all" />
                         </button>
                         
@@ -571,11 +587,21 @@ function Deadline() {
                           )}
                         </div>
 
-                        <div className="flex flex-col gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
-                          <button onClick={() => moFormSua(d)} className="p-2 text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Sửa">
+                        <div className="flex flex-col gap-2 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex-shrink-0 ml-2">
+                          <button 
+                            onClick={() => moFormSua(d)} 
+                            className="p-2 text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors" 
+                            title="Sửa"
+                            aria-label={`Sửa deadline: ${d.tieuDe}`}
+                          >
                             <Edit2 className="w-4 h-4" />
                           </button>
-                          <button onClick={() => yeuCauXoa(d)} className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors" title="Xóa">
+                          <button 
+                            onClick={() => yeuCauXoa(d)} 
+                            className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors" 
+                            title="Xóa"
+                            aria-label={`Xóa deadline: ${d.tieuDe}`}
+                          >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -595,7 +621,12 @@ function Deadline() {
                   <div className="grid gap-2 opacity-70 hover:opacity-100 transition-opacity">
                     {daHoanThanh.map((d) => (
                       <div key={d.id} className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-4 group">
-                        <button onClick={() => xuLyHoanThanh(d.id, true)} className="flex-shrink-0" title="Hoàn tác">
+                        <button 
+                          onClick={() => xuLyHoanThanh(d.id, true)} 
+                          className="flex-shrink-0" 
+                          title="Hoàn tác"
+                          aria-label={`Đánh dấu chưa hoàn thành: ${d.tieuDe}`}
+                        >
                           <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                         </button>
                         <div className="flex-1 min-w-0">
@@ -604,7 +635,12 @@ function Deadline() {
                         <div className="text-xs text-slate-400 flex-shrink-0 mr-4">
                           {dinhDangNgay(d.hanChot)}
                         </div>
-                        <button onClick={() => yeuCauXoa(d)} className="p-1.5 text-slate-400 hover:text-rose-500 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0" title="Xóa">
+                        <button 
+                          onClick={() => yeuCauXoa(d)} 
+                          className="p-1.5 text-slate-400 hover:text-rose-500 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 transition-opacity flex-shrink-0" 
+                          title="Xóa"
+                          aria-label={`Xóa deadline: ${d.tieuDe}`}
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>

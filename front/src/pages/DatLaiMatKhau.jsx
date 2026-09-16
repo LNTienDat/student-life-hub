@@ -150,8 +150,9 @@ function DatLaiMatKhau() {
 
           <form onSubmit={xuLySubmit} className="space-y-4">
             <motion.div custom={1} initial="an" animate="hien" variants={bienTheField}>
-              <label className="block text-sm font-medium text-slate-600 mb-1">Mật khẩu mới</label>
+              <label htmlFor="reset-new-password" className="block text-sm font-medium text-slate-600 mb-1">Mật khẩu mới</label>
               <input
+                id="reset-new-password"
                 type="password"
                 value={matKhauMoi}
                 onChange={(e) => setMatKhauMoi(e.target.value)}
@@ -163,8 +164,9 @@ function DatLaiMatKhau() {
             </motion.div>
 
             <motion.div custom={2} initial="an" animate="hien" variants={bienTheField}>
-              <label className="block text-sm font-medium text-slate-600 mb-1">Xác nhận mật khẩu mới</label>
+              <label htmlFor="reset-confirm-password" className="block text-sm font-medium text-slate-600 mb-1">Xác nhận mật khẩu mới</label>
               <input
+                id="reset-confirm-password"
                 type="password"
                 value={xacNhan}
                 onChange={(e) => setXacNhan(e.target.value)}

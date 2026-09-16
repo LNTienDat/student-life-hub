@@ -122,6 +122,14 @@ function Layout({ children }) {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-200">
+      {/* Skip link for keyboard accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-ink-600 focus:text-white focus:rounded-xl focus:shadow-lg focus:outline-none"
+      >
+        Chuyển đến nội dung chính
+      </a>
+
       <nav className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700/60 sticky top-0 z-40 transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-20 items-center gap-4">
@@ -151,6 +159,8 @@ function Layout({ children }) {
                     onClick={moChuong}
                     className="btn-chuong relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
                     title="Thông báo"
+                    aria-label={`Thông báo${soChuaXem > 0 ? ` (${soChuaXem} chưa đọc)` : ''}`}
+                    aria-expanded={chuongMo}
                   >
                     <Bell className="w-5 h-5" />
                     {soChuaXem > 0 && (
@@ -163,6 +173,7 @@ function Layout({ children }) {
                 <button
                   onClick={doiTheme}
                   title={theme === 'dark' ? 'Giao diện sáng' : 'Giao diện tối'}
+                  aria-label={theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
                   className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
                 >
                   {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -184,6 +195,7 @@ function Layout({ children }) {
                   onClick={xuLyDangXuat} 
                   className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors flex-shrink-0"
                   title="Đăng xuất"
+                  aria-label="Đăng xuất khỏi tài khoản"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -192,18 +204,29 @@ function Layout({ children }) {
 
             {/* Mobile menu button */}
             <div className="md:hidden flex items-center gap-1">
-              <button onClick={moChuong} className="btn-chuong p-2 relative text-slate-500 dark:text-slate-400">
+              <button 
+                onClick={moChuong} 
+                aria-label={`Thông báo${soChuaXem > 0 ? ` (${soChuaXem} chưa đọc)` : ''}`}
+                aria-expanded={chuongMo}
+                className="btn-chuong p-2 relative text-slate-500 dark:text-slate-400"
+              >
                 <Bell className="w-5 h-5" />
                 {soChuaXem > 0 && (
                   <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-800"></span>
                 )}
               </button>
-              <button onClick={doiTheme} className="p-2 text-slate-500 dark:text-slate-400">
+              <button 
+                onClick={doiTheme} 
+                aria-label={theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
+                className="p-2 text-slate-500 dark:text-slate-400"
+              >
                 {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
               <button
                 className="p-2 text-slate-500 dark:text-slate-400"
                 onClick={() => setMenuMoMobile(!menuMoMobile)}
+                aria-label={menuMoMobile ? 'Đóng menu điều hướng' : 'Mở menu điều hướng'}
+                aria-expanded={menuMoMobile}
               >
                 {menuMoMobile ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -219,6 +242,7 @@ function Layout({ children }) {
               {thongBaos.length > 0 && (
                 <button
                   onClick={danhDauTatCaDaXem}
+                  aria-label="Đánh dấu tất cả thông báo đã xem"
                   className="text-xs font-medium text-ink-600 dark:text-ink-400 hover:text-ink-700 dark:hover:text-ink-300 transition-colors"
                 >
                   Đọc tất cả
@@ -308,14 +332,14 @@ function Layout({ children }) {
             <span className="flex-1">
               <strong className="font-semibold">Cảnh báo:</strong> Bạn có {deadlinesGap.length} deadline sắp hết hạn trong 24h tới ({deadlinesGap.map((d) => d.tieuDe).join(', ')}).
             </span>
-            <button onClick={() => setBannerAn(true)} className="ml-4 p-1 rounded-md hover:bg-amber-100 dark:hover:bg-amber-800/30 transition-colors flex-shrink-0">
+            <button onClick={() => setBannerAn(true)} aria-label="Đóng cảnh báo" className="ml-4 p-1 rounded-md hover:bg-amber-100 dark:hover:bg-amber-800/30 transition-colors flex-shrink-0">
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full">
+      <main id="main-content" className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full">
         <motion.div
           key={location.pathname}
           initial={{ opacity: 0.85, y: 3 }}

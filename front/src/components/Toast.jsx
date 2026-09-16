@@ -5,7 +5,7 @@ export default function Toast({ toast, onClose }) {
   return (
     <AnimatePresence>
       {toast && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+        <div role="status" aria-live="polite" className="fixed top-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
           <motion.div
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -31,6 +31,7 @@ export default function Toast({ toast, onClose }) {
 
             <button
               onClick={onClose}
+              aria-label="Đóng thông báo"
               className="ml-2 p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-current opacity-70 hover:opacity-100 transition-opacity"
             >
               <X className="w-3.5 h-3.5" />

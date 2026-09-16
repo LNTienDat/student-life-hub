@@ -144,8 +144,9 @@ function Profile() {
 
             <form onSubmit={xuLySuaHoSo} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Họ tên</label>
+                <label htmlFor="profile-name" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Họ tên</label>
                 <input 
+                  id="profile-name"
                   value={ten} 
                   onChange={(e) => setTen(e.target.value)} 
                   maxLength={30}
@@ -170,7 +171,7 @@ function Profile() {
             {/* Mục Email tài khoản */}
             <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-700/50 space-y-2">
               <div className="flex justify-between items-baseline">
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">Email tài khoản</label>
+                <label htmlFor="profile-email" className="block text-sm font-medium text-slate-600 dark:text-slate-400">Email tài khoản</label>
                 <button
                   type="button"
                   onClick={() => { setHienFormEmail(!hienFormEmail); setThongBaoEmail(null); }}
@@ -182,6 +183,7 @@ function Profile() {
 
               <div className="relative">
                 <input 
+                  id="profile-email"
                   value={email} 
                   disabled
                   className="w-full bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 font-medium rounded-xl pl-10 pr-4 py-2.5 text-sm cursor-not-allowed select-none" 
@@ -205,8 +207,9 @@ function Profile() {
                   )}
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Email mới</label>
+                    <label htmlFor="profile-new-email" className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Email mới</label>
                     <input
+                      id="profile-new-email"
                       type="email"
                       value={emailMoi}
                       onChange={(e) => setEmailMoi(e.target.value)}
@@ -217,9 +220,10 @@ function Profile() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Mật khẩu hiện tại</label>
+                    <label htmlFor="profile-confirm-password" className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Mật khẩu hiện tại</label>
                     <div className="relative">
                       <input
+                        id="profile-confirm-password"
                         type={hienMKXacNhan ? 'text' : 'password'}
                         value={matKhauXacNhan}
                         onChange={(e) => setMatKhauXacNhan(e.target.value)}
@@ -231,7 +235,8 @@ function Profile() {
                         type="button"
                         onClick={() => setHienMKXacNhan(!hienMKXacNhan)}
                         className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600"
-                        tabIndex={-1}
+                        title={hienMKXacNhan ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                        aria-label={hienMKXacNhan ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                       >
                         {hienMKXacNhan ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                       </button>
@@ -286,9 +291,10 @@ function Profile() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Mật khẩu hiện tại</label>
+                <label htmlFor="profile-current-password" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Mật khẩu hiện tại</label>
                 <div className="relative">
                   <input 
+                    id="profile-current-password"
                     type={hienMKCu ? 'text' : 'password'}
                     value={matKhauCu} 
                     onChange={(e) => setMatKhauCu(e.target.value)} 
@@ -301,7 +307,7 @@ function Profile() {
                     onClick={() => setHienMKCu(!hienMKCu)}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
                     title={hienMKCu ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                    tabIndex={-1}
+                    aria-label={hienMKCu ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                   >
                     {hienMKCu ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -309,9 +315,10 @@ function Profile() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Mật khẩu mới</label>
+                <label htmlFor="profile-new-password" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Mật khẩu mới</label>
                 <div className="relative">
                   <input 
+                    id="profile-new-password"
                     type={hienMKMoi ? 'text' : 'password'}
                     value={matKhauMoi} 
                     onChange={(e) => setMatKhauMoi(e.target.value)} 
@@ -325,7 +332,7 @@ function Profile() {
                     onClick={() => setHienMKMoi(!hienMKMoi)}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
                     title={hienMKMoi ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                    tabIndex={-1}
+                    aria-label={hienMKMoi ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                   >
                     {hienMKMoi ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>

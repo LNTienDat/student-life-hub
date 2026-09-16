@@ -12,6 +12,7 @@ export default function GlowingNav({ menu }) {
           <Link
             key={item.path}
             to={item.path}
+            aria-current={isActive ? 'page' : undefined}
             className={`relative px-4 py-2 rounded-xl text-sm font-medium transition-colors duration-150 flex items-center justify-center z-10 select-none whitespace-nowrap ${
               isActive
                 ? 'text-ink-700 dark:text-ink-100 font-semibold'

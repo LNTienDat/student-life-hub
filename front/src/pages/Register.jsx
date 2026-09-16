@@ -132,8 +132,9 @@ function Register() {
 
           <form onSubmit={xuLySubmit} className="space-y-4">
             <motion.div custom={1} initial="an" animate="hien" variants={bienTheField}>
-              <label className="block text-sm font-medium text-slate-600 mb-1">Họ tên</label>
+              <label htmlFor="register-name" className="block text-sm font-medium text-slate-600 mb-1">Họ tên</label>
               <input
+                id="register-name"
                 type="text"
                 value={ten}
                 onChange={(e) => setTen(e.target.value)}
@@ -145,8 +146,9 @@ function Register() {
             </motion.div>
 
             <motion.div custom={2} initial="an" animate="hien" variants={bienTheField}>
-              <label className="block text-sm font-medium text-slate-600 mb-1">Email</label>
+              <label htmlFor="register-email" className="block text-sm font-medium text-slate-600 mb-1">Email</label>
               <input
+                id="register-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -157,9 +159,10 @@ function Register() {
             </motion.div>
 
             <motion.div custom={3} initial="an" animate="hien" variants={bienTheField}>
-              <label className="block text-sm font-medium text-slate-600 mb-1">Mật khẩu</label>
+              <label htmlFor="register-password" className="block text-sm font-medium text-slate-600 mb-1">Mật khẩu</label>
               <div className="relative">
                 <input
+                  id="register-password"
                   type={hienMatKhau ? 'text' : 'password'}
                   value={matKhau}
                   onChange={(e) => setMatKhau(e.target.value)}
@@ -173,7 +176,7 @@ function Register() {
                   onClick={() => setHienMatKhau(!hienMatKhau)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
                   title={hienMatKhau ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                  tabIndex={-1}
+                  aria-label={hienMatKhau ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 >
                   {hienMatKhau ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -181,9 +184,10 @@ function Register() {
             </motion.div>
 
             <motion.div custom={4} initial="an" animate="hien" variants={bienTheField}>
-              <label className="block text-sm font-medium text-slate-600 mb-1">Xác nhận mật khẩu</label>
+              <label htmlFor="register-confirm-password" className="block text-sm font-medium text-slate-600 mb-1">Xác nhận mật khẩu</label>
               <div className="relative">
                 <input
+                  id="register-confirm-password"
                   type={hienMatKhau ? 'text' : 'password'}
                   value={xacNhanMatKhau}
                   onChange={(e) => setXacNhanMatKhau(e.target.value)}

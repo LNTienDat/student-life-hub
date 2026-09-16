@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useId } from 'react';
 import { ChevronDown, Search } from 'lucide-react';
 
 export default function Autocomplete({ 
@@ -10,12 +10,20 @@ export default function Autocomplete({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(value || '');
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const wrapperRef = useRef(null);
+  const inputRef = useRef(null);
+  const listboxId = useId();
 
   // Sync internal state if external value changes
   useEffect(() => {
     setSearchTerm(value || '');
   }, [value]);
+
+  // Reset highlight index when dropdown opens or filter changes
+  useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [searchTerm, isOpen]);
 
   // Click outside to close dropdown
   useEffect(() => {
@@ -40,6 +48,7 @@ export default function Autocomplete({
     setSearchTerm(option);
     onChange(option);
     setIsOpen(false);
+    setHighlightedIndex(-1);
   };
 
   const handleInputChange = (e) => {
@@ -49,16 +58,61 @@ export default function Autocomplete({
     setIsOpen(true);
   };
 
+  const handleKeyDown = (e) => {
+    if (!isOpen) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        setIsOpen(true);
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (filteredOptions.length > 0) {
+        setHighlightedIndex(prev => 
+          prev < filteredOptions.length - 1 ? prev + 1 : 0
+        );
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (filteredOptions.length > 0) {
+        setHighlightedIndex(prev => 
+          prev > 0 ? prev - 1 : filteredOptions.length - 1
+        );
+      }
+    } else if (e.key === 'Enter') {
+      if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
+        e.preventDefault();
+        handleSelect(filteredOptions[highlightedIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setIsOpen(false);
+    }
+  };
+
   return (
     <div ref={wrapperRef} className="relative w-full">
       <div 
         className="relative flex items-center w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl transition-shadow focus-within:ring-2 focus-within:ring-ink-500/30 dark:focus-within:ring-ink-400/40"
       >
         <input
+          ref={inputRef}
           type="text"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={isOpen}
+          aria-controls={isOpen ? listboxId : undefined}
+          aria-activedescendant={
+            isOpen && highlightedIndex >= 0
+              ? `${listboxId}-option-${highlightedIndex}`
+              : undefined
+          }
           value={searchTerm}
           onChange={handleInputChange}
           onClick={() => setIsOpen(true)}
+          onKeyDown={handleKeyDown}
           placeholder={placeholder}
           required={required}
           className="w-full bg-transparent text-slate-900 dark:text-white px-4 py-2.5 text-sm focus:outline-none"
@@ -66,6 +120,8 @@ export default function Autocomplete({
         <button 
           type="button" 
           onClick={() => setIsOpen(!isOpen)}
+          aria-label={isOpen ? "Đóng danh sách gợi ý" : "Mở danh sách gợi ý"}
+          aria-expanded={isOpen}
           className="pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 focus:outline-none"
         >
           <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
@@ -73,18 +129,34 @@ export default function Autocomplete({
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg max-h-60 overflow-y-auto overflow-x-hidden">
+        <div 
+          id={listboxId}
+          role="listbox"
+          aria-label={placeholder}
+          className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg max-h-60 overflow-y-auto overflow-x-hidden"
+        >
           {filteredOptions.length > 0 ? (
             <ul className="py-1">
-              {filteredOptions.map((option, index) => (
-                <li
-                  key={index}
-                  onClick={() => handleSelect(option)}
-                  className="px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors"
-                >
-                  {option}
-                </li>
-              ))}
+              {filteredOptions.map((option, index) => {
+                const isSelected = index === highlightedIndex;
+                return (
+                  <li
+                    key={index}
+                    id={`${listboxId}-option-${index}`}
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => handleSelect(option)}
+                    onMouseEnter={() => setHighlightedIndex(index)}
+                    className={`px-4 py-2.5 text-sm cursor-pointer transition-colors ${
+                      isSelected
+                        ? 'bg-ink-100 dark:bg-slate-700 text-ink-900 dark:text-white font-medium'
+                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                    }`}
+                  >
+                    {option}
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <div className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400 flex flex-col items-center gap-2">

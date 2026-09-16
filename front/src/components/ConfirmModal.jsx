@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, AlertTriangle, Info, X } from 'lucide-react';
 
@@ -15,14 +15,22 @@ export default function ConfirmModal({
   type = 'danger', // 'danger' | 'warning' | 'info'
   isLoading = false
 }) {
-  // Đóng khi bấm phím ESC
+  const cancelBtnRef = useRef(null);
+
+  // Đóng khi bấm phím ESC & Tự động focus nút hủy để hỗ trợ bàn phím
   useEffect(() => {
     function handleKeyDown(e) {
       if (e.key === 'Escape' && isOpen && !isLoading) {
         onClose();
       }
     }
-    window.addEventListener('keydown', handleKeyDown);
+    if (isOpen) {
+      // Focus vào nút hủy bỏ khi modal mở ra
+      setTimeout(() => {
+        cancelBtnRef.current?.focus();
+      }, 50);
+      window.addEventListener('keydown', handleKeyDown);
+    }
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, isLoading, onClose]);
 
@@ -37,10 +45,15 @@ export default function ConfirmModal({
             exit={{ opacity: 0 }}
             onClick={!isLoading ? onClose : undefined}
             className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity"
+            aria-hidden="true"
           />
 
           {/* Khung Modal */}
           <motion.div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="confirm-modal-title"
+            aria-describedby="confirm-modal-desc"
             initial={{ opacity: 0, scale: 0.92, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 15 }}
@@ -53,6 +66,7 @@ export default function ConfirmModal({
               disabled={isLoading}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors disabled:opacity-50"
               title="Đóng"
+              aria-label="Đóng"
             >
               <X className="w-4 h-4" />
             </button>
@@ -78,7 +92,7 @@ export default function ConfirmModal({
               </div>
 
               <div className="flex-1 pr-6">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-snug">
+                <h3 id="confirm-modal-title" className="text-lg font-bold text-slate-900 dark:text-white leading-snug">
                   {title}
                 </h3>
                 {subTitle && (
@@ -120,13 +134,14 @@ export default function ConfirmModal({
             )}
 
             {/* Nội dung thông báo giải thích */}
-            <p className="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            <p id="confirm-modal-desc" className="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
               {message}
             </p>
 
             {/* Các nút hành động */}
             <div className="mt-6 flex items-center justify-end gap-3 pt-2">
               <button
+                ref={cancelBtnRef}
                 type="button"
                 onClick={onClose}
                 disabled={isLoading}

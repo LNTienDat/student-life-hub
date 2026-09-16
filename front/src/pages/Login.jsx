@@ -129,8 +129,9 @@ function Login() {
 
           <form onSubmit={xuLySubmit} className="space-y-4">
             <motion.div custom={1} initial="an" animate="hien" variants={bienTheField}>
-              <label className="block text-sm font-medium text-slate-600 mb-1">Email</label>
+              <label htmlFor="login-email" className="block text-sm font-medium text-slate-600 mb-1">Email</label>
               <input
+                id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -141,13 +142,14 @@ function Login() {
 
             <motion.div custom={2} initial="an" animate="hien" variants={bienTheField}>
               <div className="flex items-baseline justify-between mb-1">
-                <label className="block text-sm font-medium text-slate-600">Mật khẩu</label>
+                <label htmlFor="login-password" className="block text-sm font-medium text-slate-600">Mật khẩu</label>
                 <Link to="/quen-mat-khau" className="text-xs text-ink-600 hover:text-ink-700">
                   Quên mật khẩu?
                 </Link>
               </div>
               <div className="relative">
                 <input
+                  id="login-password"
                   type={hienMatKhau ? 'text' : 'password'}
                   value={matKhau}
                   onChange={(e) => setMatKhau(e.target.value)}
@@ -159,7 +161,7 @@ function Login() {
                   onClick={() => setHienMatKhau(!hienMatKhau)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
                   title={hienMatKhau ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                  tabIndex={-1}
+                  aria-label={hienMatKhau ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                 >
                   {hienMatKhau ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
