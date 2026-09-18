@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 require('dotenv').config();
 
 const authRoutes = require('./src/modules/auth/auth.routes');
@@ -13,6 +14,9 @@ const thongBaoRoutes = require('./src/modules/thongbao/thongbao.routes');
 const chatbotRoutes = require('./src/modules/chatbot/chatbot.routes');
 const { khoiDongCronJobs } = require('./src/cron/thongBao.cron');
 const prisma = require('./src/prismaClient');
+
+const swaggerUi = require('swagger-ui-express');
+const swaggerDoc = require('./src/docs/swagger.json');
 
 const { RATE_LIMIT } = require('./src/constants');
 
@@ -34,6 +38,7 @@ app.use(
   })
 );
 
+app.use(compression());
 app.use(express.json({ limit: '500kb' }));
 
 // Rate limiter toàn cục
@@ -60,6 +65,9 @@ app.get('/', (req, res) => {
   res.send('Backend đang chạy ngon lành!');
 });
 
+// Swagger UI - Tài liệu API tương tác
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/academic', academicRoutes);
 app.use('/api/deadline', deadlineRoutes);
@@ -82,11 +90,14 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Đã có lỗi xảy ra ở server' });
 });
 
-const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
-  console.log(`Server đang chạy tại http://localhost:${PORT}`);
-  khoiDongCronJobs();
-});
+let server;
+if (process.env.NODE_ENV !== 'test') {
+  const PORT = process.env.PORT || 5000;
+  server = app.listen(PORT, () => {
+    console.log(`Server đang chạy tại http://localhost:${PORT}`);
+    khoiDongCronJobs();
+  });
+}
 
 // Đóng tắt êm (graceful shutdown) — khi hosting/Docker gửi tín hiệu dừng
 // (VD: trước khi deploy bản mới), dừng nhận request mới, để request đang
@@ -95,11 +106,15 @@ const server = app.listen(PORT, () => {
 // DB không đóng đúng cách.
 function tatEm(tinHieu) {
   console.log(`[Shutdown] Nhận tín hiệu ${tinHieu}, đang đóng server êm...`);
-  server.close(async () => {
-    await prisma.$disconnect();
-    console.log('[Shutdown] Đã đóng server và ngắt kết nối database.');
+  if (server) {
+    server.close(async () => {
+      await prisma.$disconnect();
+      console.log('[Shutdown] Đã đóng server và ngắt kết nối database.');
+      process.exit(0);
+    });
+  } else {
     process.exit(0);
-  });
+  }
 }
 
 process.on('SIGTERM', () => tatEm('SIGTERM'));
@@ -122,3 +137,5 @@ process.on('uncaughtException', (err) => {
   // động lại sạch, thay vì tiếp tục chạy ngầm ở trạng thái có thể đã hỏng.
   process.exit(1);
 });
+
+module.exports = app;

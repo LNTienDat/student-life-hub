@@ -1,0 +1,292 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Student Life Hub API",
+    "version": "1.0.0",
+    "description": "Hệ thống API backend quản lý toàn diện đời sống sinh viên (Học tập, Deadline, Tài chính, Thời khóa biểu, Trợ lý AI và Thông báo tự động)."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Local Development Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Nhập JWT token dạng: Bearer <token>"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Kiểm tra tình trạng sức khỏe hệ thống & kết nối CSDL",
+        "tags": ["System"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Hệ thống hoạt động bình thường"
+          }
+        }
+      }
+    },
+    "/api/auth/dang-ky": {
+      "post": {
+        "summary": "Đăng ký tài khoản sinh viên mới",
+        "tags": ["Auth"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "matKhau", "ten"],
+                "properties": {
+                  "email": { "type": "string", "example": "sv@university.edu.vn" },
+                  "matKhau": { "type": "string", "example": "MatKhau123@" },
+                  "ten": { "type": "string", "example": "Nguyễn Văn A" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Đăng ký thành công" },
+          "400": { "description": "Dữ liệu không hợp lệ hoặc email đã tồn tại" }
+        }
+      }
+    },
+    "/api/auth/dang-nhap": {
+      "post": {
+        "summary": "Đăng nhập và lấy JWT token",
+        "tags": ["Auth"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "matKhau"],
+                "properties": {
+                  "email": { "type": "string", "example": "sv@university.edu.vn" },
+                  "matKhau": { "type": "string", "example": "MatKhau123@" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Đăng nhập thành công, trả về token và user" },
+          "400": { "description": "Sai email hoặc mật khẩu" }
+        }
+      }
+    },
+    "/api/academic/mon-hoc": {
+      "get": {
+        "summary": "Lấy danh sách môn học kèm điểm thành phần của sinh viên",
+        "tags": ["Academic"],
+        "responses": {
+          "200": { "description": "Danh sách môn học" }
+        }
+      },
+      "post": {
+        "summary": "Thêm môn học mới",
+        "tags": ["Academic"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["ten", "tinChi", "hocKy"],
+                "properties": {
+                  "ten": { "type": "string", "example": "Cơ sở dữ liệu" },
+                  "tinChi": { "type": "integer", "example": 3 },
+                  "hocKy": { "type": "string", "example": "HK1 2024" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Tạo môn học thành công" }
+        }
+      }
+    },
+    "/api/academic/gpa": {
+      "get": {
+        "summary": "Tính toán điểm trung bình tích lũy GPA (thang 4 và thang 10)",
+        "tags": ["Academic"],
+        "responses": {
+          "200": { "description": "Trả về gpa, tongTinChi, xepLoai" }
+        }
+      }
+    },
+    "/api/academic/canh-bao": {
+      "get": {
+        "summary": "Cảnh báo các môn học có nguy cơ rớt hoặc điểm thấp",
+        "tags": ["Academic"],
+        "responses": {
+          "200": { "description": "Danh sách môn nguy cơ" }
+        }
+      }
+    },
+    "/api/academic/xuat-bang-diem": {
+      "get": {
+        "summary": "Xuất bảng điểm sinh viên ra file PDF",
+        "tags": ["Academic"],
+        "responses": {
+          "200": { "description": "File PDF stream", "content": { "application/pdf": {} } }
+        }
+      }
+    },
+    "/api/deadline": {
+      "get": {
+        "summary": "Lấy toàn bộ danh sách deadline",
+        "tags": ["Deadline"],
+        "responses": {
+          "200": { "description": "Danh sách deadlines" }
+        }
+      },
+      "post": {
+        "summary": "Tạo deadline mới",
+        "tags": ["Deadline"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["tieuDe", "hanChot"],
+                "properties": {
+                  "tieuDe": { "type": "string", "example": "Nộp bài tập lớn" },
+                  "hanChot": { "type": "string", "format": "date-time" },
+                  "doUuTien": { "type": "string", "enum": ["thap", "binh_thuong", "cao"] },
+                  "idMonHoc": { "type": "integer", "nullable": true }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Tạo deadline thành công" }
+        }
+      }
+    },
+    "/api/deadline/sap-toi": {
+      "get": {
+        "summary": "Lấy các deadline sắp đến hạn trong vòng N ngày",
+        "tags": ["Deadline"],
+        "parameters": [
+          { "name": "soNgay", "in": "query", "schema": { "type": "integer", "default": 7 } }
+        ],
+        "responses": {
+          "200": { "description": "Danh sách deadline sắp tới" }
+        }
+      }
+    },
+    "/api/finance/giao-dich": {
+      "get": {
+        "summary": "Lấy danh sách giao dịch có phân trang, lọc và tìm kiếm",
+        "tags": ["Finance"],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 } },
+          { "name": "loai", "in": "query", "schema": { "type": "string", "enum": ["thu", "chi"] } },
+          { "name": "danhMuc", "in": "query", "schema": { "type": "string" } },
+          { "name": "timKiem", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Danh sách giao dịch và thông tin phân trang" }
+        }
+      },
+      "post": {
+        "summary": "Thêm giao dịch thu/chi mới",
+        "tags": ["Finance"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["soTien", "loai", "danhMuc"],
+                "properties": {
+                  "soTien": { "type": "number", "example": 50000 },
+                  "loai": { "type": "string", "enum": ["thu", "chi"] },
+                  "danhMuc": { "type": "string", "example": "an_uong" },
+                  "moTa": { "type": "string", "example": "Ăn trưa cơm sườn" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Tạo giao dịch thành công" }
+        }
+      }
+    },
+    "/api/finance/thong-ke": {
+      "get": {
+        "summary": "Lấy thống kê tổng thu, tổng chi, số dư theo tháng",
+        "tags": ["Finance"],
+        "responses": {
+          "200": { "description": "Dữ liệu thống kê tài chính" }
+        }
+      }
+    },
+    "/api/finance/xu-huong": {
+      "get": {
+        "summary": "Lấy biểu đồ xu hướng thu - chi 6 tháng gần nhất",
+        "tags": ["Finance"],
+        "responses": {
+          "200": { "description": "Chuỗi dữ liệu 6 tháng" }
+        }
+      }
+    },
+    "/api/finance/xuat-bao-cao": {
+      "get": {
+        "summary": "Xuất báo cáo tài chính ra file Excel an toàn (chống CSV Injection)",
+        "tags": ["Finance"],
+        "responses": {
+          "200": { "description": "File Excel (.xlsx)" }
+        }
+      }
+    },
+    "/api/thoi-khoa-bieu": {
+      "get": {
+        "summary": "Lấy thời khóa biểu tuần của sinh viên",
+        "tags": ["Timetable"],
+        "responses": {
+          "200": { "description": "Danh sách các buổi học trong tuần" }
+        }
+      },
+      "post": {
+        "summary": "Thêm một buổi học vào thời khóa biểu",
+        "tags": ["Timetable"],
+        "responses": {
+          "201": { "description": "Thêm buổi học thành công" }
+        }
+      }
+    },
+    "/api/thong-bao": {
+      "get": {
+        "summary": "Lấy danh sách thông báo in-app kèm số lượng chưa đọc",
+        "tags": ["Notification"],
+        "responses": {
+          "200": { "description": "Danh sách thông báo" }
+        }
+      }
+    }
+  }
+}

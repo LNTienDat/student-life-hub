@@ -8,6 +8,7 @@ import { BookOpen, Plus, X, Target, Download } from 'lucide-react';
 import SubjectGpaChart from './monhoc/SubjectGpaChart';
 import SubjectForm from './monhoc/SubjectForm';
 import SubjectCard from './monhoc/SubjectCard';
+import { PageSkeleton } from '../components/Skeleton';
 
 function MonHoc() {
   const [danhSach, setDanhSach] = useState([]);
@@ -304,10 +305,7 @@ function MonHoc() {
 
         {/* 3. Danh sách môn học */}
         {dangTai ? (
-          <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60">
-            <div className="w-8 h-8 border-4 border-ink-200 border-t-ink-600 rounded-full animate-spin"></div>
-            <p className="mt-4 text-slate-500">Đang tải dữ liệu...</p>
-          </div>
+          <PageSkeleton />
         ) : danhSach.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-16 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60 text-center">
             <div className="w-16 h-16 bg-slate-50 dark:bg-slate-900/50 rounded-full flex items-center justify-center mb-4">

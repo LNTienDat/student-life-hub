@@ -53,6 +53,10 @@ async function dangNhap(req, res) {
     const { matKhau } = req.body;
     const email = req.body.email ? req.body.email.trim().toLowerCase() : req.body.email;
 
+    if (!email || !matKhau) {
+      return res.status(400).json({ message: 'Vui lòng cung cấp đầy đủ email và mật khẩu' });
+    }
+
     const nguoiDung = await prisma.nguoiDung.findUnique({ where: { email } });
     const dungMatKhau = await bcrypt.compare(matKhau, nguoiDung ? nguoiDung.matKhau : AUTH.DUMMY_HASH);
 

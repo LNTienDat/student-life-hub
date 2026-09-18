@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # 1. Cơ sở dữ liệu PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: slh_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: student_life_hub
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d student_life_hub"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Backend Node.js Express API
+  backend:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: slh_backend
+    restart: always
+    environment:
+      PORT: 5000
+      DATABASE_URL: postgresql://postgres:postgrespassword@postgres:5432/student_life_hub?schema=public
+      JWT_SECRET: slh_production_super_secret_jwt_key_2026
+      FRONTEND_URL: http://localhost:3000
+      NODE_ENV: production
+      TRUST_PROXY: "true"
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # 3. Frontend React Vite Nginx
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:5000/api
+    container_name: slh_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+    driver: local

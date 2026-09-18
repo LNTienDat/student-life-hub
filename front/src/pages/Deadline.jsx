@@ -10,6 +10,8 @@ import { Calendar as CalendarIcon, List, Plus, X, Clock } from 'lucide-react';
 import DeadlineForm from './deadline/DeadlineForm';
 import DeadlineCalendarView from './deadline/DeadlineCalendarView';
 import DeadlineListView from './deadline/DeadlineListView';
+import triggerConfetti from '../utils/confetti';
+import { PageSkeleton } from '../components/Skeleton';
 
 function Deadline() {
   const [danhSach, setDanhSach] = useState([]);
@@ -152,6 +154,9 @@ function Deadline() {
   async function xuLyHoanThanh(id, dangHoanThanh) {
     try {
       await deadlineService.suaDeadline(id, { trangThai: dangHoanThanh ? 'cho_xu_ly' : 'hoan_thanh' });
+      if (!dangHoanThanh) {
+        triggerConfetti();
+      }
       hienToast(
         'success',
         dangHoanThanh ? 'Đã hoàn tác trạng thái deadline' : 'Chúc mừng bạn đã hoàn thành deadline! 🎉'
@@ -252,10 +257,7 @@ function Deadline() {
         />
 
         {dangTai ? (
-          <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60">
-            <div className="w-8 h-8 border-4 border-ink-200 border-t-ink-600 rounded-full animate-spin"></div>
-            <p className="mt-4 text-slate-500">Đang tải dữ liệu...</p>
-          </div>
+          <PageSkeleton />
         ) : cheDoXem === 'calendar' ? (
           <DeadlineCalendarView
             thangXemLich={thangXemLich}

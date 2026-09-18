@@ -12,6 +12,7 @@ import BudgetSection from './taichinh/BudgetSection';
 import FinanceTrendChart from './taichinh/FinanceTrendChart';
 import TransactionForm from './taichinh/TransactionForm';
 import TransactionTable from './taichinh/TransactionTable';
+import { PageSkeleton } from '../components/Skeleton';
 
 function TaiChinh() {
   const now = new Date();
@@ -262,10 +263,7 @@ function TaiChinh() {
         </div>
 
         {dangTai ? (
-          <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60">
-            <div className="w-8 h-8 border-4 border-ink-200 border-t-ink-600 rounded-full animate-spin"></div>
-            <p className="mt-4 text-slate-500">Đang tải dữ liệu...</p>
-          </div>
+          <PageSkeleton />
         ) : !thongKe ? (
           <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60">
             <p className="text-rose-500">Lỗi tải dữ liệu thống kê!</p>

@@ -12,6 +12,7 @@ import DashboardKpiCards from './dashboard/DashboardKpiCards';
 import DashboardWarnings from './dashboard/DashboardWarnings';
 import DashboardRecentLists from './dashboard/DashboardRecentLists';
 import DashboardCharts from './dashboard/DashboardCharts';
+import { PageSkeleton } from '../components/Skeleton';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -141,10 +142,7 @@ function Dashboard() {
           </button>
         </div>
       ) : dangTai ? (
-        <div className="flex flex-col items-center justify-center py-24">
-          <div className="w-10 h-10 border-3 border-ink-200 border-t-ink-600 rounded-full animate-spin" />
-          <p className="text-slate-500 mt-4 text-sm font-medium">Đang đồng bộ dữ liệu của bạn...</p>
-        </div>
+        <PageSkeleton />
       ) : (
         <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
           <DashboardKpiCards

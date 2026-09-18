@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node --watch app.js",
     "start": "node app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --runInBand --detectOpenHandles --forceExit"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +15,7 @@
   "dependencies": {
     "@prisma/client": "^5.8.0",
     "bcryptjs": "^3.0.3",
+    "compression": "^1.8.2",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "exceljs": "^4.4.0",
@@ -25,6 +26,11 @@
     "node-cron": "^4.6.0",
     "nodemailer": "^10.0.1",
     "pdfkit": "^0.15.0",
-    "prisma": "^5.8.0"
+    "prisma": "^5.8.0",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "jest": "^30.5.2",
+    "supertest": "^7.2.2"
   }
 }
