@@ -1,33 +1,28 @@
 const rateLimit = require('express-rate-limit');
+const { RATE_LIMIT } = require('../constants');
 
-// Giới hạn số lần thử đăng nhập/quên mật khẩu để chống brute-force —
-// 10 lần / 15 phút / mỗi IP, đủ thoải mái cho người dùng thật gõ nhầm
-// mật khẩu vài lần, nhưng chặn được tấn công dò mật khẩu tự động.
+// Giới hạn số lần thử đăng nhập/quên mật khẩu để chống brute-force
 const gioiHanDangNhap = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 10,
+  windowMs: RATE_LIMIT.AUTH_WINDOW_MS,
+  limit: RATE_LIMIT.AUTH_MAX,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Bạn đã thử quá nhiều lần, vui lòng thử lại sau ít phút.' },
 });
 
-// Giới hạn gọi Chatbot — API Gemini tính phí theo lượng dùng, cần chặn
-// việc gọi lặp lại liên tục (vô tình do bug frontend hoặc cố ý spam).
-// 20 tin nhắn / 5 phút / mỗi IP là đủ thoải mái cho 1 phiên chat bình thường.
+// Giới hạn gọi Chatbot — chặn spam API Gemini
 const gioiHanChatbot = rateLimit({
-  windowMs: 5 * 60 * 1000,
-  limit: 20,
+  windowMs: RATE_LIMIT.CHATBOT_WINDOW_MS,
+  limit: RATE_LIMIT.CHATBOT_MAX,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Bạn nhắn hơi nhanh, vui lòng chờ một chút rồi thử lại.' },
 });
 
-// Giới hạn API kích hoạt thủ công cron (test gửi email) — dù đã scope theo
-// người dùng, vẫn nên chặn vòng lặp gọi liên tục để tránh spam hộp thư
-// chính mình hoặc chạm giới hạn gửi email của nhà cung cấp SMTP.
+// Giới hạn API kích hoạt thủ công cron (test gửi email)
 const gioiHanTestCron = rateLimit({
-  windowMs: 10 * 60 * 1000,
-  limit: 5,
+  windowMs: RATE_LIMIT.CRON_TEST_WINDOW_MS,
+  limit: RATE_LIMIT.CRON_TEST_MAX,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Bạn đã test quá nhiều lần, vui lòng thử lại sau ít phút.' },

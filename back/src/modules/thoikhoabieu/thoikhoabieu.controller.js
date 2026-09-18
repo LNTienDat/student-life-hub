@@ -1,22 +1,21 @@
 const prisma = require('../../prismaClient');
+const { THOIKHOABIEU } = require('../../constants');
 
 // Kiểm tra thứ (2=Thứ 2 ... 8=Chủ nhật) và giờ kết thúc phải sau giờ bắt đầu.
-// Frontend đã tự kiểm tra việc này, nhưng phải kiểm tra lại ở backend vì ai
-// đó có thể gọi thẳng API mà bỏ qua frontend.
 function validateBuoiHoc({ tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien }) {
-  if (tenMon && tenMon.length > 100) {
-    return 'Tên môn học không được vượt quá 100 ký tự';
+  if (tenMon && tenMon.length > THOIKHOABIEU.MAX_TEN_MON_LENGTH) {
+    return `Tên môn học không được vượt quá ${THOIKHOABIEU.MAX_TEN_MON_LENGTH} ký tự`;
   }
-  if (phongHoc && phongHoc.length > 50) {
-    return 'Phòng học không được vượt quá 50 ký tự';
+  if (phongHoc && phongHoc.length > THOIKHOABIEU.MAX_PHONG_HOC_LENGTH) {
+    return `Phòng học không được vượt quá ${THOIKHOABIEU.MAX_PHONG_HOC_LENGTH} ký tự`;
   }
-  if (giangVien && giangVien.length > 100) {
-    return 'Tên giảng viên không được vượt quá 100 ký tự';
+  if (giangVien && giangVien.length > THOIKHOABIEU.MAX_GIANG_VIEN_LENGTH) {
+    return `Tên giảng viên không được vượt quá ${THOIKHOABIEU.MAX_GIANG_VIEN_LENGTH} ký tự`;
   }
   if (thu !== undefined) {
     const thuSo = parseInt(thu);
-    if (isNaN(thuSo) || thuSo < 2 || thuSo > 8) {
-      return 'Thứ không hợp lệ (chỉ nhận giá trị từ 2 đến 8)';
+    if (isNaN(thuSo) || thuSo < THOIKHOABIEU.THU_MIN || thuSo > THOIKHOABIEU.THU_MAX) {
+      return `Thứ không hợp lệ (chỉ nhận giá trị từ ${THOIKHOABIEU.THU_MIN} đến ${THOIKHOABIEU.THU_MAX})`;
     }
   }
   if (gioBatDau && gioKetThuc && gioKetThuc <= gioBatDau) {

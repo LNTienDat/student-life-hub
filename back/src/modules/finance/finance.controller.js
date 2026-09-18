@@ -1,18 +1,14 @@
 const prisma = require('../../prismaClient');
 const ExcelJS = require('exceljs');
+const { FINANCE } = require('../../constants');
+const {
+  chongCongThuc,
+  thongKeTaiChinhService,
+  kiemTraNganSachService,
+  tinhXuHuongService,
+} = require('./finance.service');
 
-// Chống Formula/CSV Injection khi xuất Excel: nếu chuỗi bắt đầu bằng =, +,
-// -, @ (hoặc tab/CR), Excel có thể hiểu nhầm thành công thức khi mở file —
-// thêm dấu nháy đơn phía trước để ép hiển thị như văn bản thuần túy.
-function chongCongThuc(chuoi) {
-  if (typeof chuoi !== 'string') return chuoi;
-  return /^[=+\-@\t\r]/.test(chuoi) ? `'${chuoi}` : chuoi;
-}
-
-// Danh mục chi tiêu & thu nhập hợp lệ
-const DANH_MUC_CHI = ['an_uong', 'hoc_phi', 'tro', 'giai_tri', 'di_lai', 'khac'];
-const DANH_MUC_THU = ['luong', 'hoc_bong', 'tro_cap', 'thuong', 'khac'];
-const DANH_MUC_HOP_LE = [...new Set([...DANH_MUC_CHI, ...DANH_MUC_THU])];
+const { DANH_MUC_CHI, DANH_MUC_THU, DANH_MUC_HOP_LE } = FINANCE;
 
 // ===== GIAO DỊCH =====
 
@@ -89,9 +85,7 @@ async function layDanhSachGiaoDich(req, res) {
     }
 
     const trangSo = Math.max(parseInt(trang) || 1, 1);
-    // Giới hạn tối đa 100 bản ghi/trang — tránh ai đó truyền soLuong=999999999
-    // khiến server phải truy vấn/trả về một lượng dữ liệu khổng lồ.
-    const kichThuoc = Math.min(Math.max(parseInt(soLuong) || 20, 1), 100);
+    const kichThuoc = Math.min(Math.max(parseInt(soLuong) || FINANCE.DEFAULT_PAGE_SIZE, 1), FINANCE.MAX_PAGE_SIZE);
 
     const [danhSach, tongSo] = await Promise.all([
       prisma.giaoDich.findMany({
@@ -186,27 +180,14 @@ async function thongKeTheoThang(req, res) {
       where: { idNguoiDung, ngayGiaoDich: { gte: from, lt: to } },
     });
 
-    const tongThu = giaoDichs
-      .filter((g) => g.loai === 'thu')
-      .reduce((sum, g) => sum + g.soTien, 0);
-
-    const tongChi = giaoDichs
-      .filter((g) => g.loai === 'chi')
-      .reduce((sum, g) => sum + g.soTien, 0);
-
-    const theoDanhMuc = {};
-    giaoDichs
-      .filter((g) => g.loai === 'chi')
-      .forEach((g) => {
-        theoDanhMuc[g.danhMuc] = (theoDanhMuc[g.danhMuc] || 0) + g.soTien;
-      });
+    const { tongThu, tongChi, soDu, theoDanhMuc } = thongKeTaiChinhService(giaoDichs);
 
     res.json({
       thang,
       nam,
       tongThu,
       tongChi,
-      soDu: tongThu - tongChi,
+      soDu,
       theoDanhMuc,
     });
   } catch (error) {
@@ -278,19 +259,7 @@ async function kiemTraNganSach(req, res) {
       where: { idNguoiDung, loai: 'chi', ngayGiaoDich: { gte: from, lt: to } },
     });
 
-    const ketQua = nganSachs.map((ns) => {
-      const daChi = giaoDichs
-        .filter((g) => g.danhMuc === ns.danhMuc)
-        .reduce((sum, g) => sum + g.soTien, 0);
-
-      return {
-        danhMuc: ns.danhMuc,
-        soTienToiDa: ns.soTienToiDa,
-        daChi,
-        conLai: ns.soTienToiDa - daChi,
-        vuotNganSach: daChi > ns.soTienToiDa,
-      };
-    });
+    const ketQua = kiemTraNganSachService(nganSachs, giaoDichs);
 
     res.json({ thang, nam, ketQua });
   } catch (error) {
@@ -360,10 +329,8 @@ async function xuatBaoCaoTaiChinhExcel(req, res) {
     const giaoDichs = await prisma.giaoDich.findMany({
       where,
       orderBy: { ngayGiaoDich: 'asc' },
-      // Giới hạn an toàn — nếu không, sau nhiều năm sử dụng thực tế, xuất
-      // Excel không giới hạn ngày có thể tải hàng chục nghìn bản ghi cùng
-      // lúc vào bộ nhớ, chậm hoặc tốn tài nguyên server không cần thiết.
-      take: 10000,
+      // Giới hạn an toàn tải dữ liệu vào bộ nhớ khi xuất file
+      take: FINANCE.MAX_EXPORT_RECORDS,
     });
 
     const workbook = new ExcelJS.Workbook();

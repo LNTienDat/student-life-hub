@@ -1,4 +1,5 @@
 const prisma = require('../../prismaClient');
+const { DEADLINE } = require('../../constants');
 
 // Thêm deadline mới
 async function themDeadline(req, res) {
@@ -13,7 +14,7 @@ async function themDeadline(req, res) {
     if (isNaN(hanChotDate.getTime())) {
       return res.status(400).json({ message: 'Hạn chót không hợp lệ' });
     }
-    if (doUuTien && !['thap', 'binh_thuong', 'cao'].includes(doUuTien)) {
+    if (doUuTien && !DEADLINE.DO_UU_TIEN.includes(doUuTien)) {
       return res.status(400).json({ message: 'Độ ưu tiên không hợp lệ' });
     }
 
@@ -78,10 +79,10 @@ async function suaDeadline(req, res) {
     if (hanChot && isNaN(new Date(hanChot).getTime())) {
       return res.status(400).json({ message: 'Hạn chót không hợp lệ' });
     }
-    if (doUuTien && !['thap', 'binh_thuong', 'cao'].includes(doUuTien)) {
+    if (doUuTien && !DEADLINE.DO_UU_TIEN.includes(doUuTien)) {
       return res.status(400).json({ message: 'Độ ưu tiên không hợp lệ' });
     }
-    if (trangThai && !['dang_dien_hanh', 'hoan_thanh', 'cho_xu_ly'].includes(trangThai)) {
+    if (trangThai && !DEADLINE.TRANG_THAI.includes(trangThai)) {
       return res.status(400).json({ message: 'Trạng thái deadline không hợp lệ' });
     }
 

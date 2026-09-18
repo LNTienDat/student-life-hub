@@ -14,6 +14,8 @@ const chatbotRoutes = require('./src/modules/chatbot/chatbot.routes');
 const { khoiDongCronJobs } = require('./src/cron/thongBao.cron');
 const prisma = require('./src/prismaClient');
 
+const { RATE_LIMIT } = require('./src/constants');
+
 const app = express();
 
 // Chỉ tin header X-Forwarded-For khi THẬT SỰ chạy sau 1 lớp reverse proxy
@@ -34,15 +36,25 @@ app.use(
 
 app.use(express.json({ limit: '500kb' }));
 
-// Rate limiter toàn cục: 300 requests / 15 phút / IP
+// Rate limiter toàn cục
 const gioiHanChung = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300,
+  windowMs: RATE_LIMIT.GLOBAL_WINDOW_MS,
+  max: RATE_LIMIT.GLOBAL_MAX,
   message: { message: 'Quá nhiều yêu cầu. Vui lòng thử lại sau.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 app.use('/api', gioiHanChung);
+
+// Health check endpoint phục vụ Docker / Render / UptimeRobot
+app.get('/api/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ok', uptime: Math.round(process.uptime()), timestamp: new Date().toISOString() });
+  } catch (error) {
+    res.status(503).json({ status: 'error', message: 'Database connection failed' });
+  }
+});
 
 app.get('/', (req, res) => {
   res.send('Backend đang chạy ngon lành!');

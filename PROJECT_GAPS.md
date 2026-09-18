@@ -29,9 +29,8 @@ pie title Đánh Giá Điểm Dự Án Hiện Tại
 ---
 
 ### 🟡 2. TỐI ƯU KIẾN TRÚC MÃ NGUỒN (ARCHITECTURE)
-- [ ] **Backend: Bổ sung tầng Service (`academic.service.js`, `finance.service.js`)**
-  - Tách logic tính toán GPA, cảnh báo nguy cơ, xuất file PDF/Excel ra khỏi Controller.
-  - Controller chỉ làm nhiệm vụ parse request và trả JSON response.
+- [x] **Backend: Bổ sung tầng Service (`academic.service.js`, `finance.service.js`)** — *Đã hoàn thành: Tách logic tính GPA, cảnh báo điểm, xu hướng, hạn mức ngân sách ra khỏi Controllers*
+- [x] **Gom hằng số vào `constants.js`** — *Đã hoàn thành: Tập trung toàn bộ hằng số AUTH, FINANCE, ACADEMIC, DEADLINE, THOIKHOABIEU, CHATBOT, RATE_LIMIT*
 - [ ] **Frontend: Tạo tầng API Service tập trung (`front/src/services/`)**
   - Tạo `academicService.js`, `financeService.js`, `deadlineService.js`, `timetableService.js`, `authService.js`.
   - Gom toàn bộ lệnh gọi axios và endpoint URL vào một nơi, không để rải rác trong UI.
@@ -40,8 +39,6 @@ pie title Đánh Giá Điểm Dự Án Hiện Tại
   - `TaiChinh.jsx` (628 dòng) $\rightarrow$ Tách riêng `BudgetSection.jsx`, `TransactionTable.jsx`, `FinanceChart.jsx`.
   - `MonHoc.jsx` (599 dòng) $\rightarrow$ Tách riêng `SubjectCard.jsx` (xử lý cột điểm con).
   - `Dashboard.jsx` (580 dòng) $\rightarrow$ Tách riêng `DashboardKpiCards.jsx` và `DashboardCharts.jsx`.
-- [ ] **Gom hằng số vào `constants.js`**
-  - Đưa khoảng 40 giá trị viết cứng (ngưỡng rate-limit, JWT expiry, danh mục, bảng màu biểu đồ) vào file tập trung.
 - [ ] **Dọn dẹp code rác & CSS Module**
   - Xóa 2 file không sử dụng: `AnimatedNumber.jsx` và `truongNganh.js`.
   - Đổi `NotFound.css` thành `NotFound.module.css` để tránh ô nhiễm class toàn cục.
@@ -63,8 +60,7 @@ pie title Đánh Giá Điểm Dự Án Hiện Tại
 - [ ] **Đóng gói Docker**:
   - Viết `Dockerfile` multi-stage cho Backend và Frontend.
   - Viết `docker-compose.yml` định nghĩa sẵn Postgres + Backend + Frontend (chạy bằng 1 lệnh duy nhất).
-- [ ] **Tạo Health Check Endpoint**:
-  - Thêm route `GET /api/health` kiểm tra kết nối DB cho uptime monitoring.
+- [x] **Tạo Health Check Endpoint** — *Đã hoàn thành: Route GET /api/health kiểm tra kết nối DB và uptime phục vụ Docker / Render*
 - [ ] **Cấu hình CI/CD GitHub Actions**:
   - Tạo `.github/workflows/ci.yml` tự động chạy linter, build Vite và test khi push code.
 - [ ] **Cài đặt nén HTTP**:

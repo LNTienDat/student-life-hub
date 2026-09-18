@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const prisma = require('../../prismaClient');
 const { guiEmailDatLaiMatKhau } = require('../../utils/email.util');
+const { AUTH } = require('../../constants');
 
 const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -20,17 +21,17 @@ async function dangKy(req, res) {
     if (!REGEX_EMAIL.test(email)) {
       return res.status(400).json({ message: 'Email không đúng định dạng' });
     }
-    if (matKhau.length < 6) {
-      return res.status(400).json({ message: 'Mật khẩu phải có ít nhất 6 ký tự' });
+    if (matKhau.length < AUTH.MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({ message: `Mật khẩu phải có ít nhất ${AUTH.MIN_PASSWORD_LENGTH} ký tự` });
     }
-    if (ten.length > 100) {
-      return res.status(400).json({ message: 'Họ tên không được vượt quá 100 ký tự' });
+    if (ten.length > AUTH.MAX_TEN_LENGTH) {
+      return res.status(400).json({ message: `Họ tên không được vượt quá ${AUTH.MAX_TEN_LENGTH} ký tự` });
     }
 
     const tonTai = await prisma.nguoiDung.findUnique({ where: { email } });
     if (tonTai) return res.status(400).json({ message: 'Email đã tồn tại' });
 
-    const matKhauMaHoa = await bcrypt.hash(matKhau, 10);
+    const matKhauMaHoa = await bcrypt.hash(matKhau, AUTH.SALT_ROUNDS);
     const nguoiDung = await prisma.nguoiDung.create({
       data: { email, matKhau: matKhauMaHoa, ten }
     });
@@ -46,18 +47,14 @@ async function dangKy(req, res) {
 }
 
 // Hash "rác" dùng để so sánh khi email không tồn tại — bcrypt.compare() vẫn
-// chạy đủ thời gian như bình thường, tránh lộ email nào đã đăng ký qua
-// việc đo thời gian phản hồi (response bị trả về nhanh hơn hẳn nếu bỏ qua
-// bước so sánh khi không tìm thấy user).
-const HASH_RAC = '$2b$10$0z6ZmsvwVE.WaeOXRnf5Ve8J3MjQ63wJUUThJK1/omh1jpWRBlm5K';
-
+// Bước so sánh mật khẩu giả lập chạy đủ thời gian bằng hash rác trong constants.
 async function dangNhap(req, res) {
   try {
     const { matKhau } = req.body;
     const email = req.body.email ? req.body.email.trim().toLowerCase() : req.body.email;
 
     const nguoiDung = await prisma.nguoiDung.findUnique({ where: { email } });
-    const dungMatKhau = await bcrypt.compare(matKhau, nguoiDung ? nguoiDung.matKhau : HASH_RAC);
+    const dungMatKhau = await bcrypt.compare(matKhau, nguoiDung ? nguoiDung.matKhau : AUTH.DUMMY_HASH);
 
     if (!nguoiDung || !dungMatKhau) {
       return res.status(400).json({ message: 'Email hoặc mật khẩu không đúng' });
@@ -69,7 +66,7 @@ async function dangNhap(req, res) {
     const token = jwt.sign(
       { id: nguoiDung.id, matKhauDoiLuc: nguoiDung.matKhauDoiLuc.getTime() },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: AUTH.JWT_EXPIRY }
     );
     const { matKhau: _, resetPasswordToken: __, resetPasswordExpiry: ___, ...thongTin } = nguoiDung;
 
@@ -98,19 +95,19 @@ async function suaHoSo(req, res) {
   try {
     const { ten, truong, nganh, khoaHoc, avatar } = req.body;
 
-    if (ten !== undefined && ten.length > 100) {
-      return res.status(400).json({ message: 'Họ tên không được vượt quá 100 ký tự' });
+    if (ten !== undefined && ten.length > AUTH.MAX_TEN_LENGTH) {
+      return res.status(400).json({ message: `Họ tên không được vượt quá ${AUTH.MAX_TEN_LENGTH} ký tự` });
     }
-    if (truong !== undefined && truong.length > 200) {
-      return res.status(400).json({ message: 'Tên trường không được vượt quá 200 ký tự' });
+    if (truong !== undefined && truong.length > AUTH.MAX_TRUONG_LENGTH) {
+      return res.status(400).json({ message: `Tên trường không được vượt quá ${AUTH.MAX_TRUONG_LENGTH} ký tự` });
     }
-    if (nganh !== undefined && nganh.length > 200) {
-      return res.status(400).json({ message: 'Tên ngành không được vượt quá 200 ký tự' });
+    if (nganh !== undefined && nganh.length > AUTH.MAX_NGANH_LENGTH) {
+      return res.status(400).json({ message: `Tên ngành không được vượt quá ${AUTH.MAX_NGANH_LENGTH} ký tự` });
     }
-    if (khoaHoc !== undefined && khoaHoc.length > 50) {
-      return res.status(400).json({ message: 'Khóa học không được vượt quá 50 ký tự' });
+    if (khoaHoc !== undefined && khoaHoc.length > AUTH.MAX_KHOA_HOC_LENGTH) {
+      return res.status(400).json({ message: `Khóa học không được vượt quá ${AUTH.MAX_KHOA_HOC_LENGTH} ký tự` });
     }
-    if (avatar !== undefined && avatar.length > 500) {
+    if (avatar !== undefined && avatar.length > AUTH.MAX_AVATAR_LENGTH) {
       return res.status(400).json({ message: 'Đường dẫn avatar quá dài' });
     }
 
@@ -133,8 +130,8 @@ async function doiMatKhau(req, res) {
     if (!matKhauCu || !matKhauMoi) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ mật khẩu cũ và mới' });
     }
-    if (matKhauMoi.length < 6) {
-      return res.status(400).json({ message: 'Mật khẩu mới phải có ít nhất 6 ký tự' });
+    if (matKhauMoi.length < AUTH.MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({ message: `Mật khẩu mới phải có ít nhất ${AUTH.MIN_PASSWORD_LENGTH} ký tự` });
     }
 
     const nguoiDung = await prisma.nguoiDung.findUnique({ where: { id: req.user.id } });
@@ -143,7 +140,7 @@ async function doiMatKhau(req, res) {
       return res.status(400).json({ message: 'Mật khẩu cũ không đúng' });
     }
 
-    const matKhauMaHoa = await bcrypt.hash(matKhauMoi, 10);
+    const matKhauMaHoa = await bcrypt.hash(matKhauMoi, AUTH.SALT_ROUNDS);
     const thoiDiemDoi = new Date();
     await prisma.nguoiDung.update({
       where: { id: req.user.id },
@@ -156,7 +153,7 @@ async function doiMatKhau(req, res) {
     const tokenMoi = jwt.sign(
       { id: nguoiDung.id, matKhauDoiLuc: thoiDiemDoi.getTime() },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: AUTH.JWT_EXPIRY }
     );
 
     res.json({ message: 'Đổi mật khẩu thành công', token: tokenMoi });
@@ -237,7 +234,7 @@ async function quenMatKhau(req, res) {
 
     const tokenGoc = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(tokenGoc).digest('hex');
-    const hetHan = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
+    const hetHan = new Date(Date.now() + AUTH.RESET_TOKEN_EXPIRY_MS);
 
     await prisma.nguoiDung.update({
       where: { id: nguoiDung.id },

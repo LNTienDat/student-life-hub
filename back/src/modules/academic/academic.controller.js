@@ -1,6 +1,13 @@
 const prisma = require('../../prismaClient');
 const PDFDocument = require('pdfkit');
 const path = require('path');
+const { ACADEMIC } = require('../../constants');
+const {
+  tinhGPAService,
+  canhBaoMonNguyCoService,
+  gpaTheoKyService,
+  duDoanDiemService,
+} = require('./academic.service');
 
 // Font Unicode nhúng sẵn trong project (không phụ thuộc hệ điều hành) —
 // bản trước dùng đường dẫn font hệ thống Windows (C:\Windows\Fonts\...),
@@ -18,8 +25,9 @@ async function themMonHoc(req, res) {
     if (!ten || !tinChi || !hocKy) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ tên môn, tín chỉ, học kỳ' });
     }
-    if (isNaN(parseInt(tinChi)) || parseInt(tinChi) <= 0 || parseInt(tinChi) > 20) {
-      return res.status(400).json({ message: 'Số tín chỉ phải là số nguyên dương hợp lý (tối đa 20)' });
+    const tinChiSo = parseInt(tinChi);
+    if (isNaN(tinChiSo) || tinChiSo < ACADEMIC.MIN_TIN_CHI_MON || tinChiSo > ACADEMIC.MAX_TIN_CHI_MON) {
+      return res.status(400).json({ message: `Số tín chỉ phải là số nguyên dương hợp lý (từ ${ACADEMIC.MIN_TIN_CHI_MON} đến ${ACADEMIC.MAX_TIN_CHI_MON})` });
     }
 
     const monHoc = await prisma.monHoc.create({
@@ -206,8 +214,6 @@ async function xoaDiem(req, res) {
   }
 }
 
-const { tinhDiemMon, quyDoiHe4 } = require('../../utils/grade.util');
-
 // Tính GPA của user
 async function tinhGPA(req, res) {
   try {
@@ -218,22 +224,7 @@ async function tinhGPA(req, res) {
       include: { diems: true },
     });
 
-    let tongDiemTinChi = 0;
-    let tongTinChi = 0;
-
-    const chiTiet = monHocs.map((mon) => {
-      const { diemTrungBinh: diemMon, tongTrongSo } = tinhDiemMon(mon.diems);
-
-      if (tongTrongSo > 0) {
-        tongDiemTinChi += diemMon * mon.tinChi;
-        tongTinChi += mon.tinChi;
-      }
-
-      return { ten: mon.ten, tinChi: mon.tinChi, diemMon: diemMon.toFixed(2) };
-    });
-
-    const gpa = tongTinChi > 0 ? (tongDiemTinChi / tongTinChi).toFixed(2) : 0;
-
+    const { gpa, chiTiet } = tinhGPAService(monHocs);
     res.json({ gpa, chiTiet });
   } catch (error) {
     console.error(error);
@@ -261,27 +252,18 @@ async function duDoanDiem(req, res) {
       return res.status(404).json({ message: 'Không tìm thấy môn học' });
     }
 
+    if (parseFloat(trongSoConLai) <= 0) {
+      return res.status(400).json({ message: 'Trọng số còn lại phải lớn hơn 0' });
+    }
+
     // Tổng điểm đã đạt được từ các đầu điểm hiện có (quy theo trọng số)
     const tongDaBiet = monHoc.diems.reduce(
       (sum, d) => sum + d.diem * (d.trongSo / 100),
       0
     );
 
-    const trongSoConLaiSo = parseFloat(trongSoConLai) / 100;
-    const mucTieuSo = parseFloat(mucTieu);
-
-    if (trongSoConLaiSo <= 0) {
-      return res.status(400).json({ message: 'Trọng số còn lại phải lớn hơn 0' });
-    }
-
-    const diemCanDat = (mucTieuSo - tongDaBiet) / trongSoConLaiSo;
-
-    res.json({
-      mucTieu: mucTieuSo,
-      tongDaDat: tongDaBiet.toFixed(2),
-      diemCanDat: diemCanDat.toFixed(2),
-      khaThi: diemCanDat <= 10 && diemCanDat >= 0,
-    });
+    const ketQua = duDoanDiemService(tongDaBiet, trongSoConLai, mucTieu);
+    res.json(ketQua);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Lỗi server' });
@@ -292,24 +274,14 @@ async function duDoanDiem(req, res) {
 async function canhBaoMonNguyCo(req, res) {
   try {
     const idNguoiDung = req.user.id;
-    const nguong = req.query.nguong ? parseFloat(req.query.nguong) : 5.0;
+    const nguong = req.query.nguong ? parseFloat(req.query.nguong) : ACADEMIC.DEFAULT_NGUONG_CANH_BAO;
 
     const monHocs = await prisma.monHoc.findMany({
       where: { idNguoiDung },
       include: { diems: true },
     });
 
-    const monNguyCo = monHocs
-      .map((mon) => {
-        const { diemTrungBinh: diemHienTai, tongTrongSo: tongTrongSoDaCham } = tinhDiemMon(mon.diems);
-        return {
-          ten: mon.ten,
-          diemHienTai: diemHienTai.toFixed(2),
-          tongTrongSoDaCham,
-        };
-      })
-      .filter((mon) => mon.tongTrongSoDaCham > 0 && parseFloat(mon.diemHienTai) < nguong);
-
+    const monNguyCo = canhBaoMonNguyCoService(monHocs, nguong);
     res.json({ nguong, monNguyCo });
   } catch (error) {
     console.error(error);
@@ -326,24 +298,8 @@ async function gpaTheoKy(req, res) {
       include: { diems: true },
     });
 
-    const theoKy = {};
-    monHocs.forEach((mon) => {
-      const { diemTrungBinh: diemMon, tongTrongSo } = tinhDiemMon(mon.diems);
-      if (tongTrongSo === 0) return;
-
-      if (!theoKy[mon.hocKy]) {
-        theoKy[mon.hocKy] = { tongDiemTinChi: 0, tongTinChi: 0 };
-      }
-      theoKy[mon.hocKy].tongDiemTinChi += diemMon * mon.tinChi;
-      theoKy[mon.hocKy].tongTinChi += mon.tinChi;
-    });
-
-    const ketQua = Object.entries(theoKy).map(([hocKy, data]) => ({
-      hocKy,
-      gpa: (data.tongDiemTinChi / data.tongTinChi).toFixed(2),
-    }));
-
-    res.json({ theoKy: ketQua });
+    const theoKy = gpaTheoKyService(monHocs);
+    res.json({ theoKy });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Lỗi server' });

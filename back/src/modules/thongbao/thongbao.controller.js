@@ -1,6 +1,8 @@
 const prisma = require('../../prismaClient');
 const { nhacDeadlineQuaEmail, canhBaoNganSachQuaEmail } = require('../../cron/thongBao.cron');
-const { tinhDiemMon } = require('../../utils/grade.util');
+const { canhBaoMonNguyCoService } = require('../academic/academic.service');
+const { kiemTraNganSachService } = require('../finance/finance.service');
+const { ACADEMIC } = require('../../constants');
 
 // CN31: Tổng hợp thông báo in-app (chuông) — gộp 3 nguồn: deadline sắp hết hạn,
 // môn học nguy cơ điểm thấp, và danh mục vượt ngân sách tháng này.
@@ -33,23 +35,11 @@ async function layThongBao(req, res) {
       }),
     ]);
 
-    // 2. Môn học nguy cơ điểm thấp
-    const monNguyCo = monHocs
-      .map((mon) => {
-        const { diemTrungBinh: diemHienTai, tongTrongSo: tongTrongSoDaCham } = tinhDiemMon(mon.diems);
-        return { ten: mon.ten, diemHienTai: diemHienTai.toFixed(2), tongTrongSoDaCham };
-      })
-      .filter((mon) => mon.tongTrongSoDaCham > 0 && parseFloat(mon.diemHienTai) < 5.0);
+    // 2. Môn học nguy cơ điểm thấp (dùng chung service của academic)
+    const monNguyCo = canhBaoMonNguyCoService(monHocs, ACADEMIC.DEFAULT_NGUONG_CANH_BAO);
 
-    // 3. Danh mục vượt ngân sách tháng hiện tại
-    const nganSachVuot = nganSachs
-      .map((ns) => {
-        const daChi = giaoDichs
-          .filter((g) => g.danhMuc === ns.danhMuc)
-          .reduce((sum, g) => sum + g.soTien, 0);
-        return { danhMuc: ns.danhMuc, soTienToiDa: ns.soTienToiDa, daChi };
-      })
-      .filter((ns) => ns.daChi > ns.soTienToiDa);
+    // 3. Danh mục vượt ngân sách tháng hiện tại (dùng chung service của finance)
+    const nganSachVuot = kiemTraNganSachService(nganSachs, giaoDichs).filter((ns) => ns.vuotNganSach);
 
     // Gộp thành 1 danh sách thông báo có id thống nhất để frontend đánh dấu "đã đọc"
     const thongBaos = [

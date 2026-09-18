@@ -1,4 +1,6 @@
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+const { CHATBOT } = require('../../constants');
+
+const GEMINI_MODEL = process.env.GEMINI_MODEL || CHATBOT.DEFAULT_MODEL;
 const GEMINI_API_URL = (model) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
@@ -36,7 +38,7 @@ async function guiTinNhan(req, res) {
     // Ghép lịch sử hội thoại gần nhất (tối đa 10 lượt) làm ngữ cảnh cho Gemini
     const contents = [];
     if (Array.isArray(lichSu)) {
-      lichSu.slice(-10).forEach((tin) => {
+      lichSu.slice(-CHATBOT.MAX_HISTORY_LENGTH).forEach((tin) => {
         contents.push({
           role: tin.vaiTro === 'bot' ? 'model' : 'user',
           parts: [{ text: tin.noiDung }],
@@ -47,7 +49,7 @@ async function guiTinNhan(req, res) {
 
     const response = await fetch(GEMINI_API_URL(GEMINI_MODEL), {
       method: 'POST',
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(CHATBOT.TIMEOUT_MS),
       headers: { 
         'Content-Type': 'application/json',
         'x-goog-api-key': process.env.GEMINI_API_KEY,
