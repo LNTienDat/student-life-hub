@@ -1,18 +1,13 @@
 import { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import api from '../services/api';
+import academicService from '../services/academicService';
 import { clearCache } from '../services/apiCache';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
-import { 
-  BookOpen, 
-  Plus, 
-  X, 
-  Edit2, 
-  Trash2, 
-  Target,
-  Download
-} from 'lucide-react';
+import { BookOpen, Plus, X, Target, Download } from 'lucide-react';
+
+import SubjectGpaChart from './monhoc/SubjectGpaChart';
+import SubjectForm from './monhoc/SubjectForm';
+import SubjectCard from './monhoc/SubjectCard';
 
 function MonHoc() {
   const [danhSach, setDanhSach] = useState([]);
@@ -43,18 +38,19 @@ function MonHoc() {
     cancelText: 'Hủy bỏ',
     type: 'danger',
     isLoading: false,
-    onConfirm: () => {}
+    onConfirm: () => {},
   });
 
   const { hienToast } = useToast();
+  const [dangXuatPDF, setDangXuatPDF] = useState(false);
 
   async function taiDuLieu() {
     setDangTai(true);
     try {
       const [resMonHoc, resGpa, resGpaKy] = await Promise.all([
-        api.get('/academic/mon-hoc'),
-        api.get('/academic/gpa'),
-        api.get('/academic/gpa-theo-ky'),
+        academicService.layDanhSachMonHoc(),
+        academicService.tinhGPA(),
+        academicService.gpaTheoKy(),
       ]);
       setDanhSach(resMonHoc.data.monHocs || []);
       setGpa(resGpa.data.gpa);
@@ -91,10 +87,10 @@ function MonHoc() {
     e.preventDefault();
     try {
       if (dangSuaId) {
-        await api.put(`/academic/mon-hoc/${dangSuaId}`, { ten: tenMon, tinChi: Number(tinChi), hocKy });
+        await academicService.suaMonHoc(dangSuaId, { ten: tenMon, tinChi: Number(tinChi), hocKy });
         hienToast('success', `Đã cập nhật môn "${tenMon}" thành công!`);
       } else {
-        await api.post('/academic/mon-hoc', { ten: tenMon, tinChi: Number(tinChi), hocKy });
+        await academicService.themMonHoc({ ten: tenMon, tinChi: Number(tinChi), hocKy });
         hienToast('success', `Đã thêm môn "${tenMon}" thành công!`);
       }
       clearCache('dashboard_cache');
@@ -114,40 +110,29 @@ function MonHoc() {
       itemInfo: {
         label: mon.ten,
         value: `${mon.tinChi} tín chỉ`,
-        extra: mon.hocKy || 'Chưa xếp kỳ'
+        extra: mon.hocKy || 'Chưa xếp kỳ',
       },
       message: 'Bạn có chắc muốn xóa môn học này không? Toàn bộ dữ liệu điểm số của môn sẽ bị mất vĩnh viễn.',
       confirmText: 'Xác nhận xóa môn',
       cancelText: 'Hủy bỏ',
       type: 'danger',
-      onConfirm: () => thucHienXoaMon(mon.id, mon.ten)
+      onConfirm: () => thucHienXoaMon(mon.id, mon.ten),
     });
   }
 
-  async function thucHienXoaMon(id, tenMon) {
+  async function thucHienXoaMon(id, tenMonXoa) {
     try {
-      setModalXacNhan(prev => ({ ...prev, isLoading: true }));
-      await api.delete(`/academic/mon-hoc/${id}`);
-      setModalXacNhan(prev => ({ ...prev, isOpen: false, isLoading: false }));
-      hienToast('success', `Đã xóa môn "${tenMon}" thành công!`);
+      setModalXacNhan((prev) => ({ ...prev, isLoading: true }));
+      await academicService.xoaMonHoc(id);
+      setModalXacNhan((prev) => ({ ...prev, isOpen: false, isLoading: false }));
+      hienToast('success', `Đã xóa môn "${tenMonXoa}" thành công!`);
       clearCache('dashboard_cache');
       taiDuLieu();
     } catch (error) {
       console.error(error);
-      setModalXacNhan(prev => ({ ...prev, isLoading: false }));
+      setModalXacNhan((prev) => ({ ...prev, isLoading: false }));
       hienToast('error', error.response?.data?.message || 'Không thể xóa môn học! Hãy thử lại.');
     }
-  }
-
-  function tinhDiemMon(diems) {
-    if (!diems || diems.length === 0) return null;
-    let tongDiem = 0;
-    let tongTrongSo = 0;
-    diems.forEach(d => {
-      tongDiem += (d.diem * d.trongSo);
-      tongTrongSo += d.trongSo;
-    });
-    return tongTrongSo > 0 ? (tongDiem / tongTrongSo).toFixed(2) : null;
   }
 
   function moFormThemDiem(monId) {
@@ -174,17 +159,17 @@ function MonHoc() {
     e.preventDefault();
     try {
       if (dangSuaDiemId) {
-        await api.put(`/academic/diem/${dangSuaDiemId}`, {
+        await academicService.suaDiem(dangSuaDiemId, {
           loaiDanhGia,
           diem: parseFloat(diemSo),
-          trongSo: parseFloat(trongSo)
+          trongSo: parseFloat(trongSo),
         });
         hienToast('success', `Đã cập nhật điểm "${loaiDanhGia}" thành công!`);
       } else {
-        await api.post(`/academic/mon-hoc/${monId}/diem`, {
+        await academicService.themDiem(monId, {
           loaiDanhGia,
           diem: parseFloat(diemSo),
-          trongSo: parseFloat(trongSo)
+          trongSo: parseFloat(trongSo),
         });
         hienToast('success', `Đã thêm cột điểm "${loaiDanhGia}" thành công!`);
       }
@@ -206,39 +191,36 @@ function MonHoc() {
       itemInfo: {
         label: diem.loaiDanhGia,
         value: `${diem.diem} điểm`,
-        extra: `Trọng số ${diem.trongSo}%`
+        extra: `Trọng số ${diem.trongSo}%`,
       },
-      message: 'Bạn có chắc muốn xóa cột điểm này? Thao tác này sẽ tự động cập nhật lại điểm trung bình (GPA) của môn học.',
+      message:
+        'Bạn có chắc muốn xóa cột điểm này? Thao tác này sẽ tự động cập nhật lại điểm trung bình (GPA) của môn học.',
       confirmText: 'Xác nhận xóa điểm',
       cancelText: 'Hủy bỏ',
       type: 'danger',
-      onConfirm: () => thucHienXoaDiem(diem.id, diem.loaiDanhGia)
+      onConfirm: () => thucHienXoaDiem(diem.id, diem.loaiDanhGia),
     });
   }
 
-  async function thucHienXoaDiem(diemId, loaiDanhGia) {
+  async function thucHienXoaDiem(diemId, loaiDanhGiaXoa) {
     try {
-      setModalXacNhan(prev => ({ ...prev, isLoading: true }));
-      await api.delete(`/academic/diem/${diemId}`);
-      setModalXacNhan(prev => ({ ...prev, isOpen: false, isLoading: false }));
-      hienToast('success', `Đã xóa cột điểm "${loaiDanhGia}" thành công!`);
+      setModalXacNhan((prev) => ({ ...prev, isLoading: true }));
+      await academicService.xoaDiem(diemId);
+      setModalXacNhan((prev) => ({ ...prev, isOpen: false, isLoading: false }));
+      hienToast('success', `Đã xóa cột điểm "${loaiDanhGiaXoa}" thành công!`);
       clearCache('dashboard_cache');
       taiDuLieu();
     } catch (error) {
       console.error(error);
-      setModalXacNhan(prev => ({ ...prev, isLoading: false }));
+      setModalXacNhan((prev) => ({ ...prev, isLoading: false }));
       hienToast('error', error.response?.data?.message || 'Không thể xóa điểm! Hãy thử lại.');
     }
   }
 
-  const [dangXuatPDF, setDangXuatPDF] = useState(false);
-
   async function xuLyXuatBangDiem() {
     try {
       setDangXuatPDF(true);
-      const res = await api.get('/academic/xuat-bang-diem', {
-        responseType: 'blob',
-      });
+      const res = await academicService.xuatBangDiemPDF();
       const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = url;
@@ -259,6 +241,7 @@ function MonHoc() {
   return (
     <>
       <div className="max-w-5xl mx-auto space-y-6 pb-12">
+        {/* Header & Tiện ích */}
         <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
           <div>
             <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
@@ -268,7 +251,7 @@ function MonHoc() {
               Quản lý tiến độ học tập và theo dõi GPA
             </p>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <div className="bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700/60 flex items-center gap-2">
               <Target className="w-5 h-5 text-emerald-500" />
@@ -292,9 +275,9 @@ function MonHoc() {
             <button
               onClick={moFormThem}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${
-                hienFormThem 
-                ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                : 'bg-ink-600 dark:bg-ink-500 text-white hover:bg-ink-700 dark:hover:bg-ink-400 shadow-sm shadow-ink-500/20'
+                hienFormThem
+                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  : 'bg-ink-600 dark:bg-ink-500 text-white hover:bg-ink-700 dark:hover:bg-ink-400 shadow-sm shadow-ink-500/20'
               }`}
             >
               {hienFormThem ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -303,78 +286,23 @@ function MonHoc() {
           </div>
         </div>
 
-        {gpaTheoKy.length > 1 && (
-          <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60">
-            <h2 className="font-display font-semibold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
-              <BarChart className="w-5 h-5 text-ink-500 dark:text-ink-300" />
-              Biểu đồ GPA theo học kỳ
-            </h2>
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={gpaTheoKy} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <XAxis dataKey="hocKy" fontSize={12} tickLine={false} axisLine={false} tick={{ fill: '#64748b' }} />
-                <YAxis domain={[0, 10]} fontSize={12} tickLine={false} axisLine={false} tick={{ fill: '#64748b' }} />
-                <Tooltip 
-                  cursor={{ fill: 'transparent' }}
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                />
-                <Bar dataKey="gpa" fill="#3D3F72" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+        {/* 1. Biểu đồ GPA theo kỳ */}
+        <SubjectGpaChart gpaTheoKy={gpaTheoKy} />
 
-        {hienFormThem && (
-          <form
-            onSubmit={xuLySubmit}
-            className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-ink-200 dark:border-ink-500/40 flex flex-col md:flex-row gap-4 items-end relative overflow-hidden"
-          >
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-ink-600 dark:bg-ink-400" />
-            <div className="flex-1 w-full pl-2">
-              <label htmlFor="subject-name" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Tên môn học</label>
-              <input
-                id="subject-name"
-                type="text"
-                value={tenMon}
-                onChange={(e) => setTenMon(e.target.value)}
-                placeholder="VD: Toán cao cấp"
-                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 transition-shadow"
-                required
-              />
-            </div>
-            <div className="w-full md:w-28">
-              <label htmlFor="subject-credits" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Tín chỉ</label>
-              <input
-                id="subject-credits"
-                type="number"
-                value={tinChi}
-                onChange={(e) => setTinChi(e.target.value)}
-                min="1"
-                max="20"
-                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 transition-shadow"
-                required
-              />
-            </div>
-            <div className="w-full md:w-48">
-              <label htmlFor="subject-semester" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Học kỳ</label>
-              <input
-                id="subject-semester"
-                type="text"
-                value={hocKy}
-                onChange={(e) => setHocKy(e.target.value)}
-                placeholder="VD: HK1 2024"
-                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 transition-shadow"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full md:w-auto bg-emerald-600 text-white font-medium px-6 py-2.5 rounded-xl hover:bg-emerald-700 transition-colors"
-            >
-              {dangSuaId ? 'Cập nhật' : 'Lưu môn học'}
-            </button>
-          </form>
-        )}
+        {/* 2. Form thêm/sửa môn học */}
+        <SubjectForm
+          hienFormThem={hienFormThem}
+          dangSuaId={dangSuaId}
+          tenMon={tenMon}
+          tinChi={tinChi}
+          hocKy={hocKy}
+          onTenMonChange={setTenMon}
+          onTinChiChange={setTinChi}
+          onHocKyChange={setHocKy}
+          onSubmit={xuLySubmit}
+        />
 
+        {/* 3. Danh sách môn học */}
         {dangTai ? (
           <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60">
             <div className="w-8 h-8 border-4 border-ink-200 border-t-ink-600 rounded-full animate-spin"></div>
@@ -385,8 +313,12 @@ function MonHoc() {
             <div className="w-16 h-16 bg-slate-50 dark:bg-slate-900/50 rounded-full flex items-center justify-center mb-4">
               <BookOpen className="w-8 h-8 text-slate-400" />
             </div>
-            <h3 className="text-lg font-display font-semibold text-slate-800 dark:text-slate-200">Chưa có môn học nào</h3>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-sm">Hãy thêm môn học đầu tiên để bắt đầu theo dõi tiến độ và điểm số của bạn.</p>
+            <h3 className="text-lg font-display font-semibold text-slate-800 dark:text-slate-200">
+              Chưa có môn học nào
+            </h3>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
+              Hãy thêm môn học đầu tiên để bắt đầu theo dõi tiến độ và điểm số của bạn.
+            </p>
             <button
               onClick={moFormThem}
               className="mt-6 flex items-center gap-2 bg-ink-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-ink-700 transition-colors"
@@ -396,183 +328,30 @@ function MonHoc() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {danhSach.map((mon) => {
-              const diemMon = tinhDiemMon(mon.diems);
-              const quaMon = diemMon && parseFloat(diemMon) >= 5;
-              
-              return (
-                <div key={mon.id} className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 flex flex-col h-full hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="font-display font-bold text-slate-900 dark:text-white text-lg leading-tight line-clamp-2" title={mon.ten}>
-                        {mon.ten}
-                      </h3>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-1.5">
-                        <span className="inline-flex items-center justify-center bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-xs font-medium">
-                          {mon.tinChi} TC
-                        </span>
-                        <span>•</span>
-                        <span>{mon.hocKy}</span>
-                      </p>
-                    </div>
-                    <div className="text-right flex-shrink-0 ml-3">
-                      {diemMon ? (
-                        <div className={`flex flex-col items-end ${quaMon ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                          <span className="font-display text-2xl font-bold leading-none">{diemMon}</span>
-                          <span className="text-[11px] font-semibold mt-0.5">{quaMon ? 'Đạt' : 'Chưa đạt'}</span>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-end text-slate-400">
-                          <span className="font-display text-2xl font-bold leading-none">--</span>
-                          <span className="text-[11px] font-medium mt-0.5">Chưa có</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex-1">
-                    {mon.diems.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mb-4">
-                        {mon.diems.map((d) => (
-                          <span
-                            key={d.id}
-                            className="group text-xs bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-lg flex items-center gap-1.5 transition-all hover:border-ink-300 dark:hover:border-slate-600"
-                          >
-                            <span className="font-medium text-slate-700 dark:text-slate-200">{d.loaiDanhGia}</span> 
-                            <span className="text-slate-400">|</span> 
-                            <span className="font-bold text-slate-900 dark:text-white">{d.diem}</span> 
-                            <span className="text-slate-400 text-[10px]">({d.trongSo}%)</span>
-                            <span className="flex items-center gap-0.5 ml-1 border-l border-slate-200 dark:border-slate-700 pl-1">
-                              <button
-                                type="button"
-                                onClick={() => moFormSuaDiem(mon.id, d)}
-                                className="text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 p-0.5 rounded transition-colors"
-                                title="Sửa điểm này"
-                                aria-label={`Sửa điểm ${d.loaiDanhGia} môn ${mon.ten}`}
-                              >
-                                <Edit2 className="w-3 h-3" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => yeuCauXoaDiem(mon, d)}
-                                className="text-slate-400 hover:text-rose-500 p-0.5 rounded transition-colors"
-                                title="Xóa điểm này"
-                                aria-label={`Xóa điểm ${d.loaiDanhGia} môn ${mon.ten}`}
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            </span>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="border-t border-slate-100 dark:border-slate-700/50 pt-3 mt-auto">
-                    {monThemDiemId === mon.id ? (
-                      <form
-                        onSubmit={(e) => xuLyLuuDiem(e, mon.id)}
-                        className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm flex flex-col gap-2.5"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                            {dangSuaDiemId ? (
-                              <span>
-                                ✏️ Sửa điểm: <strong className="text-ink-600 dark:text-ink-400 font-bold">{loaiDanhGia}</strong>
-                              </span>
-                            ) : (
-                              '+ Thêm cột điểm mới'
-                            )}
-                          </span>
-                        </div>
-                        {!dangSuaDiemId && (
-                          <input
-                            type="text"
-                            placeholder="Loại điểm (VD: Giữa kỳ)"
-                            aria-label="Loại đánh giá"
-                            value={loaiDanhGia}
-                            onChange={(e) => setLoaiDanhGia(e.target.value)}
-                            className="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ink-500/30"
-                            required
-                          />
-                        )}
-                        <div className="flex gap-2">
-                          <input
-                            type="number"
-                            step="0.1"
-                            placeholder="Điểm"
-                            aria-label="Điểm số"
-                            value={diemSo}
-                            onChange={(e) => setDiemSo(e.target.value)}
-                            min="0"
-                            max="10"
-                            className="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ink-500/30"
-                            required
-                          />
-                          <input
-                            type="number"
-                            placeholder="Trọng số (%)"
-                            aria-label="Trọng số phần trăm"
-                            value={trongSo}
-                            onChange={(e) => setTrongSo(e.target.value)}
-                            min="1"
-                            max="100"
-                            className="w-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-white rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-ink-500/30"
-                            required
-                          />
-                        </div>
-                        <div className="flex gap-2 mt-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setMonThemDiemId(null);
-                              setDangSuaDiemId(null);
-                            }}
-                            className="flex-1 py-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors font-medium text-xs"
-                          >
-                            Hủy
-                          </button>
-                          <button
-                            type="submit"
-                            className="flex-1 text-white bg-ink-600 hover:bg-ink-700 dark:bg-ink-500 dark:hover:bg-ink-400 py-1.5 rounded-lg font-medium text-xs transition-colors"
-                          >
-                            {dangSuaDiemId ? 'Cập nhật điểm' : 'Lưu điểm'}
-                          </button>
-                        </div>
-                      </form>
-                    ) : (
-                      <div className="flex items-center justify-between">
-                        <button
-                          onClick={() => moFormThemDiem(mon.id)}
-                          aria-label={`Thêm điểm cho môn ${mon.ten}`}
-                          className="text-ink-600 dark:text-ink-300 text-xs font-medium hover:text-ink-800 dark:hover:text-ink-200 flex items-center gap-1"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Thêm điểm
-                        </button>
-                        <div className="flex gap-3">
-                          <button
-                            onClick={() => moFormSua(mon)}
-                            className="text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 transition-colors"
-                            title="Sửa môn học"
-                            aria-label={`Sửa môn học ${mon.ten}`}
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => yeuCauXoaMon(mon)}
-                            className="text-slate-400 hover:text-rose-500 transition-colors"
-                            title="Xóa môn học"
-                            aria-label={`Xóa môn học ${mon.ten}`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            {danhSach.map((mon) => (
+              <SubjectCard
+                key={mon.id}
+                mon={mon}
+                monThemDiemId={monThemDiemId}
+                dangSuaDiemId={dangSuaDiemId}
+                loaiDanhGia={loaiDanhGia}
+                diemSo={diemSo}
+                trongSo={trongSo}
+                onOpenAddGrade={moFormThemDiem}
+                onOpenEditGrade={moFormSuaDiem}
+                onCloseGradeForm={() => {
+                  setMonThemDiemId(null);
+                  setDangSuaDiemId(null);
+                }}
+                onLoaiDanhGiaChange={setLoaiDanhGia}
+                onDiemSoChange={setDiemSo}
+                onTrongSoChange={setTrongSo}
+                onSubmitGrade={xuLyLuuDiem}
+                onDeleteGrade={yeuCauXoaDiem}
+                onEditSubject={moFormSua}
+                onDeleteSubject={yeuCauXoaMon}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -580,7 +359,7 @@ function MonHoc() {
       {/* Modal xác nhận xóa hiện đại */}
       <ConfirmModal
         isOpen={modalXacNhan.isOpen}
-        onClose={() => setModalXacNhan(prev => ({ ...prev, isOpen: false }))}
+        onClose={() => setModalXacNhan((prev) => ({ ...prev, isOpen: false }))}
         onConfirm={modalXacNhan.onConfirm}
         title={modalXacNhan.title}
         subTitle={modalXacNhan.subTitle}

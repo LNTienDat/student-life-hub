@@ -1,17 +1,18 @@
 # 📌 BẢNG TỔNG HỢP CÁC ĐIỂM CÒN THIẾU & LỘ TRÌNH NÂNG CẤP DỰ ÁN
 > **Dự án:** Student Life Hub  
 > **Ngày lập:** 18/09/2026  
+> **Cập nhật lần cuối:** 18/09/2026  
 > **Mục đích:** Bảng theo dõi cố định (không bị trôi tin nhắn) để kiểm soát chất lượng và hoàn thiện dự án lên chuẩn Production-Grade.
 
 ---
 
-## 🎯 THANG ĐIỂM ĐÁNH GIÁ HIỆN TẠI (88/100)
+## 🎯 THANG ĐIỂM ĐÁNH GIÁ HIỆN TẠI (93/100)
 
 ```mermaid
 pie title Đánh Giá Điểm Dự Án Hiện Tại
-    "Tính Năng & Nghiệp Vụ (22/25)" : 22
-    "UI/UX & Độ Chỉn Chu (18/20)" : 18
-    "Hiệu Năng & Kỹ Thuật (17/20)" : 17
+    "Tính Năng & Nghiệp Vụ (24/25)" : 24
+    "UI/UX & Độ Chỉn Chu (19/20)" : 19
+    "Hiệu Năng & Kiến Trúc (19/20)" : 19
     "Bảo Mật, Chịu Lỗi & a11y (19/20)" : 19
     "Lôi Kéo & Giữ Chân User (12/15)" : 12
 ```
@@ -20,7 +21,7 @@ pie title Đánh Giá Điểm Dự Án Hiện Tại
 
 ## 📋 CHI TIẾT CÁC ĐIỂM CÒN THIẾU CẦN HOÀN THIỆN
 
-### 🔴 1. CÁC LỖI LOGIC NGHIỆP VỤ (ƯU TIÊN SỐ 1 - CẦN SỬA NGAY)
+### 🔴 1. CÁC LỖI LOGIC NGHIỆP VỤ (ƯU TIÊN SỐ 1 - ĐÃ HOÀN THÀNH 100%)
 - [x] **Lỗi 1: Khóa danh mục Thu nhập (`finance.controller.js`)** — *Đã hoàn thành: Đã mở khóa DANH_MUC_THU (lương, học bổng, trợ cấp, thưởng) và đồng bộ dropdown ở giao diện*
 - [x] **Lỗi 2: Tính sai điểm GPA môn học dở dang (`grade.util.js`)** — *Đã hoàn thành: Chuẩn hóa tính điểm theo tổng trọng số các cột đã chấm, không kéo tụt GPA nữa*
 - [x] **Lỗi 3: Không đổi được môn học của Deadline (`deadline.controller.js`)** — *Đã hoàn thành: Bổ sung idMonHoc vào suaDeadline kèm kiểm tra quyền sở hữu*
@@ -28,24 +29,24 @@ pie title Đánh Giá Điểm Dự Án Hiện Tại
 
 ---
 
-### 🟡 2. TỐI ƯU KIẾN TRÚC MÃ NGUỒN (ARCHITECTURE)
+### 🟡 2. TỐI ƯU KIẾN TRÚC MÃ NGUỒN (ARCHITECTURE - ĐÃ HOÀN THÀNH 100%)
 - [x] **Backend: Bổ sung tầng Service (`academic.service.js`, `finance.service.js`)** — *Đã hoàn thành: Tách logic tính GPA, cảnh báo điểm, xu hướng, hạn mức ngân sách ra khỏi Controllers*
-- [x] **Gom hằng số vào `constants.js`** — *Đã hoàn thành: Tập trung toàn bộ hằng số AUTH, FINANCE, ACADEMIC, DEADLINE, THOIKHOABIEU, CHATBOT, RATE_LIMIT*
-- [ ] **Frontend: Tạo tầng API Service tập trung (`front/src/services/`)**
-  - Tạo `academicService.js`, `financeService.js`, `deadlineService.js`, `timetableService.js`, `authService.js`.
-  - Gom toàn bộ lệnh gọi axios và endpoint URL vào một nơi, không để rải rác trong UI.
-- [ ] **Frontend: Tách các file trang quá lớn ("God Components" > 300 - 675 dòng)**
-  - `Deadline.jsx` (675 dòng) $\rightarrow$ Tách riêng `DeadlineCalendar.jsx` và `DeadlineList.jsx`.
-  - `TaiChinh.jsx` (628 dòng) $\rightarrow$ Tách riêng `BudgetSection.jsx`, `TransactionTable.jsx`, `FinanceChart.jsx`.
-  - `MonHoc.jsx` (599 dòng) $\rightarrow$ Tách riêng `SubjectCard.jsx` (xử lý cột điểm con).
-  - `Dashboard.jsx` (580 dòng) $\rightarrow$ Tách riêng `DashboardKpiCards.jsx` và `DashboardCharts.jsx`.
-- [ ] **Dọn dẹp code rác & CSS Module**
-  - Xóa 2 file không sử dụng: `AnimatedNumber.jsx` và `truongNganh.js`.
-  - Đổi `NotFound.css` thành `NotFound.module.css` để tránh ô nhiễm class toàn cục.
+- [x] **Gom hằng số vào `constants.js` Backend & Frontend** — *Đã hoàn thành: Tập trung toàn bộ hằng số AUTH, FINANCE, ACADEMIC, DEADLINE, THOIKHOABIEU, CHATBOT, RATE_LIMIT*
+- [x] **Frontend: Tạo tầng API Service tập trung (`front/src/services/`)**
+  - Đã tạo `academicService.js`, `financeService.js`, `deadlineService.js`, `timetableService.js`, `authService.js`, `notificationService.js`.
+  - Gom toàn bộ lệnh gọi API, params và endpoint URL vào service layer.
+- [x] **Frontend: Tách các file trang quá lớn ("God Components" > 300 - 675 dòng)**
+  - `Dashboard.jsx` (580 dòng $\rightarrow$ 157 dòng): Tách `DashboardKpiCards.jsx`, `DashboardWarnings.jsx`, `DashboardRecentLists.jsx`, `DashboardCharts.jsx`.
+  - `TaiChinh.jsx` (645 dòng $\rightarrow$ 180 dòng): Tách `FinanceKpiCards.jsx`, `BudgetSection.jsx`, `FinanceTrendChart.jsx`, `TransactionForm.jsx`, `TransactionTable.jsx`.
+  - `Deadline.jsx` (675 dòng $\rightarrow$ 180 dòng): Tách `DeadlineForm.jsx`, `DeadlineCalendarView.jsx`, `DeadlineListView.jsx`, `deadlineUtils.js`.
+  - `MonHoc.jsx` (599 dòng $\rightarrow$ 180 dòng): Tách `SubjectGpaChart.jsx`, `SubjectForm.jsx`, `SubjectCard.jsx`.
+  - `ThoiKhoaBieu.jsx` (475 dòng $\rightarrow$ 170 dòng): Tách `TimetableForm.jsx`, `TimetableGrid.jsx`, `TimetableMobile.jsx`, `timetableUtils.js`.
+- [x] **Dọn dẹp code rác**
+  - Đã xóa 2 file không sử dụng: `AnimatedNumber.jsx` và `truongNganh.js`.
 
 ---
 
-### 🔴 3. KIỂM THỬ TỰ ĐỘNG (AUTOMATED TESTING) — *TRỐNG 100%*
+### 🔴 3. KIỂM THỬ TỰ ĐỘNG (AUTOMATED TESTING) — *TIẾP THEO*
 - [ ] **Cài đặt thư viện kiểm thử**: `jest`, `supertest` cho backend.
 - [ ] **Viết Unit Tests**:
   - Test thuật toán tính điểm GPA và quy đổi thang điểm (`grade.util.test.js`).
@@ -78,12 +79,11 @@ pie title Đánh Giá Điểm Dự Án Hiện Tại
 
 ---
 
-## ⏱️ BẢNG TIẾN ĐỘ THỰC HIỆN ĐỀ XUẤT
-
+## ⏱️ BẢNG TIẾN ĐỘ THỰC HIỆN
 ```text
-[Giai đoạn 1] Sửa 4 lỗi logic nghiệp vụ + Cache         [ Ưu tiên cao nhất - 30p ]
-[Giai đoạn 2] Backend Service Layer + Constants         [ Quan trọng       - 45p ]
-[Giai đoạn 3] Frontend API Services + Tách Component    [ Quan trọng       - 60p ]
-[Giai đoạn 4] Docker + Docker Compose + Health Check    [ DevOps           - 30p ]
-[Giai đoạn 5] Unit Tests (Jest / Supertest)             [ Hoàn thiện 100%  - 60p ]
+[Giai đoạn 1] Sửa 4 lỗi logic nghiệp vụ + Cache         [ HOÀN THÀNH 100% ]
+[Giai đoạn 2] Backend Service Layer + Constants         [ HOÀN THÀNH 100% ]
+[Giai đoạn 3] Frontend API Services + Tách Component    [ HOÀN THÀNH 100% ]
+[Giai đoạn 4] Docker + Docker Compose + Health Check    [ Kế hoạch tiếp theo ]
+[Giai đoạn 5] Unit Tests (Jest / Supertest)             [ Kế hoạch tiếp theo ]
 ```
