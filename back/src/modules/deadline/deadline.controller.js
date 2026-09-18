@@ -73,7 +73,7 @@ async function suaDeadline(req, res) {
   try {
     const { id } = req.params;
     const idNguoiDung = req.user.id;
-    const { tieuDe, moTa, hanChot, doUuTien, trangThai } = req.body;
+    const { tieuDe, moTa, hanChot, doUuTien, trangThai, idMonHoc } = req.body;
 
     if (hanChot && isNaN(new Date(hanChot).getTime())) {
       return res.status(400).json({ message: 'Hạn chót không hợp lệ' });
@@ -85,6 +85,16 @@ async function suaDeadline(req, res) {
       return res.status(400).json({ message: 'Trạng thái deadline không hợp lệ' });
     }
 
+    // Nếu có cập nhật môn học, kiểm tra môn đó phải thuộc về đúng người dùng
+    if (idMonHoc) {
+      const monHoc = await prisma.monHoc.findFirst({
+        where: { id: parseInt(idMonHoc), idNguoiDung },
+      });
+      if (!monHoc) {
+        return res.status(404).json({ message: 'Không tìm thấy môn học hoặc bạn không có quyền gắn deadline vào môn này' });
+      }
+    }
+
     const ketQua = await prisma.deadline.updateMany({
       where: { id: parseInt(id), idNguoiDung },
       data: {
@@ -93,6 +103,7 @@ async function suaDeadline(req, res) {
         hanChot: hanChot ? new Date(hanChot) : undefined,
         doUuTien,
         trangThai,
+        idMonHoc: idMonHoc !== undefined ? (idMonHoc ? parseInt(idMonHoc) : null) : undefined,
       },
     });
 
@@ -100,7 +111,10 @@ async function suaDeadline(req, res) {
       return res.status(404).json({ message: 'Không tìm thấy deadline hoặc bạn không có quyền sửa' });
     }
 
-    const deadline = await prisma.deadline.findUnique({ where: { id: parseInt(id) } });
+    const deadline = await prisma.deadline.findUnique({
+      where: { id: parseInt(id) },
+      include: { monHoc: true },
+    });
     res.json({ message: 'Cập nhật thành công', deadline });
   } catch (error) {
     console.error(error);

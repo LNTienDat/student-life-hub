@@ -302,10 +302,9 @@ async function canhBaoMonNguyCo(req, res) {
     const monNguyCo = monHocs
       .map((mon) => {
         const { diemTrungBinh: diemHienTai, tongTrongSo: tongTrongSoDaCham } = tinhDiemMon(mon.diems);
-        const diemQuyDoi = tongTrongSoDaCham > 0 ? (diemHienTai / (tongTrongSoDaCham / 100)) : 0;
         return {
           ten: mon.ten,
-          diemHienTai: diemQuyDoi.toFixed(2),
+          diemHienTai: diemHienTai.toFixed(2),
           tongTrongSoDaCham,
         };
       })

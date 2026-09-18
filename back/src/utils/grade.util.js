@@ -7,7 +7,8 @@ function tinhDiemMon(diems) {
   if (!diems || diems.length === 0) return { diemTrungBinh: 0, tongTrongSo: 0 };
   const tongTrongSo = diems.reduce((sum, d) => sum + d.trongSo, 0);
   if (tongTrongSo === 0) return { diemTrungBinh: 0, tongTrongSo: 0 };
-  const diemTrungBinh = diems.reduce((sum, d) => sum + d.diem * (d.trongSo / 100), 0);
+  const tongDiemCoTrongSo = diems.reduce((sum, d) => sum + d.diem * d.trongSo, 0);
+  const diemTrungBinh = Math.round((tongDiemCoTrongSo / tongTrongSo) * 100) / 100;
   return { diemTrungBinh, tongTrongSo };
 }
 

@@ -20,13 +20,19 @@ import {
   Activity
 } from 'lucide-react';
 
-const DANH_MUC = ['an_uong', 'hoc_phi', 'tro', 'giai_tri', 'di_lai', 'khac'];
+const DANH_MUC_CHI = ['an_uong', 'hoc_phi', 'tro', 'giai_tri', 'di_lai', 'khac'];
+const DANH_MUC_THU = ['luong', 'hoc_bong', 'tro_cap', 'thuong', 'khac'];
+const DANH_MUC = [...DANH_MUC_CHI, ...DANH_MUC_THU.filter(d => !DANH_MUC_CHI.includes(d))];
 const TEN_DANH_MUC = {
   an_uong: 'Ăn uống',
   hoc_phi: 'Học phí',
   tro: 'Nhà trọ',
   giai_tri: 'Giải trí',
   di_lai: 'Đi lại',
+  luong: 'Lương / Làm thêm',
+  hoc_bong: 'Học bổng',
+  tro_cap: 'Trợ cấp gia đình',
+  thuong: 'Thưởng',
   khac: 'Khác',
 };
 
@@ -48,6 +54,15 @@ function TaiChinh() {
   const [soTien, setSoTien] = useState('');
   const [moTa, setMoTa] = useState('');
   const [ngayGiaoDich, setNgayGiaoDich] = useState('');
+
+  function doiLoaiGiaoDich(loaiMoi) {
+    setLoai(loaiMoi);
+    if (loaiMoi === 'thu') {
+      setDanhMuc('luong');
+    } else {
+      setDanhMuc('an_uong');
+    }
+  }
 
   // Pagination & Filter
   const [timKiem, setTimKiem] = useState('');
@@ -159,6 +174,7 @@ function TaiChinh() {
       setThongKe(resTK.data);
       setNganSachs(resNS.data.nganSachs);
       clearCache('dashboard_cache');
+      clearCache('finance_cache');
       taiGiaoDich(1);
       hienToast('success', 'Thêm giao dịch thành công!');
     } catch (error) {
@@ -194,6 +210,7 @@ function TaiChinh() {
       const resTK = await api.get('/finance/thong-ke');
       setThongKe(resTK.data);
       clearCache('dashboard_cache');
+      clearCache('finance_cache');
       taiGiaoDich(trangHienTai);
     } catch (error) {
       console.error(error);
@@ -405,7 +422,7 @@ function TaiChinh() {
                         <select
                           id="finance-type"
                           value={loai}
-                          onChange={(e) => setLoai(e.target.value)}
+                          onChange={(e) => doiLoaiGiaoDich(e.target.value)}
                           className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
                         >
                           <option value="chi">Chi tiêu</option>
@@ -420,7 +437,7 @@ function TaiChinh() {
                           onChange={(e) => setDanhMuc(e.target.value)}
                           className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
                         >
-                          {DANH_MUC.map((dm) => (
+                          {(loai === 'thu' ? DANH_MUC_THU : DANH_MUC_CHI).map((dm) => (
                             <option key={dm} value={dm}>{TEN_DANH_MUC[dm]}</option>
                           ))}
                         </select>

@@ -9,9 +9,10 @@ function chongCongThuc(chuoi) {
   return /^[=+\-@\t\r]/.test(chuoi) ? `'${chuoi}` : chuoi;
 }
 
-// Danh mục hợp lệ — khớp đúng danh sách dropdown ở front/src/pages/TaiChinh.jsx.
-// Backend phải tự kiểm tra lại, không chỉ tin frontend.
-const DANH_MUC_HOP_LE = ['an_uong', 'hoc_phi', 'tro', 'giai_tri', 'di_lai', 'khac'];
+// Danh mục chi tiêu & thu nhập hợp lệ
+const DANH_MUC_CHI = ['an_uong', 'hoc_phi', 'tro', 'giai_tri', 'di_lai', 'khac'];
+const DANH_MUC_THU = ['luong', 'hoc_bong', 'tro_cap', 'thuong', 'khac'];
+const DANH_MUC_HOP_LE = [...new Set([...DANH_MUC_CHI, ...DANH_MUC_THU])];
 
 // ===== GIAO DỊCH =====
 
@@ -27,8 +28,11 @@ async function themGiaoDich(req, res) {
     if (!['thu', 'chi'].includes(loai)) {
       return res.status(400).json({ message: 'Loại giao dịch không hợp lệ (chỉ nhận "thu" hoặc "chi")' });
     }
-    if (!DANH_MUC_HOP_LE.includes(danhMuc)) {
-      return res.status(400).json({ message: 'Danh mục không hợp lệ' });
+    if (loai === 'chi' && !DANH_MUC_CHI.includes(danhMuc)) {
+      return res.status(400).json({ message: 'Danh mục chi tiêu không hợp lệ' });
+    }
+    if (loai === 'thu' && !DANH_MUC_THU.includes(danhMuc) && !DANH_MUC_CHI.includes(danhMuc)) {
+      return res.status(400).json({ message: 'Danh mục thu nhập không hợp lệ' });
     }
     if (isNaN(parseFloat(soTien)) || parseFloat(soTien) <= 0) {
       return res.status(400).json({ message: 'Số tiền phải là số dương' });
@@ -222,8 +226,8 @@ async function datNganSach(req, res) {
     if (!danhMuc || soTienToiDa === undefined || !thang || !nam) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin ngân sách' });
     }
-    if (!DANH_MUC_HOP_LE.includes(danhMuc)) {
-      return res.status(400).json({ message: 'Danh mục không hợp lệ' });
+    if (!DANH_MUC_CHI.includes(danhMuc)) {
+      return res.status(400).json({ message: 'Danh mục ngân sách không hợp lệ (ngân sách chỉ áp dụng cho chi tiêu)' });
     }
     if (isNaN(parseFloat(soTienToiDa)) || parseFloat(soTienToiDa) <= 0) {
       return res.status(400).json({ message: 'Hạn mức ngân sách phải là số dương' });
