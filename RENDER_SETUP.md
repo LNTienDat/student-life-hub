@@ -1,6 +1,6 @@
 # Student Life Hub — chuẩn bị triển khai Render
 
-Ngày chuẩn bị: 18/10/2026. Chưa push GitHub, chưa tạo dịch vụ Render và chưa chuyển dữ liệu local lên Internet.
+Ngày chuẩn bị: 18/10/2026. Mã nguồn đã được push lên nhánh `codex/student-life-hub-render` và có [bản nháp PR #1](https://github.com/LNTienDat/student-life-hub/pull/1). Chưa tạo dịch vụ Render và chưa chuyển dữ liệu local lên Internet.
 
 ## Phương án đã chuẩn bị
 
@@ -11,7 +11,7 @@ Ngày chuẩn bị: 18/10/2026. Chưa push GitHub, chưa tạo dịch vụ Rende
 
 ## Thứ tự thực hiện
 
-1. Xem lại và cập nhật những thay đổi local lên GitHub `LNTienDat/student-life-hub`. Hiện `main` trên GitHub vẫn ở commit `9c92175`, chưa có các cải tiến đang dùng local. Việc push phải được chủ dự án cho phép trước.
+1. Xem lại [PR #1](https://github.com/LNTienDat/student-life-hub/pull/1) trong GitHub `LNTienDat/student-life-hub`. Bản cập nhật nằm trên nhánh `codex/student-life-hub-render`; nhánh `main` vẫn ở commit `9c92175`. Khi thử triển khai, chọn đúng nhánh cập nhật này.
 2. Chọn PostgreSQL hosting dành riêng cho Student Life Hub. Không trỏ vào cơ sở dữ liệu của bài tập khác. Nhập chuỗi kết nối trực tiếp trong Render; không đưa chuỗi kết nối vào GitHub hoặc nội dung công khai.
 3. Trên Render chọn **New → Blueprint**, kết nối đúng repo Student Life Hub, nhánh đã được cập nhật và tệp `render.yaml` ở gốc repo.
 4. Nhập `DATABASE_URL`, xem lại danh sách tài nguyên và giá trước khi bấm tạo. Định nghĩa hiện chỉ tạo một web service `free`; không chứa database, worker, cron hoặc dịch vụ của bài tập khác.
@@ -53,4 +53,4 @@ Các giới hạn Render được đối chiếu ngày 18/10/2026: [Free](https:
 - Bản dựng và 7 kiểm thử PWA đạt; 7 kiểm thử logic frontend đạt.
 - 55 kiểm thử backend đạt, gồm kiểm tra phục vụ SPA, cache của service worker, CSP, API và PostgreSQL local.
 - Các script triển khai được kiểm tra cú pháp; chưa chạy pipeline cài đặt/build trong môi trường Render hoặc gửi Blueprint lên Render để xác minh cloud.
-- CI đã được chuẩn bị để dựng frontend trước, tạo PostgreSQL tạm, áp dụng migration và chạy kiểm thử. Chưa chạy workflow này trên GitHub vì mã mới chưa được push.
+- CI dựng frontend trước, tạo PostgreSQL tạm, áp dụng migration và chạy kiểm thử. Xem kết quả chạy trên tab **Checks** của PR #1; kiểm thử local không thay thế xác minh trên cloud.
