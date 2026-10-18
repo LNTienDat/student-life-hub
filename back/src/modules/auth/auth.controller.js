@@ -32,7 +32,7 @@ async function dangKy(req, res) {
     if (tonTai) return res.status(400).json({ message: 'Email đã tồn tại' });
 
     const matKhauMaHoa = await bcrypt.hash(matKhau, AUTH.SALT_ROUNDS);
-    const nguoiDung = await prisma.nguoiDung.create({
+    await prisma.nguoiDung.create({
       data: { email, matKhau: matKhauMaHoa, ten }
     });
 
@@ -170,13 +170,13 @@ async function doiMatKhau(req, res) {
 // Đổi email (yêu cầu mật khẩu xác thực)
 async function doiEmail(req, res) {
   try {
-    const { emailMoi, matKhau } = req.body;
+    const matKhau = req.body.matKhau;
+    const emailMoi = req.body.emailMoi ? req.body.emailMoi.trim().toLowerCase() : req.body.emailMoi;
     if (!emailMoi || !matKhau) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ email mới và mật khẩu xác nhận' });
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailMoi)) {
+    if (!REGEX_EMAIL.test(emailMoi)) {
       return res.status(400).json({ message: 'Định dạng email mới không hợp lệ' });
     }
 
@@ -266,8 +266,8 @@ async function datLaiMatKhau(req, res) {
     if (!email || !token || !matKhauMoi) {
       return res.status(400).json({ message: 'Thiếu thông tin bắt buộc' });
     }
-    if (matKhauMoi.length < 6) {
-      return res.status(400).json({ message: 'Mật khẩu mới phải có ít nhất 6 ký tự' });
+    if (matKhauMoi.length < AUTH.MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({ message: `Mật khẩu mới phải có ít nhất ${AUTH.MIN_PASSWORD_LENGTH} ký tự` });
     }
 
     const nguoiDung = await prisma.nguoiDung.findUnique({ where: { email } });
@@ -283,7 +283,7 @@ async function datLaiMatKhau(req, res) {
       return res.status(400).json({ message: 'Liên kết không hợp lệ' });
     }
 
-    const matKhauMaHoa = await bcrypt.hash(matKhauMoi, 10);
+    const matKhauMaHoa = await bcrypt.hash(matKhauMoi, AUTH.SALT_ROUNDS);
     await prisma.nguoiDung.update({
       where: { id: nguoiDung.id },
       data: {

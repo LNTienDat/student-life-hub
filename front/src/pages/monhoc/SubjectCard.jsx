@@ -30,6 +30,7 @@ function SubjectCard({
   onDeleteSubject,
 }) {
   const diemMon = tinhDiemMon(mon.diems);
+  const complete = (mon.diems || []).reduce((sum, item) => sum + Number(item.trongSo), 0) >= 100;
   const quaMon = diemMon && parseFloat(diemMon) >= 5;
   const isEditingGradeForThisSubject = monThemDiemId === mon.id;
 
@@ -60,7 +61,7 @@ function SubjectCard({
               }`}
             >
               <span className="font-display text-2xl font-bold leading-none">{diemMon}</span>
-              <span className="text-[11px] font-semibold mt-0.5">{quaMon ? 'Đạt' : 'Chưa đạt'}</span>
+              <span className="text-[11px] font-semibold mt-0.5">{complete ? (quaMon ? 'Đạt · đã đủ điểm' : 'Chưa đạt · đã đủ điểm') : 'Tạm tính · chưa đủ điểm'}</span>
             </div>
           ) : (
             <div className="flex flex-col items-end text-slate-400">

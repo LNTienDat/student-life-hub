@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSemester } from '../hooks/useSemester';
 import deadlineService from '../services/deadlineService';
 import academicService from '../services/academicService';
 import { clearCache } from '../services/apiCache';
@@ -14,6 +15,10 @@ import triggerConfetti from '../utils/confetti';
 import { PageSkeleton } from '../components/Skeleton';
 
 function Deadline() {
+  const [semester] = useSemester();
+  const [checklist, setChecklist] = useState([]);
+  const checklistLock = useRef(false);
+  const [savingChecklist, setSavingChecklist] = useState(false);
   const [danhSach, setDanhSach] = useState([]);
   const [danhSachMonHoc, setDanhSachMonHoc] = useState([]);
   const [dangTai, setDangTai] = useState(true);
@@ -51,27 +56,31 @@ function Deadline() {
 
   const { hienToast } = useToast();
 
-  async function taiDuLieu() {
-    setDangTai(true);
-    try {
-      const [resDeadline, resMon] = await Promise.all([
-        deadlineService.layDanhSachDeadline(),
+  const loadVersion = useRef(0);
+  const taiDuLieu = useCallback(() => {
+    const version = ++loadVersion.current;
+    return Promise.all([
+        deadlineService.layDanhSachDeadline(semester),
         academicService.layDanhSachMonHoc(),
-      ]);
+    ]).then(([resDeadline, resMon]) => {
+      if (version !== loadVersion.current) return;
       setDanhSachMonHoc(resMon.data.monHocs || []);
       setDanhSach(resDeadline.data.deadlines || []);
-    } catch (error) {
+    }).catch((error) => {
       console.error(error);
-    } finally {
-      setDangTai(false);
-    }
-  }
+    }).finally(() => {
+      if (version === loadVersion.current) setDangTai(false);
+    });
+  }, [semester]);
 
   useEffect(() => {
+    const counter = loadVersion;
     taiDuLieu();
-  }, []);
+    return () => { counter.current++; };
+  }, [taiDuLieu]);
 
   function moFormThem() {
+    setChecklist([]);
     setTieuDe('');
     setMoTa('');
     setHanChot('');
@@ -82,9 +91,11 @@ function Deadline() {
   }
 
   function moFormSua(d) {
+    setChecklist(d.checklist || []);
     setTieuDe(d.tieuDe);
     setMoTa(d.moTa || '');
-    setHanChot(new Date(d.hanChot).toISOString().slice(0, 16));
+    const dObj = new Date(d.hanChot);
+    setHanChot(new Date(dObj.getTime() - dObj.getTimezoneOffset() * 60000).toISOString().slice(0, 16));
     setDoUuTien(d.doUuTien);
     setIdMonHoc(d.idMonHoc ? String(d.idMonHoc) : '');
     setDangSuaId(d.id);
@@ -97,6 +108,7 @@ function Deadline() {
     try {
       const data = {
         tieuDe,
+        checklist,
         moTa,
         hanChot: new Date(hanChot).toISOString(),
         doUuTien,
@@ -114,7 +126,7 @@ function Deadline() {
       taiDuLieu();
     } catch (error) {
       console.error(error);
-      hienToast('error', error.response?.data?.message || 'Có lỗi xảy ra! Hãy kiểm tra kết nối Backend.');
+      hienToast('error', error.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại sau.');
     }
   }
 
@@ -169,6 +181,16 @@ function Deadline() {
     }
   }
 
+  async function updateChecklist(deadline, items) {
+    if (checklistLock.current) return;
+    checklistLock.current = true; setSavingChecklist(true);
+    try {
+      const response = await deadlineService.suaDeadline(deadline.id, { checklist: items });
+      setDanhSach((previous) => previous.map((item) => item.id === deadline.id ? response.data.deadline : item));
+    } catch (error) { hienToast('error', error.response?.data?.message || 'Chưa lưu được checklist.'); }
+    finally { checklistLock.current = false; setSavingChecklist(false); }
+  }
+
   function doiThang(denta) {
     setThangXemLich(new Date(thangXemLich.getFullYear(), thangXemLich.getMonth() + denta, 1));
   }
@@ -219,7 +241,7 @@ function Deadline() {
         </div>
 
         {/* Nút thêm mới */}
-        <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60">
+        <div className="flex flex-wrap gap-3 justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60">
           <span className="font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
             <Clock className="w-5 h-5 text-ink-500 dark:text-ink-300" />
             Sắp xếp công việc hiệu quả
@@ -247,6 +269,8 @@ function Deadline() {
           doUuTien={doUuTien}
           idMonHoc={idMonHoc}
           danhSachMonHoc={danhSachMonHoc}
+          checklist={checklist}
+          onChecklistChange={setChecklist}
           onTieuDeChange={setTieuDe}
           onMoTaChange={setMoTa}
           onHanChotChange={setHanChot}
@@ -273,6 +297,8 @@ function Deadline() {
           <DeadlineListView
             dangDienHanh={dangDienHanh}
             daHoanThanh={daHoanThanh}
+            savingChecklist={savingChecklist}
+            onChecklistChange={updateChecklist}
             onHoanThanh={xuLyHoanThanh}
             onSua={moFormSua}
             onXoa={yeuCauXoa}

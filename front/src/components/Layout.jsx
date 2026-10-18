@@ -1,3 +1,5 @@
+import { useSemester } from '../hooks/useSemester';
+import SemesterPicker from './SemesterPicker';
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -12,6 +14,7 @@ import {
 } from 'lucide-react';
 
 function Layout({ children }) {
+  const [semester] = useSemester();
   const { user, dangXuat } = useAuth();
   const { theme, doiTheme } = useTheme();
   const navigate = useNavigate();
@@ -26,8 +29,14 @@ function Layout({ children }) {
   const [thongBaos, setThongBaos] = useState([]);
   const [chuongMo, setChuongMo] = useState(false);
   const [daXemId, setDaXemId] = useState(() => {
-    const saved = localStorage.getItem('thongbao_da_xem');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('thongbao_da_xem');
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      localStorage.removeItem('thongbao_da_xem');
+      return [];
+    }
   });
   const chuongRef = useRef(null);
 
@@ -62,11 +71,28 @@ function Layout({ children }) {
 
     taiThongBao();
     kiemTraDeadlineSapToi();
+
+    // Smart Polling: Chỉ gọi API định kỳ khi tab đang hiển thị (tiết kiệm pin & CPU)
     const timer = setInterval(() => {
-      taiThongBao();
-      kiemTraDeadlineSapToi();
+      if (document.visibilityState === 'visible') {
+        taiThongBao();
+        kiemTraDeadlineSapToi();
+      }
     }, 5 * 60 * 1000);
-    return () => clearInterval(timer);
+
+    // Tự động làm mới dữ liệu khi người dùng chuyển lại vào tab
+    function xuLyThayDoiHienThi() {
+      if (document.visibilityState === 'visible') {
+        taiThongBao();
+        kiemTraDeadlineSapToi();
+      }
+    }
+    document.addEventListener('visibilitychange', xuLyThayDoiHienThi);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', xuLyThayDoiHienThi);
+    };
   }, []);
 
   useEffect(() => {
@@ -259,7 +285,10 @@ function Layout({ children }) {
                 thongBaos.map((tb) => (
                   <div
                     key={tb.id}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => danhDauDaXem(tb.id)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') danhDauDaXem(tb.id); }}
                     className={`flex gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 cursor-pointer transition-colors ${
                       !daXemId.includes(tb.id) ? 'bg-ink-50/50 dark:bg-ink-500/10 hover:bg-ink-50 dark:hover:bg-ink-500/20' : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'
                     }`}
@@ -341,11 +370,12 @@ function Layout({ children }) {
 
       <main id="main-content" className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full">
         <motion.div
-          key={location.pathname}
+          key={`${location.pathname}:${semester}`}
           initial={{ opacity: 0.85, y: 3 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.15, ease: 'easeOut' }}
         >
+          {!['/tai-chinh', '/profile', '/ho-so'].includes(location.pathname) && <SemesterPicker />}
           {children || <Outlet />}
         </motion.div>
       </main>

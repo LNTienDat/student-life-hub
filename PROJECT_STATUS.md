@@ -1,6 +1,8 @@
 # 📌 STUDENT LIFE HUB - TRẠNG THÁI DỰ ÁN
 
-> **Cập nhật lần cuối**: 2026-08-30 (Dự án đã hoàn thiện 100%)
+> **Cập nhật lần cuối**: 2026-10-15
+
+> Đợt cập nhật mới: xem [UPGRADE_NOTES.md](UPGRADE_NOTES.md). Đã xác minh 50 kiểm thử backend và 7 kiểm thử frontend; chưa xác nhận trực quan bằng trình duyệt. Checklist cũ dưới đây ghi nhận phạm vi đã triển khai, không chứng minh hệ thống hoàn thiện hoặc sẵn sàng production.
 > **Mục tiêu**: Hệ thống Quản lý Học tập, Deadline & Tài chính cho Sinh viên.
 > **Tech Stack**: Node.js (Express) + PostgreSQL (Prisma) | React 19 (Vite) + TailwindCSS.
 > **Source Code**: `github.com/LNTienDat/student-life-hub`
@@ -9,7 +11,7 @@
 
 ## 📈 1. Tổng Kết Tiến Độ
 
-- **Tiến độ tổng thể**: **100%**
+- **Tiến độ tổng thể**: Các chức năng nền đã triển khai; còn bước xác nhận trực quan và vận hành thực tế.
 - **Chức năng hoàn thành**: **37 / 37** (Tất cả 6 Module)
 - **Database**: 7 Model (NguoiDung, MonHoc, Diem, Deadline, GiaoDich, NganSach, ThoiKhoaBieu)
 - **Backend API**: 41 Endpoints nghiệp vụ
@@ -72,4 +74,6 @@
 
 ---
 
-## 🎉 DỰ ÁN ĐÃ HOÀN THÀNH TOÀN BỘ YÊU CẦU!
+## Xác minh và công việc tiếp theo
+
+Theo dõi kết quả thực tế trong PROJECT_GAPS.md; không quy đổi checklist tính năng thành mức hoàn thiện 100%.

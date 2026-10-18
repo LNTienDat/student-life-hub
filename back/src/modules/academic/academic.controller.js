@@ -1,6 +1,7 @@
 const prisma = require('../../prismaClient');
 const PDFDocument = require('pdfkit');
 const path = require('path');
+const { tinhDiemMon } = require('../../utils/grade.util');
 const { ACADEMIC } = require('../../constants');
 const {
   tinhGPAService,
@@ -47,7 +48,7 @@ async function layDanhSachMonHoc(req, res) {
     const idNguoiDung = req.user.id;
 
     const danhSach = await prisma.monHoc.findMany({
-      where: { idNguoiDung },
+      where: { idNguoiDung, ...(req.query.hocKy ? { hocKy: String(req.query.hocKy) } : {}) },
       include: { diems: true },
       orderBy: { ngayTao: 'desc' },
     });
@@ -66,8 +67,8 @@ async function suaMonHoc(req, res) {
     const idNguoiDung = req.user.id;
     const { ten, tinChi, hocKy, trangThai } = req.body;
 
-    if (tinChi !== undefined && (isNaN(parseInt(tinChi)) || parseInt(tinChi) <= 0 || parseInt(tinChi) > 20)) {
-      return res.status(400).json({ message: 'Số tín chỉ phải là số nguyên dương hợp lý (tối đa 20)' });
+    if (tinChi !== undefined && (isNaN(parseInt(tinChi)) || parseInt(tinChi) <= 0 || parseInt(tinChi) > ACADEMIC.MAX_TIN_CHI_MON)) {
+      return res.status(400).json({ message: `Số tín chỉ phải là số nguyên dương hợp lý (tối đa ${ACADEMIC.MAX_TIN_CHI_MON})` });
     }
 
     const ketQua = await prisma.monHoc.updateMany({
@@ -115,11 +116,11 @@ async function themDiem(req, res) {
     if (!idMonHoc || !loaiDanhGia || diem === undefined || trongSo === undefined) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin điểm' });
     }
-    if (isNaN(parseFloat(diem)) || parseFloat(diem) < 0 || parseFloat(diem) > 10) {
-      return res.status(400).json({ message: 'Điểm phải nằm trong khoảng 0 đến 10' });
+    if (isNaN(parseFloat(diem)) || parseFloat(diem) < 0 || parseFloat(diem) > ACADEMIC.THANG_DIEM_MAX) {
+      return res.status(400).json({ message: `Điểm phải nằm trong khoảng 0 đến ${ACADEMIC.THANG_DIEM_MAX}` });
     }
-    if (isNaN(parseFloat(trongSo)) || parseFloat(trongSo) <= 0 || parseFloat(trongSo) > 100) {
-      return res.status(400).json({ message: 'Trọng số phải nằm trong khoảng 0 đến 100' });
+    if (isNaN(parseFloat(trongSo)) || parseFloat(trongSo) <= 0 || parseFloat(trongSo) > ACADEMIC.TONG_TRONG_SO_CHUAN) {
+      return res.status(400).json({ message: `Trọng số phải nằm trong khoảng 0 đến ${ACADEMIC.TONG_TRONG_SO_CHUAN}` });
     }
 
     const monHoc = await prisma.monHoc.findFirst({
@@ -152,11 +153,11 @@ async function suaDiem(req, res) {
     const idNguoiDung = req.user.id;
     const { loaiDanhGia, diem, trongSo } = req.body;
 
-    if (diem !== undefined && (isNaN(parseFloat(diem)) || parseFloat(diem) < 0 || parseFloat(diem) > 10)) {
-      return res.status(400).json({ message: 'Điểm phải nằm trong khoảng 0 đến 10' });
+    if (diem !== undefined && (isNaN(parseFloat(diem)) || parseFloat(diem) < 0 || parseFloat(diem) > ACADEMIC.THANG_DIEM_MAX)) {
+      return res.status(400).json({ message: `Điểm phải nằm trong khoảng 0 đến ${ACADEMIC.THANG_DIEM_MAX}` });
     }
-    if (trongSo !== undefined && (isNaN(parseFloat(trongSo)) || parseFloat(trongSo) <= 0 || parseFloat(trongSo) > 100)) {
-      return res.status(400).json({ message: 'Trọng số phải nằm trong khoảng 0 đến 100' });
+    if (trongSo !== undefined && (isNaN(parseFloat(trongSo)) || parseFloat(trongSo) <= 0 || parseFloat(trongSo) > ACADEMIC.TONG_TRONG_SO_CHUAN)) {
+      return res.status(400).json({ message: `Trọng số phải nằm trong khoảng 0 đến ${ACADEMIC.TONG_TRONG_SO_CHUAN}` });
     }
 
     const diemHienTai = await prisma.diem.findFirst({
@@ -220,7 +221,7 @@ async function tinhGPA(req, res) {
     const idNguoiDung = req.user.id;
 
     const monHocs = await prisma.monHoc.findMany({
-      where: { idNguoiDung },
+      where: { idNguoiDung, ...(req.query.hocKy ? { hocKy: String(req.query.hocKy) } : {}) },
       include: { diems: true },
     });
 
@@ -277,7 +278,7 @@ async function canhBaoMonNguyCo(req, res) {
     const nguong = req.query.nguong ? parseFloat(req.query.nguong) : ACADEMIC.DEFAULT_NGUONG_CANH_BAO;
 
     const monHocs = await prisma.monHoc.findMany({
-      where: { idNguoiDung },
+      where: { idNguoiDung, ...(req.query.hocKy ? { hocKy: String(req.query.hocKy) } : {}) },
       include: { diems: true },
     });
 
@@ -294,7 +295,7 @@ async function gpaTheoKy(req, res) {
   try {
     const idNguoiDung = req.user.id;
     const monHocs = await prisma.monHoc.findMany({
-      where: { idNguoiDung },
+      where: { idNguoiDung, ...(req.query.hocKy ? { hocKy: String(req.query.hocKy) } : {}) },
       include: { diems: true },
     });
 
@@ -313,7 +314,7 @@ async function xuatBangDiemPDF(req, res) {
 
     const nguoiDung = await prisma.nguoiDung.findUnique({ where: { id: idNguoiDung } });
     const monHocs = await prisma.monHoc.findMany({
-      where: { idNguoiDung },
+      where: { idNguoiDung, ...(req.query.hocKy ? { hocKy: String(req.query.hocKy) } : {}) },
       include: { diems: true },
       orderBy: { hocKy: 'asc' },
     });

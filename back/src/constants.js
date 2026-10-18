@@ -45,6 +45,7 @@ const DEADLINE = {
   DO_UU_TIEN: ['thap', 'binh_thuong', 'cao'],
   MAC_DINH_DO_UU_TIEN: 'binh_thuong',
   MAC_DINH_TRANG_THAI: 'dang_dien_hanh',
+  TRANG_THAI_HOAN_THANH: 'hoan_thanh',
 };
 
 // 5. Cấu hình Thời khóa biểu
@@ -58,9 +59,13 @@ const THOIKHOABIEU = {
 
 // 6. Cấu hình Chatbot AI
 const CHATBOT = {
-  DEFAULT_MODEL: 'gemini-1.5-flash',
+  // gemini-1.5-flash và mọi model Gemini 1.x/2.0 đã bị Google khai tử hoàn toàn (trả về 404)
+  // Dùng gemini-3.6-flash là bản ổn định được khuyến nghị chính thức
+  DEFAULT_MODEL: 'gemini-3.6-flash',
   TIMEOUT_MS: 15000,
   MAX_HISTORY_LENGTH: 10,
+  MAX_OUTPUT_TOKENS: 500,
+  CONTEXT_DEADLINE_DAYS: 7, // Số ngày tới để lấy deadline sắp hạn
 };
 
 // 7. Cấu hình Rate Limiting (Số lượt / Khoảng thời gian)

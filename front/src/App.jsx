@@ -5,6 +5,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
 import Layout from './components/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
+import PwaStatus from './components/PwaStatus';
 
 // Code-splitting (Lazy loading) các trang để giảm dung lượng bundle ban đầu
 const Login = lazy(() => import('./pages/Login'));
@@ -45,6 +46,7 @@ function App() {
         <AuthProvider>
           <ToastProvider>
             <BrowserRouter>
+              <PwaStatus />
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                   <Route path="/login" element={<Login />} />

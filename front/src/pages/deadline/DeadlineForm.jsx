@@ -1,4 +1,7 @@
+import ChecklistEditor from '../../components/ChecklistEditor';
 function DeadlineForm({
+  checklist = [],
+  onChecklistChange,
   hienFormThem,
   dangSuaId,
   tieuDe,
@@ -27,6 +30,7 @@ function DeadlineForm({
         {dangSuaId ? 'Cập nhật Deadline' : 'Tạo Deadline mới'}
       </h3>
 
+      <div className="mb-5 ml-2"><ChecklistEditor items={checklist} onChange={onChecklistChange}/></div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 ml-2">
         <div className="md:col-span-2">
           <label htmlFor="deadline-title" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">

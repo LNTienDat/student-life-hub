@@ -1,0 +1,29 @@
+# Creates a NEW web service. Does not reference the user's existing exercise service.
+# Provide a hosted PostgreSQL URL during setup; no database or paid plan is created here.
+services:
+  - type: web
+    name: student-life-hub
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: node scripts/render-build.mjs
+    startCommand: node scripts/render-start.mjs
+    healthCheckPath: /api/health
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: SKIP_INSTALL_DEPS
+        value: "true"
+      - key: NODE_ENV
+        value: production
+      - key: SERVE_FRONTEND
+        value: "true"
+      - key: TRUST_PROXY
+        value: "true"
+      - key: ENABLE_CRON_JOBS
+        value: "false"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false

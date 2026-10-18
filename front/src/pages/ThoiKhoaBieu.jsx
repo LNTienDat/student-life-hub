@@ -1,4 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import ImportPanel from '../components/ImportPanel';
+import { useSemester } from '../hooks/useSemester';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import timetableService from '../services/timetableService';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
@@ -11,6 +13,8 @@ import TimetableMobile from './thoikhoabieu/TimetableMobile';
 import { PageSkeleton } from '../components/Skeleton';
 
 function ThoiKhoaBieu() {
+  const [semester] = useSemester();
+  const [classSemester, setClassSemester] = useState(semester);
   const [danhSach, setDanhSach] = useState([]);
   const [dangTai, setDangTai] = useState(true);
   const [hienForm, setHienForm] = useState(false);
@@ -39,23 +43,27 @@ function ThoiKhoaBieu() {
 
   const { hienToast } = useToast();
 
-  async function taiDuLieu() {
-    setDangTai(true);
-    try {
-      const res = await timetableService.layThoiKhoaBieu();
+  const loadVersion = useRef(0);
+  const taiDuLieu = useCallback(() => {
+    const version = ++loadVersion.current;
+    return timetableService.layThoiKhoaBieu(semester).then((res) => {
+      if (version !== loadVersion.current) return;
       setDanhSach(res.data.thoiKhoaBieu || []);
-    } catch (error) {
+    }).catch((error) => {
       console.error(error);
-    } finally {
-      setDangTai(false);
-    }
-  }
+    }).finally(() => {
+      if (version === loadVersion.current) setDangTai(false);
+    });
+  }, [semester]);
 
   useEffect(() => {
+    const counter = loadVersion;
     taiDuLieu();
-  }, []);
+    return () => { counter.current++; };
+  }, [taiDuLieu]);
 
   function moFormThem() {
+    setClassSemester(semester);
     setDangSuaId(null);
     setTenMon('');
     setThu(2);
@@ -68,6 +76,7 @@ function ThoiKhoaBieu() {
 
   function moFormSua(bh) {
     setHienForm(true);
+    setClassSemester(bh.hocKy || '');
     setDangSuaId(bh.id);
     setTenMon(bh.tenMon);
     setThu(bh.thu);
@@ -85,7 +94,7 @@ function ThoiKhoaBieu() {
       return;
     }
     try {
-      const data = { tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien };
+      const data = { tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien, hocKy: classSemester };
       if (dangSuaId) {
         await timetableService.suaBuoiHoc(dangSuaId, data);
         hienToast('success', 'Cập nhật buổi học thành công!');
@@ -173,8 +182,12 @@ function ThoiKhoaBieu() {
           </div>
         </div>
 
+        {semester && danhSach.some((item) => !item.hocKy) && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">Lịch cũ chưa xếp học kỳ vẫn được hiển thị. Sửa buổi học để gắn vào học kỳ phù hợp.</p>}
+        <ImportPanel kind="timetable" onImported={taiDuLieu} />
         {/* Form thêm mới */}
         <TimetableForm
+          hocKy={classSemester}
+          onHocKyChange={setClassSemester}
           hienForm={hienForm}
           dangSuaId={dangSuaId}
           tenMon={tenMon}

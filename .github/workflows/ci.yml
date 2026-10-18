@@ -8,8 +8,28 @@ on:
 
 jobs:
   backend-check:
-    name: Backend Lint & Test
+    name: API and PostgreSQL Tests
+    needs: frontend-check
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: student_life_hub_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/student_life_hub_test?schema=public
+      JWT_SECRET: ci-test-only-jwt-signing-key-not-for-production
+      NODE_ENV: test
+      ENABLE_CRON_JOBS: "false"
     defaults:
       run:
         working-directory: ./back
@@ -18,10 +38,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: back/package-lock.json
 
@@ -31,7 +51,16 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Run Backend Unit Tests
+      - name: Download built frontend for combined hosting tests
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: front/dist
+
+      - name: Create test database schema
+        run: npx prisma migrate deploy
+
+      - name: Run API and database tests
         run: npm test --if-present
 
   frontend-check:
@@ -45,15 +74,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
           cache-dependency-path: front/package-lock.json
 
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Vite Build
-        run: npm run build
+      - name: Run frontend logic tests
+        run: npm test
+
+      - name: Build and test PWA
+        run: npm run test:pwa
+
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: front/dist
+          retention-days: 3

@@ -1,6 +1,8 @@
 import { CAC_THU } from './timetableUtils';
 
 function TimetableForm({
+  hocKy,
+  onHocKyChange,
   hienForm,
   dangSuaId,
   tenMon,
@@ -30,6 +32,7 @@ function TimetableForm({
         {dangSuaId ? 'Cập nhật buổi học' : 'Thêm buổi học mới'}
       </h3>
 
+      <label className="mb-4 ml-2 block text-sm text-slate-600">Học kỳ (để trống nếu dùng chung)<input value={hocKy} onChange={(e) => onHocKyChange(e.target.value)} maxLength={100} className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2" /></label>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 ml-2">
         <div className="md:col-span-2">
           <label htmlFor="tkb-ten-mon" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">

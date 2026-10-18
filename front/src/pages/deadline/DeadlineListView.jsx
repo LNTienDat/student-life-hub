@@ -1,3 +1,4 @@
+import ChecklistEditor from '../../components/ChecklistEditor';
 import { AlertTriangle, CheckCircle2, Circle, Clock, Edit2, Trash2 } from 'lucide-react';
 import { badgeUuTien, textUuTien } from './deadlineUtils';
 import { dinhDangNgay } from '../../utils/formatters';
@@ -5,6 +6,8 @@ import { dinhDangNgay } from '../../utils/formatters';
 function DeadlineListView({
   dangDienHanh = [],
   daHoanThanh = [],
+  savingChecklist,
+  onChecklistChange,
   onHoanThanh,
   onSua,
   onXoa,
@@ -65,6 +68,7 @@ function DeadlineListView({
                       </span>
                     </div>
                   )}
+                  <details className="mt-3"><summary className="cursor-pointer text-xs text-ink-600">Checklist · {(d.checklist || []).filter((item) => item.done).length}/{(d.checklist || []).length} đã xong</summary><div className="mt-3"><ChecklistEditor disabled={savingChecklist} items={d.checklist || []} onChange={(items) => onChecklistChange(d, items)}/></div></details>
                 </div>
 
                 <div className="flex flex-col gap-2 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex-shrink-0 ml-2">
@@ -102,7 +106,7 @@ function DeadlineListView({
             {daHoanThanh.map((d) => (
               <div
                 key={d.id}
-                className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-4 group"
+                className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2 sm:gap-4 group flex-wrap sm:flex-nowrap"
               >
                 <button
                   onClick={() => onHoanThanh(d.id, true)}
@@ -114,6 +118,7 @@ function DeadlineListView({
                 </button>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium text-slate-500 dark:text-slate-400 line-through truncate">{d.tieuDe}</h3>
+                  {d.checklist?.length > 0 && <p className="mt-1 text-xs text-slate-500">Checklist: {d.checklist.filter((step) => step.done).length}/{d.checklist.length} bước đã xong</p>}
                 </div>
                 <div className="text-xs text-slate-400 flex-shrink-0 mr-4">{dinhDangNgay(d.hanChot)}</div>
                 <button

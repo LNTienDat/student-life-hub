@@ -31,7 +31,7 @@ function Profile() {
     async function tai() {
       try {
         const res = await api.get('/auth/ho-so');
-        const u = res.data.user;
+        const u = res.data?.user || {};
         setTen(u.ten || '');
         setEmail(u.email || '');
       } catch (error) {
@@ -71,7 +71,7 @@ function Profile() {
       const res = await api.put('/auth/doi-email', { emailMoi, matKhau: matKhauXacNhan });
       const token = localStorage.getItem('token');
       dangNhap(res.data.user, token);
-      setEmail(res.data.user.email);
+      setEmail(res.data?.user?.email);
       setEmailMoi('');
       setMatKhauXacNhan('');
       setThongBaoEmail({ loai: 'success', text: 'Đổi email tài khoản thành công!' });

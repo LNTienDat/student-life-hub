@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { getCache, setCache } from '../services/apiCache';
+import useDataRevision from '../hooks/useDataRevision';
+import { useSemester } from '../hooks/useSemester';
+import QuickEntry from './dashboard/QuickEntry';
 import { academicService } from '../services/academicService';
 import { deadlineService } from '../services/deadlineService';
 import { financeService } from '../services/financeService';
@@ -10,8 +11,8 @@ import { Sparkles, Plus } from 'lucide-react';
 
 import DashboardKpiCards from './dashboard/DashboardKpiCards';
 import DashboardWarnings from './dashboard/DashboardWarnings';
-import DashboardRecentLists from './dashboard/DashboardRecentLists';
 import DashboardCharts from './dashboard/DashboardCharts';
+import DashboardToday from './dashboard/DashboardToday';
 import { PageSkeleton } from '../components/Skeleton';
 
 const containerVariants = {
@@ -35,56 +36,37 @@ const itemVariants = {
 
 function Dashboard() {
   const { user } = useAuth();
-  const cached = getCache('dashboard_cache');
-  const [gpa, setGpa] = useState(cached?.gpa ?? null);
-  const [deadlinesSapToi, setDeadlinesSapToi] = useState(cached?.deadlinesSapToi ?? []);
-  const [monNguyCo, setMonNguyCo] = useState(cached?.monNguyCo ?? []);
-  const [nganSachVuot, setNganSachVuot] = useState(cached?.nganSachVuot ?? []);
-  const [thongKeTaiChinh, setThongKeTaiChinh] = useState(cached?.thongKeTaiChinh ?? null);
-  const [gpaTheoKy, setGpaTheoKy] = useState(cached?.gpaTheoKy ?? []);
-  const [dangTai, setDangTai] = useState(!cached);
-  const [loiTai, setLoiTai] = useState(false);
+  const revision = useDataRevision();
+  const [semester] = useSemester();
+  const [result, setResult] = useState(null);
+  const [retry, setRetry] = useState(0);
+  const [quickEntry, setQuickEntry] = useState(null);
 
-  const taiDuLieu = async () => {
-    setLoiTai(false);
-    try {
-      const [resGpa, resDeadline, resCanhBao, resTaiChinh, resNganSach, resGpaKy] =
-        await Promise.all([
-          academicService.tinhGPA(),
-          deadlineService.layDeadlineSapToi(7),
-          academicService.canhBaoMonNguyCo(),
-          financeService.layThongKe(),
-          financeService.layNganSach(),
-          academicService.gpaTheoKy(),
-        ]);
-
-      const data = {
-        gpa: resGpa.data.gpa,
-        deadlinesSapToi: resDeadline.data.deadlines || [],
-        monNguyCo: resCanhBao.data.monNguyCo || [],
-        thongKeTaiChinh: resTaiChinh.data,
-        nganSachVuot: resNganSach.data?.ketQua?.filter((ns) => ns.vuotNganSach) || [],
-        gpaTheoKy: resGpaKy.data?.theoKy || [],
-      };
-
-      setGpa(data.gpa);
-      setDeadlinesSapToi(data.deadlinesSapToi);
-      setMonNguyCo(data.monNguyCo);
-      setThongKeTaiChinh(data.thongKeTaiChinh);
-      setNganSachVuot(data.nganSachVuot);
-      setGpaTheoKy(data.gpaTheoKy);
-      setCache('dashboard_cache', data);
-    } catch (error) {
-      console.error(error);
-      setLoiTai(true);
-    } finally {
-      setDangTai(false);
-    }
-  };
-
+  const queryKey = `${revision}:${semester}:${retry}:${user?.id}`;
+  const data = result?.key === queryKey ? result.data : {};
+  const errors = result?.key === queryKey ? result.errors : [];
+  const loading = result?.key !== queryKey || !result.done;
   useEffect(() => {
-    taiDuLieu();
-  }, []);
+    let active = true;
+    const update = (change) => setResult((previous) => change(previous?.key === queryKey ? previous : { key: queryKey, data: {}, errors: [], done: false }));
+    const sources = [
+      ['gpa', () => academicService.tinhGPA(semester), (r) => r.data.gpa],
+      ['deadlinesSapToi', () => deadlineService.layDeadlineSapToi(7, semester), (r) => r.data.deadlines || []],
+      ['monNguyCo', () => academicService.canhBaoMonNguyCo(5, semester), (r) => r.data.monNguyCo || []],
+      ['thongKeTaiChinh', () => financeService.layThongKe(), (r) => r.data],
+      ['nganSachVuot', () => financeService.layNganSach(), (r) => r.data.ketQua?.filter((item) => item.vuotNganSach) || []],
+      ['gpaTheoKy', () => academicService.gpaTheoKy(), (r) => r.data.theoKy || []],
+    ];
+    Promise.allSettled(sources.map(async ([key, request, select]) => {
+      try {
+        const result = await request();
+        if (active) update((previous) => ({ ...previous, data: { ...previous.data, [key]: select(result) } }));
+      } catch {
+        if (active) update((previous) => ({ ...previous, errors: [...previous.errors, key] }));
+      }
+    })).then(() => { if (active) update((previous) => ({ ...previous, done: true })); });
+    return () => { active = false; };
+  }, [queryKey, semester]);
 
   const loiChaoTheoGio = () => {
     const gio = new Date().getHours();
@@ -98,18 +80,18 @@ function Dashboard() {
       {/* Banner Chào Mừng & Quick Action */}
       <div
         style={{ backgroundColor: '#141527' }}
-        className="relative overflow-hidden rounded-3xl p-6 sm:p-8 text-white shadow-xl"
+        className="relative overflow-hidden rounded-2xl p-5 sm:p-6 text-white shadow-xl"
       >
         <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-ink-500/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-1/3 -mb-8 w-48 h-48 bg-teal-500/10 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-ink-200 text-xs font-medium tracking-wide">
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               <span>{loiChaoTheoGio()}</span>
             </div>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-white">
               Xin chào, {user?.ten || 'Bạn'}! 👋
             </h1>
             <p className="text-slate-300 text-sm max-w-xl leading-relaxed">
@@ -117,60 +99,30 @@ function Dashboard() {
             </p>
           </div>
 
-          <Link
-            to="/deadline"
+          <button
+            type="button" onClick={() => setQuickEntry('deadline')}
             style={{ backgroundColor: '#ffffff', color: '#141527' }}
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
           >
             <Plus className="w-4 h-4 text-ink-900" />
             <span>Thêm việc cần làm</span>
-          </Link>
+          </button>
         </div>
       </div>
 
-      {loiTai ? (
-        <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-          <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center">
-            <span className="text-3xl">⚠️</span>
-          </div>
-          <p className="text-slate-600 dark:text-slate-400 text-center">Không thể tải dữ liệu. Vui lòng kiểm tra kết nối mạng.</p>
-          <button
-            onClick={() => { setDangTai(true); taiDuLieu(); }}
-            className="px-5 py-2.5 bg-ink-600 hover:bg-ink-700 text-white font-semibold rounded-xl transition-all"
-          >
-            Thử lại
-          </button>
-        </div>
-      ) : dangTai ? (
-        <PageSkeleton />
-      ) : (
-        <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
-          <DashboardKpiCards
-            gpa={gpa}
-            deadlinesSapToi={deadlinesSapToi}
-            thongKeTaiChinh={thongKeTaiChinh}
-            itemVariants={itemVariants}
-          />
+      {quickEntry && <QuickEntry key={quickEntry} kind={quickEntry} onClose={() => setQuickEntry(null)} />}
+      <DashboardToday key={`${user?.id}:${semester}`} userId={user?.id} semester={semester} onQuickEntry={setQuickEntry} />
 
-          <DashboardWarnings
-            monNguyCo={monNguyCo}
-            nganSachVuot={nganSachVuot}
-            itemVariants={itemVariants}
-          />
+      {errors.length > 0 && <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 flex flex-wrap justify-between gap-2">
+        <span>Một số số liệu chưa tải được. Các mục còn lại vẫn sử dụng được.</span>
+        <button onClick={() => setRetry((value) => value + 1)} className="font-semibold underline">Thử lại</button>
+      </div>}
+      {loading && Object.keys(data).length === 0 ? <PageSkeleton /> : <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-5">
+        <DashboardKpiCards gpa={data.gpa} deadlinesSapToi={data.deadlinesSapToi} thongKeTaiChinh={data.thongKeTaiChinh} itemVariants={itemVariants} deadlineUnavailable={!data.deadlinesSapToi} semester={semester} />
+        <DashboardWarnings monNguyCo={data.monNguyCo} nganSachVuot={data.nganSachVuot} itemVariants={itemVariants} />
+        {(data.gpaTheoKy?.length > 0 || Object.keys(data.thongKeTaiChinh?.theoDanhMuc || {}).length > 0) && <DashboardCharts thongKeTaiChinh={data.thongKeTaiChinh} gpaTheoKy={data.gpaTheoKy} itemVariants={itemVariants} />}
+      </motion.div>}
 
-          <DashboardRecentLists
-            deadlinesSapToi={deadlinesSapToi}
-            thongKeTaiChinh={thongKeTaiChinh}
-            itemVariants={itemVariants}
-          />
-
-          <DashboardCharts
-            thongKeTaiChinh={thongKeTaiChinh}
-            gpaTheoKy={gpaTheoKy}
-            itemVariants={itemVariants}
-          />
-        </motion.div>
-      )}
     </div>
   );
 }

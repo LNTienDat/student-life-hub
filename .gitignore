@@ -21,3 +21,6 @@ prisma/migrations/migration_lock.toml
 
 # Local documentation (hidden from git)
 README.md
+
+# Local backups are not deployment source.
+improvement-backups/

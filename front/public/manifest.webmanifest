@@ -1,0 +1,22 @@
+{
+  "id": "/",
+  "name": "Student Life Hub",
+  "short_name": "LifeHub",
+  "description": "Lịch học, deadline, điểm số và chi tiêu sinh viên trong một nơi.",
+  "lang": "vi",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#15161f",
+  "theme_color": "#15161f",
+  "icons": [
+    { "src": "/icons/app-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/app-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/app-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Hôm nay của bạn", "url": "/dashboard" },
+    { "name": "Deadline", "url": "/deadline" },
+    { "name": "Thời khóa biểu", "url": "/thoi-khoa-bieu" }
+  ]
+}

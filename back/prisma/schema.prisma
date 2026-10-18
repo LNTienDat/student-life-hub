@@ -69,6 +69,7 @@ model Deadline {
   doUuTien    String    @default("binh_thuong")
   trangThai   String    @default("dang_dien_hanh")
   ngayTao     DateTime  @default(now())
+  checklist   Json      @default("[]")
 
   nguoiDung   NguoiDung @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
   monHoc      MonHoc?   @relation(fields: [idMonHoc], references: [id], onDelete: SetNull)
@@ -119,10 +120,12 @@ model ThoiKhoaBieu {
   gioKetThuc  String    // "09:00"
   phongHoc    String?
   giangVien   String?
+  hocKy       String    @default("")
   ngayTao     DateTime  @default(now())
 
   nguoiDung   NguoiDung @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
 
   @@index([idNguoiDung])
   @@index([idNguoiDung, thu])
+  @@index([idNguoiDung, hocKy])
 }

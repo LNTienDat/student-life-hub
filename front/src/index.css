@@ -17,6 +17,15 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  @media (display-mode: standalone) {
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+  }
+
   /* Số liệu lớn (GPA, tiền, tiêu đề) dùng font display Sora — xem class .font-display */
   .font-display {
     font-family: 'Sora', sans-serif;
@@ -41,39 +50,29 @@
   background-color: #1B1D36; /* ink-800, dùng làm surface tối */
 }
 
-.dark .bg-gray-50,
-.dark .bg-gray-100,
 .dark .bg-slate-50,
 .dark .bg-slate-100 {
   background-color: #15161F; /* paper-dark */
 }
 
-.dark .text-gray-900,
-.dark .text-gray-800,
-.dark .text-gray-700,
 .dark .text-slate-900,
 .dark .text-slate-800,
 .dark .text-slate-700 {
   color: #E4E6F1;
 }
 
-.dark .text-gray-600,
-.dark .text-gray-500,
 .dark .text-slate-600,
 .dark .text-slate-500 {
   color: #A6ACC7;
 }
 
-.dark .text-gray-400,
 .dark .text-slate-400 {
-  color: #6B7099;
+  color: #A6ACC7;
 }
 
 .dark .border,
 .dark .border-t,
 .dark .border-b,
-.dark .border-gray-100,
-.dark .border-gray-200,
 .dark .border-slate-100,
 .dark .border-slate-200,
 .dark .divide-y > * + *,
@@ -99,9 +98,6 @@
 .dark .text-ink-600 {
   color: #8E98CB; /* ink-300 */
 }
-.dark .border-ink-600 {
-  border-color: #5F68A0;
-}
 
 /* Trạng thái màu ngữ nghĩa (nhấn ấm, tích cực, cảnh báo) */
 .dark .bg-amber-50 {
@@ -116,50 +112,21 @@
   border-color: rgba(217, 119, 6, 0.35);
 }
 
-.dark .bg-teal-50 {
-  background-color: rgba(13, 148, 136, 0.15);
-}
-.dark .text-teal-700,
-.dark .text-teal-600 {
-  color: #2DD4BF;
-}
-
-.dark .bg-rose-50,
-.dark .bg-red-50,
-.dark .bg-red-100 {
+.dark .bg-rose-50 {
   background-color: rgba(190, 18, 60, 0.18);
 }
 .dark .text-rose-700,
 .dark .text-rose-600,
-.dark .text-rose-800,
-.dark .text-red-600,
-.dark .text-red-700 {
+.dark .text-rose-800 {
   color: #FB7185;
 }
 .dark .border-rose-200 {
   border-color: rgba(190, 18, 60, 0.35);
 }
 
-.dark .bg-green-100 {
-  background-color: rgba(13, 148, 136, 0.18);
-  color: #2DD4BF;
-}
-
-.dark .bg-yellow-100 {
-  background-color: rgba(217, 119, 6, 0.18);
-  color: #FBBF24;
-}
-
-.dark .bg-blue-50,
-.dark .bg-blue-100 {
+.dark .bg-blue-50 {
   background-color: rgba(61, 63, 114, 0.35);
   color: #8E98CB;
-}
-
-.dark .bg-orange-50,
-.dark .bg-orange-100 {
-  background-color: rgba(217, 119, 6, 0.18);
-  color: #FBBF24;
 }
 
 /* ============================================================
@@ -186,3 +153,8 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Keep secondary surfaces and chart labels legible in dark mode. */
+.dark .bg-ink-50 { background-color: #282B4B; }
+.dark .recharts-default-tooltip { background-color: #1B1D36 !important; color: #E4E6F1; border: 1px solid #454968 !important; }
+.dark .recharts-text { fill: #A6ACC7; }

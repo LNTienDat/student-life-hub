@@ -5,7 +5,6 @@ const {
   chongCongThuc,
   thongKeTaiChinhService,
   kiemTraNganSachService,
-  tinhXuHuongService,
 } = require('./finance.service');
 
 const { DANH_MUC_CHI, DANH_MUC_THU, DANH_MUC_HOP_LE } = FINANCE;
@@ -273,7 +272,7 @@ async function xuHuongNThang(req, res) {
   try {
     const idNguoiDung = req.user.id;
     // Giới hạn soThang trong khoảng [1, 24]
-    const soThang = Math.min(Math.max(parseInt(req.query.soThang) || 6, 1), 24);
+    const soThang = Math.min(Math.max(parseInt(req.query.soThang) || FINANCE.DEFAULT_TREND_MONTHS, 1), 24);
     const now = new Date();
 
     // Tính khoảng thời gian bao phủ toàn bộ N tháng

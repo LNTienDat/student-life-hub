@@ -28,12 +28,13 @@ function validateBuoiHoc({ tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVi
 async function themBuoiHoc(req, res) {
   try {
     const idNguoiDung = req.user.id;
-    const { tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien } = req.body;
+    const { tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien, hocKy } = req.body;
 
     if (!tenMon || !thu || !gioBatDau || !gioKetThuc) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ tên môn, thứ, giờ bắt đầu/kết thúc' });
     }
 
+    if (hocKy !== undefined && (typeof hocKy !== 'string' || hocKy.length > 100)) return res.status(400).json({ message: 'Học kỳ không hợp lệ.' });
     const loiValidate = validateBuoiHoc({ tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien });
     if (loiValidate) {
       return res.status(400).json({ message: loiValidate });
@@ -48,6 +49,7 @@ async function themBuoiHoc(req, res) {
         gioKetThuc,
         phongHoc,
         giangVien,
+        hocKy,
       },
     });
 
@@ -63,7 +65,7 @@ async function layThoiKhoaBieu(req, res) {
   try {
     const idNguoiDung = req.user.id;
     const danhSach = await prisma.thoiKhoaBieu.findMany({
-      where: { idNguoiDung },
+      where: { idNguoiDung, ...(req.query.hocKy ? { OR: [{ hocKy: String(req.query.hocKy) }, { hocKy: '' }] } : {}) },
       orderBy: [{ thu: 'asc' }, { gioBatDau: 'asc' }],
     });
     res.json({ thoiKhoaBieu: danhSach });
@@ -78,8 +80,9 @@ async function suaBuoiHoc(req, res) {
   try {
     const { id } = req.params;
     const idNguoiDung = req.user.id;
-    const { tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien } = req.body;
+    const { tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien, hocKy } = req.body;
 
+    if (hocKy !== undefined && (typeof hocKy !== 'string' || hocKy.length > 100)) return res.status(400).json({ message: 'Học kỳ không hợp lệ.' });
     const loiValidate = validateBuoiHoc({ tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien });
     if (loiValidate) {
       return res.status(400).json({ message: loiValidate });
@@ -94,6 +97,7 @@ async function suaBuoiHoc(req, res) {
         gioKetThuc,
         phongHoc,
         giangVien,
+        hocKy,
       },
     });
 

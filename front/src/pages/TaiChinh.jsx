@@ -4,7 +4,6 @@ import financeService from '../services/financeService';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
 import { TEN_DANH_MUC } from '../constants';
-import { dinhDangTien } from '../utils/formatters';
 import { Plus, X, Download } from 'lucide-react';
 
 import FinanceKpiCards from './taichinh/FinanceKpiCards';
@@ -50,7 +49,6 @@ function TaiChinh() {
 
   const [trangHienTai, setTrangHienTai] = useState(1);
   const [soTrang, setSoTrang] = useState(1);
-  const [tongSoGiaoDich, setTongSoGiaoDich] = useState(0);
   const [dangTaiGD, setDangTaiGD] = useState(false);
 
   // State modal xác nhận và toast
@@ -110,7 +108,6 @@ function TaiChinh() {
       setGiaoDichs(res.data.giaoDichs);
       setSoTrang(res.data.soTrang);
       setTrangHienTai(res.data.trangHienTai);
-      setTongSoGiaoDich(res.data.tongSo);
     } catch (error) {
       console.error(error);
     } finally {

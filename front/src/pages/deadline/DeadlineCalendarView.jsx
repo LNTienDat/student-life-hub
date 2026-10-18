@@ -138,6 +138,7 @@ function DeadlineCalendarView({
                   <button
                     onClick={() => onHoanThanh(d.id, d.trangThai === 'hoan_thanh')}
                     className="mt-0.5 flex-shrink-0"
+                    aria-label={d.trangThai === 'hoan_thanh' ? 'Đánh dấu chưa hoàn thành' : 'Đánh dấu hoàn thành'}
                   >
                     {d.trangThai === 'hoan_thanh' ? (
                       <CheckCircle2 className="w-6 h-6 text-emerald-500" />
@@ -178,6 +179,7 @@ function DeadlineCalendarView({
                     <button
                       onClick={() => onSua(d)}
                       className="p-1.5 text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600"
+                      title="Sửa" aria-label={`Sửa deadline: ${d.tieuDe}`}
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
@@ -185,6 +187,7 @@ function DeadlineCalendarView({
                       onClick={() => onXoa(d)}
                       className="p-1.5 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600"
                       title="Xóa"
+                      aria-label={`Xóa deadline: ${d.tieuDe}`}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

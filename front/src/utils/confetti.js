@@ -2,8 +2,13 @@ import confetti from 'canvas-confetti';
 
 /**
  * Bắn hiệu ứng pháo hoa giấy chúc mừng (Gamification)
+ * Tôn trọng cài đặt giảm chuyển động (prefers-reduced-motion) cho Accessibility
  */
 export function triggerConfetti() {
+  if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return; // Người dùng bật giảm chuyển động vì lý do sức khỏe/tiền đình
+  }
+
   const count = 180;
   const defaults = {
     origin: { y: 0.7 },

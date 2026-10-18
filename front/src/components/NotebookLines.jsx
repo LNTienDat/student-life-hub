@@ -10,6 +10,7 @@ function NotebookLines({ className = '' }) {
       viewBox="0 0 400 600"
       preserveAspectRatio="xMidYMid slice"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
       <defs>
         <pattern id="notebook-ruled" width="400" height="32" patternUnits="userSpaceOnUse">

@@ -32,6 +32,7 @@ function TransactionTable({
               value={timKiem}
               onChange={(e) => onTimKiemChange(e.target.value)}
               placeholder="Tìm kiếm giao dịch..."
+              aria-label="Tìm kiếm giao dịch"
               className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
             />
           </div>
@@ -39,6 +40,7 @@ function TransactionTable({
             <select
               value={locLoai}
               onChange={(e) => onLocLoaiChange(e.target.value)}
+              aria-label="Lọc theo loại giao dịch"
               className="w-full md:w-auto bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
             >
               <option value="">Tất cả loại</option>
@@ -48,6 +50,7 @@ function TransactionTable({
             <select
               value={locDanhMuc}
               onChange={(e) => onLocDanhMucChange(e.target.value)}
+              aria-label="Lọc theo danh mục"
               className="w-full md:w-auto bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
             >
               <option value="">Tất cả danh mục</option>
