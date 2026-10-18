@@ -12,7 +12,7 @@ Ngày chuẩn bị: 18/10/2026. Mã nguồn đã được push lên nhánh `code
 ## Thứ tự thực hiện
 
 1. Xem lại [PR #1](https://github.com/LNTienDat/student-life-hub/pull/1) trong GitHub `LNTienDat/student-life-hub`. Bản cập nhật nằm trên nhánh `codex/student-life-hub-render`; nhánh `main` vẫn ở commit `9c92175`. Khi thử triển khai, chọn đúng nhánh cập nhật này.
-2. Chọn PostgreSQL hosting dành riêng cho Student Life Hub. Không trỏ vào cơ sở dữ liệu của bài tập khác. Nhập chuỗi kết nối trực tiếp trong Render; không đưa chuỗi kết nối vào GitHub hoặc nội dung công khai.
+2. Tạo PostgreSQL trên Neon Free dành riêng cho Student Life Hub theo phần bên dưới. Nhập chuỗi kết nối trực tiếp trong Render; không đưa chuỗi kết nối vào GitHub hoặc nội dung công khai.
 3. Trên Render chọn **New → Blueprint**, kết nối đúng repo Student Life Hub, nhánh đã được cập nhật và tệp `render.yaml` ở gốc repo.
 4. Nhập `DATABASE_URL`, xem lại danh sách tài nguyên và giá trước khi bấm tạo. Định nghĩa hiện chỉ tạo một web service `free`; không chứa database, worker, cron hoặc dịch vụ của bài tập khác.
 5. Sau khi triển khai, kiểm tra URL HTTPS do Render cấp, `/api/health`, đăng ký/đăng nhập, lưu deadline, nhập tệp và cài PWA trên điện thoại.
@@ -30,6 +30,23 @@ Nếu tạo Web Service thủ công thay Blueprint:
 | Plan | Free |
 
 Cần khai báo các biến giống `render.yaml`; JWT_SECRET phải là giá trị ngẫu nhiên riêng, không dùng giá trị mẫu. `FRONTEND_URL` tự lấy từ `RENDER_EXTERNAL_URL`; khi dùng tên miền tùy chỉnh, đặt FRONTEND_URL thành địa chỉ HTTPS đó.
+
+## PostgreSQL cho bản thử nghiệm: Neon Free
+
+Đã chọn Neon Free làm phương án cơ sở dữ liệu cho bản thử nghiệm. Việc chọn phương án chưa tạo tài khoản hoặc cơ sở dữ liệu. Cần đăng nhập tài khoản của chủ dự án để thực hiện:
+
+1. Mở [Neon Console](https://console.neon.tech), đăng nhập hoặc tự hoàn tất đăng ký nếu chưa có tài khoản.
+2. Tạo project `student-life-hub` trên gói **Free**, chọn khu vực gần Render Singapore nhất trong danh sách hiện có. Dùng PostgreSQL 16 nếu có, cùng phiên bản đã kiểm thử trên GitHub.
+3. Mở **Connect**, chọn cơ sở dữ liệu của project mới. Với cấu hình hiện tại, dùng kết nối **Direct / Unpooled** (tắt Connection pooling). Ứng dụng dùng chung `DATABASE_URL` cho Prisma Client và migration, nên kết nối trực tiếp là phương án đơn giản cho một máy chủ thử nghiệm.
+4. Giữ `sslmode=require` trong URL. Có thể thêm `connect_timeout=15&connection_limit=5` vào query string để chờ cơ sở dữ liệu thức dậy và giới hạn số kết nối của máy chủ nhỏ. Các tham số query được nối bằng `&`; không thêm dấu `?` lần thứ hai.
+5. Dán URL thật vào biến bí mật `DATABASE_URL` khi tạo Blueprint Render. Không thay URL trong `back/.env` local. Không dán mật khẩu hay URL kết nối vào chat, PR hoặc tệp được theo dõi bởi Git.
+6. Lần khởi động Render đầu tiên sẽ tạo cấu trúc bảng bằng các migration đã lưu. Cơ sở dữ liệu online bắt đầu trống; dữ liệu local chỉ được chuyển khi chủ dự án yêu cầu riêng.
+
+Không cần nâng cấp Prisma để kết nối Neon. Nếu sau này dùng kết nối pooled, cần cấu hình riêng kết nối trực tiếp cho migration rồi kiểm thử trước khi đổi biến trên hosting.
+
+Neon Free vẫn có hạn mức dung lượng/tài nguyên và có thể tạm dừng compute khi không hoạt động; xem hạn mức trong Console trước khi đưa cho nhiều người dùng. Không chọn nâng cấp trả phí hoặc nhập thẻ nếu chưa được chủ dự án đồng ý.
+
+Nguồn đối chiếu ngày 18/10/2026: [Neon Free](https://neon.com/blog/neon-free-plan-1-gb-per-project), [Neon và Prisma](https://neon.com/docs/guides/prisma).
 
 ## Cách hoạt động của bản triển khai
 
