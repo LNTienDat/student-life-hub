@@ -1,6 +1,14 @@
-# Student Life Hub — chuẩn bị triển khai Render
+# Student Life Hub — triển khai Render
 
-Ngày chuẩn bị: 18/10/2026. Mã nguồn đã được push lên nhánh `codex/student-life-hub-render` và có [bản nháp PR #1](https://github.com/LNTienDat/student-life-hub/pull/1). Chưa tạo dịch vụ Render và chưa chuyển dữ liệu local lên Internet.
+Ngày cập nhật: 19/10/2026. Website đã chạy tại [student-life-hub-inx4.onrender.com](https://student-life-hub-inx4.onrender.com), dùng Render Free và Neon Free tại Singapore. Mã nguồn nằm trên nhánh `codex/student-life-hub-render`, trong [bản nháp PR #1](https://github.com/LNTienDat/student-life-hub/pull/1). Dữ liệu và tài khoản local chưa được chuyển lên online; người dùng đăng ký tài khoản mới trên website online.
+
+## Dịch vụ đang sử dụng
+
+- Render service: `student-life-hub`, ID `srv-dbafdh5g1s2s73btieh0`.
+- Neon project: `student-life-hub`, ID `morning-credit-05388648`, nhánh `production`, PostgreSQL 18.
+- Chủ dự án đã cho phép lưu kết nối Neon vào biến bí mật `DATABASE_URL` của Render. Giá trị thật chỉ được nhập trên Render, không lưu trong Git hoặc tài liệu này.
+- Render đã build thành công, áp dụng đủ 5 migration và trả HTTP 200 tại `/api/health`. CI dùng PostgreSQL 16; lần triển khai thực tế đã áp dụng migration thành công trên Neon PostgreSQL 18.
+- Tự deploy đã tắt: sau khi push bản sửa và kiểm thử đạt, chọn **Manual Deploy → Deploy latest commit** trên đúng service này.
 
 ## Phương án đã chuẩn bị
 
@@ -33,7 +41,7 @@ Cần khai báo các biến giống `render.yaml`; JWT_SECRET phải là giá tr
 
 ## PostgreSQL cho bản thử nghiệm: Neon Free
 
-Đã chọn Neon Free làm phương án cơ sở dữ liệu cho bản thử nghiệm. Việc chọn phương án chưa tạo tài khoản hoặc cơ sở dữ liệu. Cần đăng nhập tài khoản của chủ dự án để thực hiện:
+Neon Free đã được tạo và kết nối cho bản thử nghiệm. Các bước dưới đây ghi lại cách thiết lập khi cần tái tạo môi trường:
 
 1. Mở [Neon Console](https://console.neon.tech), đăng nhập hoặc tự hoàn tất đăng ký nếu chưa có tài khoản.
 2. Tạo project `student-life-hub` trên gói **Free**, chọn khu vực gần Render Singapore nhất trong danh sách hiện có. Dùng PostgreSQL 16 nếu có, cùng phiên bản đã kiểm thử trên GitHub.
@@ -69,5 +77,11 @@ Các giới hạn Render được đối chiếu ngày 18/10/2026: [Free](https:
 - Đối chiếu mã commit nhánh main từ GitHub bằng thao tác chỉ đọc.
 - Bản dựng và 7 kiểm thử PWA đạt; 7 kiểm thử logic frontend đạt.
 - 55 kiểm thử backend đạt, gồm kiểm tra phục vụ SPA, cache của service worker, CSP, API và PostgreSQL local.
-- Các script triển khai được kiểm tra cú pháp; chưa chạy pipeline cài đặt/build trong môi trường Render hoặc gửi Blueprint lên Render để xác minh cloud.
+- Blueprint đã được Render chấp nhận; script build/start đã chạy thành công trên Render với cơ sở dữ liệu Neon riêng.
 - CI dựng frontend trước, tạo PostgreSQL tạm, áp dụng migration và chạy kiểm thử. Xem kết quả chạy trên tab **Checks** của PR #1; kiểm thử local không thay thế xác minh trên cloud.
+
+## Bản vá thư viện ngày 19/10/2026
+
+- Cập nhật lockfile trong phạm vi tương thích hiện tại: `proxy-addr` 2.0.8, `nodemailer` 10.1.6, `ip-address` 10.7.4 và hai phiên bản phụ thuộc `brace-expansion` 1.1.21/2.1.7.
+- 55 kiểm thử backend đạt sau cập nhật. `npm audit --omit=dev` còn 2 cảnh báo mức trung bình (`exceljs` và phụ thuộc `uuid`), không còn mức cao/nghiêm trọng tại thời điểm kiểm tra.
+- Cảnh báo UUID liên quan các hàm v3/v5/v6 nhận buffer. Mã ExcelJS hiện được kiểm tra chỉ gọi v4; chưa nâng cấp cưỡng bức hoặc hạ phiên bản ExcelJS để làm mất cảnh báo. Cần tiếp tục theo dõi bản vá upstream; kết quả audit này không phải cam kết không còn mọi rủi ro.
