@@ -43,3 +43,37 @@ test('authenticated import, semester filtering and checklist updates work throug
   expect((await request(app).post('/api/imports/commit').set(auth).send(bad)).status).toBe(400);
   expect(await prisma.monHoc.count({ where: { idNguoiDung: owner.id } })).toBe(1);
 }, 20000);
+
+
+test('finance search, pagination and repeated budget saves keep each user data separate', async () => {
+  const owner = await account();
+  const other = await account();
+  const auth = { Authorization: `Bearer ${owner.token}` };
+  const otherAuth = { Authorization: `Bearer ${other.token}` };
+  const current = new Date();
+  const period = { thang: current.getMonth() + 1, nam: current.getFullYear() };
+  for (let index = 0; index < 11; index++) {
+    const created = await request(app).post('/api/finance/giao-dich').set(auth)
+      .send({ loai: 'chi', danhMuc: 'an_uong', soTien: 50000, moTa: index === 0 ? 'Sách kiểm thử' : `Bữa ăn ${index}` });
+    expect(created.status).toBe(201);
+  }
+  const secondPage = await request(app).get('/api/finance/giao-dich').query({ trang: 2, soLuong: 10 }).set(auth);
+  expect(secondPage.status).toBe(200);
+  expect(secondPage.body).toMatchObject({ trang: 2, soTrang: 2, tongSo: 11 });
+  expect(secondPage.body.giaoDichs).toHaveLength(1);
+  const search = await request(app).get('/api/finance/giao-dich').query({ q: 'Sách', ...period }).set(auth);
+  expect(search.body.giaoDichs).toHaveLength(1);
+  expect(search.body.giaoDichs[0].moTa).toBe('Sách kiểm thử');
+  for (const soTienToiDa of [1000000, 1500000]) {
+    const saved = await request(app).post('/api/finance/ngan-sach').set(auth)
+      .send({ danhMuc: 'an_uong', soTienToiDa, ...period });
+    expect(saved.status).toBe(200);
+  }
+  const budget = await request(app).get('/api/finance/ngan-sach').query(period).set(auth);
+  expect(budget.body.ketQua).toHaveLength(1);
+  expect(budget.body.ketQua[0]).toMatchObject({ soTienToiDa: 1500000, daChi: 550000 });
+  const otherBudget = await request(app).get('/api/finance/ngan-sach').query(period).set(otherAuth);
+  expect(otherBudget.body.ketQua).toEqual([]);
+  const otherTransactions = await request(app).get('/api/finance/giao-dich').set(otherAuth);
+  expect(otherTransactions.body.giaoDichs).toEqual([]);
+}, 20000);

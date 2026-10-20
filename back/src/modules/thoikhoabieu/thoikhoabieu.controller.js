@@ -1,22 +1,27 @@
 const prisma = require('../../prismaClient');
 const { THOIKHOABIEU } = require('../../constants');
+const { finiteNumber } = require('../../utils/number.util');
 
 // Kiểm tra thứ (2=Thứ 2 ... 8=Chủ nhật) và giờ kết thúc phải sau giờ bắt đầu.
 function validateBuoiHoc({ tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien }) {
-  if (tenMon && tenMon.length > THOIKHOABIEU.MAX_TEN_MON_LENGTH) {
-    return `Tên môn học không được vượt quá ${THOIKHOABIEU.MAX_TEN_MON_LENGTH} ký tự`;
+  if (tenMon !== undefined && (typeof tenMon !== 'string' || !tenMon.trim() || tenMon.length > THOIKHOABIEU.MAX_TEN_MON_LENGTH)) {
+    return `Tên môn học cần có từ 1 đến ${THOIKHOABIEU.MAX_TEN_MON_LENGTH} ký tự`;
   }
-  if (phongHoc && phongHoc.length > THOIKHOABIEU.MAX_PHONG_HOC_LENGTH) {
+  if (phongHoc != null && (typeof phongHoc !== 'string' || phongHoc.length > THOIKHOABIEU.MAX_PHONG_HOC_LENGTH)) {
     return `Phòng học không được vượt quá ${THOIKHOABIEU.MAX_PHONG_HOC_LENGTH} ký tự`;
   }
-  if (giangVien && giangVien.length > THOIKHOABIEU.MAX_GIANG_VIEN_LENGTH) {
+  if (giangVien != null && (typeof giangVien !== 'string' || giangVien.length > THOIKHOABIEU.MAX_GIANG_VIEN_LENGTH)) {
     return `Tên giảng viên không được vượt quá ${THOIKHOABIEU.MAX_GIANG_VIEN_LENGTH} ký tự`;
   }
   if (thu !== undefined) {
-    const thuSo = parseInt(thu);
-    if (isNaN(thuSo) || thuSo < THOIKHOABIEU.THU_MIN || thuSo > THOIKHOABIEU.THU_MAX) {
+    const thuSo = finiteNumber(thu);
+    if (!Number.isInteger(thuSo) || thuSo < THOIKHOABIEU.THU_MIN || thuSo > THOIKHOABIEU.THU_MAX) {
       return `Thứ không hợp lệ (chỉ nhận giá trị từ ${THOIKHOABIEU.THU_MIN} đến ${THOIKHOABIEU.THU_MAX})`;
     }
+  }
+  const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
+  if ([gioBatDau, gioKetThuc].some((value) => value !== undefined && (typeof value !== 'string' || !timePattern.test(value)))) {
+    return 'Giờ học phải đúng định dạng HH:mm (từ 00:00 đến 23:59)';
   }
   if (gioBatDau && gioKetThuc && gioKetThuc <= gioBatDau) {
     return 'Giờ kết thúc phải sau giờ bắt đầu';
@@ -44,7 +49,7 @@ async function themBuoiHoc(req, res) {
       data: {
         idNguoiDung,
         tenMon,
-        thu: parseInt(thu),
+        thu: finiteNumber(thu),
         gioBatDau,
         gioKetThuc,
         phongHoc,
@@ -83,7 +88,11 @@ async function suaBuoiHoc(req, res) {
     const { tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien, hocKy } = req.body;
 
     if (hocKy !== undefined && (typeof hocKy !== 'string' || hocKy.length > 100)) return res.status(400).json({ message: 'Học kỳ không hợp lệ.' });
-    const loiValidate = validateBuoiHoc({ tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien });
+    const hienTai = await prisma.thoiKhoaBieu.findFirst({ where: { id: parseInt(id), idNguoiDung } });
+    if (!hienTai) {
+      return res.status(404).json({ message: 'Không tìm thấy buổi học hoặc bạn không có quyền sửa' });
+    }
+    const loiValidate = validateBuoiHoc({ ...hienTai, ...req.body });
     if (loiValidate) {
       return res.status(400).json({ message: loiValidate });
     }
@@ -92,7 +101,7 @@ async function suaBuoiHoc(req, res) {
       where: { id: parseInt(id), idNguoiDung },
       data: {
         tenMon,
-        thu: thu !== undefined ? parseInt(thu) : undefined,
+        thu: thu !== undefined ? finiteNumber(thu) : undefined,
         gioBatDau,
         gioKetThuc,
         phongHoc,

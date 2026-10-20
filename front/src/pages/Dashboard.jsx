@@ -7,7 +7,7 @@ import QuickEntry from './dashboard/QuickEntry';
 import { academicService } from '../services/academicService';
 import { deadlineService } from '../services/deadlineService';
 import { financeService } from '../services/financeService';
-import { Sparkles, Plus } from 'lucide-react';
+import { Plus, ChevronDown } from 'lucide-react';
 
 import DashboardKpiCards from './dashboard/DashboardKpiCards';
 import DashboardWarnings from './dashboard/DashboardWarnings';
@@ -41,6 +41,7 @@ function Dashboard() {
   const [result, setResult] = useState(null);
   const [retry, setRetry] = useState(0);
   const [quickEntry, setQuickEntry] = useState(null);
+  const [showCharts, setShowCharts] = useState(false);
 
   const queryKey = `${revision}:${semester}:${retry}:${user?.id}`;
   const data = result?.key === queryKey ? result.data : {};
@@ -76,39 +77,17 @@ function Dashboard() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-12">
-      {/* Banner Chào Mừng & Quick Action */}
-      <div
-        style={{ backgroundColor: '#141527' }}
-        className="relative overflow-hidden rounded-2xl p-5 sm:p-6 text-white shadow-xl"
-      >
-        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-ink-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 -mb-8 w-48 h-48 bg-teal-500/10 rounded-full blur-2xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-ink-200 text-xs font-medium tracking-wide">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>{loiChaoTheoGio()}</span>
-            </div>
-            <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-white">
-              Xin chào, {user?.ten || 'Bạn'}! 👋
-            </h1>
-            <p className="text-slate-300 text-sm max-w-xl leading-relaxed">
-              Hãy kiểm tra các đầu điểm và deadline cần hoàn thành hôm nay để giữ nhịp học tập tốt nhất.
-            </p>
-          </div>
-
-          <button
-            type="button" onClick={() => setQuickEntry('deadline')}
-            style={{ backgroundColor: '#ffffff', color: '#141527' }}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <Plus className="w-4 h-4 text-ink-900" />
-            <span>Thêm việc cần làm</span>
-          </button>
+    <div className="max-w-6xl mx-auto space-y-6">
+      <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="min-w-0">
+          <p className="mb-1 text-sm text-slate-500">{loiChaoTheoGio()}</p>
+          <h1 className="break-words font-display text-2xl font-bold tracking-tight text-slate-900">Xin chào, {user?.ten || 'bạn'}!</h1>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">Lịch học, việc cần làm và chi tiêu trong ngày của bạn.</p>
         </div>
-      </div>
+        <button type="button" onClick={() => setQuickEntry('deadline')} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-ink-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-ink-700">
+          <Plus aria-hidden="true" className="h-4 w-4" />Thêm việc cần làm
+        </button>
+      </header>
 
       {quickEntry && <QuickEntry key={quickEntry} kind={quickEntry} onClose={() => setQuickEntry(null)} />}
       <DashboardToday key={`${user?.id}:${semester}`} userId={user?.id} semester={semester} onQuickEntry={setQuickEntry} />
@@ -118,9 +97,15 @@ function Dashboard() {
         <button onClick={() => setRetry((value) => value + 1)} className="font-semibold underline">Thử lại</button>
       </div>}
       {loading && Object.keys(data).length === 0 ? <PageSkeleton /> : <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-5">
-        <DashboardKpiCards gpa={data.gpa} deadlinesSapToi={data.deadlinesSapToi} thongKeTaiChinh={data.thongKeTaiChinh} itemVariants={itemVariants} deadlineUnavailable={!data.deadlinesSapToi} semester={semester} />
+        <div className="border-t border-slate-200 pt-6"><h2 className="mb-3 text-base font-semibold text-slate-900">Tổng quan của bạn</h2>
+        <DashboardKpiCards gpa={data.gpa} deadlinesSapToi={data.deadlinesSapToi} thongKeTaiChinh={data.thongKeTaiChinh} itemVariants={itemVariants} deadlineUnavailable={!data.deadlinesSapToi} semester={semester} /></div>
         <DashboardWarnings monNguyCo={data.monNguyCo} nganSachVuot={data.nganSachVuot} itemVariants={itemVariants} />
-        {(data.gpaTheoKy?.length > 0 || Object.keys(data.thongKeTaiChinh?.theoDanhMuc || {}).length > 0) && <DashboardCharts thongKeTaiChinh={data.thongKeTaiChinh} gpaTheoKy={data.gpaTheoKy} itemVariants={itemVariants} />}
+        {(data.gpaTheoKy?.length > 0 || Object.keys(data.thongKeTaiChinh?.theoDanhMuc || {}).length > 0) && <section>
+          <button type="button" onClick={() => setShowCharts(!showCharts)} aria-expanded={showCharts} aria-controls="dashboard-charts" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-ink-600">
+            {showCharts ? 'Thu gọn biểu đồ' : 'Xem biểu đồ học tập và chi tiêu'}<ChevronDown aria-hidden="true" className={`h-4 w-4 transition-transform ${showCharts ? 'rotate-180' : ''}`} />
+          </button>
+          {showCharts && <div id="dashboard-charts" className="mt-3"><DashboardCharts thongKeTaiChinh={data.thongKeTaiChinh} gpaTheoKy={data.gpaTheoKy} itemVariants={itemVariants} /></div>}
+        </section>}
       </motion.div>}
 
     </div>

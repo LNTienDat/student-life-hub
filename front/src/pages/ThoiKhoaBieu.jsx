@@ -1,3 +1,4 @@
+import DataLoadError from '../components/DataLoadError';
 import ImportPanel from '../components/ImportPanel';
 import { useSemester } from '../hooks/useSemester';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -17,6 +18,9 @@ function ThoiKhoaBieu() {
   const [classSemester, setClassSemester] = useState(semester);
   const [danhSach, setDanhSach] = useState([]);
   const [dangTai, setDangTai] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const saveLock = useRef(false);
   const [hienForm, setHienForm] = useState(false);
   const [dangSuaId, setDangSuaId] = useState(null);
 
@@ -48,9 +52,10 @@ function ThoiKhoaBieu() {
     const version = ++loadVersion.current;
     return timetableService.layThoiKhoaBieu(semester).then((res) => {
       if (version !== loadVersion.current) return;
+      setLoadError('');
       setDanhSach(res.data.thoiKhoaBieu || []);
     }).catch((error) => {
-      console.error(error);
+      if (version === loadVersion.current) setLoadError(error.response?.data?.message || 'Chưa tải được dữ liệu. Kiểm tra kết nối và thử lại.');
     }).finally(() => {
       if (version === loadVersion.current) setDangTai(false);
     });
@@ -93,6 +98,9 @@ function ThoiKhoaBieu() {
       hienToast('error', 'Giờ kết thúc phải sau giờ bắt đầu');
       return;
     }
+    if (saveLock.current) return;
+    saveLock.current = true;
+    setSaving(true);
     try {
       const data = { tenMon, thu, gioBatDau, gioKetThuc, phongHoc, giangVien, hocKy: classSemester };
       if (dangSuaId) {
@@ -106,6 +114,9 @@ function ThoiKhoaBieu() {
       taiDuLieu();
     } catch (error) {
       hienToast('error', error.response?.data?.message || 'Có lỗi xảy ra');
+    } finally {
+      saveLock.current = false;
+      setSaving(false);
     }
   }
 
@@ -116,8 +127,9 @@ function ThoiKhoaBieu() {
       title: 'Xóa buổi học?',
       subTitle: 'Hành động này sẽ xóa buổi học khỏi thời khóa biểu của bạn.',
       itemInfo: {
-        title: bh.tenMon,
-        subtitle: `${thuHoc} • ${bh.gioBatDau} - ${bh.gioKetThuc}${bh.phongHoc ? ` • Phòng ${bh.phongHoc}` : ''}`,
+        label: bh.tenMon,
+        value: `${thuHoc} • ${bh.gioBatDau} - ${bh.gioKetThuc}`,
+        extra: bh.phongHoc ? `Phòng ${bh.phongHoc}` : '',
       },
       message: 'Bạn có chắc chắn muốn xóa buổi học này không? Dữ liệu đã xóa không thể hoàn tác.',
       confirmText: 'Xác nhận xóa',
@@ -203,10 +215,11 @@ function ThoiKhoaBieu() {
           onPhongHocChange={setPhongHoc}
           onGiangVienChange={setGiangVien}
           onSubmit={xuLySubmit}
+          saving={saving}
           onCancel={moFormThem}
         />
 
-        {dangTai ? (
+        {loadError ? <DataLoadError message={loadError} onRetry={taiDuLieu} /> : dangTai ? (
           <PageSkeleton />
         ) : soMonHoc === 0 ? (
           <div className="flex flex-col items-center justify-center p-16 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60 text-center">

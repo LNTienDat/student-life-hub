@@ -1,118 +1,18 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { GraduationCap, CalendarDays, Wallet, ArrowUpRight } from 'lucide-react';
 import { dinhDangTien } from '../../utils/formatters';
 
-export default function DashboardKpiCards({ gpa, deadlinesSapToi = [], thongKeTaiChinh, itemVariants, deadlineUnavailable, semester }) {
-  const soDuDuong = (thongKeTaiChinh?.soDu ?? 0) >= 0;
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-      {/* Thẻ GPA */}
-      <motion.div variants={itemVariants} whileHover={{ y: -4, transition: { duration: 0.2 } }}>
-        <Link
-          to="/mon-hoc"
-          className="group relative block h-full bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-ink-50 rounded-bl-full -z-0 group-hover:scale-110 transition-transform duration-300" />
-          <div className="relative z-10 flex items-start justify-between">
-            <div>
-              <span className="text-xs font-medium text-slate-400">Học tập</span>
-              <h3 className="text-base font-semibold text-slate-800 mt-0.5">GPA {semester ? 'học kỳ' : 'tích lũy'}</h3>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-ink-50 flex items-center justify-center text-ink-600 group-hover:bg-ink-600 group-hover:text-white transition-colors duration-200">
-              <GraduationCap className="w-5 h-5" />
-            </div>
-          </div>
-
-          <div className="relative z-10 mt-5 flex items-baseline gap-2">
-            <span className="font-display text-4xl font-extrabold text-slate-900 group-hover:text-ink-600 transition-colors">
-              {gpa !== null && gpa !== undefined ? Number(gpa).toFixed(2) : '--'}
-            </span>
-            <span className="text-sm font-medium text-slate-400">
-              / 10
-            </span>
-          </div>
-
-          <div className="relative z-10 mt-4 pt-4 border-t border-slate-50 flex flex-col gap-2 text-xs text-slate-500">
-            <span className="flex items-center gap-1 font-medium text-ink-600">
-              Chi tiết môn học <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
-            </span>
-            <span className="text-slate-400">
-              Thang 10 · tạm tính từ các điểm đã nhập
-            </span>
-          </div>
-        </Link>
-      </motion.div>
-
-      {/* Thẻ Deadline */}
-      <motion.div variants={itemVariants} whileHover={{ y: -4, transition: { duration: 0.2 } }}>
-        <Link
-          to="/deadline"
-          className="group relative block h-full bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-bl-full -z-0 group-hover:scale-110 transition-transform duration-300" />
-          <div className="relative z-10 flex items-start justify-between">
-            <div>
-              <span className="text-xs font-medium text-slate-400">Tiến độ</span>
-              <h3 className="text-base font-semibold text-slate-800 mt-0.5">Deadline sắp tới</h3>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
-              <CalendarDays className="w-5 h-5" />
-            </div>
-          </div>
-
-          <div className="relative z-10 mt-5 flex items-baseline gap-2">
-            <span className="font-display text-4xl font-extrabold text-slate-900 group-hover:text-amber-600 transition-colors">
-              {deadlineUnavailable ? '--' : deadlinesSapToi.length}
-            </span>
-            <span className="text-sm font-medium text-slate-400">nhiệm vụ</span>
-          </div>
-
-          <div className="relative z-10 mt-4 pt-4 border-t border-slate-50 flex items-center justify-between text-xs text-slate-500">
-            <span className="flex items-center gap-1 font-medium text-amber-600">
-              Lịch hạn chót <ArrowUpRight className="w-3.5 h-3.5" />
-            </span>
-            <span className="text-slate-400">Trong 7 ngày</span>
-          </div>
-        </Link>
-      </motion.div>
-
-      {/* Thẻ Số Dư Tài Chính */}
-      <motion.div variants={itemVariants} whileHover={{ y: -4, transition: { duration: 0.2 } }}>
-        <Link
-          to="/tai-chinh"
-          className="group relative block h-full bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-bl-full -z-0 group-hover:scale-110 transition-transform duration-300" />
-          <div className="relative z-10 flex items-start justify-between">
-            <div>
-              <span className="text-xs font-medium text-slate-400">Ngân sách</span>
-              <h3 className="text-base font-semibold text-slate-800 mt-0.5">Số dư tháng này</h3>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-200">
-              <Wallet className="w-5 h-5" />
-            </div>
-          </div>
-
-          <div className="relative z-10 mt-5 flex items-baseline gap-2">
-            <span
-              className={`font-display text-3xl sm:text-4xl font-extrabold tracking-tight ${
-                soDuDuong ? 'text-emerald-600' : 'text-rose-600'
-              }`}
-            >
-              {thongKeTaiChinh ? dinhDangTien(thongKeTaiChinh.soDu) : '--'}
-            </span>
-          </div>
-
-          <div className="relative z-10 mt-4 pt-4 border-t border-slate-50 flex items-center justify-between text-xs text-slate-500">
-            <span className="flex items-center gap-1 font-medium text-emerald-600">
-              Quản lý chi tiêu <ArrowUpRight className="w-3.5 h-3.5" />
-            </span>
-            <span className="text-slate-400">Tháng hiện tại</span>
-          </div>
-        </Link>
-      </motion.div>
-    </div>
-  );
+export default function DashboardKpiCards({ gpa, deadlinesSapToi = [], thongKeTaiChinh, deadlineUnavailable, semester }) {
+  const cards = [
+    { to: '/mon-hoc', title: `GPA ${semester ? 'học kỳ' : 'tích lũy'}`, value: gpa == null ? '—' : Number(gpa).toFixed(2), unit: '/ 10', hint: 'Tạm tính từ các điểm đã nhập', Icon: GraduationCap },
+    { to: '/deadline', title: 'Deadline trong 7 ngày', value: deadlineUnavailable ? '—' : deadlinesSapToi.length, unit: 'việc', hint: 'Xem danh sách công việc', Icon: CalendarDays },
+    { to: '/tai-chinh', title: 'Số dư tháng này', value: thongKeTaiChinh ? dinhDangTien(thongKeTaiChinh.soDu) : '—', hint: 'Tổng thu trừ tổng chi trong tháng', Icon: Wallet },
+  ];
+  return <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    {cards.map(({ to, title, value, unit, hint, Icon }) => <Link key={to} to={to} className="group min-w-0 rounded-2xl border border-slate-200 bg-white p-4 transition-colors hover:border-ink-300 sm:p-5">
+      <div className="flex items-center justify-between gap-2 text-slate-500"><span className="text-sm font-medium">{title}</span><Icon aria-hidden="true" className="h-4 w-4 shrink-0" /></div>
+      <p className="mt-3 break-words font-display text-2xl font-bold tabular-nums text-slate-900">{value} <span className="font-sans text-sm font-normal text-slate-500">{unit}</span></p>
+      <p className="mt-2 flex items-center justify-between gap-2 text-xs leading-relaxed text-slate-500">{hint}<ArrowUpRight aria-hidden="true" className="h-4 w-4 shrink-0 text-ink-600" /></p>
+    </Link>)}
+  </div>;
 }

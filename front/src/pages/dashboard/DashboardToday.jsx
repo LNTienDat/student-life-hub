@@ -9,8 +9,8 @@ import { financeService } from '../../services/financeService';
 import { dinhDangTien, dinhDangNgay } from '../../utils/formatters';
 import { getTodayClasses, getUrgentDeadlines, getDailyBudget, localDayKey } from './todayUtils';
 
-const cardStyle = 'rounded-2xl border border-slate-100 bg-white p-5 shadow-sm';
-const linkStyle = 'inline-flex items-center gap-1 text-xs font-semibold text-ink-600 hover:underline';
+const cardStyle = 'flex min-w-0 flex-col rounded-2xl border border-slate-200 bg-white p-4 sm:p-5';
+const linkStyle = 'inline-flex min-h-11 items-center gap-1 text-sm font-medium text-ink-600 hover:underline';
 
 function LoadingOrError({ result, loading, children }) {
   if (loading) return <p role="status" className="py-3 text-sm text-slate-500">Đang tải…</p>;
@@ -77,11 +77,11 @@ export default function DashboardToday({ userId, semester, onQuickEntry }) {
     <section aria-labelledby="today-heading" className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 id="today-heading" className="font-display text-xl font-bold text-slate-900">Hôm nay của bạn</h2>
+          <h2 id="today-heading" className="text-lg font-semibold text-slate-900">Hôm nay của bạn</h2>
           <p className="mt-1 text-sm text-slate-500">{now.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
         <button type="button" disabled={loading} onClick={() => { setNow(new Date()); setRevision((value) => value + 1); }}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50">
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50">
           <RefreshCw aria-hidden="true" className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />Làm mới
         </button>
       </div>
@@ -95,7 +95,30 @@ export default function DashboardToday({ userId, semester, onQuickEntry }) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
+        <article className={cardStyle}>
+          <div className="mb-4 flex items-center gap-2 text-slate-800"><Clock aria-hidden="true" className="h-5 w-5 text-amber-600" /><h3 className="font-semibold">Việc cần ưu tiên</h3></div>
+          <LoadingOrError result={data?.deadlines} loading={isLoading('deadlines')}>
+            {deadlines.items.length ? <>
+              <p className="mb-3 text-xs text-slate-500">{deadlines.overdue.length} quá hạn · {deadlines.dueToday.length} đến hạn hôm nay</p>
+              <ul className="space-y-3">{deadlines.items.slice(0, 4).map((item) => {
+                const late = new Date(item.hanChot) < now;
+                const today = localDayKey(new Date(item.hanChot)) === dayKey;
+                return <li key={item.id} className="rounded-xl bg-slate-50 p-3">
+                  <Link to="/deadline" className="block break-words text-sm font-semibold text-slate-800 hover:text-ink-600">{item.tieuDe}</Link>
+                  <p className={`mt-1 text-xs ${late ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500'}`}>{late ? 'Quá hạn · ' : today ? 'Hôm nay · ' : ''}{dinhDangNgay(item.hanChot, true)}</p>
+                  {item.checklist?.length > 0 && <p className="mt-1 text-xs text-slate-500">{item.checklist.filter((step) => step.done).length}/{item.checklist.length} bước đã xong</p>}
+                  {item.monHoc?.ten && <p className="mt-1 break-words text-xs text-slate-500">{item.monHoc.ten}</p>}
+                  <button type="button" onClick={() => complete(item.id)} disabled={busyId !== null} aria-label={`Hoàn thành: ${item.tieuDe}`} className="mt-3 inline-flex min-h-11 items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-emerald-700 disabled:opacity-50">{busyId === item.id ? 'Đang lưu…' : '✓ Hoàn thành'}</button>
+                </li>;
+              })}</ul>
+              {deadlines.items.length > 4 && <p className="mt-3 text-xs text-slate-500">Còn {deadlines.items.length - 4} việc khác trong danh sách.</p>}
+            </> : <div className="py-2 text-sm text-slate-500"><CheckCircle2 aria-hidden="true" className="mb-2 h-6 w-6 text-emerald-600" />Không có việc quá hạn hoặc đến hạn trong 7 ngày tới.</div>}
+          </LoadingOrError>
+          <button type="button" onClick={() => onQuickEntry('deadline')} className={`${linkStyle} mt-3 mr-4`}>+ Thêm việc</button>
+          <Link to="/deadline" className={`${linkStyle} mt-4`}>Quản lý deadline <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" /></Link>
+        </article>
+
         <article className={cardStyle}>
           <div className="mb-4 flex items-center gap-2 text-slate-800"><CalendarDays aria-hidden="true" className="h-5 w-5 text-ink-600" /><h3 className="font-semibold">Lịch học hôm nay</h3></div>
           <LoadingOrError result={data?.classes} loading={isLoading('classes')}>
@@ -112,29 +135,6 @@ export default function DashboardToday({ userId, semester, onQuickEntry }) {
         </article>
 
         <article className={cardStyle}>
-          <div className="mb-4 flex items-center gap-2 text-slate-800"><Clock aria-hidden="true" className="h-5 w-5 text-amber-600" /><h3 className="font-semibold">Việc cần ưu tiên</h3></div>
-          <LoadingOrError result={data?.deadlines} loading={isLoading('deadlines')}>
-            {deadlines.items.length ? <>
-              <p className="mb-3 text-xs text-slate-500">{deadlines.overdue.length} quá hạn · {deadlines.dueToday.length} đến hạn hôm nay</p>
-              <ul className="space-y-3">{deadlines.items.slice(0, 4).map((item) => {
-                const late = new Date(item.hanChot) < now;
-                const today = localDayKey(new Date(item.hanChot)) === dayKey;
-                return <li key={item.id} className="rounded-xl bg-slate-50 p-3">
-                  <button type="button" onClick={() => complete(item.id)} disabled={busyId !== null} aria-label={`Hoàn thành: ${item.tieuDe}`} className="mb-2 block text-xs font-semibold text-emerald-600 disabled:opacity-50">{busyId === item.id ? 'Đang lưu…' : '✓ Hoàn thành'}</button>
-                  <Link to="/deadline" className="break-words text-sm font-semibold text-slate-800 hover:text-ink-600">{item.tieuDe}</Link>
-                  <p className={`mt-1 text-xs ${late ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500'}`}>{late ? 'Quá hạn · ' : today ? 'Hôm nay · ' : ''}{dinhDangNgay(item.hanChot, true)}</p>
-                  {item.checklist?.length > 0 && <p className="mt-1 text-xs text-slate-500">{item.checklist.filter((step) => step.done).length}/{item.checklist.length} bước đã xong</p>}
-                  {item.monHoc?.ten && <p className="mt-1 break-words text-xs text-slate-500">{item.monHoc.ten}</p>}
-                </li>;
-              })}</ul>
-              {deadlines.items.length > 4 && <p className="mt-3 text-xs text-slate-500">Còn {deadlines.items.length - 4} việc khác trong danh sách.</p>}
-            </> : <div className="py-2 text-sm text-slate-500"><CheckCircle2 aria-hidden="true" className="mb-2 h-6 w-6 text-emerald-600" />Không có việc quá hạn hoặc đến hạn trong 7 ngày tới.</div>}
-          </LoadingOrError>
-          <button type="button" onClick={() => onQuickEntry('deadline')} className={`${linkStyle} mt-3 mr-4`}>+ Thêm việc</button>
-          <Link to="/deadline" className={`${linkStyle} mt-4`}>Quản lý deadline <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" /></Link>
-        </article>
-
-        <article className={cardStyle}>
           <div className="mb-4 flex items-center gap-2 text-slate-800"><Wallet aria-hidden="true" className="h-5 w-5 text-emerald-600" /><h3 className="font-semibold">Nhịp chi tiêu</h3></div>
           <LoadingOrError result={data?.budgets} loading={isLoading('budgets')}>
             {budget ? <>
@@ -142,7 +142,7 @@ export default function DashboardToday({ userId, semester, onQuickEntry }) {
               <p className="mt-2 break-words font-display text-3xl font-bold text-slate-900">{dinhDangTien(budget.perDay)}</p>
               <p className="mt-3 text-sm text-slate-600">Còn {dinhDangTien(budget.remaining)} trong các danh mục chưa vượt ngân sách, chia cho {budget.daysLeft} ngày (gồm hôm nay).</p>
               {budget.exceeded > 0 && <p className="mt-3 text-sm text-rose-600 dark:text-rose-400">{budget.exceeded} danh mục đã vượt ngân sách. Kiểm tra trước khi chi thêm.</p>}
-              <p className="mt-3 text-xs leading-relaxed text-slate-500">Gợi ý dựa trên ngân sách theo danh mục bạn đã đặt, không phải số tiền đang có. Chưa tính các danh mục chưa đặt ngân sách.</p>
+              <details className="mt-3 text-xs leading-relaxed text-slate-500"><summary className="cursor-pointer py-2 text-ink-600">Cách tính mức chi mỗi ngày</summary><p>Ngân sách còn lại của các danh mục chưa vượt mức, chia cho số ngày còn lại. Chưa tính danh mục chưa đặt ngân sách và không phải số dư thực tế.</p></details>
             </> : <p className="py-2 text-sm text-slate-500">Đặt ngân sách tháng để biết mức chi bình quân cho những ngày còn lại.</p>}
           </LoadingOrError>
           <button type="button" onClick={() => onQuickEntry('expense')} className={`${linkStyle} mt-3 mr-4`}>+ Ghi khoản chi</button>

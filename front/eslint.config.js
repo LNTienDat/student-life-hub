@@ -18,4 +18,12 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    files: ['src/context/*Context.jsx'],
+    rules: { 'react-refresh/only-export-components': ['error', { allowExportNames: ['useAuth', 'useTheme', 'useToast'] }] },
+  },
+  {
+    files: ['tests/ui-preview.jsx'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
 ])

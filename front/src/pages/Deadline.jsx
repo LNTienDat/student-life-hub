@@ -1,3 +1,4 @@
+import DataLoadError from '../components/DataLoadError';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSemester } from '../hooks/useSemester';
 import deadlineService from '../services/deadlineService';
@@ -22,6 +23,9 @@ function Deadline() {
   const [danhSach, setDanhSach] = useState([]);
   const [danhSachMonHoc, setDanhSachMonHoc] = useState([]);
   const [dangTai, setDangTai] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const saveLock = useRef(false);
   const [hienFormThem, setHienFormThem] = useState(false);
   const [dangSuaId, setDangSuaId] = useState(null);
   const [cheDoXem, setCheDoXem] = useState('list'); // 'list' | 'calendar'
@@ -64,10 +68,11 @@ function Deadline() {
         academicService.layDanhSachMonHoc(),
     ]).then(([resDeadline, resMon]) => {
       if (version !== loadVersion.current) return;
+      setLoadError('');
       setDanhSachMonHoc(resMon.data.monHocs || []);
       setDanhSach(resDeadline.data.deadlines || []);
     }).catch((error) => {
-      console.error(error);
+      if (version === loadVersion.current) setLoadError(error.response?.data?.message || 'Chưa tải được dữ liệu. Kiểm tra kết nối và thử lại.');
     }).finally(() => {
       if (version === loadVersion.current) setDangTai(false);
     });
@@ -105,6 +110,9 @@ function Deadline() {
 
   async function xuLySubmit(e) {
     e.preventDefault();
+    if (saveLock.current) return;
+    saveLock.current = true;
+    setSaving(true);
     try {
       const data = {
         tieuDe,
@@ -127,6 +135,9 @@ function Deadline() {
     } catch (error) {
       console.error(error);
       hienToast('error', error.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại sau.');
+    } finally {
+      saveLock.current = false;
+      setSaving(false);
     }
   }
 
@@ -277,10 +288,11 @@ function Deadline() {
           onDoUuTienChange={setDoUuTien}
           onIdMonHocChange={setIdMonHoc}
           onSubmit={xuLySubmit}
+          saving={saving}
           onCancel={moFormThem}
         />
 
-        {dangTai ? (
+        {loadError ? <DataLoadError message={loadError} onRetry={taiDuLieu} /> : dangTai ? (
           <PageSkeleton />
         ) : cheDoXem === 'calendar' ? (
           <DeadlineCalendarView

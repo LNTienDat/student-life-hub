@@ -16,6 +16,7 @@ function DeadlineForm({
   onDoUuTienChange,
   onIdMonHocChange,
   onSubmit,
+  saving = false,
   onCancel,
 }) {
   if (!hienFormThem) return null;
@@ -121,6 +122,8 @@ function DeadlineForm({
         </button>
         <button
           type="submit"
+          disabled={saving}
+          aria-busy={saving}
           className="bg-emerald-600 text-white font-medium px-6 py-2.5 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-500/20"
         >
           {dangSuaId ? 'Cập nhật' : 'Lưu công việc'}

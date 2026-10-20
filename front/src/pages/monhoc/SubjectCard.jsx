@@ -25,6 +25,7 @@ function SubjectCard({
   onDiemSoChange,
   onTrongSoChange,
   onSubmitGrade,
+  saving = false,
   onDeleteGrade,
   onEditSubject,
   onDeleteSubject,
@@ -175,6 +176,8 @@ function SubjectCard({
               </button>
               <button
                 type="submit"
+          disabled={saving}
+          aria-busy={saving}
                 className="flex-1 text-white bg-ink-600 hover:bg-ink-700 dark:bg-ink-500 dark:hover:bg-ink-400 py-1.5 rounded-lg font-medium text-xs transition-colors"
               >
                 {dangSuaDiemId ? 'Cập nhật điểm' : 'Lưu điểm'}

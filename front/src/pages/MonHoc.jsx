@@ -1,3 +1,4 @@
+import DataLoadError from '../components/DataLoadError';
 import ImportPanel from '../components/ImportPanel';
 import { useSemester } from '../hooks/useSemester';
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -18,6 +19,9 @@ function MonHoc() {
   const [gpa, setGpa] = useState(null);
   const [gpaTheoKy, setGpaTheoKy] = useState([]);
   const [dangTai, setDangTai] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const saveLock = useRef(false);
   const [hienFormThem, setHienFormThem] = useState(false);
   const [dangSuaId, setDangSuaId] = useState(null);
 
@@ -57,11 +61,12 @@ function MonHoc() {
         academicService.gpaTheoKy(),
     ]).then(([resMonHoc, resGpa, resGpaKy]) => {
       if (version !== loadVersion.current) return;
+      setLoadError('');
       setDanhSach(resMonHoc.data.monHocs || []);
       setGpa(resGpa.data.gpa);
       setGpaTheoKy(resGpaKy.data.theoKy || []);
     }).catch((error) => {
-      console.error(error);
+      if (version === loadVersion.current) setLoadError(error.response?.data?.message || 'Chưa tải được dữ liệu. Kiểm tra kết nối và thử lại.');
     }).finally(() => {
       if (version === loadVersion.current) setDangTai(false);
     });
@@ -92,6 +97,9 @@ function MonHoc() {
 
   async function xuLySubmit(e) {
     e.preventDefault();
+    if (saveLock.current) return;
+    saveLock.current = true;
+    setSaving(true);
     try {
       if (dangSuaId) {
         await academicService.suaMonHoc(dangSuaId, { ten: tenMon, tinChi: Number(tinChi), hocKy });
@@ -106,6 +114,9 @@ function MonHoc() {
     } catch (error) {
       console.error(error);
       hienToast('error', error.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại sau.');
+    } finally {
+      saveLock.current = false;
+      setSaving(false);
     }
   }
 
@@ -164,6 +175,9 @@ function MonHoc() {
 
   async function xuLyLuuDiem(e, monId) {
     e.preventDefault();
+    if (saveLock.current) return;
+    saveLock.current = true;
+    setSaving(true);
     try {
       if (dangSuaDiemId) {
         await academicService.suaDiem(dangSuaDiemId, {
@@ -187,6 +201,9 @@ function MonHoc() {
     } catch (error) {
       console.error(error);
       hienToast('error', error.response?.data?.message || 'Không thể lưu điểm! Hãy kiểm tra lại dữ liệu.');
+    } finally {
+      saveLock.current = false;
+      setSaving(false);
     }
   }
 
@@ -308,10 +325,11 @@ function MonHoc() {
           onTinChiChange={setTinChi}
           onHocKyChange={setHocKy}
           onSubmit={xuLySubmit}
+          saving={saving}
         />
 
         {/* 3. Danh sách môn học */}
-        {dangTai ? (
+        {loadError ? <DataLoadError message={loadError} onRetry={taiDuLieu} /> : dangTai ? (
           <PageSkeleton />
         ) : danhSach.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-16 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60 text-center">
@@ -352,6 +370,7 @@ function MonHoc() {
                 onDiemSoChange={setDiemSo}
                 onTrongSoChange={setTrongSo}
                 onSubmitGrade={xuLyLuuDiem}
+                saving={saving}
                 onDeleteGrade={yeuCauXoaDiem}
                 onEditSubject={moFormSua}
                 onDeleteSubject={yeuCauXoaMon}

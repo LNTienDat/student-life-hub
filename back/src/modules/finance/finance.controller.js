@@ -1,6 +1,7 @@
 const prisma = require('../../prismaClient');
 const ExcelJS = require('exceljs');
 const { FINANCE } = require('../../constants');
+const { finiteNumber } = require('../../utils/number.util');
 const {
   chongCongThuc,
   thongKeTaiChinhService,
@@ -29,7 +30,7 @@ async function themGiaoDich(req, res) {
     if (loai === 'thu' && !DANH_MUC_THU.includes(danhMuc) && !DANH_MUC_CHI.includes(danhMuc)) {
       return res.status(400).json({ message: 'Danh mục thu nhập không hợp lệ' });
     }
-    if (isNaN(parseFloat(soTien)) || parseFloat(soTien) <= 0) {
+    if (!Number.isFinite(finiteNumber(soTien)) || finiteNumber(soTien) <= 0) {
       return res.status(400).json({ message: 'Số tiền phải là số dương' });
     }
     if (ngayGiaoDich && isNaN(new Date(ngayGiaoDich).getTime())) {
@@ -40,7 +41,7 @@ async function themGiaoDich(req, res) {
       data: {
         loai,
         danhMuc,
-        soTien: parseFloat(soTien),
+        soTien: finiteNumber(soTien),
         moTa,
         ngayGiaoDich: ngayGiaoDich ? new Date(ngayGiaoDich) : undefined,
         idNguoiDung,
@@ -113,7 +114,7 @@ async function suaGiaoDich(req, res) {
   try {
     const { id } = req.params;
     const idNguoiDung = req.user.id;
-    const { loai, danhMuc, soTien, moTa } = req.body;
+    const { loai, danhMuc, soTien, moTa, ngayGiaoDich } = req.body;
 
     if (loai !== undefined && !['thu', 'chi'].includes(loai)) {
       return res.status(400).json({ message: 'Loại giao dịch không hợp lệ (chỉ nhận "thu" hoặc "chi")' });
@@ -121,8 +122,21 @@ async function suaGiaoDich(req, res) {
     if (danhMuc !== undefined && !DANH_MUC_HOP_LE.includes(danhMuc)) {
       return res.status(400).json({ message: 'Danh mục không hợp lệ' });
     }
-    if (soTien !== undefined && (isNaN(parseFloat(soTien)) || parseFloat(soTien) <= 0)) {
+    if (soTien !== undefined && (!Number.isFinite(finiteNumber(soTien)) || finiteNumber(soTien) <= 0)) {
       return res.status(400).json({ message: 'Số tiền phải là số dương' });
+    }
+    if (ngayGiaoDich !== undefined && (typeof ngayGiaoDich !== 'string' || !ngayGiaoDich.trim() || isNaN(new Date(ngayGiaoDich).getTime()))) {
+      return res.status(400).json({ message: 'Ngày giao dịch không hợp lệ' });
+    }
+
+    const hienTai = await prisma.giaoDich.findFirst({ where: { id: parseInt(id), idNguoiDung } });
+    if (!hienTai) {
+      return res.status(404).json({ message: 'Không tìm thấy giao dịch hoặc bạn không có quyền sửa' });
+    }
+    const loaiMoi = loai ?? hienTai.loai;
+    const danhMucMoi = danhMuc ?? hienTai.danhMuc;
+    if (loaiMoi === 'chi' && !DANH_MUC_CHI.includes(danhMucMoi)) {
+      return res.status(400).json({ message: 'Vui lòng chọn danh mục chi tiêu phù hợp' });
     }
 
     const ketQua = await prisma.giaoDich.updateMany({
@@ -130,8 +144,9 @@ async function suaGiaoDich(req, res) {
       data: {
         loai,
         danhMuc,
-        soTien: soTien !== undefined ? parseFloat(soTien) : undefined,
+        soTien: soTien !== undefined ? finiteNumber(soTien) : undefined,
         moTa,
+        ngayGiaoDich: ngayGiaoDich !== undefined ? new Date(ngayGiaoDich) : undefined,
       },
     });
 
@@ -209,32 +224,26 @@ async function datNganSach(req, res) {
     if (!DANH_MUC_CHI.includes(danhMuc)) {
       return res.status(400).json({ message: 'Danh mục ngân sách không hợp lệ (ngân sách chỉ áp dụng cho chi tiêu)' });
     }
-    if (isNaN(parseFloat(soTienToiDa)) || parseFloat(soTienToiDa) <= 0) {
+    if (!Number.isFinite(finiteNumber(soTienToiDa)) || finiteNumber(soTienToiDa) <= 0) {
       return res.status(400).json({ message: 'Hạn mức ngân sách phải là số dương' });
     }
-    if (isNaN(parseInt(thang)) || parseInt(thang) < 1 || parseInt(thang) > 12) {
+    if (!Number.isInteger(finiteNumber(thang)) || finiteNumber(thang) < 1 || finiteNumber(thang) > 12) {
       return res.status(400).json({ message: 'Tháng không hợp lệ (phải từ 1 đến 12)' });
     }
-
-    const nganSach = await prisma.nganSach.create({
-      data: {
-        danhMuc,
-        soTienToiDa: parseFloat(soTienToiDa),
-        thang: parseInt(thang),
-        nam: parseInt(nam),
-        idNguoiDung,
-      },
-    });
-
-    res.status(201).json({ message: 'Đặt ngân sách thành công', nganSach });
-  } catch (error) {
-    // P2002 = vi phạm ràng buộc unique (đã đặt ngân sách cho đúng danh mục +
-    // tháng + năm này rồi) — trả về thông báo rõ ràng thay vì "Lỗi server"
-    // chung chung, vì đây là thao tác người dùng rất dễ gặp phải khi thao
-    // tác nhanh hoặc bấm nút 2 lần.
-    if (error.code === 'P2002') {
-      return res.status(409).json({ message: 'Bạn đã đặt ngân sách cho danh mục này trong tháng rồi' });
+    if (!Number.isInteger(finiteNumber(nam)) || finiteNumber(nam) < 1000 || finiteNumber(nam) > 9999) {
+      return res.status(400).json({ message: 'Năm phải là số nguyên từ 1000 đến 9999' });
     }
+
+    const amount = finiteNumber(soTienToiDa);
+    const month = finiteNumber(thang);
+    const year = finiteNumber(nam);
+    const nganSach = await prisma.nganSach.upsert({
+      where: { idNguoiDung_danhMuc_thang_nam: { idNguoiDung, danhMuc, thang: month, nam: year } },
+      create: { danhMuc, soTienToiDa: amount, thang: month, nam: year, idNguoiDung },
+      update: { soTienToiDa: amount },
+    });
+    res.status(200).json({ message: 'Đã lưu ngân sách', nganSach });
+  } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Lỗi server' });
   }

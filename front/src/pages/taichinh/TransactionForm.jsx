@@ -1,4 +1,5 @@
 import { DANH_MUC_CHI, DANH_MUC_THU, TEN_DANH_MUC } from '../../constants';
+import { localDateInput } from './financeUtils';
 
 function TransactionForm({
   hienFormGD,
@@ -13,13 +14,16 @@ function TransactionForm({
   onMoTaChange,
   onNgayGiaoDichChange,
   onSubmit,
+  onCancel,
+  dangLuu = false,
 }) {
   if (!hienFormGD) return null;
 
   return (
-    <div className="p-6 border-b border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-900/30">
+    <div className="p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800">
       <h3 className="font-display font-semibold text-slate-800 dark:text-slate-200 mb-4">Thêm giao dịch mới</h3>
       <form onSubmit={onSubmit} className="space-y-4">
+        <fieldset disabled={dangLuu} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label htmlFor="finance-type" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
@@ -59,6 +63,9 @@ function TransactionForm({
             <input
               id="finance-amount"
               type="number"
+              min="1"
+              step="1"
+              inputMode="numeric"
               value={soTien}
               onChange={(e) => onSoTienChange(e.target.value)}
               placeholder="Ví dụ: 50000"
@@ -89,19 +96,21 @@ function TransactionForm({
             type="date"
             value={ngayGiaoDich}
             onChange={(e) => onNgayGiaoDichChange(e.target.value)}
-            max={new Date().toISOString().slice(0, 10)}
+            max={localDateInput()}
             className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 transition-shadow"
           />
           <p className="text-xs text-slate-400 mt-1">Để trống = lấy ngày hôm nay</p>
         </div>
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-end gap-3 pt-2">
+          <button type="button" onClick={onCancel} className="rounded-xl px-5 py-2.5 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">Hủy</button>
           <button
             type="submit"
             className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition-colors"
           >
-            Lưu giao dịch
+            {dangLuu ? 'Đang lưu…' : 'Lưu giao dịch'}
           </button>
         </div>
+        </fieldset>
       </form>
     </div>
   );

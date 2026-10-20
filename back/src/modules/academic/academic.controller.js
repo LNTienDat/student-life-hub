@@ -3,6 +3,7 @@ const PDFDocument = require('pdfkit');
 const path = require('path');
 const { tinhDiemMon } = require('../../utils/grade.util');
 const { ACADEMIC } = require('../../constants');
+const { finiteNumber } = require('../../utils/number.util');
 const {
   tinhGPAService,
   canhBaoMonNguyCoService,
@@ -26,13 +27,13 @@ async function themMonHoc(req, res) {
     if (!ten || !tinChi || !hocKy) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ tên môn, tín chỉ, học kỳ' });
     }
-    const tinChiSo = parseInt(tinChi);
-    if (isNaN(tinChiSo) || tinChiSo < ACADEMIC.MIN_TIN_CHI_MON || tinChiSo > ACADEMIC.MAX_TIN_CHI_MON) {
+    const tinChiSo = finiteNumber(tinChi);
+    if (!Number.isInteger(tinChiSo) || tinChiSo < ACADEMIC.MIN_TIN_CHI_MON || tinChiSo > ACADEMIC.MAX_TIN_CHI_MON) {
       return res.status(400).json({ message: `Số tín chỉ phải là số nguyên dương hợp lý (từ ${ACADEMIC.MIN_TIN_CHI_MON} đến ${ACADEMIC.MAX_TIN_CHI_MON})` });
     }
 
     const monHoc = await prisma.monHoc.create({
-      data: { ten, tinChi: parseInt(tinChi), hocKy, idNguoiDung },
+      data: { ten, tinChi: tinChiSo, hocKy, idNguoiDung },
     });
 
     res.status(201).json({ message: 'Thêm môn học thành công', monHoc });
@@ -67,13 +68,13 @@ async function suaMonHoc(req, res) {
     const idNguoiDung = req.user.id;
     const { ten, tinChi, hocKy, trangThai } = req.body;
 
-    if (tinChi !== undefined && (isNaN(parseInt(tinChi)) || parseInt(tinChi) <= 0 || parseInt(tinChi) > ACADEMIC.MAX_TIN_CHI_MON)) {
+    if (tinChi !== undefined && (!Number.isInteger(finiteNumber(tinChi)) || finiteNumber(tinChi) < ACADEMIC.MIN_TIN_CHI_MON || finiteNumber(tinChi) > ACADEMIC.MAX_TIN_CHI_MON)) {
       return res.status(400).json({ message: `Số tín chỉ phải là số nguyên dương hợp lý (tối đa ${ACADEMIC.MAX_TIN_CHI_MON})` });
     }
 
     const ketQua = await prisma.monHoc.updateMany({
       where: { id: parseInt(id), idNguoiDung },
-      data: { ten, tinChi: tinChi ? parseInt(tinChi) : undefined, hocKy, trangThai },
+      data: { ten, tinChi: tinChi !== undefined ? finiteNumber(tinChi) : undefined, hocKy, trangThai },
     });
 
     if (ketQua.count === 0) {
@@ -116,10 +117,10 @@ async function themDiem(req, res) {
     if (!idMonHoc || !loaiDanhGia || diem === undefined || trongSo === undefined) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin điểm' });
     }
-    if (isNaN(parseFloat(diem)) || parseFloat(diem) < 0 || parseFloat(diem) > ACADEMIC.THANG_DIEM_MAX) {
+    if (!Number.isFinite(finiteNumber(diem)) || finiteNumber(diem) < 0 || finiteNumber(diem) > ACADEMIC.THANG_DIEM_MAX) {
       return res.status(400).json({ message: `Điểm phải nằm trong khoảng 0 đến ${ACADEMIC.THANG_DIEM_MAX}` });
     }
-    if (isNaN(parseFloat(trongSo)) || parseFloat(trongSo) <= 0 || parseFloat(trongSo) > ACADEMIC.TONG_TRONG_SO_CHUAN) {
+    if (!Number.isFinite(finiteNumber(trongSo)) || finiteNumber(trongSo) <= 0 || finiteNumber(trongSo) > ACADEMIC.TONG_TRONG_SO_CHUAN) {
       return res.status(400).json({ message: `Trọng số phải nằm trong khoảng 0 đến ${ACADEMIC.TONG_TRONG_SO_CHUAN}` });
     }
 
@@ -134,8 +135,8 @@ async function themDiem(req, res) {
       data: {
         idMonHoc: parseInt(idMonHoc),
         loaiDanhGia,
-        diem: parseFloat(diem),
-        trongSo: parseFloat(trongSo),
+        diem: finiteNumber(diem),
+        trongSo: finiteNumber(trongSo),
       },
     });
 
@@ -153,10 +154,10 @@ async function suaDiem(req, res) {
     const idNguoiDung = req.user.id;
     const { loaiDanhGia, diem, trongSo } = req.body;
 
-    if (diem !== undefined && (isNaN(parseFloat(diem)) || parseFloat(diem) < 0 || parseFloat(diem) > ACADEMIC.THANG_DIEM_MAX)) {
+    if (diem !== undefined && (!Number.isFinite(finiteNumber(diem)) || finiteNumber(diem) < 0 || finiteNumber(diem) > ACADEMIC.THANG_DIEM_MAX)) {
       return res.status(400).json({ message: `Điểm phải nằm trong khoảng 0 đến ${ACADEMIC.THANG_DIEM_MAX}` });
     }
-    if (trongSo !== undefined && (isNaN(parseFloat(trongSo)) || parseFloat(trongSo) <= 0 || parseFloat(trongSo) > ACADEMIC.TONG_TRONG_SO_CHUAN)) {
+    if (trongSo !== undefined && (!Number.isFinite(finiteNumber(trongSo)) || finiteNumber(trongSo) <= 0 || finiteNumber(trongSo) > ACADEMIC.TONG_TRONG_SO_CHUAN)) {
       return res.status(400).json({ message: `Trọng số phải nằm trong khoảng 0 đến ${ACADEMIC.TONG_TRONG_SO_CHUAN}` });
     }
 
@@ -175,8 +176,8 @@ async function suaDiem(req, res) {
       where: { id: parseInt(id) },
       data: {
         loaiDanhGia: loaiDanhGia !== undefined ? loaiDanhGia : undefined,
-        diem: diem !== undefined ? parseFloat(diem) : undefined,
-        trongSo: trongSo !== undefined ? parseFloat(trongSo) : undefined,
+        diem: diem !== undefined ? finiteNumber(diem) : undefined,
+        trongSo: trongSo !== undefined ? finiteNumber(trongSo) : undefined,
       },
     });
 
@@ -243,6 +244,12 @@ async function duDoanDiem(req, res) {
     if (mucTieu === undefined || trongSoConLai === undefined) {
       return res.status(400).json({ message: 'Vui lòng nhập mục tiêu và trọng số còn lại' });
     }
+    if (!Number.isFinite(finiteNumber(mucTieu)) || finiteNumber(mucTieu) < 0 || finiteNumber(mucTieu) > ACADEMIC.THANG_DIEM_MAX) {
+      return res.status(400).json({ message: `Điểm mục tiêu phải nằm trong khoảng 0 đến ${ACADEMIC.THANG_DIEM_MAX}` });
+    }
+    if (!Number.isFinite(finiteNumber(trongSoConLai)) || finiteNumber(trongSoConLai) <= 0 || finiteNumber(trongSoConLai) > ACADEMIC.TONG_TRONG_SO_CHUAN) {
+      return res.status(400).json({ message: `Trọng số còn lại phải lớn hơn 0 và không vượt quá ${ACADEMIC.TONG_TRONG_SO_CHUAN}` });
+    }
 
     const monHoc = await prisma.monHoc.findFirst({
       where: { id: parseInt(idMonHoc), idNguoiDung },
@@ -251,10 +258,6 @@ async function duDoanDiem(req, res) {
 
     if (!monHoc) {
       return res.status(404).json({ message: 'Không tìm thấy môn học' });
-    }
-
-    if (parseFloat(trongSoConLai) <= 0) {
-      return res.status(400).json({ message: 'Trọng số còn lại phải lớn hơn 0' });
     }
 
     // Tổng điểm đã đạt được từ các đầu điểm hiện có (quy theo trọng số)
