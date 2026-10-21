@@ -45,6 +45,7 @@ const DEADLINE = {
   DO_UU_TIEN: ['thap', 'binh_thuong', 'cao'],
   MAC_DINH_DO_UU_TIEN: 'binh_thuong',
   MAC_DINH_TRANG_THAI: 'dang_dien_hanh',
+  TRANG_THAI_HOAN_THANH: 'hoan_thanh',
 };
 
 // 5. Cấu hình Thời khóa biểu
@@ -58,12 +59,30 @@ const THOIKHOABIEU = {
 
 // 6. Cấu hình Chatbot AI
 const CHATBOT = {
-  DEFAULT_MODEL: 'gemini-1.5-flash',
+  // gemini-1.5-flash và mọi model Gemini 1.x/2.0 đã bị Google khai tử hoàn toàn (trả về 404)
+  // Dùng gemini-3.6-flash là bản ổn định được khuyến nghị chính thức
+  DEFAULT_MODEL: 'gemini-3.6-flash',
   TIMEOUT_MS: 15000,
   MAX_HISTORY_LENGTH: 10,
+  MAX_OUTPUT_TOKENS: 500,
+  CONTEXT_DEADLINE_DAYS: 7, // Số ngày tới để lấy deadline sắp hạn
 };
 
-// 7. Cấu hình Rate Limiting (Số lượt / Khoảng thời gian)
+// 7. Cấu hình Nhóm học tập (Study Groups)
+const NHOM = {
+  MAX_TEN_LENGTH: 100,
+  MAX_MO_TA_LENGTH: 500,
+  CODE_LENGTH: 6,
+  MAX_MEMBERS_PER_GROUP: 30,
+  VAI_TRO: {
+    CHU_NHOM: 'chu_nhom',
+    THANH_VIEN: 'thanh_vien',
+  },
+  TRANG_THAI_TIEN_DO: ['chua_lam', 'dang_lam', 'hoan_thanh'],
+  DEFAULT_TRANG_THAI_TIEN_DO: 'chua_lam',
+};
+
+// 8. Cấu hình Rate Limiting (Số lượt / Khoảng thời gian)
 const RATE_LIMIT = {
   GLOBAL_WINDOW_MS: 15 * 60 * 1000,
   GLOBAL_MAX: 300,
@@ -82,5 +101,6 @@ module.exports = {
   DEADLINE,
   THOIKHOABIEU,
   CHATBOT,
+  NHOM,
   RATE_LIMIT,
 };

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import './NotFound.css';
 
@@ -24,6 +23,7 @@ function NotFound() {
                 xmlnsXlink="http://www.w3.org/1999/xlink"
                 viewBox="0 0 189.929 189.929"
                 xmlSpace="preserve"
+                aria-hidden="true"
               >
                 <path
                   d="M70.343,70.343c-30.554,30.553-44.806,72.7-39.102,115.635l-29.738,3.951C-5.442,137.659,11.917,86.34,49.129,49.13

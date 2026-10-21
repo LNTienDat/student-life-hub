@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, AlertTriangle, Info, X } from 'lucide-react';
 
@@ -16,28 +17,82 @@ export default function ConfirmModal({
   isLoading = false
 }) {
   const cancelBtnRef = useRef(null);
+  const dialogRef = useRef(null);
+  const stateRef = useRef({ isLoading, onClose });
+  const titleId = useId();
+  const descriptionId = useId();
 
-  // Đóng khi bấm phím ESC & Tự động focus nút hủy để hỗ trợ bàn phím
   useEffect(() => {
-    function handleKeyDown(e) {
-      if (e.key === 'Escape' && isOpen && !isLoading) {
-        onClose();
+    stateRef.current = { isLoading, onClose };
+    if (isOpen && isLoading && dialogRef.current?.contains(document.activeElement)) {
+      dialogRef.current.focus();
+    }
+  }, [isLoading, onClose, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusFrame = requestAnimationFrame(() => {
+      (cancelBtnRef.current?.disabled ? dialogRef.current : cancelBtnRef.current)?.focus();
+    });
+
+    function focusableElements() {
+      return [...(dialogRef.current?.querySelectorAll(
+        'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      ) || [])].filter((element) => element.getClientRects().length > 0);
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!stateRef.current.isLoading) stateRef.current.onClose();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const elements = focusableElements();
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+      const active = document.activeElement;
+      if (!first) {
+        event.preventDefault();
+        dialogRef.current?.focus();
+      } else if (event.shiftKey && (active === first || !elements.includes(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !elements.includes(active))) {
+        event.preventDefault();
+        first.focus();
       }
     }
-    if (isOpen) {
-      // Focus vào nút hủy bỏ khi modal mở ra
-      setTimeout(() => {
-        cancelBtnRef.current?.focus();
-      }, 50);
-      window.addEventListener('keydown', handleKeyDown);
-    }
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, isLoading, onClose]);
 
-  return (
+    function keepFocusInside(event) {
+      if (!dialogRef.current?.contains(event.target)) {
+        (focusableElements()[0] || dialogRef.current)?.focus();
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown, true);
+    document.addEventListener('focusin', keepFocusInside);
+    return () => {
+      cancelAnimationFrame(focusFrame);
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown, true);
+      document.removeEventListener('focusin', keepFocusInside);
+      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+    };
+  }, [isOpen]);
+
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           {/* Backdrop mờ nền */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -50,18 +105,22 @@ export default function ConfirmModal({
 
           {/* Khung Modal */}
           <motion.div
+            ref={dialogRef}
             role="alertdialog"
+            tabIndex={-1}
             aria-modal="true"
-            aria-labelledby="confirm-modal-title"
-            aria-describedby="confirm-modal-desc"
+            aria-labelledby={titleId}
+            aria-describedby={descriptionId}
+            aria-busy={isLoading}
             initial={{ opacity: 0, scale: 0.92, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 15 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-700 p-6 overflow-hidden z-10"
+            className="relative w-full min-w-0 max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-700 p-5 sm:p-6 z-10 focus:outline-none"
           >
             {/* Nút đóng góc phải */}
             <button
+              type="button"
               onClick={onClose}
               disabled={isLoading}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors disabled:opacity-50"
@@ -91,8 +150,8 @@ export default function ConfirmModal({
                 )}
               </div>
 
-              <div className="flex-1 pr-6">
-                <h3 id="confirm-modal-title" className="text-lg font-bold text-slate-900 dark:text-white leading-snug">
+              <div className="min-w-0 flex-1 pr-6 break-words">
+                <h3 id={titleId} className="text-lg font-bold text-slate-900 dark:text-white leading-snug">
                   {title}
                 </h3>
                 {subTitle && (
@@ -107,16 +166,16 @@ export default function ConfirmModal({
             {itemInfo && (
               <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/70 dark:border-slate-700/70 text-sm">
                 {typeof itemInfo === 'string' ? (
-                  <p className="font-medium text-slate-700 dark:text-slate-300">{itemInfo}</p>
+                  <p className="break-words font-medium text-slate-700 dark:text-slate-300">{itemInfo}</p>
                 ) : (
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="w-2 h-2 rounded-full bg-rose-500"></span>
                       <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
                         {itemInfo.label}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0 text-xs font-medium">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2 break-words text-xs font-medium">
                       {itemInfo.value && (
                         <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700">
                           {itemInfo.value}
@@ -134,12 +193,12 @@ export default function ConfirmModal({
             )}
 
             {/* Nội dung thông báo giải thích */}
-            <p id="confirm-modal-desc" className="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            <p id={descriptionId} className="mt-3 break-words text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
               {message}
             </p>
 
             {/* Các nút hành động */}
-            <div className="mt-6 flex items-center justify-end gap-3 pt-2">
+            <div className="mt-6 flex flex-wrap items-center justify-end gap-3 pt-2">
               <button
                 ref={cancelBtnRef}
                 type="button"
@@ -168,6 +227,7 @@ export default function ConfirmModal({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

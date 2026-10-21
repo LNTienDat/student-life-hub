@@ -2,8 +2,9 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronRight, CheckCircle2, Clock, Inbox } from 'lucide-react';
 import { dinhDangTien, dinhDangNgay } from '../../utils/formatters';
+import { TEN_DANH_MUC } from '../../constants';
 
-export default function DashboardRecentLists({ deadlinesSapToi, thongKeTaiChinh, itemVariants }) {
+export default function DashboardRecentLists({ deadlinesSapToi = [], thongKeTaiChinh, itemVariants }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Deadline sắp tới */}
@@ -107,7 +108,7 @@ export default function DashboardRecentLists({ deadlinesSapToi, thongKeTaiChinh,
                   className="flex justify-between items-center p-3 rounded-xl hover:bg-slate-50/80 transition-colors border border-transparent hover:border-slate-100"
                 >
                   <span className="capitalize text-sm font-medium text-slate-700">
-                    {danhMuc.replace('_', ' ')}
+                    {TEN_DANH_MUC[danhMuc] || danhMuc}
                   </span>
                   <span className="text-sm font-bold text-slate-900">
                     {dinhDangTien(soTien)}

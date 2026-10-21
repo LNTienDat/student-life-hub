@@ -1,7 +1,7 @@
 import { Calendar as CalendarIcon, Clock, MapPin, User, Edit2, Trash2 } from 'lucide-react';
 import { CAC_THU, mauChoMon } from './timetableUtils';
 
-function TimetableGrid({ buoiTheoThu = {}, onSua, onXoa }) {
+function TimetableGrid({ buoiTheoThu = {}, onSua, onXoa, readOnly = false }) {
   return (
     <>
       {/* Hàng tiêu đề các thứ (Desktop) */}
@@ -60,22 +60,22 @@ function TimetableGrid({ buoiTheoThu = {}, onSua, onXoa }) {
                       </div>
 
                       {/* Actions hover */}
-                      <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity">
+                      {!readOnly && <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity">
                         <button
-                          onClick={() => onSua(bh)}
+                          onClick={() => onSua?.(bh)}
                           aria-label={`Sửa buổi học ${bh.tenMon}`}
                           className="p-1 bg-white/50 hover:bg-white dark:bg-black/20 dark:hover:bg-black/40 rounded shadow-sm text-slate-700 dark:text-slate-200"
                         >
                           <Edit2 className="w-3 h-3" />
                         </button>
                         <button
-                          onClick={() => onXoa(bh)}
+                          onClick={() => onXoa?.(bh)}
                           aria-label={`Xóa buổi học ${bh.tenMon}`}
                           className="p-1 bg-white/50 hover:bg-white dark:bg-black/20 dark:hover:bg-black/40 rounded shadow-sm text-rose-600 dark:text-rose-400"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
-                      </div>
+                      </div>}
                     </div>
                   ))
                 )}

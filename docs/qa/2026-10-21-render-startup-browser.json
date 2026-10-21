@@ -1,0 +1,21 @@
+{
+  "at": "2026-10-21T08:28:51.154Z",
+  "environment": "Headless Chrome; production bundle; 390x844; separate local static and API servers; disposable stub responses",
+  "passed": true,
+  "checks": [
+    "Static login renders without any API probe",
+    "Render HTML health response is not accepted as readiness",
+    "Startup banner visible and no horizontal overflow",
+    "Login waits then submits exactly once",
+    "Cross-origin API/preflight works",
+    "Lost write response is reported without replay",
+    "Manual reconnect probes only and does not resubmit",
+    "Reload displays the single saved transaction",
+    "Static CSP accepts the application without violations",
+    "No page JavaScript errors"
+  ],
+  "loginWrites": 1,
+  "expenseWrites": 1,
+  "healthReads": 4,
+  "screenshot": "docs/qa/render-startup-mobile.png"
+}

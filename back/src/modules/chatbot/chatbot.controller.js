@@ -1,26 +1,33 @@
 const { CHATBOT } = require('../../constants');
+const { layNguCanhSinhVien } = require('./chatbot.service');
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL || CHATBOT.DEFAULT_MODEL;
 const GEMINI_API_URL = (model) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
-// Hướng dẫn hệ thống: cho Gemini biết nó là chatbot hỗ trợ trong app Student Life Hub
-const HUONG_DAN_HE_THONG = `Bạn là trợ lý ảo tên "SLH Bot" trong ứng dụng "Student Life Hub" — hệ thống quản lý học tập,
-deadline và tài chính cho sinh viên Việt Nam. Nhiệm vụ của bạn:
-1. Trả lời ngắn gọn, thân thiện, bằng tiếng Việt (trừ khi người dùng hỏi bằng ngôn ngữ khác).
-2. Hướng dẫn sinh viên cách dùng các chức năng của app: Dashboard (tổng quan), Học tập (CRUD môn học,
-   nhập điểm, tính GPA, dự đoán điểm), Deadline (quản lý deadline dạng danh sách/lịch), Thời khóa biểu
-   (lịch học tuần), Tài chính (thu chi, ngân sách, biểu đồ), Hồ sơ (thông tin cá nhân).
-3. Có thể trả lời các câu hỏi chung về học tập, quản lý thời gian, quản lý tài chính cá nhân cho sinh viên.
-4. Nếu không chắc chắn hoặc câu hỏi ngoài phạm vi, hãy thành thật nói rằng bạn không chắc.
-Trả lời trong khoảng 2-5 câu, không dùng markdown phức tạp.`;
+// Hướng dẫn hệ thống: cho Gemini biết nó là trợ lý cá nhân có quyền truy cập dữ liệu sinh viên
+const HUONG_DAN_HE_THONG = `Bạn là trợ lý ảo cá nhân tên "SLH Bot" trong ứng dụng "Student Life Hub" — hệ thống quản lý học tập,
+deadline và tài chính cho sinh viên Việt Nam. Bạn CÓ QUYỀN TRUY CẬP dữ liệu cá nhân của sinh viên.
 
-// Gửi tin nhắn tới chatbot (Gemini Flash), có thể kèm lịch sử hội thoại ngắn
+Nhiệm vụ của bạn:
+1. Trả lời ngắn gọn, thân thiện, bằng tiếng Việt (trừ khi người dùng hỏi bằng ngôn ngữ khác).
+2. Sử dụng DỮ LIỆU CÁ NHÂN bên dưới để trả lời chính xác các câu hỏi về GPA, deadline, tài chính, lịch học.
+3. Khi được hỏi về dữ liệu cá nhân, hãy trích dẫn con số cụ thể từ dữ liệu, không đoán mò.
+4. Hướng dẫn sinh viên cách dùng các chức năng của app nếu được hỏi.
+5. Có thể đưa ra lời khuyên về học tập, quản lý thời gian, tài chính dựa trên dữ liệu thực.
+6. Nếu không có dữ liệu hoặc câu hỏi ngoài phạm vi, hãy thành thật nói rằng bạn không có thông tin.
+Trả lời trong khoảng 2-6 câu. Dùng emoji phù hợp. Có thể dùng bullet list ngắn nếu cần liệt kê.`;
+
+/**
+ * POST /api/chatbot/hoi-dap
+ * Xử lý tin nhắn từ người dùng, inject context cá nhân, gọi Gemini API
+ * @param {Object} req.body - { tinNhan: string, lichSu: Array }
+ */
 async function guiTinNhan(req, res) {
   try {
     const { tinNhan, lichSu } = req.body;
 
-    if (!tinNhan || !tinNhan.trim()) {
+    if (typeof tinNhan !== 'string' || !tinNhan.trim()) {
       return res.status(400).json({ message: 'Vui lòng nhập nội dung tin nhắn' });
     }
     if (tinNhan.length > 2000) {
@@ -28,12 +35,26 @@ async function guiTinNhan(req, res) {
     }
 
     if (!process.env.GEMINI_API_KEY) {
-      return res.status(200).json({
+      return res.json({
         traLoi:
-          'Chatbot chưa được cấu hình. Vui lòng thêm GEMINI_API_KEY vào file .env để kích hoạt tính năng này.',
+          'Trợ lý AI hiện chưa sẵn sàng. Bạn vẫn có thể dùng các chức năng quản lý học tập và thu chi.',
         daCauHinh: false,
       });
     }
+
+    // --- Context Injection: lấy dữ liệu cá nhân sinh viên ---
+    let nguCanh = '';
+    try {
+      nguCanh = await layNguCanhSinhVien(req.user.id);
+    } catch (err) {
+      console.error('Lỗi lấy ngữ cảnh sinh viên:', err.message);
+      // Vẫn tiếp tục trả lời dù không có context — graceful degradation
+    }
+
+    // Nối system prompt + dữ liệu cá nhân
+    const systemPrompt = nguCanh
+      ? `${HUONG_DAN_HE_THONG}\n\n--- DỮ LIỆU CÁ NHÂN CỦA SINH VIÊN ---\n${nguCanh}`
+      : HUONG_DAN_HE_THONG;
 
     // Ghép lịch sử hội thoại gần nhất (tối đa 10 lượt) làm ngữ cảnh cho Gemini
     const contents = [];
@@ -45,23 +66,23 @@ async function guiTinNhan(req, res) {
         });
       });
     }
-    contents.push({ role: 'user', parts: [{ text: tinNhan } ] });
+    contents.push({ role: 'user', parts: [{ text: tinNhan }] });
 
     const response = await fetch(GEMINI_API_URL(GEMINI_MODEL), {
       method: 'POST',
       signal: AbortSignal.timeout(CHATBOT.TIMEOUT_MS),
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'x-goog-api-key': process.env.GEMINI_API_KEY,
       },
       body: JSON.stringify({
         contents,
         systemInstruction: {
-          parts: [{ text: HUONG_DAN_HE_THONG }],
+          parts: [{ text: systemPrompt }],
         },
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 300,
+          maxOutputTokens: CHATBOT.MAX_OUTPUT_TOKENS,
         },
       }),
     });

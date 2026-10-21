@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import DataLoadError from '../components/DataLoadError';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import deadlineService from '../services/deadlineService';
-import academicService from '../services/academicService';
 import { clearCache } from '../services/apiCache';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
-import { dinhDangNgay } from '../utils/formatters';
+import { formatDeadlineDate, deadlineToISO, deadlineInputValue } from './deadline/deadlineDate';
 import { Calendar as CalendarIcon, List, Plus, X, Clock } from 'lucide-react';
 
 import DeadlineForm from './deadline/DeadlineForm';
@@ -15,8 +15,10 @@ import { PageSkeleton } from '../components/Skeleton';
 
 function Deadline() {
   const [danhSach, setDanhSach] = useState([]);
-  const [danhSachMonHoc, setDanhSachMonHoc] = useState([]);
   const [dangTai, setDangTai] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const saveLock = useRef(false);
   const [hienFormThem, setHienFormThem] = useState(false);
   const [dangSuaId, setDangSuaId] = useState(null);
   const [cheDoXem, setCheDoXem] = useState('list'); // 'list' | 'calendar'
@@ -30,10 +32,8 @@ function Deadline() {
 
   // Form state
   const [tieuDe, setTieuDe] = useState('');
-  const [moTa, setMoTa] = useState('');
   const [hanChot, setHanChot] = useState('');
   const [doUuTien, setDoUuTien] = useState('binh_thuong');
-  const [idMonHoc, setIdMonHoc] = useState('');
 
   // State modal xác nhận
   const [modalXacNhan, setModalXacNhan] = useState({
@@ -51,42 +51,38 @@ function Deadline() {
 
   const { hienToast } = useToast();
 
-  async function taiDuLieu() {
-    setDangTai(true);
-    try {
-      const [resDeadline, resMon] = await Promise.all([
-        deadlineService.layDanhSachDeadline(),
-        academicService.layDanhSachMonHoc(),
-      ]);
-      setDanhSachMonHoc(resMon.data.monHocs || []);
+  const loadVersion = useRef(0);
+  const taiDuLieu = useCallback(() => {
+    const version = ++loadVersion.current;
+    return deadlineService.layDanhSachDeadline().then((resDeadline) => {
+      if (version !== loadVersion.current) return;
+      setLoadError('');
       setDanhSach(resDeadline.data.deadlines || []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setDangTai(false);
-    }
-  }
+    }).catch((error) => {
+      if (version === loadVersion.current) setLoadError(error.response?.data?.message || 'Chưa tải được dữ liệu. Kiểm tra kết nối và thử lại.');
+    }).finally(() => {
+      if (version === loadVersion.current) setDangTai(false);
+    });
+  }, []);
 
   useEffect(() => {
+    const counter = loadVersion;
     taiDuLieu();
-  }, []);
+    return () => { counter.current++; };
+  }, [taiDuLieu]);
 
   function moFormThem() {
     setTieuDe('');
-    setMoTa('');
     setHanChot('');
     setDoUuTien('binh_thuong');
-    setIdMonHoc('');
     setDangSuaId(null);
     setHienFormThem(!hienFormThem);
   }
 
   function moFormSua(d) {
     setTieuDe(d.tieuDe);
-    setMoTa(d.moTa || '');
-    setHanChot(new Date(d.hanChot).toISOString().slice(0, 16));
+    setHanChot(deadlineInputValue(d.hanChot));
     setDoUuTien(d.doUuTien);
-    setIdMonHoc(d.idMonHoc ? String(d.idMonHoc) : '');
     setDangSuaId(d.id);
     setHienFormThem(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -94,13 +90,14 @@ function Deadline() {
 
   async function xuLySubmit(e) {
     e.preventDefault();
+    if (saveLock.current) return;
+    saveLock.current = true;
+    setSaving(true);
     try {
       const data = {
         tieuDe,
-        moTa,
-        hanChot: new Date(hanChot).toISOString(),
+        hanChot: deadlineToISO(hanChot),
         doUuTien,
-        idMonHoc: idMonHoc ? parseInt(idMonHoc) : null,
       };
       if (dangSuaId) {
         await deadlineService.suaDeadline(dangSuaId, data);
@@ -114,7 +111,10 @@ function Deadline() {
       taiDuLieu();
     } catch (error) {
       console.error(error);
-      hienToast('error', error.response?.data?.message || 'Có lỗi xảy ra! Hãy kiểm tra kết nối Backend.');
+      hienToast('error', error.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại sau.');
+    } finally {
+      saveLock.current = false;
+      setSaving(false);
     }
   }
 
@@ -122,11 +122,11 @@ function Deadline() {
     setModalXacNhan({
       isOpen: true,
       title: 'Xác nhận xóa deadline',
-      subTitle: d.monHoc?.ten ? `Môn: ${d.monHoc.ten}` : '',
+      subTitle: '',
       itemInfo: {
         label: d.tieuDe,
-        value: dinhDangNgay(d.hanChot),
-        extra: d.doUuTien === 'cao' ? 'Ưu tiên cao' : d.doUuTien === 'thap' ? 'Ưu tiên thấp' : 'Bình thường',
+        value: formatDeadlineDate(d.hanChot),
+        extra: d.doUuTien === 'cao' ? 'Khẩn cấp' : d.doUuTien === 'thap' ? 'Ưu tiên thấp' : 'Bình thường',
       },
       message: 'Bạn có chắc chắn muốn xóa deadline này không? Thao tác này không thể hoàn tác.',
       confirmText: 'Xác nhận xóa',
@@ -219,7 +219,7 @@ function Deadline() {
         </div>
 
         {/* Nút thêm mới */}
-        <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60">
+        <div className="flex flex-wrap gap-3 justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60">
           <span className="font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
             <Clock className="w-5 h-5 text-ink-500 dark:text-ink-300" />
             Sắp xếp công việc hiệu quả
@@ -238,25 +238,21 @@ function Deadline() {
         </div>
 
         {/* Form thêm mới */}
-        <DeadlineForm
+        <DeadlineForm key={`${dangSuaId ?? "new"}:${hienFormThem}`}
           hienFormThem={hienFormThem}
           dangSuaId={dangSuaId}
           tieuDe={tieuDe}
-          moTa={moTa}
           hanChot={hanChot}
           doUuTien={doUuTien}
-          idMonHoc={idMonHoc}
-          danhSachMonHoc={danhSachMonHoc}
           onTieuDeChange={setTieuDe}
-          onMoTaChange={setMoTa}
           onHanChotChange={setHanChot}
           onDoUuTienChange={setDoUuTien}
-          onIdMonHocChange={setIdMonHoc}
           onSubmit={xuLySubmit}
+          saving={saving}
           onCancel={moFormThem}
         />
 
-        {dangTai ? (
+        {loadError ? <DataLoadError message={loadError} onRetry={taiDuLieu} /> : dangTai ? (
           <PageSkeleton />
         ) : cheDoXem === 'calendar' ? (
           <DeadlineCalendarView

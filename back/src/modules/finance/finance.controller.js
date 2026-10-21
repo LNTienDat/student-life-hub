@@ -1,11 +1,12 @@
+const { readPeriod, monthRange, vietnamParts, parseVietnamDate } = require('../../utils/date.util');
 const prisma = require('../../prismaClient');
 const ExcelJS = require('exceljs');
 const { FINANCE } = require('../../constants');
+const { finiteNumber } = require('../../utils/number.util');
 const {
   chongCongThuc,
   thongKeTaiChinhService,
   kiemTraNganSachService,
-  tinhXuHuongService,
 } = require('./finance.service');
 
 const { DANH_MUC_CHI, DANH_MUC_THU, DANH_MUC_HOP_LE } = FINANCE;
@@ -30,10 +31,10 @@ async function themGiaoDich(req, res) {
     if (loai === 'thu' && !DANH_MUC_THU.includes(danhMuc) && !DANH_MUC_CHI.includes(danhMuc)) {
       return res.status(400).json({ message: 'Danh mục thu nhập không hợp lệ' });
     }
-    if (isNaN(parseFloat(soTien)) || parseFloat(soTien) <= 0) {
+    if (!Number.isFinite(finiteNumber(soTien)) || finiteNumber(soTien) <= 0) {
       return res.status(400).json({ message: 'Số tiền phải là số dương' });
     }
-    if (ngayGiaoDich && isNaN(new Date(ngayGiaoDich).getTime())) {
+    if (ngayGiaoDich !== undefined && isNaN(parseVietnamDate(ngayGiaoDich).getTime())) {
       return res.status(400).json({ message: 'Ngày giao dịch không hợp lệ' });
     }
 
@@ -41,9 +42,9 @@ async function themGiaoDich(req, res) {
       data: {
         loai,
         danhMuc,
-        soTien: parseFloat(soTien),
+        soTien: finiteNumber(soTien),
         moTa,
-        ngayGiaoDich: ngayGiaoDich ? new Date(ngayGiaoDich) : undefined,
+        ngayGiaoDich: ngayGiaoDich ? parseVietnamDate(ngayGiaoDich) : undefined,
         idNguoiDung,
       },
     });
@@ -51,7 +52,7 @@ async function themGiaoDich(req, res) {
     res.status(201).json({ message: 'Thêm giao dịch thành công', giaoDich });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
   }
 }
 
@@ -63,9 +64,8 @@ async function layDanhSachGiaoDich(req, res) {
 
     const where = { idNguoiDung };
 
-    if (thang && nam) {
-      const from = new Date(parseInt(nam), parseInt(thang) - 1, 1);
-      const to = new Date(parseInt(nam), parseInt(thang), 1);
+    if (thang !== undefined || nam !== undefined) {
+      const { from, to } = readPeriod(req.query, true);
       where.ngayGiaoDich = { gte: from, lt: to };
     }
 
@@ -84,7 +84,8 @@ async function layDanhSachGiaoDich(req, res) {
       ];
     }
 
-    const trangSo = Math.max(parseInt(trang) || 1, 1);
+    if ((trang !== undefined && !/^[1-9]\d*$/.test(String(trang))) || (soLuong !== undefined && !/^[1-9]\d*$/.test(String(soLuong)))) return res.status(400).json({ message: 'Trang và số lượng phải là số nguyên dương' });
+    const trangSo = Math.max(Number(trang) || 1, 1);
     const kichThuoc = Math.min(Math.max(parseInt(soLuong) || FINANCE.DEFAULT_PAGE_SIZE, 1), FINANCE.MAX_PAGE_SIZE);
 
     const [danhSach, tongSo] = await Promise.all([
@@ -105,7 +106,7 @@ async function layDanhSachGiaoDich(req, res) {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
   }
 }
 
@@ -114,7 +115,7 @@ async function suaGiaoDich(req, res) {
   try {
     const { id } = req.params;
     const idNguoiDung = req.user.id;
-    const { loai, danhMuc, soTien, moTa } = req.body;
+    const { loai, danhMuc, soTien, moTa, ngayGiaoDich } = req.body;
 
     if (loai !== undefined && !['thu', 'chi'].includes(loai)) {
       return res.status(400).json({ message: 'Loại giao dịch không hợp lệ (chỉ nhận "thu" hoặc "chi")' });
@@ -122,8 +123,21 @@ async function suaGiaoDich(req, res) {
     if (danhMuc !== undefined && !DANH_MUC_HOP_LE.includes(danhMuc)) {
       return res.status(400).json({ message: 'Danh mục không hợp lệ' });
     }
-    if (soTien !== undefined && (isNaN(parseFloat(soTien)) || parseFloat(soTien) <= 0)) {
+    if (soTien !== undefined && (!Number.isFinite(finiteNumber(soTien)) || finiteNumber(soTien) <= 0)) {
       return res.status(400).json({ message: 'Số tiền phải là số dương' });
+    }
+    if (ngayGiaoDich !== undefined && (typeof ngayGiaoDich !== 'string' || !ngayGiaoDich.trim() || isNaN(parseVietnamDate(ngayGiaoDich).getTime()))) {
+      return res.status(400).json({ message: 'Ngày giao dịch không hợp lệ' });
+    }
+
+    const hienTai = await prisma.giaoDich.findFirst({ where: { id: parseInt(id), idNguoiDung } });
+    if (!hienTai) {
+      return res.status(404).json({ message: 'Không tìm thấy giao dịch hoặc bạn không có quyền sửa' });
+    }
+    const loaiMoi = loai ?? hienTai.loai;
+    const danhMucMoi = danhMuc ?? hienTai.danhMuc;
+    if (loaiMoi === 'chi' && !DANH_MUC_CHI.includes(danhMucMoi)) {
+      return res.status(400).json({ message: 'Vui lòng chọn danh mục chi tiêu phù hợp' });
     }
 
     const ketQua = await prisma.giaoDich.updateMany({
@@ -131,8 +145,9 @@ async function suaGiaoDich(req, res) {
       data: {
         loai,
         danhMuc,
-        soTien: soTien !== undefined ? parseFloat(soTien) : undefined,
+        soTien: soTien !== undefined ? finiteNumber(soTien) : undefined,
         moTa,
+        ngayGiaoDich: ngayGiaoDich !== undefined ? parseVietnamDate(ngayGiaoDich) : undefined,
       },
     });
 
@@ -144,7 +159,7 @@ async function suaGiaoDich(req, res) {
     res.json({ message: 'Cập nhật thành công', giaoDich });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
   }
 }
 
@@ -162,7 +177,7 @@ async function xoaGiaoDich(req, res) {
     res.json({ message: 'Xóa giao dịch thành công' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
   }
 }
 
@@ -170,11 +185,9 @@ async function xoaGiaoDich(req, res) {
 async function thongKeTheoThang(req, res) {
   try {
     const idNguoiDung = req.user.id;
-    const thang = parseInt(req.query.thang) || new Date().getMonth() + 1;
-    const nam = parseInt(req.query.nam) || new Date().getFullYear();
+    const { thang, nam } = readPeriod(req.query);
 
-    const from = new Date(nam, thang - 1, 1);
-    const to = new Date(nam, thang, 1);
+    const { from, to } = monthRange(thang, nam);
 
     const giaoDichs = await prisma.giaoDich.findMany({
       where: { idNguoiDung, ngayGiaoDich: { gte: from, lt: to } },
@@ -192,7 +205,7 @@ async function thongKeTheoThang(req, res) {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
   }
 }
 
@@ -210,34 +223,28 @@ async function datNganSach(req, res) {
     if (!DANH_MUC_CHI.includes(danhMuc)) {
       return res.status(400).json({ message: 'Danh mục ngân sách không hợp lệ (ngân sách chỉ áp dụng cho chi tiêu)' });
     }
-    if (isNaN(parseFloat(soTienToiDa)) || parseFloat(soTienToiDa) <= 0) {
+    if (!Number.isFinite(finiteNumber(soTienToiDa)) || finiteNumber(soTienToiDa) <= 0) {
       return res.status(400).json({ message: 'Hạn mức ngân sách phải là số dương' });
     }
-    if (isNaN(parseInt(thang)) || parseInt(thang) < 1 || parseInt(thang) > 12) {
+    if (!Number.isInteger(finiteNumber(thang)) || finiteNumber(thang) < 1 || finiteNumber(thang) > 12) {
       return res.status(400).json({ message: 'Tháng không hợp lệ (phải từ 1 đến 12)' });
     }
-
-    const nganSach = await prisma.nganSach.create({
-      data: {
-        danhMuc,
-        soTienToiDa: parseFloat(soTienToiDa),
-        thang: parseInt(thang),
-        nam: parseInt(nam),
-        idNguoiDung,
-      },
-    });
-
-    res.status(201).json({ message: 'Đặt ngân sách thành công', nganSach });
-  } catch (error) {
-    // P2002 = vi phạm ràng buộc unique (đã đặt ngân sách cho đúng danh mục +
-    // tháng + năm này rồi) — trả về thông báo rõ ràng thay vì "Lỗi server"
-    // chung chung, vì đây là thao tác người dùng rất dễ gặp phải khi thao
-    // tác nhanh hoặc bấm nút 2 lần.
-    if (error.code === 'P2002') {
-      return res.status(409).json({ message: 'Bạn đã đặt ngân sách cho danh mục này trong tháng rồi' });
+    if (!Number.isInteger(finiteNumber(nam)) || finiteNumber(nam) < 1000 || finiteNumber(nam) > 9999) {
+      return res.status(400).json({ message: 'Năm phải là số nguyên từ 1000 đến 9999' });
     }
+
+    const amount = finiteNumber(soTienToiDa);
+    const month = finiteNumber(thang);
+    const year = finiteNumber(nam);
+    const nganSach = await prisma.nganSach.upsert({
+      where: { idNguoiDung_danhMuc_thang_nam: { idNguoiDung, danhMuc, thang: month, nam: year } },
+      create: { danhMuc, soTienToiDa: amount, thang: month, nam: year, idNguoiDung },
+      update: { soTienToiDa: amount },
+    });
+    res.status(200).json({ message: 'Đã lưu ngân sách', nganSach });
+  } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
   }
 }
 
@@ -245,15 +252,13 @@ async function datNganSach(req, res) {
 async function kiemTraNganSach(req, res) {
   try {
     const idNguoiDung = req.user.id;
-    const thang = parseInt(req.query.thang) || new Date().getMonth() + 1;
-    const nam = parseInt(req.query.nam) || new Date().getFullYear();
+    const { thang, nam } = readPeriod(req.query);
 
     const nganSachs = await prisma.nganSach.findMany({
       where: { idNguoiDung, thang, nam },
     });
 
-    const from = new Date(nam, thang - 1, 1);
-    const to = new Date(nam, thang, 1);
+    const { from, to } = monthRange(thang, nam);
 
     const giaoDichs = await prisma.giaoDich.findMany({
       where: { idNguoiDung, loai: 'chi', ngayGiaoDich: { gte: from, lt: to } },
@@ -264,7 +269,7 @@ async function kiemTraNganSach(req, res) {
     res.json({ thang, nam, ketQua });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
   }
 }
 
@@ -273,12 +278,13 @@ async function xuHuongNThang(req, res) {
   try {
     const idNguoiDung = req.user.id;
     // Giới hạn soThang trong khoảng [1, 24]
-    const soThang = Math.min(Math.max(parseInt(req.query.soThang) || 6, 1), 24);
-    const now = new Date();
+    const soThang = Math.min(Math.max(parseInt(req.query.soThang) || FINANCE.DEFAULT_TREND_MONTHS, 1), 24);
+    const parts = vietnamParts();
+    const now = new Date(Date.UTC(parts.year, parts.month - 1, 15));
 
     // Tính khoảng thời gian bao phủ toàn bộ N tháng
-    const from = new Date(now.getFullYear(), now.getMonth() - (soThang - 1), 1);
-    const to = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const from = monthRange(parts.month - (soThang - 1), parts.year).from;
+    const to = monthRange(parts.month, parts.year).to;
 
     // 1 query duy nhất thay vì N queries tuần tự
     const giaoDichs = await prisma.giaoDich.findMany({
@@ -298,7 +304,8 @@ async function xuHuongNThang(req, res) {
     // Gom nhóm trong bộ nhớ
     giaoDichs.forEach((g) => {
       const d = new Date(g.ngayGiaoDich);
-      const key = `${d.getMonth() + 1}/${d.getFullYear()}`;
+      const part = vietnamParts(d);
+      const key = `${part.month}/${part.year}`;
       if (thangMap[key]) {
         if (g.loai === 'thu') thangMap[key].thu += g.soTien;
         else thangMap[key].chi += g.soTien;
@@ -308,7 +315,7 @@ async function xuHuongNThang(req, res) {
     res.json({ xuHuong: Object.values(thangMap) });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
   }
 }
 
@@ -320,9 +327,8 @@ async function xuatBaoCaoTaiChinhExcel(req, res) {
     const { thang, nam } = req.query;
 
     const where = { idNguoiDung };
-    if (thang && nam) {
-      const from = new Date(parseInt(nam), parseInt(thang) - 1, 1);
-      const to = new Date(parseInt(nam), parseInt(thang), 1);
+    if (thang !== undefined || nam !== undefined) {
+      const { from, to } = readPeriod(req.query, true);
       where.ngayGiaoDich = { gte: from, lt: to };
     }
 
@@ -405,7 +411,7 @@ async function xuatBaoCaoTaiChinhExcel(req, res) {
     res.end();
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Không thể xuất báo cáo tài chính' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Không thể xuất báo cáo tài chính' });
   }
 }
 

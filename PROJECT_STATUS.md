@@ -1,6 +1,22 @@
 # 📌 STUDENT LIFE HUB - TRẠNG THÁI DỰ ÁN
 
-> **Cập nhật lần cuối**: 2026-08-30 (Dự án đã hoàn thiện 100%)
+> **Deadline rút gọn 21/10:** bỏ checklist, ghi chú và môn học khỏi giao diện; ba mức Thấp/Bình thường/Khẩn cấp; mặc định chọn ngày, bật Thêm giờ khi cần. Ngày không giờ hết hạn cuối ngày địa phương; sửa deadline cũ giữ giờ và không ghi đè các trường đã ẩn. Cả danh sách, lịch và thêm nhanh đã đồng bộ. Lint/build, 29 bài logic và 7 PWA đạt; [kiểm tra trình duyệt local](docs/qa/2026-10-21-simple-deadline.json). Bản này chưa triển khai online.
+
+> **Giao diện gọn và nhập tiền 21/10:** trang Hôm nay đưa GPA/deadline/số dư lên đầu, hai khối lịch và công việc, mỗi thao tác nhanh xuất hiện một lần; bộ lọc học kỳ chỉ ở trang chi tiết. Ẩn Nhóm học khỏi menu (giữ mã và dữ liệu). Ô tiền thu/chi, ngân sách và ghi chi nhanh hiển thị `100 000` nhưng gửi số `100000`. Lint/build, 27 kiểm thử logic, 7 kiểm thử PWA và Chrome local với API giả đạt. [Minh chứng giao diện và payload](docs/qa/2026-10-21-compact-dashboard-money.json). Bản giao diện này chưa triển khai Render; người dùng đã xác nhận T3/T5 đạt ở bản trước `020306b`.
+
+> **Chuẩn bị tách giao diện 21/10:** [Static Site và chờ máy chủ](docs/guides/STATIC_FRONTEND_SETUP.md) — đã bổ sung xử lý khởi động chậm, thử lại GET và origin cho frontend riêng; chưa kích hoạt dịch vụ Static Site trên Render.
+
+> **Kiểm thử mới nhất 21/10:** [Bảng nghiệm thu chức năng](docs/reports/FUNCTION_ACCEPTANCE.md) — 118 bài tự động và 119 kịch bản mở rộng đạt trên môi trường thử riêng. Có giới hạn về UI, email/AI thật, thiết bị di động và bản online; chưa xác nhận hoàn thiện 100%.
+
+> **Cập nhật lần cuối**: 2026-10-21
+
+> **Sửa lỗi mới nhất:** [BUGFIX_REPORT.md](docs/reports/BUGFIX_REPORT.md) — 115 bài kiểm thử và 119 kịch bản mở rộng đạt trên database thử riêng; migration nhóm/chia sẻ đã bổ sung. Các nhận xét ngày 20/10 bên dưới là lịch sử trước đợt sửa. Chưa triển khai bản sửa này lên online.
+
+> **Phần mới trong mã local:** nhóm học tập và chia sẻ thời khóa biểu; chưa nghiệm thu hoặc triển khai. Xem [PROJECT_REVIEW_UPDATE.md](docs/reports/PROJECT_REVIEW_UPDATE.md) về migration còn thiếu, kiểm thử và lỗi phân quyền đã tái hiện.
+
+> **Nghiệm thu hiện tại:** theo [MODULE_COMPLETION.md](docs/planning/MODULE_COMPLETION.md), thực hiện tuần tự từng phần, bắt đầu với tài khoản và dữ liệu cá nhân. Checklist tính năng cũ bên dưới chỉ ghi nhận mã đã triển khai, không xác nhận đã nghiệm thu trên bản online. Kết quả rà soát UX: [UX_REVIEW.md](docs/reports/UX_REVIEW.md).
+
+> Đợt cập nhật mới: xem [UPGRADE_NOTES.md](docs/reports/UPGRADE_NOTES.md). Đã xác minh 50 kiểm thử backend và 7 kiểm thử frontend; chưa xác nhận trực quan bằng trình duyệt. Checklist cũ dưới đây ghi nhận phạm vi đã triển khai, không chứng minh hệ thống hoàn thiện hoặc sẵn sàng production.
 > **Mục tiêu**: Hệ thống Quản lý Học tập, Deadline & Tài chính cho Sinh viên.
 > **Tech Stack**: Node.js (Express) + PostgreSQL (Prisma) | React 19 (Vite) + TailwindCSS.
 > **Source Code**: `github.com/LNTienDat/student-life-hub`
@@ -9,15 +25,15 @@
 
 ## 📈 1. Tổng Kết Tiến Độ
 
-- **Tiến độ tổng thể**: **100%**
-- **Chức năng hoàn thành**: **37 / 37** (Tất cả 6 Module)
+- **Tiến độ tổng thể**: Các chức năng nền đã triển khai; còn bước xác nhận trực quan và vận hành thực tế.
+- **Danh mục cũ**: 37 chức năng đã có triển khai; còn khoảng trống ở giao diện, cấu hình dịch vụ và nghiệm thu luồng đầy đủ.
 - **Database**: 7 Model (NguoiDung, MonHoc, Diem, Deadline, GiaoDich, NganSach, ThoiKhoaBieu)
 - **Backend API**: 41 Endpoints nghiệp vụ
 - **Frontend**: 10 Trang giao diện chuẩn Responsive + Dark mode
 
 ---
 
-## 🎯 2. Checklist 37 Chức năng (Đã xong 100%)
+## 🎯 2. Checklist 37 chức năng đã triển khai (lịch sử, chưa phải nghiệm thu)
 
 ### 🟢 Module 0: Tài khoản & Xác thực
 - [x] CN1: Đăng ký tài khoản
@@ -72,4 +88,6 @@
 
 ---
 
-## 🎉 DỰ ÁN ĐÃ HOÀN THÀNH TOÀN BỘ YÊU CẦU!
+## Xác minh và công việc tiếp theo
+
+Theo dõi kết quả thực tế trong PROJECT_GAPS.md; không quy đổi checklist tính năng thành mức hoàn thiện 100%.

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#15161f">
+  <title>LifeHub · Chưa có kết nối</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:24px;background:#15161f;color:#e4e6f1;font-family:system-ui,sans-serif;line-height:1.65}main{max-width:440px;padding:32px;border:1px solid #454968;border-radius:24px;background:#1b1d36}img{width:64px;height:64px;border-radius:16px}h1{font-size:24px;line-height:1.3}p{color:#b7bdd5}button{min-height:44px;padding:12px 20px;border:0;border-radius:12px;background:#d9ddff;color:#15161f;font:inherit;font-weight:650;cursor:pointer}button:focus-visible{outline:3px solid #a6b0ff;outline-offset:4px}small{display:block;margin-top:20px;color:#b7bdd5}
+  </style>
+</head>
+<body>
+  <main>
+    <img src="/icons/app-192.png" width="64" height="64" alt="LifeHub">
+    <h1>Chưa có kết nối mạng</h1>
+    <p>Kết nối lại Wi-Fi hoặc dữ liệu di động để mở lịch học, deadline và chi tiêu của bạn.</p>
+    <p>LifeHub chưa hỗ trợ nhập hoặc chỉnh sửa dữ liệu khi mất mạng. Không có thao tác nào được gửi từ màn hình này.</p>
+    <button id="retry" type="button">Thử kết nối lại</button>
+    <small id="connection" role="status" aria-live="polite"></small>
+  </main>
+  <script src="/offline.js"></script>
+</body>
+</html>

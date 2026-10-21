@@ -25,11 +25,14 @@ function SubjectCard({
   onDiemSoChange,
   onTrongSoChange,
   onSubmitGrade,
+  saving = false,
   onDeleteGrade,
   onEditSubject,
   onDeleteSubject,
 }) {
   const diemMon = tinhDiemMon(mon.diems);
+  const totalWeight = (mon.diems || []).reduce((sum, item) => sum + Number(item.trongSo), 0);
+  const complete = Math.abs(totalWeight - 100) < 1e-8;
   const quaMon = diemMon && parseFloat(diemMon) >= 5;
   const isEditingGradeForThisSubject = monThemDiemId === mon.id;
 
@@ -60,7 +63,7 @@ function SubjectCard({
               }`}
             >
               <span className="font-display text-2xl font-bold leading-none">{diemMon}</span>
-              <span className="text-[11px] font-semibold mt-0.5">{quaMon ? 'Đạt' : 'Chưa đạt'}</span>
+              <span className="text-[11px] font-semibold mt-0.5">{totalWeight > 100 + 1e-8 ? 'Trọng số vượt 100% · cần sửa' : complete ? (quaMon ? 'Đạt · đã đủ điểm' : 'Chưa đạt · đã đủ điểm') : 'Tạm tính · chưa đủ điểm'}</span>
             </div>
           ) : (
             <div className="flex flex-col items-end text-slate-400">
@@ -174,6 +177,8 @@ function SubjectCard({
               </button>
               <button
                 type="submit"
+          disabled={saving}
+          aria-busy={saving}
                 className="flex-1 text-white bg-ink-600 hover:bg-ink-700 dark:bg-ink-500 dark:hover:bg-ink-400 py-1.5 rounded-lg font-medium text-xs transition-colors"
               >
                 {dangSuaDiemId ? 'Cập nhật điểm' : 'Lưu điểm'}

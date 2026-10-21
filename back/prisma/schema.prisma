@@ -22,11 +22,18 @@ model NguoiDung {
   resetPasswordToken  String?
   resetPasswordExpiry DateTime?
 
-  monHocs     MonHoc[]
-  deadlines   Deadline[]
-  giaoDichs   GiaoDich[]
-  nganSachs   NganSach[]
-  thoiKhoaBieus ThoiKhoaBieu[]
+  shareToken          String?   @unique
+  shareEnabled        Boolean   @default(false)
+
+  monHocs             MonHoc[]
+  deadlines           Deadline[]
+  giaoDichs           GiaoDich[]
+  nganSachs           NganSach[]
+  thoiKhoaBieus       ThoiKhoaBieu[]
+  nhomChuNhom         NhomHocTap[]        @relation("ChuNhom")
+  nhomThamGia         ThanhVienNhom[]
+  deadlineNhomsTao    DeadlineNhom[]      @relation("NguoiTaoDeadlineNhom")
+  tienDoDeadlineNhoms TienDoDeadlineNhom[]
 }
 
 model MonHoc {
@@ -69,6 +76,7 @@ model Deadline {
   doUuTien    String    @default("binh_thuong")
   trangThai   String    @default("dang_dien_hanh")
   ngayTao     DateTime  @default(now())
+  checklist   Json      @default("[]")
 
   nguoiDung   NguoiDung @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
   monHoc      MonHoc?   @relation(fields: [idMonHoc], references: [id], onDelete: SetNull)
@@ -119,10 +127,77 @@ model ThoiKhoaBieu {
   gioKetThuc  String    // "09:00"
   phongHoc    String?
   giangVien   String?
+  hocKy       String    @default("")
   ngayTao     DateTime  @default(now())
 
   nguoiDung   NguoiDung @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
 
   @@index([idNguoiDung])
   @@index([idNguoiDung, thu])
+  @@index([idNguoiDung, hocKy])
+}
+
+model NhomHocTap {
+  id          Int             @id @default(autoincrement())
+  ten         String
+  moTa        String?
+  maCode      String          @unique
+  idChuNhom   Int
+  ngayTao     DateTime        @default(now())
+
+  chuNhom     NguoiDung       @relation("ChuNhom", fields: [idChuNhom], references: [id], onDelete: Cascade)
+  thanhViens  ThanhVienNhom[]
+  deadlineNhoms DeadlineNhom[]
+
+  @@index([maCode])
+  @@index([idChuNhom])
+}
+
+model ThanhVienNhom {
+  id          Int         @id @default(autoincrement())
+  idNhom      Int
+  idNguoiDung Int
+  vaiTro      String      @default("thanh_vien") // "chu_nhom" | "thanh_vien"
+  ngayThamGia DateTime    @default(now())
+
+  nhom        NhomHocTap  @relation(fields: [idNhom], references: [id], onDelete: Cascade)
+  nguoiDung   NguoiDung   @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
+
+  @@unique([idNhom, idNguoiDung])
+  @@index([idNguoiDung])
+  @@index([idNhom])
+}
+
+model DeadlineNhom {
+  id          Int                  @id @default(autoincrement())
+  idNhom      Int
+  idNguoiTao  Int
+  tieuDe      String
+  moTa        String?
+  hanChot     DateTime
+  doUuTien    String               @default("binh_thuong")
+  ngayTao     DateTime             @default(now())
+
+  nhom        NhomHocTap           @relation(fields: [idNhom], references: [id], onDelete: Cascade)
+  nguoiTao    NguoiDung            @relation("NguoiTaoDeadlineNhom", fields: [idNguoiTao], references: [id], onDelete: Cascade)
+  tienDos     TienDoDeadlineNhom[]
+
+  @@index([idNhom])
+  @@index([idNhom, hanChot])
+}
+
+model TienDoDeadlineNhom {
+  id             Int          @id @default(autoincrement())
+  idDeadlineNhom Int
+  idNguoiDung    Int
+  trangThai      String       @default("chua_lam") // "chua_lam" | "dang_lam" | "hoan_thanh"
+  ghiChu         String?
+  capNhatLuc     DateTime     @default(now()) @updatedAt
+
+  deadlineNhom   DeadlineNhom @relation(fields: [idDeadlineNhom], references: [id], onDelete: Cascade)
+  nguoiDung      NguoiDung    @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
+
+  @@unique([idDeadlineNhom, idNguoiDung])
+  @@index([idNguoiDung])
+  @@index([idDeadlineNhom])
 }

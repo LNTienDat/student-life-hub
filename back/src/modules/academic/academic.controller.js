@@ -1,7 +1,11 @@
+const { validText } = require('../../utils/validation.util');
+const { serializable, httpError } = require('../../utils/transaction.util');
 const prisma = require('../../prismaClient');
 const PDFDocument = require('pdfkit');
 const path = require('path');
+const { tinhDiemMon } = require('../../utils/grade.util');
 const { ACADEMIC } = require('../../constants');
+const { finiteNumber } = require('../../utils/number.util');
 const {
   tinhGPAService,
   canhBaoMonNguyCoService,
@@ -22,16 +26,16 @@ async function themMonHoc(req, res) {
     const { ten, tinChi, hocKy } = req.body;
     const idNguoiDung = req.user.id;
 
-    if (!ten || !tinChi || !hocKy) {
+    if (!validText(ten) || !tinChi || !validText(hocKy)) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ tên môn, tín chỉ, học kỳ' });
     }
-    const tinChiSo = parseInt(tinChi);
-    if (isNaN(tinChiSo) || tinChiSo < ACADEMIC.MIN_TIN_CHI_MON || tinChiSo > ACADEMIC.MAX_TIN_CHI_MON) {
+    const tinChiSo = finiteNumber(tinChi);
+    if (!Number.isInteger(tinChiSo) || tinChiSo < ACADEMIC.MIN_TIN_CHI_MON || tinChiSo > ACADEMIC.MAX_TIN_CHI_MON) {
       return res.status(400).json({ message: `Số tín chỉ phải là số nguyên dương hợp lý (từ ${ACADEMIC.MIN_TIN_CHI_MON} đến ${ACADEMIC.MAX_TIN_CHI_MON})` });
     }
 
     const monHoc = await prisma.monHoc.create({
-      data: { ten, tinChi: parseInt(tinChi), hocKy, idNguoiDung },
+      data: { ten: ten.trim(), tinChi: tinChiSo, hocKy: hocKy.trim(), idNguoiDung },
     });
 
     res.status(201).json({ message: 'Thêm môn học thành công', monHoc });
@@ -47,7 +51,7 @@ async function layDanhSachMonHoc(req, res) {
     const idNguoiDung = req.user.id;
 
     const danhSach = await prisma.monHoc.findMany({
-      where: { idNguoiDung },
+      where: { idNguoiDung, ...(req.query.hocKy ? { hocKy: String(req.query.hocKy) } : {}) },
       include: { diems: true },
       orderBy: { ngayTao: 'desc' },
     });
@@ -65,14 +69,15 @@ async function suaMonHoc(req, res) {
     const { id } = req.params;
     const idNguoiDung = req.user.id;
     const { ten, tinChi, hocKy, trangThai } = req.body;
+    if ((ten !== undefined && !validText(ten)) || (hocKy !== undefined && !validText(hocKy)) || (trangThai !== undefined && !['active', 'completed', 'inactive'].includes(trangThai))) return res.status(400).json({ message: 'Thông tin môn học không hợp lệ' });
 
-    if (tinChi !== undefined && (isNaN(parseInt(tinChi)) || parseInt(tinChi) <= 0 || parseInt(tinChi) > 20)) {
-      return res.status(400).json({ message: 'Số tín chỉ phải là số nguyên dương hợp lý (tối đa 20)' });
+    if (tinChi !== undefined && (!Number.isInteger(finiteNumber(tinChi)) || finiteNumber(tinChi) < ACADEMIC.MIN_TIN_CHI_MON || finiteNumber(tinChi) > ACADEMIC.MAX_TIN_CHI_MON)) {
+      return res.status(400).json({ message: `Số tín chỉ phải là số nguyên dương hợp lý (tối đa ${ACADEMIC.MAX_TIN_CHI_MON})` });
     }
 
     const ketQua = await prisma.monHoc.updateMany({
       where: { id: parseInt(id), idNguoiDung },
-      data: { ten, tinChi: tinChi ? parseInt(tinChi) : undefined, hocKy, trangThai },
+      data: { ten: ten?.trim(), tinChi: tinChi !== undefined ? finiteNumber(tinChi) : undefined, hocKy: hocKy?.trim(), trangThai },
     });
 
     if (ketQua.count === 0) {
@@ -108,85 +113,35 @@ async function xoaMonHoc(req, res) {
 // Thêm điểm cho môn học — chỉ cho thêm nếu môn học thuộc về đúng người đang đăng nhập
 async function themDiem(req, res) {
   try {
-    const idNguoiDung = req.user.id;
-    const idMonHoc = req.body.idMonHoc || req.params.idMonHoc;
+    const idMonHoc = Number(req.body.idMonHoc || req.params.idMonHoc);
     const { loaiDanhGia, diem, trongSo } = req.body;
-
-    if (!idMonHoc || !loaiDanhGia || diem === undefined || trongSo === undefined) {
-      return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin điểm' });
-    }
-    if (isNaN(parseFloat(diem)) || parseFloat(diem) < 0 || parseFloat(diem) > 10) {
-      return res.status(400).json({ message: 'Điểm phải nằm trong khoảng 0 đến 10' });
-    }
-    if (isNaN(parseFloat(trongSo)) || parseFloat(trongSo) <= 0 || parseFloat(trongSo) > 100) {
-      return res.status(400).json({ message: 'Trọng số phải nằm trong khoảng 0 đến 100' });
-    }
-
-    const monHoc = await prisma.monHoc.findFirst({
-      where: { id: parseInt(idMonHoc), idNguoiDung },
+    if (!Number.isSafeInteger(idMonHoc) || idMonHoc <= 0 || !validText(loaiDanhGia) || !Number.isFinite(finiteNumber(diem)) || finiteNumber(diem) < 0 || finiteNumber(diem) > 10 || !Number.isFinite(finiteNumber(trongSo)) || finiteNumber(trongSo) <= 0 || finiteNumber(trongSo) > 100) return res.status(400).json({ message: 'Điểm, trọng số hoặc loại đánh giá không hợp lệ' });
+    const diemMoi = await serializable(prisma, async tx => {
+      const mon = await tx.monHoc.findFirst({ where: { id: idMonHoc, idNguoiDung: req.user.id }, include: { diems: true } });
+      if (!mon) throw httpError(404, 'Không tìm thấy môn học hoặc bạn không có quyền thêm điểm');
+      if ((mon.diems || []).reduce((sum, d) => sum + d.trongSo, 0) + finiteNumber(trongSo) > 100 + 1e-8) throw httpError(400, 'Tổng trọng số các cột điểm không được vượt quá 100%');
+      return tx.diem.create({ data: { idMonHoc, loaiDanhGia: loaiDanhGia.trim(), diem: finiteNumber(diem), trongSo: finiteNumber(trongSo) } });
     });
-    if (!monHoc) {
-      return res.status(404).json({ message: 'Không tìm thấy môn học hoặc bạn không có quyền thêm điểm' });
-    }
-
-    const diemMoi = await prisma.diem.create({
-      data: {
-        idMonHoc: parseInt(idMonHoc),
-        loaiDanhGia,
-        diem: parseFloat(diem),
-        trongSo: parseFloat(trongSo),
-      },
-    });
-
     res.status(201).json({ message: 'Thêm điểm thành công', diem: diemMoi });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
-  }
+  } catch (error) { res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Chưa lưu được điểm. Vui lòng thử lại.' }); }
 }
 
-// Sửa điểm — chỉ cho sửa nếu môn học của điểm đó thuộc về đúng người đang đăng nhập
 async function suaDiem(req, res) {
   try {
-    const { id } = req.params;
-    const idNguoiDung = req.user.id;
     const { loaiDanhGia, diem, trongSo } = req.body;
-
-    if (diem !== undefined && (isNaN(parseFloat(diem)) || parseFloat(diem) < 0 || parseFloat(diem) > 10)) {
-      return res.status(400).json({ message: 'Điểm phải nằm trong khoảng 0 đến 10' });
-    }
-    if (trongSo !== undefined && (isNaN(parseFloat(trongSo)) || parseFloat(trongSo) <= 0 || parseFloat(trongSo) > 100)) {
-      return res.status(400).json({ message: 'Trọng số phải nằm trong khoảng 0 đến 100' });
-    }
-
-    const diemHienTai = await prisma.diem.findFirst({
-      where: {
-        id: parseInt(id),
-        monHoc: { idNguoiDung },
-      },
+    if ((loaiDanhGia !== undefined && !validText(loaiDanhGia)) || (diem !== undefined && (!Number.isFinite(finiteNumber(diem)) || finiteNumber(diem) < 0 || finiteNumber(diem) > 10)) || (trongSo !== undefined && (!Number.isFinite(finiteNumber(trongSo)) || finiteNumber(trongSo) <= 0 || finiteNumber(trongSo) > 100))) return res.status(400).json({ message: 'Điểm hoặc trọng số không hợp lệ' });
+    const result = await serializable(prisma, async tx => {
+      const current = await tx.diem.findFirst({ where: { id: Number(req.params.id), monHoc: { idNguoiDung: req.user.id } }, include: { monHoc: { include: { diems: true } } } });
+      if (!current) throw httpError(404, 'Không tìm thấy điểm hoặc bạn không có quyền sửa');
+      const weight = trongSo === undefined ? current.trongSo : finiteNumber(trongSo);
+      const total = current.monHoc.diems.filter(d => d.id !== current.id).reduce((sum, d) => sum + d.trongSo, weight);
+      if (total > 100 + 1e-8) throw httpError(400, 'Tổng trọng số các cột điểm không được vượt quá 100%');
+      return tx.diem.update({ where: { id: current.id }, data: { loaiDanhGia: loaiDanhGia?.trim(), diem: diem === undefined ? undefined : finiteNumber(diem), trongSo: weight } });
     });
-
-    if (!diemHienTai) {
-      return res.status(404).json({ message: 'Không tìm thấy điểm hoặc bạn không có quyền sửa' });
-    }
-
-    const diemCapNhat = await prisma.diem.update({
-      where: { id: parseInt(id) },
-      data: {
-        loaiDanhGia: loaiDanhGia !== undefined ? loaiDanhGia : undefined,
-        diem: diem !== undefined ? parseFloat(diem) : undefined,
-        trongSo: trongSo !== undefined ? parseFloat(trongSo) : undefined,
-      },
-    });
-
-    res.json({ message: 'Cập nhật điểm thành công', diem: diemCapNhat });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
-  }
+    res.json({ message: 'Cập nhật điểm thành công', diem: result });
+  } catch (error) { res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Chưa lưu được điểm. Vui lòng thử lại.' }); }
 }
 
-// Xóa điểm — chỉ cho xóa nếu môn học của điểm đó thuộc về đúng người đang đăng nhập
 async function xoaDiem(req, res) {
   try {
     const { id } = req.params;
@@ -220,12 +175,11 @@ async function tinhGPA(req, res) {
     const idNguoiDung = req.user.id;
 
     const monHocs = await prisma.monHoc.findMany({
-      where: { idNguoiDung },
+      where: { idNguoiDung, ...(req.query.hocKy ? { hocKy: String(req.query.hocKy) } : {}) },
       include: { diems: true },
     });
 
-    const { gpa, chiTiet } = tinhGPAService(monHocs);
-    res.json({ gpa, chiTiet });
+    res.json(tinhGPAService(monHocs));
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Lỗi server' });
@@ -242,6 +196,12 @@ async function duDoanDiem(req, res) {
     if (mucTieu === undefined || trongSoConLai === undefined) {
       return res.status(400).json({ message: 'Vui lòng nhập mục tiêu và trọng số còn lại' });
     }
+    if (!Number.isFinite(finiteNumber(mucTieu)) || finiteNumber(mucTieu) < 0 || finiteNumber(mucTieu) > ACADEMIC.THANG_DIEM_MAX) {
+      return res.status(400).json({ message: `Điểm mục tiêu phải nằm trong khoảng 0 đến ${ACADEMIC.THANG_DIEM_MAX}` });
+    }
+    if (!Number.isFinite(finiteNumber(trongSoConLai)) || finiteNumber(trongSoConLai) <= 0 || finiteNumber(trongSoConLai) > ACADEMIC.TONG_TRONG_SO_CHUAN) {
+      return res.status(400).json({ message: `Trọng số còn lại phải lớn hơn 0 và không vượt quá ${ACADEMIC.TONG_TRONG_SO_CHUAN}` });
+    }
 
     const monHoc = await prisma.monHoc.findFirst({
       where: { id: parseInt(idMonHoc), idNguoiDung },
@@ -250,10 +210,6 @@ async function duDoanDiem(req, res) {
 
     if (!monHoc) {
       return res.status(404).json({ message: 'Không tìm thấy môn học' });
-    }
-
-    if (parseFloat(trongSoConLai) <= 0) {
-      return res.status(400).json({ message: 'Trọng số còn lại phải lớn hơn 0' });
     }
 
     // Tổng điểm đã đạt được từ các đầu điểm hiện có (quy theo trọng số)
@@ -277,7 +233,7 @@ async function canhBaoMonNguyCo(req, res) {
     const nguong = req.query.nguong ? parseFloat(req.query.nguong) : ACADEMIC.DEFAULT_NGUONG_CANH_BAO;
 
     const monHocs = await prisma.monHoc.findMany({
-      where: { idNguoiDung },
+      where: { idNguoiDung, ...(req.query.hocKy ? { hocKy: String(req.query.hocKy) } : {}) },
       include: { diems: true },
     });
 
@@ -294,7 +250,7 @@ async function gpaTheoKy(req, res) {
   try {
     const idNguoiDung = req.user.id;
     const monHocs = await prisma.monHoc.findMany({
-      where: { idNguoiDung },
+      where: { idNguoiDung, ...(req.query.hocKy ? { hocKy: String(req.query.hocKy) } : {}) },
       include: { diems: true },
     });
 
@@ -313,7 +269,7 @@ async function xuatBangDiemPDF(req, res) {
 
     const nguoiDung = await prisma.nguoiDung.findUnique({ where: { id: idNguoiDung } });
     const monHocs = await prisma.monHoc.findMany({
-      where: { idNguoiDung },
+      where: { idNguoiDung, ...(req.query.hocKy ? { hocKy: String(req.query.hocKy) } : {}) },
       include: { diems: true },
       orderBy: { hocKy: 'asc' },
     });

@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-21",
+  "root": "D:\\EDU\\Do_An_2_SLH",
+  "deleted": [
+    "front\\dist",
+    "front\\README.md",
+    "back\\update_thunder.py",
+    "improvement-backups\\npm-cache",
+    "improvement-backups\\functional-audit-20261020\\isolated-pg",
+    "improvement-backups\\functional-audit-20261020\\pgdata",
+    "improvement-backups\\bugfix-20261021\\backend-fixes.py",
+    "improvement-backups\\bugfix-20261021\\frontend-fixes.py",
+    "improvement-backups\\bugfix-20261021\\group-fixes.py",
+    "improvement-backups\\bugfix-20261021\\group-ui-fixes.py",
+    "improvement-backups\\course-pdf",
+    "improvement-backups\\qd309"
+  ],
+  "freedBytes": 164680134,
+  "freedMiB": 157.05,
+  "removedBrokenJunctions": 18,
+  "movedDocuments": {
+    "BUGFIX_REPORT.md": "docs/reports/BUGFIX_REPORT.md",
+    "FUNCTIONAL_AUDIT.md": "docs/reports/FUNCTIONAL_AUDIT.md",
+    "PROJECT_GAPS.md": "docs/reports/PROJECT_GAPS.md",
+    "PROJECT_REVIEW_UPDATE.md": "docs/reports/PROJECT_REVIEW_UPDATE.md",
+    "UPGRADE_NOTES.md": "docs/reports/UPGRADE_NOTES.md",
+    "UX_REVIEW.md": "docs/reports/UX_REVIEW.md",
+    "PWA_SETUP.md": "docs/guides/PWA_SETUP.md",
+    "RENDER_SETUP.md": "docs/guides/RENDER_SETUP.md",
+    "MODULE_COMPLETION.md": "docs/planning/MODULE_COMPLETION.md",
+    "MOBILE_TEST_PLAN.md": "docs/planning/MOBILE_TEST_PLAN.md",
+    "roadmap.docx": "docs/planning/roadmap.docx"
+  },
+  "protectedFileCount": 169,
+  "protectedContentsUnchanged": true,
+  "kept": [
+    ".git",
+    "back/src",
+    "front/src",
+    "back/prisma",
+    "back/.env",
+    "back/node_modules",
+    "front/node_modules",
+    "docs/qa",
+    "roadmap.docx (moved to docs/planning)",
+    "source backups and QA screenshots"
+  ],
+  "documentLinksChecked": true,
+  "brokenDocumentLinks": [],
+  "verification": {
+    "frontendLint": "passed",
+    "frontendTestsPassed": 12,
+    "pwaTestsPassed": 7,
+    "frontendBuild": "passed; regenerated output removed after verification",
+    "backendUnitTestsPassed": 69,
+    "databaseIntegrationTests": "not run for file cleanup",
+    "gitDiffCheck": "passed",
+    "onlineDeploymentChanged": false
+  }
+}

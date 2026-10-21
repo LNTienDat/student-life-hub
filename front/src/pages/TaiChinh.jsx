@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getCache, setCache, clearCache } from '../services/apiCache';
 import financeService from '../services/financeService';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
 import { TEN_DANH_MUC } from '../constants';
-import { dinhDangTien } from '../utils/formatters';
 import { Plus, X, Download } from 'lucide-react';
 
 import FinanceKpiCards from './taichinh/FinanceKpiCards';
@@ -13,6 +12,7 @@ import FinanceTrendChart from './taichinh/FinanceTrendChart';
 import TransactionForm from './taichinh/TransactionForm';
 import TransactionTable from './taichinh/TransactionTable';
 import { PageSkeleton } from '../components/Skeleton';
+import { transactionQuery, financeSummary } from './taichinh/financeUtils';
 
 function TaiChinh() {
   const now = new Date();
@@ -25,6 +25,13 @@ function TaiChinh() {
   const [nganSachs, setNganSachs] = useState(cached?.nganSachs ?? []);
   const [xuHuong, setXuHuong] = useState(cached?.xuHuong ?? []);
   const [dangTai, setDangTai] = useState(!cached);
+  const [loiThongKe, setLoiThongKe] = useState('');
+  const [loiGiaoDich, setLoiGiaoDich] = useState('');
+  const [dangLuu, setDangLuu] = useState(false);
+  const saveLock = useRef(false);
+  const statsVersion = useRef(0);
+  const listVersion = useRef(0);
+  const formRef = useRef(null);
 
   const [hienFormGD, setHienFormGD] = useState(false);
   const [loai, setLoai] = useState('chi');
@@ -47,10 +54,13 @@ function TaiChinh() {
   const [locLoai, setLocLoai] = useState('');
   const [locDanhMuc, setLocDanhMuc] = useState('');
   const [chiThangNay, setChiThangNay] = useState(false);
+  const filtersRef = useRef({});
+  useEffect(() => {
+    filtersRef.current = { timKiem, locLoai, locDanhMuc, chiThangNay, thang, nam };
+  }, [timKiem, locLoai, locDanhMuc, chiThangNay, thang, nam]);
 
   const [trangHienTai, setTrangHienTai] = useState(1);
   const [soTrang, setSoTrang] = useState(1);
-  const [tongSoGiaoDich, setTongSoGiaoDich] = useState(0);
   const [dangTaiGD, setDangTaiGD] = useState(false);
 
   // State modal xác nhận và toast
@@ -70,63 +80,76 @@ function TaiChinh() {
   const { hienToast } = useToast();
   const [dangXuatExcel, setDangXuatExcel] = useState(false);
 
-  useEffect(() => {
-    async function taiThongKe() {
+  const taiThongKe = useCallback(async () => {
+      const version = ++statsVersion.current;
+      setLoiThongKe('');
       try {
         const [resTK, resNS, resXH] = await Promise.all([
           financeService.layThongKe(),
           financeService.layNganSach(),
           financeService.layXuHuong(6),
         ]);
-        const data = {
-          thongKe: resTK.data,
-          nganSachs: resNS.data.ketQua || [],
-          xuHuong: resXH.data.xuHuong || [],
-        };
+        if (version !== statsVersion.current) return;
+        const data = financeSummary(resTK.data, resNS.data, resXH.data);
         setThongKe(data.thongKe);
         setNganSachs(data.nganSachs);
         setXuHuong(data.xuHuong);
         setCache('finance_cache', data);
       } catch (error) {
-        console.error(error);
+        if (version === statsVersion.current) setLoiThongKe(error.response?.data?.message || 'Chưa tải được thống kê. Kiểm tra kết nối và thử lại.');
       } finally {
-        setDangTai(false);
+        if (version === statsVersion.current) setDangTai(false);
       }
-    }
-    taiThongKe();
   }, []);
 
-  async function taiGiaoDich(page = 1) {
+  const invalidateLists = useCallback(() => { listVersion.current++; }, []);
+  const invalidateAll = useCallback(() => { statsVersion.current++; invalidateLists(); }, [invalidateLists]);
+  useEffect(() => {
+    const timer = setTimeout(taiThongKe, 0);
+    return () => { clearTimeout(timer); invalidateAll(); };
+  }, [taiThongKe, invalidateAll]);
+
+  const taiGiaoDich = useCallback(async (page = 1) => {
+    const version = ++listVersion.current;
     setDangTaiGD(true);
+    setLoiGiaoDich('');
     try {
-      const res = await financeService.layDanhSachGiaoDich({
-        page,
-        limit: 10,
-        timKiem,
-        loai: locLoai,
-        danhMuc: locDanhMuc,
-        chiThangNay,
-      });
-      setGiaoDichs(res.data.giaoDichs);
-      setSoTrang(res.data.soTrang);
-      setTrangHienTai(res.data.trangHienTai);
-      setTongSoGiaoDich(res.data.tongSo);
+      let res = await financeService.layDanhSachGiaoDich(transactionQuery(filtersRef.current, page));
+      if (version !== listVersion.current) return;
+      if (page > res.data.soTrang) {
+        res = await financeService.layDanhSachGiaoDich(transactionQuery(filtersRef.current, res.data.soTrang));
+        if (version !== listVersion.current) return;
+      }
+      setGiaoDichs(res.data.giaoDichs || []);
+      setSoTrang(res.data.soTrang || 1);
+      setTrangHienTai(res.data.trang || 1);
     } catch (error) {
-      console.error(error);
+      if (version === listVersion.current) setLoiGiaoDich(error.response?.data?.message || 'Chưa tải được giao dịch. Kiểm tra kết nối và thử lại.');
     } finally {
-      setDangTaiGD(false);
+      if (version === listVersion.current) setDangTaiGD(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
+    listVersion.current++;
     const timer = setTimeout(() => {
       taiGiaoDich(1);
     }, 300);
-    return () => clearTimeout(timer);
-  }, [timKiem, locLoai, locDanhMuc, chiThangNay]);
+    return () => { clearTimeout(timer); invalidateLists(); };
+  }, [timKiem, locLoai, locDanhMuc, chiThangNay, taiGiaoDich, invalidateLists]);
+
+  useEffect(() => {
+    if (hienFormGD) {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      formRef.current?.querySelector('input')?.focus({ preventScroll: true });
+    }
+  }, [hienFormGD]);
 
   async function xuLyThemGiaoDich(e) {
     e.preventDefault();
+    if (saveLock.current) return;
+    saveLock.current = true;
+    setDangLuu(true);
     try {
       await financeService.themGiaoDich({
         soTien: parseFloat(soTien),
@@ -140,19 +163,16 @@ function TaiChinh() {
       setNgayGiaoDich('');
       setHienFormGD(false);
 
-      const [resTK, resNS] = await Promise.all([
-        financeService.layThongKe(),
-        financeService.layNganSach(),
-      ]);
-      setThongKe(resTK.data);
-      setNganSachs(resNS.data.nganSachs);
       clearCache('dashboard_cache');
       clearCache('finance_cache');
-      taiGiaoDich(1);
       hienToast('success', 'Thêm giao dịch thành công!');
+      await Promise.all([taiThongKe(), taiGiaoDich(1)]);
     } catch (error) {
       console.error(error);
       hienToast('error', error.response?.data?.message || 'Không thể thêm giao dịch!');
+    } finally {
+      saveLock.current = false;
+      setDangLuu(false);
     }
   }
 
@@ -180,11 +200,9 @@ function TaiChinh() {
       await financeService.xoaGiaoDich(id);
       setModalXacNhan((prev) => ({ ...prev, isOpen: false, isLoading: false }));
       hienToast('success', 'Đã xóa giao dịch thành công!');
-      const resTK = await financeService.layThongKe();
-      setThongKe(resTK.data);
       clearCache('dashboard_cache');
       clearCache('finance_cache');
-      taiGiaoDich(trangHienTai);
+      await Promise.all([taiThongKe(), taiGiaoDich(trangHienTai)]);
     } catch (error) {
       console.error(error);
       setModalXacNhan((prev) => ({ ...prev, isLoading: false }));
@@ -220,7 +238,15 @@ function TaiChinh() {
     setMoTa('');
     setNgayGiaoDich('');
     setHienFormGD(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function luuNganSach(data) {
+    await financeService.datNganSach({ ...data, thang, nam });
+    clearCache('finance_cache');
+    clearCache('dashboard_cache');
+    hienToast('success', 'Đã lưu ngân sách tháng này.');
+    await taiThongKe();
   }
 
   return (
@@ -240,7 +266,7 @@ function TaiChinh() {
           <div className="flex items-center gap-3">
             <button
               onClick={xuLyXuatExcel}
-              disabled={dangXuatExcel || giaoDichs.length === 0}
+              disabled={dangXuatExcel || !thongKe || (thongKe.tongThu === 0 && thongKe.tongChi === 0)}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
               title="Xuất báo cáo Excel"
               aria-label="Xuất báo cáo tài chính ra file Excel"
@@ -250,6 +276,8 @@ function TaiChinh() {
             </button>
             <button
               onClick={() => setHienFormGD(!hienFormGD)}
+              disabled={dangLuu}
+              aria-expanded={hienFormGD}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${
                 hienFormGD
                   ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -262,44 +290,45 @@ function TaiChinh() {
           </div>
         </div>
 
+        <div ref={formRef} className="scroll-mt-32">
+          <TransactionForm
+            hienFormGD={hienFormGD}
+            loai={loai}
+            danhMuc={danhMuc}
+            soTien={soTien}
+            moTa={moTa}
+            ngayGiaoDich={ngayGiaoDich}
+            onLoaiChange={doiLoaiGiaoDich}
+            onDanhMucChange={setDanhMuc}
+            onSoTienChange={setSoTien}
+            onMoTaChange={setMoTa}
+            onNgayGiaoDichChange={setNgayGiaoDich}
+            onSubmit={xuLyThemGiaoDich}
+            dangLuu={dangLuu}
+            onCancel={() => setHienFormGD(false)}
+          />
+        </div>
+        {loiThongKe && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-200">{loiThongKe} <button type="button" onClick={taiThongKe} className="ml-2 font-semibold underline">Thử lại</button></div>}
         {dangTai ? (
           <PageSkeleton />
-        ) : !thongKe ? (
-          <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60">
-            <p className="text-rose-500">Lỗi tải dữ liệu thống kê!</p>
-          </div>
         ) : (
           <>
             {/* 1. Thống kê tổng quan */}
-            <FinanceKpiCards thongKe={thongKe} />
+            {thongKe && <FinanceKpiCards thongKe={thongKe} />}
 
             {/* 2. Layout 2 cột: Ngân sách & Biểu đồ xu hướng */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {thongKe && <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <BudgetSection
                 nganSachs={nganSachs}
                 thongKe={thongKe}
                 onQuickTransaction={taoGiaoDichNhanh}
+                onSaveBudget={luuNganSach}
               />
               <FinanceTrendChart xuHuong={xuHuong} />
-            </div>
+            </div>}
 
             {/* 3. Lịch sử giao dịch */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 overflow-hidden">
-              <TransactionForm
-                hienFormGD={hienFormGD}
-                loai={loai}
-                danhMuc={danhMuc}
-                soTien={soTien}
-                moTa={moTa}
-                ngayGiaoDich={ngayGiaoDich}
-                onLoaiChange={doiLoaiGiaoDich}
-                onDanhMucChange={setDanhMuc}
-                onSoTienChange={setSoTien}
-                onMoTaChange={setMoTa}
-                onNgayGiaoDichChange={setNgayGiaoDich}
-                onSubmit={xuLyThemGiaoDich}
-              />
-
               <TransactionTable
                 giaoDichs={giaoDichs}
                 dangTaiGD={dangTaiGD}
@@ -309,6 +338,8 @@ function TaiChinh() {
                 chiThangNay={chiThangNay}
                 trangHienTai={trangHienTai}
                 soTrang={soTrang}
+                error={loiGiaoDich}
+                onRetry={() => taiGiaoDich(trangHienTai)}
                 onTimKiemChange={setTimKiem}
                 onLocLoaiChange={setLocLoai}
                 onLocDanhMucChange={setLocDanhMuc}

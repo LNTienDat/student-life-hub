@@ -5,6 +5,8 @@ import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
 import Layout from './components/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
+import PwaStatus from './components/PwaStatus';
+import BackendStatus from './components/BackendStatus';
 
 // Code-splitting (Lazy loading) các trang để giảm dung lượng bundle ban đầu
 const Login = lazy(() => import('./pages/Login'));
@@ -17,6 +19,9 @@ const Deadline = lazy(() => import('./pages/Deadline'));
 const TaiChinh = lazy(() => import('./pages/TaiChinh'));
 const ThoiKhoaBieu = lazy(() => import('./pages/ThoiKhoaBieu'));
 const Profile = lazy(() => import('./pages/Profile'));
+const NhomHocTap = lazy(() => import('./pages/NhomHocTap'));
+const ChiTietNhom = lazy(() => import('./pages/ChiTietNhom'));
+const ChiaSeTKB = lazy(() => import('./pages/ChiaSeTKB'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 function PageLoader() {
@@ -32,7 +37,7 @@ function AuthenticatedLayout() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" />;
   return (
-    <Layout>
+    <Layout key={user.id}>
       <Outlet />
     </Layout>
   );
@@ -45,18 +50,26 @@ function App() {
         <AuthProvider>
           <ToastProvider>
             <BrowserRouter>
+              <PwaStatus />
+              <BackendStatus />
               <Suspense fallback={<PageLoader />}>
                 <Routes>
+                  {/* Public routes */}
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/quen-mat-khau" element={<QuenMatKhau />} />
                   <Route path="/dat-lai-mat-khau" element={<DatLaiMatKhau />} />
+                  <Route path="/chia-se-tkb/:token" element={<ChiaSeTKB />} />
+
+                  {/* Authenticated routes */}
                   <Route element={<AuthenticatedLayout />}>
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/mon-hoc" element={<MonHoc />} />
                     <Route path="/deadline" element={<Deadline />} />
                     <Route path="/tai-chinh" element={<TaiChinh />} />
                     <Route path="/thoi-khoa-bieu" element={<ThoiKhoaBieu />} />
+                    <Route path="/nhom" element={<NhomHocTap />} />
+                    <Route path="/nhom/:id" element={<ChiTietNhom />} />
                     <Route path="/ho-so" element={<Profile />} />
                   </Route>
                   <Route path="/" element={<Navigate to="/dashboard" />} />

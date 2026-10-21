@@ -1,7 +1,7 @@
 import api from './api';
 
 export const academicService = {
-  layDanhSachMonHoc: () => api.get('/academic/mon-hoc'),
+  layDanhSachMonHoc: (hocKy) => api.get('/academic/mon-hoc', { params: { hocKy } }),
   themMonHoc: (data) => api.post('/academic/mon-hoc', data),
   suaMonHoc: (id, data) => api.put(`/academic/mon-hoc/${id}`, data),
   xoaMonHoc: (id) => api.delete(`/academic/mon-hoc/${id}`),
@@ -10,11 +10,11 @@ export const academicService = {
   suaDiem: (id, data) => api.put(`/academic/diem/${id}`, data),
   xoaDiem: (id) => api.delete(`/academic/diem/${id}`),
 
-  tinhGPA: () => api.get('/academic/gpa'),
-  canhBaoMonNguyCo: (nguong = 5.0) => api.get(`/academic/canh-bao?nguong=${nguong}`),
+  tinhGPA: (hocKy) => api.get('/academic/gpa', { params: { hocKy } }),
+  canhBaoMonNguyCo: (nguong = 5.0, hocKy) => api.get('/academic/canh-bao', { params: { nguong, hocKy } }),
   gpaTheoKy: () => api.get('/academic/gpa-theo-ky'),
   duDoanDiem: (idMonHoc, data) => api.post(`/academic/mon-hoc/${idMonHoc}/du-doan`, data),
-  xuatBangDiemPDF: () => api.get('/academic/xuat-bang-diem', { responseType: 'blob' }),
+  xuatBangDiemPDF: (hocKy) => api.get('/academic/xuat-bang-diem', { responseType: 'blob', params: { hocKy }, timeout: 60000 }),
 };
 
 export default academicService;

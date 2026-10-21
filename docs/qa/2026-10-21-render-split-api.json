@@ -1,0 +1,733 @@
+{
+  "at": "2026-10-21T08:29:58.637Z",
+  "baseline": "working tree at audit time",
+  "environment": "isolated PostgreSQL 18 on loopback:55439",
+  "mail": "captured in-process; no mail sent",
+  "ai": "not configured; no external AI request",
+  "total": 119,
+  "passed": 119,
+  "failed": 0,
+  "loggedServerErrors": 3,
+  "results": [
+    {
+      "name": "Health and database",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Register Audit Owner",
+      "expected": 201,
+      "actual": 201,
+      "pass": true
+    },
+    {
+      "name": "Register Audit Other",
+      "expected": 201,
+      "actual": 201,
+      "pass": true
+    },
+    {
+      "name": "Login normalized email",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Login second user",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Login redacts password/reset secrets",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "Duplicate email",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Wrong password",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Missing authentication",
+      "expected": 401,
+      "actual": 401,
+      "pass": true
+    },
+    {
+      "name": "Expired JWT",
+      "expected": 403,
+      "actual": 403,
+      "pass": true
+    },
+    {
+      "name": "Read profile",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Update profile",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Reject null profile name",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Reject whitespace profile name",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Reject non-string login email",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Reject non-string registration password",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Authentication rate limit",
+      "expected": 429,
+      "actual": 429,
+      "pass": true
+    },
+    {
+      "name": "Create subject",
+      "expected": 201,
+      "actual": 201,
+      "pass": true
+    },
+    {
+      "name": "Read semester subjects",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Other user cannot read subjects",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Other user cannot put subject",
+      "expected": 404,
+      "actual": 404,
+      "pass": true
+    },
+    {
+      "name": "Other user cannot delete subject",
+      "expected": 404,
+      "actual": 404,
+      "pass": true
+    },
+    {
+      "name": "Update subject",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Reject fractional credits",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Reject blank subject title",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Add grade 8 at 40%",
+      "expected": 201,
+      "actual": 201,
+      "pass": true
+    },
+    {
+      "name": "Predict remaining 60% for target 7",
+      "expected": "6.33",
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Add grade 6 at 60%",
+      "expected": 201,
+      "actual": 201,
+      "pass": true
+    },
+    {
+      "name": "Weighted GPA equals 6.80",
+      "expected": "6.80",
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "GPA by semester",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Academic warnings",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Reject grade above 10",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Other user cannot update grade",
+      "expected": 404,
+      "actual": 404,
+      "pass": true
+    },
+    {
+      "name": "Reject total weights over 100%",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Reject malformed numeric subject ID",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Export PDF signature",
+      "expected": "%PDF",
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Create deadline with checklist",
+      "expected": 201,
+      "actual": 201,
+      "pass": true
+    },
+    {
+      "name": "List upcoming deadlines",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Semester deadline filter",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Other user cannot change deadline",
+      "expected": 404,
+      "actual": 404,
+      "pass": true
+    },
+    {
+      "name": "Update checklist",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Bell includes upcoming deadline",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Complete deadline",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Completed deadline removed from bell",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Reopen deadline",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Reject invalid deadline date",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Reject blank deadline title",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Reject empty deadline status",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Reject null updated deadline date",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Create class",
+      "expected": 201,
+      "actual": 201,
+      "pass": true
+    },
+    {
+      "name": "Read semester timetable",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Update class room",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Reject reversed class hours",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Reject invalid class time",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Other user cannot delete class",
+      "expected": 404,
+      "actual": 404,
+      "pass": true
+    },
+    {
+      "name": "Reject overlapping class",
+      "expected": 409,
+      "actual": 409,
+      "pass": true
+    },
+    {
+      "name": "Allow adjacent class",
+      "expected": 201,
+      "actual": 201,
+      "pass": true
+    },
+    {
+      "name": "Create income",
+      "expected": 201,
+      "actual": 201,
+      "pass": true
+    },
+    {
+      "name": "Create expense",
+      "expected": 201,
+      "actual": 201,
+      "pass": true
+    },
+    {
+      "name": "Finance totals match arithmetic",
+      "expected": 950000,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Edit expense amount",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Finance totals after edit",
+      "expected": 940000,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Other user cannot edit expense",
+      "expected": 404,
+      "actual": 404,
+      "pass": true
+    },
+    {
+      "name": "Other user cannot delete expense",
+      "expected": 404,
+      "actual": 404,
+      "pass": true
+    },
+    {
+      "name": "Other user cannot delete grade",
+      "expected": 404,
+      "actual": 404,
+      "pass": true
+    },
+    {
+      "name": "Other user cannot complete deadline",
+      "expected": 404,
+      "actual": 404,
+      "pass": true
+    },
+    {
+      "name": "Other user cannot delete deadline",
+      "expected": 404,
+      "actual": 404,
+      "pass": true
+    },
+    {
+      "name": "Other user cannot attach foreign subject",
+      "expected": 404,
+      "actual": 404,
+      "pass": true
+    },
+    {
+      "name": "Other user cannot see timetable",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Other user cannot see transactions",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Search and pagination",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Reject negative amount",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Reject amount with trailing letters",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Reject expense in income category",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Reject invalid finance month",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Reject malformed page",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Create budget",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Update same budget",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Budget unique and correctly overspent",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Other user cannot see budgets",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Finance trend",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Export Excel opens as workbook",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "Preview subjects CSV",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Commit subjects CSV",
+      "expected": 1,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Repeated subjects import skips duplicates",
+      "expected": 1,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Preview timetable CSV",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Commit timetable CSV",
+      "expected": 1,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Repeated timetable import skips duplicates",
+      "expected": 1,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Invalid import rejected without partial write",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Preview XLSX subject import",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Commit XLSX subject import",
+      "expected": 1,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Protected route families require login",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "Database outage keeps session distinguishable",
+      "expected": 503,
+      "actual": 503,
+      "pass": true
+    },
+    {
+      "name": "Vietnam month boundary under UTC server",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "Reject empty chatbot message",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Reject wrong chatbot message type",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Chatbot reports service unconfigured",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Deadline cron simulation scoped to caller",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "Budget cron simulation scoped to caller",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "Cron reports simulated mail delivery failure",
+      "expected": "non-2xx",
+      "actual": 500,
+      "pass": true
+    },
+    {
+      "name": "Forgot password generic unknown user",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Forgot password with captured mail",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Change password issues replacement JWT",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Old JWT invalid after password change",
+      "expected": 403,
+      "actual": 403,
+      "pass": true
+    },
+    {
+      "name": "Old reset link invalid after password change",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Change email with password",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Request reset after email change",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Reset link handles normalized email",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Reset password with original email casing",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Reset link cannot be reused",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "New password can login",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Expired reset link rejected",
+      "expected": 400,
+      "actual": 400,
+      "pass": true
+    },
+    {
+      "name": "Concurrent reset consumes link once",
+      "expected": "one success",
+      "actual": {
+        "successes": 1,
+        "statuses": [
+          200,
+          400
+        ]
+      },
+      "pass": true
+    },
+    {
+      "name": "Delete grade",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Delete deadline",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Delete timetable class",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Delete expense",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Delete subject",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "name": "Deleted subject stays absent",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    }
+  ]
+}

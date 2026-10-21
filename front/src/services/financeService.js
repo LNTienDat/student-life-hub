@@ -20,7 +20,7 @@ export const financeService = {
   layXuHuong: (soThang = 6) => api.get(`/finance/xu-huong?soThang=${soThang}`),
   xuatBaoCaoExcel: (thang, nam) => {
     const q = thang && nam ? `?thang=${thang}&nam=${nam}` : '';
-    return api.get(`/finance/xuat-bao-cao${q}`, { responseType: 'blob' });
+    return api.get(`/finance/xuat-bao-cao${q}`, { responseType: 'blob', timeout: 60000 });
   },
 };
 

@@ -1,0 +1,24 @@
+{
+  "at": "2026-10-21T15:33:52.786083+07:00",
+  "backendTestsPassed": 102,
+  "backendTestsFailed": 0,
+  "frontendLogicTestsPassed": 24,
+  "pwaTestsPassed": 7,
+  "formalTestsPassed": 133,
+  "extendedScenariosPassed": 119,
+  "extendedScenariosFailed": 0,
+  "lint": "passed",
+  "productionBuild": "passed",
+  "blueprintSchema": "passed for render.yaml and render-static.yaml",
+  "browserVerification": "passed on a 390x844 production build with separate local servers and simulated cold start/lost response",
+  "renderConnection": "not confirmed",
+  "staticSiteCreated": false,
+  "deployed": false,
+  "dataSafety": "Only disposable local accounts; no production database modified",
+  "limitations": [
+    "Free API still sleeps; the CDN frontend reduces startup-page impact only after activation",
+    "Existing PWA remains on its old origin until reinstalled from new URL",
+    "Actual assigned static URL must be configured in API allowed origins",
+    "No live cold-start or static-site smoke check until Render connection and activation"
+  ]
+}

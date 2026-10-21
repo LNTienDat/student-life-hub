@@ -1,4 +1,7 @@
-import { useState, useEffect } from 'react';
+import DataLoadError from '../components/DataLoadError';
+import ImportPanel from '../components/ImportPanel';
+import { useSemester } from '../hooks/useSemester';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import academicService from '../services/academicService';
 import { clearCache } from '../services/apiCache';
 import ConfirmModal from '../components/ConfirmModal';
@@ -11,10 +14,14 @@ import SubjectCard from './monhoc/SubjectCard';
 import { PageSkeleton } from '../components/Skeleton';
 
 function MonHoc() {
+  const [semester] = useSemester();
   const [danhSach, setDanhSach] = useState([]);
   const [gpa, setGpa] = useState(null);
   const [gpaTheoKy, setGpaTheoKy] = useState([]);
   const [dangTai, setDangTai] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const saveLock = useRef(false);
   const [hienFormThem, setHienFormThem] = useState(false);
   const [dangSuaId, setDangSuaId] = useState(null);
 
@@ -45,27 +52,31 @@ function MonHoc() {
   const { hienToast } = useToast();
   const [dangXuatPDF, setDangXuatPDF] = useState(false);
 
-  async function taiDuLieu() {
-    setDangTai(true);
-    try {
-      const [resMonHoc, resGpa, resGpaKy] = await Promise.all([
-        academicService.layDanhSachMonHoc(),
-        academicService.tinhGPA(),
+  const loadVersion = useRef(0);
+  const taiDuLieu = useCallback(() => {
+    const version = ++loadVersion.current;
+    return Promise.all([
+        academicService.layDanhSachMonHoc(semester),
+        academicService.tinhGPA(semester),
         academicService.gpaTheoKy(),
-      ]);
+    ]).then(([resMonHoc, resGpa, resGpaKy]) => {
+      if (version !== loadVersion.current) return;
+      setLoadError('');
       setDanhSach(resMonHoc.data.monHocs || []);
-      setGpa(resGpa.data.gpa);
+      setGpa(resGpa.data.hasGrades === false ? null : resGpa.data.gpa);
       setGpaTheoKy(resGpaKy.data.theoKy || []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setDangTai(false);
-    }
-  }
+    }).catch((error) => {
+      if (version === loadVersion.current) setLoadError(error.response?.data?.message || 'Chưa tải được dữ liệu. Kiểm tra kết nối và thử lại.');
+    }).finally(() => {
+      if (version === loadVersion.current) setDangTai(false);
+    });
+  }, [semester]);
 
   useEffect(() => {
+    const counter = loadVersion;
     taiDuLieu();
-  }, []);
+    return () => { counter.current++; };
+  }, [taiDuLieu]);
 
   function moFormSua(mon) {
     setTenMon(mon.ten);
@@ -79,13 +90,16 @@ function MonHoc() {
   function moFormThem() {
     setTenMon('');
     setTinChi('');
-    setHocKy('');
+    setHocKy(semester);
     setDangSuaId(null);
     setHienFormThem(!hienFormThem);
   }
 
   async function xuLySubmit(e) {
     e.preventDefault();
+    if (saveLock.current) return;
+    saveLock.current = true;
+    setSaving(true);
     try {
       if (dangSuaId) {
         await academicService.suaMonHoc(dangSuaId, { ten: tenMon, tinChi: Number(tinChi), hocKy });
@@ -99,7 +113,10 @@ function MonHoc() {
       taiDuLieu();
     } catch (error) {
       console.error(error);
-      hienToast('error', error.response?.data?.message || 'Có lỗi xảy ra! Hãy kiểm tra kết nối Backend.');
+      hienToast('error', error.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại sau.');
+    } finally {
+      saveLock.current = false;
+      setSaving(false);
     }
   }
 
@@ -158,6 +175,9 @@ function MonHoc() {
 
   async function xuLyLuuDiem(e, monId) {
     e.preventDefault();
+    if (saveLock.current) return;
+    saveLock.current = true;
+    setSaving(true);
     try {
       if (dangSuaDiemId) {
         await academicService.suaDiem(dangSuaDiemId, {
@@ -181,6 +201,9 @@ function MonHoc() {
     } catch (error) {
       console.error(error);
       hienToast('error', error.response?.data?.message || 'Không thể lưu điểm! Hãy kiểm tra lại dữ liệu.');
+    } finally {
+      saveLock.current = false;
+      setSaving(false);
     }
   }
 
@@ -221,7 +244,7 @@ function MonHoc() {
   async function xuLyXuatBangDiem() {
     try {
       setDangXuatPDF(true);
-      const res = await academicService.xuatBangDiemPDF();
+      const res = await academicService.xuatBangDiemPDF(semester);
       const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = url;
@@ -253,13 +276,13 @@ function MonHoc() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700/60 flex items-center gap-2">
               <Target className="w-5 h-5 text-emerald-500" />
               <div className="flex flex-col">
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">GPA hiện tại</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">GPA {semester ? 'học kỳ' : 'tích lũy'}</span>
                 <span className="font-display font-bold text-slate-900 dark:text-white leading-none">
-                  {gpa ? Number(gpa).toFixed(2) : '--'}
+                  {gpa !== null ? Number(gpa).toFixed(2) : '--'} / 10
                 </span>
               </div>
             </div>
@@ -287,6 +310,7 @@ function MonHoc() {
           </div>
         </div>
 
+        <ImportPanel kind="subjects" onImported={taiDuLieu} />
         {/* 1. Biểu đồ GPA theo kỳ */}
         <SubjectGpaChart gpaTheoKy={gpaTheoKy} />
 
@@ -301,10 +325,11 @@ function MonHoc() {
           onTinChiChange={setTinChi}
           onHocKyChange={setHocKy}
           onSubmit={xuLySubmit}
+          saving={saving}
         />
 
         {/* 3. Danh sách môn học */}
-        {dangTai ? (
+        {loadError ? <DataLoadError message={loadError} onRetry={taiDuLieu} /> : dangTai ? (
           <PageSkeleton />
         ) : danhSach.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-16 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60 text-center">
@@ -345,6 +370,7 @@ function MonHoc() {
                 onDiemSoChange={setDiemSo}
                 onTrongSoChange={setTrongSo}
                 onSubmitGrade={xuLyLuuDiem}
+                saving={saving}
                 onDeleteGrade={yeuCauXoaDiem}
                 onEditSubject={moFormSua}
                 onDeleteSubject={yeuCauXoaMon}

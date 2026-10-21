@@ -8,6 +8,7 @@ function SubjectForm({
   onTinChiChange,
   onHocKyChange,
   onSubmit,
+  saving = false,
 }) {
   if (!hienFormThem) return null;
 
@@ -62,6 +63,8 @@ function SubjectForm({
       </div>
       <button
         type="submit"
+          disabled={saving}
+          aria-busy={saving}
         className="w-full md:w-auto bg-emerald-600 text-white font-medium px-6 py-2.5 rounded-xl hover:bg-emerald-700 transition-colors"
       >
         {dangSuaId ? 'Cập nhật' : 'Lưu môn học'}

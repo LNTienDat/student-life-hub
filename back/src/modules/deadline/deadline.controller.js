@@ -1,20 +1,25 @@
+const { validText, positiveId } = require('../../utils/validation.util');
+const { parseVietnamDate } = require('../../utils/date.util');
+const { validateChecklist } = require('./checklist');
 const prisma = require('../../prismaClient');
 const { DEADLINE } = require('../../constants');
 
 // Thêm deadline mới
 async function themDeadline(req, res) {
   try {
-    const { tieuDe, moTa, hanChot, idMonHoc, doUuTien } = req.body;
+    const { tieuDe, moTa, hanChot, idMonHoc, doUuTien, checklist } = req.body;
+    if ((tieuDe !== undefined && !validText(tieuDe, 200)) || (moTa != null && !validText(moTa, 5000, false)) || (idMonHoc !== undefined && idMonHoc !== null && !positiveId(idMonHoc))) return res.status(400).json({ message: 'Thông tin deadline không hợp lệ' });
     const idNguoiDung = req.user.id;
+    if (checklist !== undefined && validateChecklist(checklist)) return res.status(400).json({ message: validateChecklist(checklist) });
 
-    if (!tieuDe || !hanChot) {
+    if (!validText(tieuDe, 200) || !hanChot) {
       return res.status(400).json({ message: 'Vui lòng nhập tiêu đề và hạn chót' });
     }
-    const hanChotDate = new Date(hanChot);
+    const hanChotDate = parseVietnamDate(hanChot);
     if (isNaN(hanChotDate.getTime())) {
       return res.status(400).json({ message: 'Hạn chót không hợp lệ' });
     }
-    if (doUuTien && !DEADLINE.DO_UU_TIEN.includes(doUuTien)) {
+    if (doUuTien !== undefined && !DEADLINE.DO_UU_TIEN.includes(doUuTien)) {
       return res.status(400).json({ message: 'Độ ưu tiên không hợp lệ' });
     }
 
@@ -31,11 +36,12 @@ async function themDeadline(req, res) {
 
     const deadline = await prisma.deadline.create({
       data: {
-        tieuDe,
+        tieuDe: tieuDe?.trim(),
+        checklist,
         moTa,
         hanChot: hanChotDate,
         idMonHoc: idMonHoc ? parseInt(idMonHoc) : null,
-        doUuTien: doUuTien || 'binh_thuong',
+        doUuTien: doUuTien || DEADLINE.MAC_DINH_DO_UU_TIEN,
         idNguoiDung,
       },
     });
@@ -55,6 +61,7 @@ async function layDanhSachDeadline(req, res) {
 
     const where = { idNguoiDung };
     if (trangThai) where.trangThai = trangThai;
+    if (req.query.hocKy) where.OR = [{ monHoc: { hocKy: String(req.query.hocKy) } }, { idMonHoc: null }];
 
     const danhSach = await prisma.deadline.findMany({
       where,
@@ -74,15 +81,17 @@ async function suaDeadline(req, res) {
   try {
     const { id } = req.params;
     const idNguoiDung = req.user.id;
-    const { tieuDe, moTa, hanChot, doUuTien, trangThai, idMonHoc } = req.body;
+    const { tieuDe, moTa, hanChot, doUuTien, trangThai, idMonHoc, checklist } = req.body;
+    if ((tieuDe !== undefined && !validText(tieuDe, 200)) || (moTa != null && !validText(moTa, 5000, false)) || (idMonHoc !== undefined && idMonHoc !== null && !positiveId(idMonHoc))) return res.status(400).json({ message: 'Thông tin deadline không hợp lệ' });
 
-    if (hanChot && isNaN(new Date(hanChot).getTime())) {
+    if (checklist !== undefined && validateChecklist(checklist)) return res.status(400).json({ message: validateChecklist(checklist) });
+    if (hanChot !== undefined && isNaN(parseVietnamDate(hanChot).getTime())) {
       return res.status(400).json({ message: 'Hạn chót không hợp lệ' });
     }
-    if (doUuTien && !DEADLINE.DO_UU_TIEN.includes(doUuTien)) {
+    if (doUuTien !== undefined && !DEADLINE.DO_UU_TIEN.includes(doUuTien)) {
       return res.status(400).json({ message: 'Độ ưu tiên không hợp lệ' });
     }
-    if (trangThai && !DEADLINE.TRANG_THAI.includes(trangThai)) {
+    if (trangThai !== undefined && !DEADLINE.TRANG_THAI.includes(trangThai)) {
       return res.status(400).json({ message: 'Trạng thái deadline không hợp lệ' });
     }
 
@@ -99,9 +108,10 @@ async function suaDeadline(req, res) {
     const ketQua = await prisma.deadline.updateMany({
       where: { id: parseInt(id), idNguoiDung },
       data: {
-        tieuDe,
+        tieuDe: tieuDe?.trim(),
+        checklist,
         moTa,
-        hanChot: hanChot ? new Date(hanChot) : undefined,
+        hanChot: hanChot ? parseVietnamDate(hanChot) : undefined,
         doUuTien,
         trangThai,
         idMonHoc: idMonHoc !== undefined ? (idMonHoc ? parseInt(idMonHoc) : null) : undefined,
@@ -131,7 +141,7 @@ async function hoanThanhDeadline(req, res) {
 
     const ketQua = await prisma.deadline.updateMany({
       where: { id: parseInt(id), idNguoiDung },
-      data: { trangThai: 'hoan_thanh' },
+      data: { trangThai: DEADLINE.TRANG_THAI_HOAN_THANH },
     });
 
     if (ketQua.count === 0) {
@@ -168,7 +178,7 @@ async function xoaDeadline(req, res) {
 async function deadlineSapToi(req, res) {
   try {
     const idNguoiDung = req.user.id;
-    const soNgay = req.query.soNgay ? parseInt(req.query.soNgay) : 7;
+    const soNgay = Math.max(parseInt(req.query.soNgay) || 7, 1);
 
     const now = new Date();
     const gioiHan = new Date();
@@ -177,7 +187,8 @@ async function deadlineSapToi(req, res) {
     const danhSach = await prisma.deadline.findMany({
       where: {
         idNguoiDung,
-        trangThai: 'dang_dien_hanh',
+        trangThai: { not: DEADLINE.TRANG_THAI_HOAN_THANH },
+        ...(req.query.hocKy ? { OR: [{ monHoc: { hocKy: String(req.query.hocKy) } }, { idMonHoc: null }] } : {}),
         hanChot: { gte: now, lte: gioiHan },
       },
       include: { monHoc: true },

@@ -10,15 +10,15 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { MAU_DANH_MUC } from '../../constants';
+import { MAU_DANH_MUC, TEN_DANH_MUC } from '../../constants';
 import { dinhDangTien } from '../../utils/formatters';
 
-export default function DashboardCharts({ thongKeTaiChinh, gpaTheoKy, itemVariants }) {
+export default function DashboardCharts({ thongKeTaiChinh, gpaTheoKy = [], itemVariants }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Biểu đồ tròn chi tiêu */}
       <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <h2 className="font-semibold text-slate-800 text-base">Cơ cấu chi tiêu</h2>
           <span className="text-xs text-slate-400 font-medium">Theo danh mục</span>
         </div>
@@ -32,7 +32,7 @@ export default function DashboardCharts({ thongKeTaiChinh, gpaTheoKy, itemVarian
               <PieChart>
                 <Pie
                   data={Object.entries(thongKeTaiChinh?.theoDanhMuc || {}).map(([name, value]) => ({
-                    name: name.replace('_', ' '),
+                    name: TEN_DANH_MUC[name] || name,
                     value,
                   }))}
                   dataKey="value"
@@ -44,8 +44,8 @@ export default function DashboardCharts({ thongKeTaiChinh, gpaTheoKy, itemVarian
                   stroke="none"
                   paddingAngle={3}
                 >
-                  {Object.keys(thongKeTaiChinh.theoDanhMuc).map((_, index) => (
-                    <Cell key={index} fill={MAU_DANH_MUC[index % MAU_DANH_MUC.length]} />
+                  {Object.keys(thongKeTaiChinh.theoDanhMuc).map((danhMuc, index) => (
+                    <Cell key={danhMuc} fill={MAU_DANH_MUC[index % MAU_DANH_MUC.length]} />
                   ))}
                 </Pie>
                 <Tooltip
@@ -65,9 +65,9 @@ export default function DashboardCharts({ thongKeTaiChinh, gpaTheoKy, itemVarian
 
       {/* Biểu đồ cột GPA theo kỳ */}
       <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <h2 className="font-semibold text-slate-800 text-base">Xu hướng GPA theo kỳ</h2>
-          <span className="text-xs text-slate-400 font-medium">Thang điểm 4</span>
+          <span className="text-xs text-slate-400 font-medium">Thang điểm 10</span>
         </div>
         {gpaTheoKy.length === 0 ? (
           <div className="h-48 flex items-center justify-center text-slate-400 text-sm">
@@ -84,12 +84,14 @@ export default function DashboardCharts({ thongKeTaiChinh, gpaTheoKy, itemVarian
                   tickLine={false}
                 />
                 <YAxis
-                  domain={[0, 4]}
+                  domain={[0, 10]}
+                  ticks={[0, 2, 4, 6, 8, 10]}
                   tick={{ fontSize: 12, fill: '#94A3B8' }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip
+                  formatter={(value) => [`${Number(value).toFixed(2)} / 10`, 'GPA tạm tính']}
                   cursor={{ fill: 'rgba(241, 245, 249, 0.7)' }}
                   contentStyle={{
                     borderRadius: '12px',
@@ -103,6 +105,7 @@ export default function DashboardCharts({ thongKeTaiChinh, gpaTheoKy, itemVarian
             </ResponsiveContainer>
           </div>
         )}
+        <p className="mt-3 text-xs leading-relaxed text-slate-400">Điểm tạm tính từ các điểm đã nhập trong từng học kỳ.</p>
       </motion.div>
     </div>
   );
