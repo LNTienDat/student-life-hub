@@ -1,13 +1,10 @@
-import ChecklistEditor from '../../components/ChecklistEditor';
 import { AlertTriangle, CheckCircle2, Circle, Clock, Edit2, Trash2 } from 'lucide-react';
 import { badgeUuTien, textUuTien } from './deadlineUtils';
-import { dinhDangNgay } from '../../utils/formatters';
+import { formatDeadlineDate } from './deadlineDate';
 
 function DeadlineListView({
   dangDienHanh = [],
   daHoanThanh = [],
-  savingChecklist,
-  onChecklistChange,
   onHoanThanh,
   onSua,
   onXoa,
@@ -44,31 +41,23 @@ function DeadlineListView({
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-2">
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-slate-900 dark:text-white text-base">{d.tieuDe}</h3>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="break-words font-semibold text-slate-900 dark:text-white text-base">{d.tieuDe}</h3>
                         <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${badgeUuTien(d.doUuTien)}`}>
                           {textUuTien(d.doUuTien)}
                         </span>
                       </div>
-                      {d.moTa && <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{d.moTa}</p>}
                     </div>
 
                     <div className="flex items-center gap-3 md:flex-col md:items-end">
                       <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
                         <Clock className="w-4 h-4 text-ink-500" />
-                        {dinhDangNgay(d.hanChot)}
+                        {formatDeadlineDate(d.hanChot)}
                       </div>
                     </div>
                   </div>
 
-                  {d.monHoc && (
-                    <div className="mt-3 inline-block">
-                      <span className="text-xs bg-ink-50 text-ink-700 dark:bg-ink-900/40 dark:text-ink-200 px-2 py-1 rounded-md font-medium border border-ink-100 dark:border-ink-700/60">
-                        Môn: {d.monHoc.ten}
-                      </span>
-                    </div>
-                  )}
-                  <details className="mt-3"><summary className="cursor-pointer text-xs text-ink-600">Checklist · {(d.checklist || []).filter((item) => item.done).length}/{(d.checklist || []).length} đã xong</summary><div className="mt-3"><ChecklistEditor disabled={savingChecklist} items={d.checklist || []} onChange={(items) => onChecklistChange(d, items)}/></div></details>
+
                 </div>
 
                 <div className="flex flex-col gap-2 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex-shrink-0 ml-2">
@@ -118,9 +107,8 @@ function DeadlineListView({
                 </button>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium text-slate-500 dark:text-slate-400 line-through truncate">{d.tieuDe}</h3>
-                  {d.checklist?.length > 0 && <p className="mt-1 text-xs text-slate-500">Checklist: {d.checklist.filter((step) => step.done).length}/{d.checklist.length} bước đã xong</p>}
                 </div>
-                <div className="text-xs text-slate-400 flex-shrink-0 mr-4">{dinhDangNgay(d.hanChot)}</div>
+                <div className="text-xs text-slate-400 flex-shrink-0 mr-4">{formatDeadlineDate(d.hanChot)}</div>
                 <button
                   onClick={() => onXoa(d)}
                   className="p-1.5 text-slate-400 hover:text-rose-500 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 transition-opacity flex-shrink-0"

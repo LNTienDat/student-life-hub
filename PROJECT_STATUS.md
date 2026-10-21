@@ -1,5 +1,7 @@
 # 📌 STUDENT LIFE HUB - TRẠNG THÁI DỰ ÁN
 
+> **Deadline rút gọn 21/10:** bỏ checklist, ghi chú và môn học khỏi giao diện; ba mức Thấp/Bình thường/Khẩn cấp; mặc định chọn ngày, bật Thêm giờ khi cần. Ngày không giờ hết hạn cuối ngày địa phương; sửa deadline cũ giữ giờ và không ghi đè các trường đã ẩn. Cả danh sách, lịch và thêm nhanh đã đồng bộ. Lint/build, 29 bài logic và 7 PWA đạt; [kiểm tra trình duyệt local](docs/qa/2026-10-21-simple-deadline.json). Bản này chưa triển khai online.
+
 > **Giao diện gọn và nhập tiền 21/10:** trang Hôm nay đưa GPA/deadline/số dư lên đầu, hai khối lịch và công việc, mỗi thao tác nhanh xuất hiện một lần; bộ lọc học kỳ chỉ ở trang chi tiết. Ẩn Nhóm học khỏi menu (giữ mã và dữ liệu). Ô tiền thu/chi, ngân sách và ghi chi nhanh hiển thị `100 000` nhưng gửi số `100000`. Lint/build, 27 kiểm thử logic, 7 kiểm thử PWA và Chrome local với API giả đạt. [Minh chứng giao diện và payload](docs/qa/2026-10-21-compact-dashboard-money.json). Bản giao diện này chưa triển khai Render; người dùng đã xác nhận T3/T5 đạt ở bản trước `020306b`.
 
 > **Chuẩn bị tách giao diện 21/10:** [Static Site và chờ máy chủ](docs/guides/STATIC_FRONTEND_SETUP.md) — đã bổ sung xử lý khởi động chậm, thử lại GET và origin cho frontend riêng; chưa kích hoạt dịch vụ Static Site trên Render.

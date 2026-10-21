@@ -54,3 +54,29 @@ test('an overspent category stays explicit and does not borrow from another budg
   assert.equal(result.exceeded, 1);
   assert.equal(getDailyBudget([], new Date()), null);
 });
+
+
+test('date-only deadlines expire at the end of the local day and round-trip without enabling time', async () => {
+  const { deadlineToISO, deadlineInputValue, deadlineHasTime } = await import('../src/pages/deadline/deadlineDate.js');
+  const iso = deadlineToISO('2028-02-29');
+  const date = new Date(iso);
+  assert.equal(date.getHours(), 23);
+  assert.equal(date.getMinutes(), 59);
+  assert.equal(date.getSeconds(), 59);
+  assert.equal(date.getMilliseconds(), 999);
+  assert.equal(deadlineInputValue(iso), '2028-02-29');
+  assert.equal(deadlineHasTime(iso), false);
+  const noon = new Date(2028, 1, 29, 12);
+  assert.equal(getUrgentDeadlines([{ hanChot: iso, trangThai: 'cho_xu_ly' }], noon).overdue.length, 0);
+});
+
+test('timed deadlines including midnight and 23:59 retain their time on edit', async () => {
+  const { deadlineToISO, deadlineInputValue, deadlineHasTime } = await import('../src/pages/deadline/deadlineDate.js');
+  for (const time of ['00:00', '14:30', '23:59']) {
+    const input = `2026-10-25T${time}`;
+    const iso = deadlineToISO(input);
+    assert.equal(deadlineHasTime(iso), true);
+    assert.equal(deadlineInputValue(iso), input);
+  }
+  for (const bad of ['', '2026-02-30', '2026-10-25T24:00', '2026-10-25T', 'tomorrow']) assert.throws(() => deadlineToISO(bad));
+});

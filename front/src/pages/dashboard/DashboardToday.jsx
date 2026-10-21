@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { CalendarDays, CheckCircle2, Clock, RefreshCw, ArrowUpRight } from 'lucide-react';
 import { timetableService } from '../../services/timetableService';
 import { deadlineService } from '../../services/deadlineService';
-import { dinhDangNgay } from '../../utils/formatters';
+import { formatDeadlineDate } from '../deadline/deadlineDate';
 import { getTodayClasses, getUrgentDeadlines, localDayKey } from './todayUtils';
 
 const cardStyle = 'flex min-w-0 flex-col rounded-2xl border border-slate-200 bg-white p-4 sm:p-5';
@@ -87,9 +87,7 @@ export default function DashboardToday({ userId, semester }) {
                 const today = localDayKey(new Date(item.hanChot)) === dayKey;
                 return <li key={item.id} className="rounded-xl bg-slate-50 p-3">
                   <Link to="/deadline" className="block break-words text-sm font-semibold text-slate-800 hover:text-ink-600">{item.tieuDe}</Link>
-                  <p className={`mt-1 text-xs ${late ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500'}`}>{late ? 'Quá hạn · ' : today ? 'Hôm nay · ' : ''}{dinhDangNgay(item.hanChot, true)}</p>
-                  {item.checklist?.length > 0 && <p className="mt-1 text-xs text-slate-500">{item.checklist.filter((step) => step.done).length}/{item.checklist.length} bước đã xong</p>}
-                  {item.monHoc?.ten && <p className="mt-1 break-words text-xs text-slate-500">{item.monHoc.ten}</p>}
+                  <p className={`mt-1 text-xs ${late ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500'}`}>{late ? 'Quá hạn · ' : today ? 'Hôm nay · ' : ''}{formatDeadlineDate(item.hanChot)}</p>
                   <button type="button" onClick={() => complete(item.id)} disabled={busyId !== null} aria-label={`Hoàn thành: ${item.tieuDe}`} className="mt-3 inline-flex min-h-11 items-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-emerald-700 disabled:opacity-50">{busyId === item.id ? 'Đang lưu…' : '✓ Hoàn thành'}</button>
                 </li>;
               })}</ul>

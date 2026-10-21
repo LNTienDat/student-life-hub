@@ -1,12 +1,10 @@
 import DataLoadError from '../components/DataLoadError';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useSemester } from '../hooks/useSemester';
 import deadlineService from '../services/deadlineService';
-import academicService from '../services/academicService';
 import { clearCache } from '../services/apiCache';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
-import { dinhDangNgay } from '../utils/formatters';
+import { formatDeadlineDate, deadlineToISO, deadlineInputValue } from './deadline/deadlineDate';
 import { Calendar as CalendarIcon, List, Plus, X, Clock } from 'lucide-react';
 
 import DeadlineForm from './deadline/DeadlineForm';
@@ -16,12 +14,7 @@ import triggerConfetti from '../utils/confetti';
 import { PageSkeleton } from '../components/Skeleton';
 
 function Deadline() {
-  const [semester] = useSemester();
-  const [checklist, setChecklist] = useState([]);
-  const checklistLock = useRef(false);
-  const [savingChecklist, setSavingChecklist] = useState(false);
   const [danhSach, setDanhSach] = useState([]);
-  const [danhSachMonHoc, setDanhSachMonHoc] = useState([]);
   const [dangTai, setDangTai] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -39,10 +32,8 @@ function Deadline() {
 
   // Form state
   const [tieuDe, setTieuDe] = useState('');
-  const [moTa, setMoTa] = useState('');
   const [hanChot, setHanChot] = useState('');
   const [doUuTien, setDoUuTien] = useState('binh_thuong');
-  const [idMonHoc, setIdMonHoc] = useState('');
 
   // State modal xác nhận
   const [modalXacNhan, setModalXacNhan] = useState({
@@ -63,20 +54,16 @@ function Deadline() {
   const loadVersion = useRef(0);
   const taiDuLieu = useCallback(() => {
     const version = ++loadVersion.current;
-    return Promise.all([
-        deadlineService.layDanhSachDeadline(semester),
-        academicService.layDanhSachMonHoc(),
-    ]).then(([resDeadline, resMon]) => {
+    return deadlineService.layDanhSachDeadline().then((resDeadline) => {
       if (version !== loadVersion.current) return;
       setLoadError('');
-      setDanhSachMonHoc(resMon.data.monHocs || []);
       setDanhSach(resDeadline.data.deadlines || []);
     }).catch((error) => {
       if (version === loadVersion.current) setLoadError(error.response?.data?.message || 'Chưa tải được dữ liệu. Kiểm tra kết nối và thử lại.');
     }).finally(() => {
       if (version === loadVersion.current) setDangTai(false);
     });
-  }, [semester]);
+  }, []);
 
   useEffect(() => {
     const counter = loadVersion;
@@ -85,24 +72,17 @@ function Deadline() {
   }, [taiDuLieu]);
 
   function moFormThem() {
-    setChecklist([]);
     setTieuDe('');
-    setMoTa('');
     setHanChot('');
     setDoUuTien('binh_thuong');
-    setIdMonHoc('');
     setDangSuaId(null);
     setHienFormThem(!hienFormThem);
   }
 
   function moFormSua(d) {
-    setChecklist(d.checklist || []);
     setTieuDe(d.tieuDe);
-    setMoTa(d.moTa || '');
-    const dObj = new Date(d.hanChot);
-    setHanChot(new Date(dObj.getTime() - dObj.getTimezoneOffset() * 60000).toISOString().slice(0, 16));
+    setHanChot(deadlineInputValue(d.hanChot));
     setDoUuTien(d.doUuTien);
-    setIdMonHoc(d.idMonHoc ? String(d.idMonHoc) : '');
     setDangSuaId(d.id);
     setHienFormThem(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -116,11 +96,8 @@ function Deadline() {
     try {
       const data = {
         tieuDe,
-        checklist,
-        moTa,
-        hanChot: new Date(hanChot).toISOString(),
+        hanChot: deadlineToISO(hanChot),
         doUuTien,
-        idMonHoc: idMonHoc ? parseInt(idMonHoc) : null,
       };
       if (dangSuaId) {
         await deadlineService.suaDeadline(dangSuaId, data);
@@ -145,11 +122,11 @@ function Deadline() {
     setModalXacNhan({
       isOpen: true,
       title: 'Xác nhận xóa deadline',
-      subTitle: d.monHoc?.ten ? `Môn: ${d.monHoc.ten}` : '',
+      subTitle: '',
       itemInfo: {
         label: d.tieuDe,
-        value: dinhDangNgay(d.hanChot),
-        extra: d.doUuTien === 'cao' ? 'Ưu tiên cao' : d.doUuTien === 'thap' ? 'Ưu tiên thấp' : 'Bình thường',
+        value: formatDeadlineDate(d.hanChot),
+        extra: d.doUuTien === 'cao' ? 'Khẩn cấp' : d.doUuTien === 'thap' ? 'Ưu tiên thấp' : 'Bình thường',
       },
       message: 'Bạn có chắc chắn muốn xóa deadline này không? Thao tác này không thể hoàn tác.',
       confirmText: 'Xác nhận xóa',
@@ -190,16 +167,6 @@ function Deadline() {
       console.error(error);
       hienToast('error', 'Không thể cập nhật trạng thái deadline');
     }
-  }
-
-  async function updateChecklist(deadline, items) {
-    if (checklistLock.current) return;
-    checklistLock.current = true; setSavingChecklist(true);
-    try {
-      const response = await deadlineService.suaDeadline(deadline.id, { checklist: items });
-      setDanhSach((previous) => previous.map((item) => item.id === deadline.id ? response.data.deadline : item));
-    } catch (error) { hienToast('error', error.response?.data?.message || 'Chưa lưu được checklist.'); }
-    finally { checklistLock.current = false; setSavingChecklist(false); }
   }
 
   function doiThang(denta) {
@@ -271,22 +238,15 @@ function Deadline() {
         </div>
 
         {/* Form thêm mới */}
-        <DeadlineForm
+        <DeadlineForm key={`${dangSuaId ?? "new"}:${hienFormThem}`}
           hienFormThem={hienFormThem}
           dangSuaId={dangSuaId}
           tieuDe={tieuDe}
-          moTa={moTa}
           hanChot={hanChot}
           doUuTien={doUuTien}
-          idMonHoc={idMonHoc}
-          danhSachMonHoc={danhSachMonHoc}
-          checklist={checklist}
-          onChecklistChange={setChecklist}
           onTieuDeChange={setTieuDe}
-          onMoTaChange={setMoTa}
           onHanChotChange={setHanChot}
           onDoUuTienChange={setDoUuTien}
-          onIdMonHocChange={setIdMonHoc}
           onSubmit={xuLySubmit}
           saving={saving}
           onCancel={moFormThem}
@@ -309,8 +269,6 @@ function Deadline() {
           <DeadlineListView
             dangDienHanh={dangDienHanh}
             daHoanThanh={daHoanThanh}
-            savingChecklist={savingChecklist}
-            onChecklistChange={updateChecklist}
             onHoanThanh={xuLyHoanThanh}
             onSua={moFormSua}
             onXoa={yeuCauXoa}

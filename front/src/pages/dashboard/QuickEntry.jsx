@@ -1,3 +1,5 @@
+import DeadlineDueInput from '../../components/DeadlineDueInput';
+import { deadlineToISO } from '../deadline/deadlineDate';
 import MoneyInput from '../../components/MoneyInput';
 import { useState, useEffect, useRef } from 'react';
 import { deadlineService } from '../../services/deadlineService';
@@ -12,6 +14,7 @@ export default function QuickEntry({ kind, onClose }) {
   const formRef = useRef(null);
   const saveLock = useRef(false);
   const [busy, setBusy] = useState(false);
+  const [due, setDue] = useState('');
   useEffect(() => {
     formRef.current?.scrollIntoView({ block: 'nearest' });
     formRef.current?.querySelector('input')?.focus({ preventScroll: true });
@@ -26,7 +29,7 @@ export default function QuickEntry({ kind, onClose }) {
     const form = Object.fromEntries(new FormData(event.currentTarget));
     setBusy(true); setError('');
     try {
-      if (kind === 'deadline') await deadlineService.themDeadline({ tieuDe: form.title, hanChot: new Date(form.due).toISOString() });
+      if (kind === 'deadline') await deadlineService.themDeadline({ tieuDe: form.title, hanChot: deadlineToISO(form.due) });
       if (kind === 'class') {
         if (form.end <= form.start) throw new Error('Giờ kết thúc phải sau giờ bắt đầu.');
         await timetableService.themBuoiHoc({ tenMon: form.title, thu: Number(form.day), gioBatDau: form.start, gioKetThuc: form.end, phongHoc: form.room, hocKy: semester });
@@ -41,7 +44,7 @@ export default function QuickEntry({ kind, onClose }) {
     <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">{kind === 'class' ? 'Thêm lịch học' : kind === 'expense' ? 'Ghi khoản chi' : 'Thêm việc cần làm'}</h3><button type="button" onClick={onClose} disabled={busy} className="min-h-11 rounded-lg px-3 text-sm text-slate-500">Đóng</button></div>
     <div className="grid gap-3 sm:grid-cols-2">
       <label className="text-sm">{kind === 'class' ? 'Tên môn học' : kind === 'expense' ? 'Nội dung chi' : 'Tên công việc'}<input name="title" required maxLength={200} className={inputStyle} autoFocus /></label>
-      {kind === 'deadline' && <label className="text-sm">Hạn chót<input type="datetime-local" name="due" required className={inputStyle}/></label>}
+      {kind === 'deadline' && <DeadlineDueInput id="quick-deadline-due" value={due} onValueChange={setDue} name="due" disabled={busy} />}
       {kind === 'class' && <>
         <label className="text-sm">Thứ<select name="day" className={inputStyle}>{[2,3,4,5,6,7,8].map(day => <option key={day} value={day}>{day === 8 ? 'Chủ nhật' : `Thứ ${day}`}</option>)}</select></label>
         <label className="text-sm">Bắt đầu<input type="time" name="start" required defaultValue="07:00" className={inputStyle}/></label>

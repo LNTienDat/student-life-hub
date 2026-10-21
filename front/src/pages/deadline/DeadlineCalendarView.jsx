@@ -1,3 +1,4 @@
+import { deadlineHasTime } from './deadlineDate';
 import { useMemo } from 'react';
 import {
   ChevronLeft,
@@ -165,13 +166,11 @@ function DeadlineCalendarView({
                         {textUuTien(d.doUuTien)}
                       </span>
                     </div>
-                    {d.moTa && (
-                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{d.moTa}</p>
-                    )}
+
                     <div className="flex items-center gap-4 mt-2">
                       <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
-                        {new Date(d.hanChot).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                        {deadlineHasTime(d.hanChot) ? new Date(d.hanChot).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'Cả ngày'}
                       </span>
                     </div>
                   </div>

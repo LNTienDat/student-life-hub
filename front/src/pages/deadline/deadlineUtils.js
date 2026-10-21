@@ -12,11 +12,11 @@ export const badgeUuTien = (doUu) => {
 export const textUuTien = (doUu) => {
   switch (doUu) {
     case 'cao':
-      return 'Cao';
+      return 'Khẩn cấp';
     case 'thap':
       return 'Thấp';
     default:
-      return 'Thường';
+      return 'Bình thường';
   }
 };
 

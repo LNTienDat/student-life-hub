@@ -1,0 +1,70 @@
+{
+  "at": "2026-10-21T15:47:39.823Z",
+  "passed": true,
+  "environment": "Local production bundle, Chrome desktop and 390px mobile, in-memory API fixtures; no production database access",
+  "checks": [
+    "Date-only create expires at local day end",
+    "Optional time toggles on/off and round-trips on edit",
+    "Legacy timed deadline preserves 14:30",
+    "Hidden notes/checklist/subject fields omitted from updates; legacy data preserved",
+    "Exactly three priority labels",
+    "Calendar shows date-only item as all-day",
+    "Quick-entry uses the same date-only convention",
+    "Mobile optional-time form has no horizontal overflow",
+    "Cancel sends no request",
+    "No browser JavaScript errors"
+  ],
+  "writes": [
+    {
+      "method": "POST",
+      "path": "/api/deadline",
+      "body": {
+        "tieuDe": "Việc chỉ chọn ngày",
+        "hanChot": "2026-10-25T16:59:59.999Z",
+        "doUuTien": "binh_thuong"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/api/deadline/22",
+      "body": {
+        "tieuDe": "Việc chỉ chọn ngày",
+        "hanChot": "2026-10-25T09:45:00.000Z",
+        "doUuTien": "thap"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/api/deadline/21",
+      "body": {
+        "tieuDe": "Công việc cũ đã sửa",
+        "hanChot": "2026-10-25T07:30:00.000Z",
+        "doUuTien": "cao"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/api/deadline/22",
+      "body": {
+        "tieuDe": "Việc chỉ chọn ngày",
+        "hanChot": "2026-10-25T16:59:59.999Z",
+        "doUuTien": "thap"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/deadline",
+      "body": {
+        "tieuDe": "Việc nhanh",
+        "hanChot": "2026-10-26T16:59:59.999Z"
+      }
+    }
+  ],
+  "lint": "passed",
+  "productionBuild": "passed",
+  "frontendLogicTests": 29,
+  "pwaTests": 7,
+  "deployed": false,
+  "dateOnlyEncoding": "Chosen local day at 23:59:59.999, stored as UTC ISO; normal explicit times retain seconds/milliseconds zero",
+  "dataSafety": "Only local fixtures; removed fields omitted from update payloads; no production schema/data changes"
+}
