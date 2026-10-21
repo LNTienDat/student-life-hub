@@ -46,3 +46,14 @@ test('worker can update; hashed bundles are immutable; scripts comply with self-
   expect((await request(app).get('/offline.js')).status).toBe(200);
   expect((await request(app).get('/theme-init.js')).status).toBe(200);
 });
+
+
+test('same-origin OCR worker/models are served as files; missing OCR paths never return SPA HTML', async () => {
+  const worker = await request(app).head('/ocr/v7/worker.min.js');
+  expect(worker.status).toBe(200);
+  expect(worker.headers['content-type']).toMatch(/javascript/);
+  const model = await request(app).head('/ocr/v7/vie.traineddata.gz');
+  expect(model.status).toBe(200);
+  expect(Number(model.headers['content-length'])).toBeGreaterThan(1000000);
+  expect((await request(app).get('/ocr/v7/missing.traineddata.gz')).status).toBe(404);
+});

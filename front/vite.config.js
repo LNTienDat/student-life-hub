@@ -1,12 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import lifeHubPwa from './pwa/vite-plugin.mjs'
+import lifeHubOcr from './ocr/vite-plugin.mjs'
 
 const apiProxy = { '/api': { target: 'http://127.0.0.1:5000', changeOrigin: true } }
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), lifeHubPwa()],
+  plugins: [react(), lifeHubOcr(), lifeHubPwa()],
   server: { proxy: apiProxy },
   preview: { proxy: apiProxy },
   build: {

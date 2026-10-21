@@ -35,7 +35,10 @@ if (process.env.TRUST_PROXY === 'true') {
 }
 
 // Đặt các HTTP header bảo mật cơ bản
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: { directives: {
+  scriptSrc: ["'self'", "'wasm-unsafe-eval'"],
+  workerSrc: ["'self'"],
+} } }));
 
 // Chỉ cho phép đúng domain frontend gọi API
 app.use(

@@ -1,5 +1,6 @@
 import DataLoadError from '../components/DataLoadError';
 import ImportPanel from '../components/ImportPanel';
+import TimetableImageImport from '../components/TimetableImageImport';
 import { useSemester } from '../hooks/useSemester';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import timetableService from '../services/timetableService';
@@ -205,6 +206,7 @@ function ThoiKhoaBieu() {
         </div>
 
         {semester && danhSach.some((item) => !item.hocKy) && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">Lịch cũ chưa xếp học kỳ vẫn được hiển thị. Sửa buổi học để gắn vào học kỳ phù hợp.</p>}
+        <TimetableImageImport semester={semester} onImported={taiDuLieu} />
         <ImportPanel kind="timetable" onImported={taiDuLieu} />
         {/* Form thêm mới */}
         <TimetableForm

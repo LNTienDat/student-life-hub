@@ -14,6 +14,8 @@ describe('API Integration Tests', () => {
       expect(res.body).toHaveProperty('status', 'ok');
       expect(res.body).toHaveProperty('timestamp');
       expect(res.headers['cache-control']).toBe('no-store');
+      expect(res.headers['content-security-policy']).toContain("script-src 'self' 'wasm-unsafe-eval'");
+      expect(res.headers['content-security-policy']).toContain("worker-src 'self'");
     });
   });
 

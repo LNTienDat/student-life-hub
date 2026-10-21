@@ -1,0 +1,142 @@
+{
+  "at": "2026-10-21T16:41:57.654Z",
+  "passed": true,
+  "deployed": false,
+  "pushed": false,
+  "environment": "Local production build; headless Chrome with strict same-origin CSP; real OCR on supplied screenshot; actual import parser/commit service with in-memory transaction fixture",
+  "ocrSeconds": 2.959,
+  "recognizedSessions": 6,
+  "automaticallyDeselectedSuspended": 1,
+  "dayHours": [
+    {
+      "selected": true,
+      "thu": "2",
+      "time": [
+        "07:00",
+        "11:15"
+      ]
+    },
+    {
+      "selected": true,
+      "thu": "2",
+      "time": [
+        "13:00",
+        "17:15"
+      ]
+    },
+    {
+      "selected": true,
+      "thu": "5",
+      "time": [
+        "07:00",
+        "11:15"
+      ]
+    },
+    {
+      "selected": true,
+      "thu": "5",
+      "time": [
+        "13:00",
+        "17:15"
+      ]
+    },
+    {
+      "selected": false,
+      "thu": "6",
+      "time": [
+        "07:00",
+        "11:15"
+      ]
+    },
+    {
+      "selected": true,
+      "thu": "6",
+      "time": [
+        "13:00",
+        "17:15"
+      ]
+    }
+  ],
+  "checks": [
+    "Image recognition alone sends no write request",
+    "Only same-origin OCR assets requested; no external image upload",
+    "Camera input requests rear camera on supported devices",
+    "All six sessions parsed with correct weekdays/time ranges; suspended session unchecked",
+    "Editable name/room/lecturer; missing fields and overlaps block save",
+    "Manual row add/delete supported",
+    "390px preview has no horizontal overflow",
+    "Exactly one confirmed save imports five edited selected sessions with server-side ownership",
+    "Repeated identical import is detected and cannot be saved again",
+    "Invalid image produces readable error",
+    "Cancel discards late OCR results and makes no save",
+    "Strict CSP accepts self-hosted WebAssembly worker",
+    "No browser JavaScript errors"
+  ],
+  "limitations": [
+    "Vietnamese accents and room glyphs need manual correction; not arbitrary-photo accuracy guarantee",
+    "Current data model repeats weekly within a semester, not date-specific weekly variations",
+    "Camera hardware not tested on a physical phone",
+    "First use downloads language/core assets; mobile performance varies"
+  ],
+  "savedPreview": [
+    {
+      "tenMon": "Môn minh họa 1",
+      "thu": 2,
+      "gioBatDau": "07:00",
+      "gioKetThuc": "11:15",
+      "phongHoc": "A201",
+      "giangVien": "Giảng viên thử",
+      "hocKy": "HK1 2026–2027",
+      "id": 1
+    },
+    {
+      "tenMon": "Môn minh họa 2",
+      "thu": 2,
+      "gioBatDau": "13:00",
+      "gioKetThuc": "17:15",
+      "phongHoc": "A202",
+      "giangVien": "Giảng viên thử",
+      "hocKy": "HK1 2026–2027",
+      "id": 2
+    },
+    {
+      "tenMon": "Môn minh họa 3",
+      "thu": 5,
+      "gioBatDau": "07:00",
+      "gioKetThuc": "11:15",
+      "phongHoc": "A203",
+      "giangVien": "Giảng viên thử",
+      "hocKy": "HK1 2026–2027",
+      "id": 3
+    },
+    {
+      "tenMon": "Môn minh họa 4",
+      "thu": 5,
+      "gioBatDau": "13:00",
+      "gioKetThuc": "17:15",
+      "phongHoc": "A204",
+      "giangVien": "Giảng viên thử",
+      "hocKy": "HK1 2026–2027",
+      "id": 4
+    },
+    {
+      "tenMon": "Môn minh họa 6",
+      "thu": 6,
+      "gioBatDau": "13:00",
+      "gioKetThuc": "17:15",
+      "phongHoc": "A206",
+      "giangVien": "Giảng viên thử",
+      "hocKy": "HK1 2026–2027",
+      "id": 5
+    }
+  ],
+  "backendTestsPassed": 103,
+  "backendSuitesPassed": 17,
+  "frontendLogicTestsPassed": 35,
+  "pwaTestsPassed": 7,
+  "lint": "passed",
+  "productionBuild": "passed",
+  "developmentOcr": "passed: six rows recognized through Vite dev middleware",
+  "localHealth": "status ok; local PostgreSQL only",
+  "formalTestsPassed": 145
+}
