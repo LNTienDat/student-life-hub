@@ -1,0 +1,64 @@
+{
+  "at": "2026-10-21T12:29:51.531Z",
+  "environment": "Local production bundle; headless Chrome; mocked API; no production database access",
+  "passed": true,
+  "checks": [
+    "Empty desktop dashboard: compact KPIs and two daily panels",
+    "Only one button per quick action; no semester filter or group navigation",
+    "Populated dashboard shows real tasks/classes from fixture",
+    "Desktop and 390px mobile have no horizontal overflow",
+    "All money fields group digits with spaces",
+    "Quick expense submits numeric 100000 once",
+    "Income submits numeric 100000; expense submits numeric 20000",
+    "Budget submits numeric 1500000",
+    "Zero is blocked by form validation",
+    "Middle insertion preserves caret; backspace/delete at separator edit digits",
+    "Grouped paste accepted; invalid negative/exponent characters rejected",
+    "No page JavaScript errors"
+  ],
+  "writes": [
+    {
+      "path": "/api/finance/giao-dich",
+      "body": {
+        "loai": "chi",
+        "danhMuc": "an_uong",
+        "soTien": 100000,
+        "moTa": "Khoản thử local",
+        "ngayGiaoDich": "2026-10-21T12:29:49.013Z"
+      }
+    },
+    {
+      "path": "/api/finance/giao-dich",
+      "body": {
+        "soTien": 100000,
+        "loai": "thu",
+        "danhMuc": "luong",
+        "moTa": ""
+      }
+    },
+    {
+      "path": "/api/finance/giao-dich",
+      "body": {
+        "soTien": 20000,
+        "loai": "chi",
+        "danhMuc": "an_uong",
+        "moTa": ""
+      }
+    },
+    {
+      "path": "/api/finance/ngan-sach",
+      "body": {
+        "danhMuc": "an_uong",
+        "soTienToiDa": 1500000,
+        "thang": 10,
+        "nam": 2026
+      }
+    }
+  ],
+  "lint": "passed",
+  "productionBuild": "passed",
+  "frontendLogicTests": 27,
+  "pwaTests": 7,
+  "deployed": false,
+  "scope": "Frontend only; group code and database preserved; no database migration"
+}

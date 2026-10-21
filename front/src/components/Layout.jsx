@@ -79,7 +79,6 @@ function Layout({ children }) {
     { path: '/mon-hoc', label: 'Học tập' },
     { path: '/deadline', label: 'Deadline' },
     { path: '/thoi-khoa-bieu', label: 'Thời khóa biểu' },
-    { path: '/nhom', label: 'Nhóm học' },
     { path: '/tai-chinh', label: 'Tài chính' },
     { path: '/ho-so', label: 'Hồ sơ' },
   ];
@@ -129,7 +128,7 @@ function Layout({ children }) {
     {deadlinesGap.length > 0 && !bannerAn && location.pathname !== '/dashboard' && <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800"><div className="mx-auto flex max-w-6xl items-center gap-3"><AlertCircle aria-hidden="true" className="h-5 w-5 shrink-0" /><Link to="/deadline" className="flex-1 underline underline-offset-2">{deadlinesGap.length} việc đến hạn trong 24 giờ tới. Xem deadline</Link><button type="button" onClick={() => setBannerAn(true)} className="min-h-11 min-w-11" aria-label="Đóng cảnh báo"><X className="mx-auto h-4 w-4" /></button></div></div>}
     <main id="main-content" tabIndex={-1} className="mx-auto w-full min-w-0 max-w-7xl p-4 pb-24 sm:p-6 sm:pb-24 lg:p-8 lg:pb-24">
       <div key={`${location.pathname}:${semester}`}>
-        {!['/tai-chinh', '/profile', '/ho-so'].includes(location.pathname) && <SemesterPicker />}
+        {['/mon-hoc', '/deadline', '/thoi-khoa-bieu'].includes(location.pathname) && <SemesterPicker />}
         {children || <Outlet />}
       </div>
     </main>

@@ -1,3 +1,4 @@
+import MoneyInput from '../../components/MoneyInput';
 import { DANH_MUC_CHI, DANH_MUC_THU, TEN_DANH_MUC } from '../../constants';
 import { localDateInput } from './financeUtils';
 
@@ -58,17 +59,13 @@ function TransactionForm({
           </div>
           <div>
             <label htmlFor="finance-amount" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-              Số tiền
+              Số tiền (đồng)
             </label>
-            <input
+            <MoneyInput
               id="finance-amount"
-              type="number"
-              min="1"
-              step="1"
-              inputMode="numeric"
               value={soTien}
-              onChange={(e) => onSoTienChange(e.target.value)}
-              placeholder="Ví dụ: 50000"
+              onValueChange={onSoTienChange}
+              placeholder="Ví dụ: 50 000"
               className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
               required
             />

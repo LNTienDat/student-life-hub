@@ -1,3 +1,4 @@
+import MoneyInput from '../../components/MoneyInput';
 import { useState, useRef } from 'react';
 import { PieChart as PieChartIcon } from 'lucide-react';
 import { TEN_DANH_MUC, DANH_MUC_CHI } from '../../constants';
@@ -55,7 +56,7 @@ function BudgetSection({ nganSachs = [], thongKe, onQuickTransaction, onSaveBudg
               </select>
             </label>
             <label className="block text-sm text-slate-700 dark:text-slate-200">Hạn mức tháng này (đồng)
-              <input type="number" inputMode="numeric" min="1" step="1" required value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="Ví dụ: 1500000" className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-600 dark:bg-slate-800" />
+              <MoneyInput required value={amount} onValueChange={setAmount} placeholder="Ví dụ: 1 500 000" className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-600 dark:bg-slate-800" />
             </label>
             <p className="text-xs text-slate-500 dark:text-slate-400">Nếu danh mục đã có ngân sách, số tiền này sẽ thay hạn mức hiện tại.</p>
             {error && <p role="alert" className="text-sm text-rose-700 dark:text-rose-300">{error}</p>}

@@ -1,3 +1,4 @@
+import MoneyInput from '../../components/MoneyInput';
 import { useState, useEffect, useRef } from 'react';
 import { deadlineService } from '../../services/deadlineService';
 import { timetableService } from '../../services/timetableService';
@@ -49,7 +50,7 @@ export default function QuickEntry({ kind, onClose }) {
         <p className="text-xs text-slate-500 self-center">Học kỳ: {semester || 'Chưa xếp học kỳ'}</p>
       </>}
       {kind === 'expense' && <>
-        <label className="text-sm">Số tiền (đồng)<input name="amount" type="number" min="1" step="1" required className={inputStyle}/></label>
+        <label className="text-sm">Số tiền (đồng)<MoneyInput name="amount" required placeholder="Ví dụ: 100 000" className={inputStyle}/></label>
         <label className="text-sm">Danh mục<select name="category" className={inputStyle}>{DANH_MUC_CHI.map(category => <option key={category} value={category}>{TEN_DANH_MUC[category]}</option>)}</select></label>
       </>}
     </div>

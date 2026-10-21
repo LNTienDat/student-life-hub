@@ -1,5 +1,7 @@
 # 📌 STUDENT LIFE HUB - TRẠNG THÁI DỰ ÁN
 
+> **Giao diện gọn và nhập tiền 21/10:** trang Hôm nay đưa GPA/deadline/số dư lên đầu, hai khối lịch và công việc, mỗi thao tác nhanh xuất hiện một lần; bộ lọc học kỳ chỉ ở trang chi tiết. Ẩn Nhóm học khỏi menu (giữ mã và dữ liệu). Ô tiền thu/chi, ngân sách và ghi chi nhanh hiển thị `100 000` nhưng gửi số `100000`. Lint/build, 27 kiểm thử logic, 7 kiểm thử PWA và Chrome local với API giả đạt. [Minh chứng giao diện và payload](docs/qa/2026-10-21-compact-dashboard-money.json). Bản giao diện này chưa triển khai Render; người dùng đã xác nhận T3/T5 đạt ở bản trước `020306b`.
+
 > **Chuẩn bị tách giao diện 21/10:** [Static Site và chờ máy chủ](docs/guides/STATIC_FRONTEND_SETUP.md) — đã bổ sung xử lý khởi động chậm, thử lại GET và origin cho frontend riêng; chưa kích hoạt dịch vụ Static Site trên Render.
 
 > **Kiểm thử mới nhất 21/10:** [Bảng nghiệm thu chức năng](docs/reports/FUNCTION_ACCEPTANCE.md) — 118 bài tự động và 119 kịch bản mở rộng đạt trên môi trường thử riêng. Có giới hạn về UI, email/AI thật, thiết bị di động và bản online; chưa xác nhận hoàn thiện 100%.
