@@ -13,6 +13,7 @@ describe('API Integration Tests', () => {
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('status', 'ok');
       expect(res.body).toHaveProperty('timestamp');
+      expect(res.headers['cache-control']).toBe('no-store');
     });
   });
 

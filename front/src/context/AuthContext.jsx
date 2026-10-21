@@ -1,19 +1,29 @@
-import { createContext, useState, useContext, useCallback, useMemo } from 'react';
+import { createContext, useState, useContext, useCallback, useMemo, useEffect } from 'react';
 import { clearCache } from '../services/apiCache';
+import { readSession } from '../services/session';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser ? JSON.parse(savedUser) : null;
+      return readSession(localStorage);
     } catch {
       localStorage.removeItem('user');
       localStorage.removeItem('token');
       return null;
     }
   });
+
+  useEffect(() => {
+    const sync = (event) => {
+      if (event.key !== null && !['user', 'token'].includes(event.key)) return;
+      clearCache();
+      setUser(readSession(localStorage));
+    };
+    window.addEventListener('storage', sync);
+    return () => window.removeEventListener('storage', sync);
+  }, []);
 
   const dangNhap = useCallback((userData, token) => {
     clearCache();

@@ -1,10 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { User, Lock, Save, KeyRound, CheckCircle2, AlertCircle, Mail, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 
 function Profile() {
-  const { dangNhap } = useAuth();
+  const { dangNhap, user } = useAuth();
+  const saveLock = useRef(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState('');
+  const [retry, setRetry] = useState(0);
   const [ten, setTen] = useState('');
   const [email, setEmail] = useState('');
   const [thongBao, setThongBao] = useState(null);
@@ -28,22 +32,27 @@ function Profile() {
   const [dangTaiMK, setDangTaiMK] = useState(false);
 
   useEffect(() => {
+    let active = true;
     async function tai() {
       try {
         const res = await api.get('/auth/ho-so');
+        if (!active) return;
         const u = res.data?.user || {};
         setTen(u.ten || '');
         setEmail(u.email || '');
       } catch (error) {
-        console.error(error);
-      }
+        if (active) setProfileError(error.response?.data?.message || 'Chưa tải được hồ sơ');
+      } finally { if (active) setProfileLoading(false); }
     }
     tai();
-  }, []);
+    return () => { active = false; };
+  }, [retry]);
 
   async function xuLySuaHoSo(e) {
     e.preventDefault();
     setThongBao(null);
+    if (saveLock.current) return;
+    saveLock.current = true;
     setDangTai(true);
     try {
       const res = await api.put('/auth/ho-so', { ten });
@@ -53,6 +62,7 @@ function Profile() {
     } catch (error) {
       setThongBao({ loai: 'error', text: error.response?.data?.message || 'Có lỗi xảy ra' });
     } finally {
+      saveLock.current = false;
       setDangTai(false);
     }
   }
@@ -66,6 +76,8 @@ function Profile() {
       return;
     }
 
+    if (saveLock.current) return;
+    saveLock.current = true;
     setDangTaiEmail(true);
     try {
       const res = await api.put('/auth/doi-email', { emailMoi, matKhau: matKhauXacNhan });
@@ -82,6 +94,7 @@ function Profile() {
     } catch (error) {
       setThongBaoEmail({ loai: 'error', text: error.response?.data?.message || 'Đổi email thất bại' });
     } finally {
+      saveLock.current = false;
       setDangTaiEmail(false);
     }
   }
@@ -89,11 +102,13 @@ function Profile() {
   async function xuLyDoiMatKhau(e) {
     e.preventDefault();
     setThongBaoMK(null);
+    if (saveLock.current) return;
+    saveLock.current = true;
     setDangTaiMK(true);
     try {
       const res = await api.put('/auth/doi-mat-khau', { matKhauCu, matKhauMoi });
       if (res.data.token) {
-        localStorage.setItem('token', res.data.token);
+        dangNhap(user, res.data.token);
       }
       setMatKhauCu('');
       setMatKhauMoi('');
@@ -101,9 +116,13 @@ function Profile() {
     } catch (error) {
       setThongBaoMK({ loai: 'error', text: error.response?.data?.message || 'Có lỗi xảy ra' });
     } finally {
+      saveLock.current = false;
       setDangTaiMK(false);
     }
   }
+
+  if (profileLoading) return <p role="status" className="p-6">Đang tải hồ sơ…</p>;
+  if (profileError) return <div role="alert" className="p-6"><p>{profileError}</p><button type="button" className="mt-3 font-semibold text-ink-600" onClick={() => { setProfileError(''); setProfileLoading(true); setRetry(n => n + 1); }}>Thử tải lại</button></div>;
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -149,7 +168,7 @@ function Profile() {
                   id="profile-name"
                   value={ten} 
                   onChange={(e) => setTen(e.target.value)} 
-                  maxLength={30}
+                  maxLength={100}
                   placeholder="Nhập họ và tên..."
                   className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 dark:focus:ring-ink-500/30 transition-shadow" 
                   required 

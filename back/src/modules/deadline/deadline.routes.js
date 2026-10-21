@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const { validateId } = require('../../utils/validation.util');
+for (const key of ['id', 'idMonHoc', 'idDeadline', 'idThanhVien']) router.param(key, validateId);
 const xacThuc = require('../../middlewares/auth.middleware');
 const {
   themDeadline,

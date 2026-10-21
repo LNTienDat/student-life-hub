@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-21T08:28:46.354Z",
+  "schema": "https://render.com/schema/render.yaml.json",
+  "results": {
+    "render.yaml": {
+      "valid": true,
+      "errors": null
+    },
+    "render-static.yaml": {
+      "valid": true,
+      "errors": null
+    }
+  }
+}

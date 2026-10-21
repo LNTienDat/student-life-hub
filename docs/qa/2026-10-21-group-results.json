@@ -1,0 +1,58 @@
+{
+  "at": "2026-10-21T03:50:07.229Z",
+  "environment": "disposable slh_review_20261020 on loopback:55439",
+  "results": [
+    {
+      "name": "Progress rejects deadline from another group",
+      "expected": "403 or 404, no write",
+      "status": 404,
+      "foreignProgressCreated": false,
+      "pass": true
+    },
+    {
+      "name": "Progress percentage after removing member",
+      "expected": "0..100",
+      "currentMembers": 1,
+      "completedProgressRows": 1,
+      "uiFormulaPercent": 100,
+      "pass": true
+    },
+    {
+      "name": "Removed creator cannot edit group task",
+      "expected": "403 or 404",
+      "status": 403,
+      "pass": true
+    },
+    {
+      "name": "Outsider detail access denied",
+      "expected": 403,
+      "status": 403,
+      "pass": true
+    },
+    {
+      "name": "Share enable/view/disable",
+      "expected": [
+        200,
+        200,
+        404
+      ],
+      "statuses": [
+        200,
+        200,
+        404
+      ],
+      "pass": true
+    },
+    {
+      "name": "Share token reuse observation",
+      "sameTokenAfterReenable": false,
+      "classification": "rotation checked after disabling and re-enabling"
+    },
+    {
+      "name": "Removed creator cannot delete group task",
+      "expected": "403 or 404",
+      "status": 403,
+      "pass": true
+    }
+  ]
+}

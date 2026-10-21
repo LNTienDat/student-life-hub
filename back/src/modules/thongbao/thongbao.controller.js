@@ -1,3 +1,4 @@
+const { vietnamParts, monthRange } = require('../../utils/date.util');
 const prisma = require('../../prismaClient');
 const { nhacDeadlineQuaEmail, canhBaoNganSachQuaEmail } = require('../../cron/thongBao.cron');
 const { canhBaoMonNguyCoService } = require('../academic/academic.service');
@@ -11,10 +12,8 @@ async function layThongBao(req, res) {
     const idNguoiDung = req.user.id;
     const now = new Date();
     const gioiHan = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const thang = now.getMonth() + 1;
-    const nam = now.getFullYear();
-    const from = new Date(nam, thang - 1, 1);
-    const to = new Date(nam, thang, 1);
+    const { month: thang, year: nam } = vietnamParts(now);
+    const { from, to } = monthRange(thang, nam);
 
     const [deadlines, monHocs, nganSachs, giaoDichs] = await Promise.all([
       prisma.deadline.findMany({
@@ -47,7 +46,7 @@ async function layThongBao(req, res) {
         id: `deadline-${d.id}`,
         loai: 'deadline',
         tieuDe: `Deadline sắp hết hạn: ${d.tieuDe}`,
-        moTa: `Hạn chót: ${new Date(d.hanChot).toLocaleString('vi-VN')}`,
+        moTa: `Hạn chót: ${new Date(d.hanChot).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`,
         thoiGian: d.hanChot,
       })),
       ...monNguyCo.map((mon) => ({

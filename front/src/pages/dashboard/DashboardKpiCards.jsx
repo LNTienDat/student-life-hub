@@ -4,7 +4,7 @@ import { dinhDangTien } from '../../utils/formatters';
 
 export default function DashboardKpiCards({ gpa, deadlinesSapToi = [], thongKeTaiChinh, deadlineUnavailable, semester }) {
   const cards = [
-    { to: '/mon-hoc', title: `GPA ${semester ? 'học kỳ' : 'tích lũy'}`, value: gpa == null ? '—' : Number(gpa).toFixed(2), unit: '/ 10', hint: 'Tạm tính từ các điểm đã nhập', Icon: GraduationCap },
+    { to: '/mon-hoc', title: `GPA ${semester ? 'học kỳ' : 'tích lũy'}`, value: gpa == null ? '—' : Number(gpa).toFixed(2), unit: '/ 10', hint: gpa === null ? 'Chưa nhập điểm để tính GPA' : 'Tạm tính từ các điểm đã nhập', Icon: GraduationCap },
     { to: '/deadline', title: 'Deadline trong 7 ngày', value: deadlineUnavailable ? '—' : deadlinesSapToi.length, unit: 'việc', hint: 'Xem danh sách công việc', Icon: CalendarDays },
     { to: '/tai-chinh', title: 'Số dư tháng này', value: thongKeTaiChinh ? dinhDangTien(thongKeTaiChinh.soDu) : '—', hint: 'Tổng thu trừ tổng chi trong tháng', Icon: Wallet },
   ];

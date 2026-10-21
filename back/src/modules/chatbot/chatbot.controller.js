@@ -27,7 +27,7 @@ async function guiTinNhan(req, res) {
   try {
     const { tinNhan, lichSu } = req.body;
 
-    if (!tinNhan || !tinNhan.trim()) {
+    if (typeof tinNhan !== 'string' || !tinNhan.trim()) {
       return res.status(400).json({ message: 'Vui lòng nhập nội dung tin nhắn' });
     }
     if (tinNhan.length > 2000) {
@@ -37,7 +37,7 @@ async function guiTinNhan(req, res) {
     if (!process.env.GEMINI_API_KEY) {
       return res.json({
         traLoi:
-          'Chatbot chưa được cấu hình. Vui lòng thêm GEMINI_API_KEY vào file .env để kích hoạt tính năng này.',
+          'Trợ lý AI hiện chưa sẵn sàng. Bạn vẫn có thể dùng các chức năng quản lý học tập và thu chi.',
         daCauHinh: false,
       });
     }

@@ -1,8 +1,18 @@
 # 📌 STUDENT LIFE HUB - TRẠNG THÁI DỰ ÁN
 
-> **Cập nhật lần cuối**: 2026-10-15
+> **Chuẩn bị tách giao diện 21/10:** [Static Site và chờ máy chủ](docs/guides/STATIC_FRONTEND_SETUP.md) — đã bổ sung xử lý khởi động chậm, thử lại GET và origin cho frontend riêng; chưa kích hoạt dịch vụ Static Site trên Render.
 
-> Đợt cập nhật mới: xem [UPGRADE_NOTES.md](UPGRADE_NOTES.md). Đã xác minh 50 kiểm thử backend và 7 kiểm thử frontend; chưa xác nhận trực quan bằng trình duyệt. Checklist cũ dưới đây ghi nhận phạm vi đã triển khai, không chứng minh hệ thống hoàn thiện hoặc sẵn sàng production.
+> **Kiểm thử mới nhất 21/10:** [Bảng nghiệm thu chức năng](docs/reports/FUNCTION_ACCEPTANCE.md) — 118 bài tự động và 119 kịch bản mở rộng đạt trên môi trường thử riêng. Có giới hạn về UI, email/AI thật, thiết bị di động và bản online; chưa xác nhận hoàn thiện 100%.
+
+> **Cập nhật lần cuối**: 2026-10-21
+
+> **Sửa lỗi mới nhất:** [BUGFIX_REPORT.md](docs/reports/BUGFIX_REPORT.md) — 115 bài kiểm thử và 119 kịch bản mở rộng đạt trên database thử riêng; migration nhóm/chia sẻ đã bổ sung. Các nhận xét ngày 20/10 bên dưới là lịch sử trước đợt sửa. Chưa triển khai bản sửa này lên online.
+
+> **Phần mới trong mã local:** nhóm học tập và chia sẻ thời khóa biểu; chưa nghiệm thu hoặc triển khai. Xem [PROJECT_REVIEW_UPDATE.md](docs/reports/PROJECT_REVIEW_UPDATE.md) về migration còn thiếu, kiểm thử và lỗi phân quyền đã tái hiện.
+
+> **Nghiệm thu hiện tại:** theo [MODULE_COMPLETION.md](docs/planning/MODULE_COMPLETION.md), thực hiện tuần tự từng phần, bắt đầu với tài khoản và dữ liệu cá nhân. Checklist tính năng cũ bên dưới chỉ ghi nhận mã đã triển khai, không xác nhận đã nghiệm thu trên bản online. Kết quả rà soát UX: [UX_REVIEW.md](docs/reports/UX_REVIEW.md).
+
+> Đợt cập nhật mới: xem [UPGRADE_NOTES.md](docs/reports/UPGRADE_NOTES.md). Đã xác minh 50 kiểm thử backend và 7 kiểm thử frontend; chưa xác nhận trực quan bằng trình duyệt. Checklist cũ dưới đây ghi nhận phạm vi đã triển khai, không chứng minh hệ thống hoàn thiện hoặc sẵn sàng production.
 > **Mục tiêu**: Hệ thống Quản lý Học tập, Deadline & Tài chính cho Sinh viên.
 > **Tech Stack**: Node.js (Express) + PostgreSQL (Prisma) | React 19 (Vite) + TailwindCSS.
 > **Source Code**: `github.com/LNTienDat/student-life-hub`
@@ -12,14 +22,14 @@
 ## 📈 1. Tổng Kết Tiến Độ
 
 - **Tiến độ tổng thể**: Các chức năng nền đã triển khai; còn bước xác nhận trực quan và vận hành thực tế.
-- **Chức năng hoàn thành**: **37 / 37** (Tất cả 6 Module)
+- **Danh mục cũ**: 37 chức năng đã có triển khai; còn khoảng trống ở giao diện, cấu hình dịch vụ và nghiệm thu luồng đầy đủ.
 - **Database**: 7 Model (NguoiDung, MonHoc, Diem, Deadline, GiaoDich, NganSach, ThoiKhoaBieu)
 - **Backend API**: 41 Endpoints nghiệp vụ
 - **Frontend**: 10 Trang giao diện chuẩn Responsive + Dark mode
 
 ---
 
-## 🎯 2. Checklist 37 Chức năng (Đã xong 100%)
+## 🎯 2. Checklist 37 chức năng đã triển khai (lịch sử, chưa phải nghiệm thu)
 
 ### 🟢 Module 0: Tài khoản & Xác thực
 - [x] CN1: Đăng ký tài khoản

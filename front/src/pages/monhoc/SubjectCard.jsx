@@ -31,7 +31,8 @@ function SubjectCard({
   onDeleteSubject,
 }) {
   const diemMon = tinhDiemMon(mon.diems);
-  const complete = (mon.diems || []).reduce((sum, item) => sum + Number(item.trongSo), 0) >= 100;
+  const totalWeight = (mon.diems || []).reduce((sum, item) => sum + Number(item.trongSo), 0);
+  const complete = Math.abs(totalWeight - 100) < 1e-8;
   const quaMon = diemMon && parseFloat(diemMon) >= 5;
   const isEditingGradeForThisSubject = monThemDiemId === mon.id;
 
@@ -62,7 +63,7 @@ function SubjectCard({
               }`}
             >
               <span className="font-display text-2xl font-bold leading-none">{diemMon}</span>
-              <span className="text-[11px] font-semibold mt-0.5">{complete ? (quaMon ? 'Đạt · đã đủ điểm' : 'Chưa đạt · đã đủ điểm') : 'Tạm tính · chưa đủ điểm'}</span>
+              <span className="text-[11px] font-semibold mt-0.5">{totalWeight > 100 + 1e-8 ? 'Trọng số vượt 100% · cần sửa' : complete ? (quaMon ? 'Đạt · đã đủ điểm' : 'Chưa đạt · đã đủ điểm') : 'Tạm tính · chưa đủ điểm'}</span>
             </div>
           ) : (
             <div className="flex flex-col items-end text-slate-400">

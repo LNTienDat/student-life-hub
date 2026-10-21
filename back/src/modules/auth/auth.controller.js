@@ -6,14 +6,18 @@ const { guiEmailDatLaiMatKhau } = require('../../utils/email.util');
 const { AUTH } = require('../../constants');
 
 const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const normalizeEmail = value => typeof value === 'string' ? value.trim().toLowerCase() : '';
+const validPassword = value => typeof value === 'string' && value.length >= AUTH.MIN_PASSWORD_LENGTH && Buffer.byteLength(value, 'utf8') <= 72;
+const passwordMessage = `Mật khẩu cần ít nhất ${AUTH.MIN_PASSWORD_LENGTH} ký tự và tối đa 72 byte UTF-8`;
 
 async function dangKy(req, res) {
   try {
-    const { matKhau, ten } = req.body;
+    const { matKhau } = req.body;
+    const ten = typeof req.body.ten === 'string' ? req.body.ten.trim() : '';
     // Chuẩn hóa email: bỏ khoảng trắng thừa + về chữ thường, tránh
     // "Test@Gmail.com" và "test@gmail.com" bị coi là 2 tài khoản khác nhau
     // trong khi thực tế cùng 1 hộp thư.
-    const email = req.body.email ? req.body.email.trim().toLowerCase() : req.body.email;
+    const email = normalizeEmail(req.body.email);
 
     if (!email || !matKhau || !ten) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ email, mật khẩu và họ tên' });
@@ -21,8 +25,8 @@ async function dangKy(req, res) {
     if (!REGEX_EMAIL.test(email)) {
       return res.status(400).json({ message: 'Email không đúng định dạng' });
     }
-    if (matKhau.length < AUTH.MIN_PASSWORD_LENGTH) {
-      return res.status(400).json({ message: `Mật khẩu phải có ít nhất ${AUTH.MIN_PASSWORD_LENGTH} ký tự` });
+    if (!validPassword(matKhau)) {
+      return res.status(400).json({ message: passwordMessage });
     }
     if (ten.length > AUTH.MAX_TEN_LENGTH) {
       return res.status(400).json({ message: `Họ tên không được vượt quá ${AUTH.MAX_TEN_LENGTH} ký tự` });
@@ -51,9 +55,9 @@ async function dangKy(req, res) {
 async function dangNhap(req, res) {
   try {
     const { matKhau } = req.body;
-    const email = req.body.email ? req.body.email.trim().toLowerCase() : req.body.email;
+    const email = normalizeEmail(req.body.email);
 
-    if (!email || !matKhau) {
+    if (!email || typeof matKhau !== 'string' || !matKhau || Buffer.byteLength(matKhau, 'utf8') > 72) {
       return res.status(400).json({ message: 'Vui lòng cung cấp đầy đủ email và mật khẩu' });
     }
 
@@ -99,6 +103,14 @@ async function suaHoSo(req, res) {
   try {
     const { ten, truong, nganh, khoaHoc, avatar } = req.body;
 
+    const limits = { ten: AUTH.MAX_TEN_LENGTH, truong: AUTH.MAX_TRUONG_LENGTH, nganh: AUTH.MAX_NGANH_LENGTH, khoaHoc: AUTH.MAX_KHOA_HOC_LENGTH, avatar: AUTH.MAX_AVATAR_LENGTH };
+    for (const [field, max] of Object.entries(limits)) {
+      const value = req.body[field];
+      if (value !== undefined && (typeof value !== 'string' || value.length > max || (field === 'ten' && !value.trim()))) {
+        return res.status(400).json({ message: `Thông tin hồ sơ không hợp lệ (tối đa ${max} ký tự)` });
+      }
+    }
+
     if (ten !== undefined && ten.length > AUTH.MAX_TEN_LENGTH) {
       return res.status(400).json({ message: `Họ tên không được vượt quá ${AUTH.MAX_TEN_LENGTH} ký tự` });
     }
@@ -117,7 +129,7 @@ async function suaHoSo(req, res) {
 
     const nguoiDung = await prisma.nguoiDung.update({
       where: { id: req.user.id },
-      data: { ten, truong, nganh, khoaHoc, avatar },
+      data: { ten: ten?.trim(), truong: truong?.trim(), nganh: nganh?.trim(), khoaHoc: khoaHoc?.trim(), avatar: avatar?.trim() },
     });
     const { matKhau: _, resetPasswordToken: __, resetPasswordExpiry: ___, ...thongTin } = nguoiDung;
     res.json({ message: 'Cập nhật hồ sơ thành công', user: thongTin });
@@ -131,11 +143,11 @@ async function suaHoSo(req, res) {
 async function doiMatKhau(req, res) {
   try {
     const { matKhauCu, matKhauMoi } = req.body;
-    if (!matKhauCu || !matKhauMoi) {
+    if (typeof matKhauCu !== 'string' || !matKhauCu || typeof matKhauMoi !== 'string') {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ mật khẩu cũ và mới' });
     }
-    if (matKhauMoi.length < AUTH.MIN_PASSWORD_LENGTH) {
-      return res.status(400).json({ message: `Mật khẩu mới phải có ít nhất ${AUTH.MIN_PASSWORD_LENGTH} ký tự` });
+    if (!validPassword(matKhauMoi)) {
+      return res.status(400).json({ message: passwordMessage });
     }
 
     const nguoiDung = await prisma.nguoiDung.findUnique({ where: { id: req.user.id } });
@@ -145,11 +157,12 @@ async function doiMatKhau(req, res) {
     }
 
     const matKhauMaHoa = await bcrypt.hash(matKhauMoi, AUTH.SALT_ROUNDS);
-    const thoiDiemDoi = new Date();
-    await prisma.nguoiDung.update({
-      where: { id: req.user.id },
-      data: { matKhau: matKhauMaHoa, matKhauDoiLuc: thoiDiemDoi },
+    const thoiDiemDoi = new Date(Math.max(Date.now(), nguoiDung.matKhauDoiLuc.getTime() + 1));
+    const changed = await prisma.nguoiDung.updateMany({
+      where: { id: req.user.id, matKhau: nguoiDung.matKhau },
+      data: { matKhau: matKhauMaHoa, matKhauDoiLuc: thoiDiemDoi, resetPasswordToken: null, resetPasswordExpiry: null },
     });
+    if (!changed.count) return res.status(409).json({ message: 'Tài khoản vừa thay đổi. Vui lòng đăng nhập lại.' });
 
     // Cấp lại token mới cho chính phiên đổi mật khẩu này, để người dùng tiếp tục
     // sử dụng bình thường mà không bị middleware coi là phiên hết hạn.
@@ -171,8 +184,8 @@ async function doiMatKhau(req, res) {
 async function doiEmail(req, res) {
   try {
     const matKhau = req.body.matKhau;
-    const emailMoi = req.body.emailMoi ? req.body.emailMoi.trim().toLowerCase() : req.body.emailMoi;
-    if (!emailMoi || !matKhau) {
+    const emailMoi = normalizeEmail(req.body.emailMoi);
+    if (!emailMoi || typeof matKhau !== 'string' || !matKhau) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ email mới và mật khẩu xác nhận' });
     }
 
@@ -203,7 +216,7 @@ async function doiEmail(req, res) {
 
     const capNhat = await prisma.nguoiDung.update({
       where: { id: req.user.id },
-      data: { email: emailMoi.toLowerCase() },
+      data: { email: emailMoi.toLowerCase(), resetPasswordToken: null, resetPasswordExpiry: null },
     });
 
     const { matKhau: _, resetPasswordToken: __, resetPasswordExpiry: ___, ...thongTin } = capNhat;
@@ -220,10 +233,10 @@ async function doiEmail(req, res) {
 // CN3 - Bước 1: Yêu cầu đặt lại mật khẩu
 async function quenMatKhau(req, res) {
   try {
-    if (!req.body.email) {
+    if (!REGEX_EMAIL.test(normalizeEmail(req.body.email))) {
       return res.status(400).json({ message: 'Vui lòng nhập email' });
     }
-    const email = req.body.email.trim().toLowerCase();
+    const email = normalizeEmail(req.body.email);
 
     const nguoiDung = await prisma.nguoiDung.findUnique({ where: { email } });
 
@@ -240,16 +253,22 @@ async function quenMatKhau(req, res) {
     const tokenHash = crypto.createHash('sha256').update(tokenGoc).digest('hex');
     const hetHan = new Date(Date.now() + AUTH.RESET_TOKEN_EXPIRY_MS);
 
-    await prisma.nguoiDung.update({
-      where: { id: nguoiDung.id },
+    const issued = await prisma.nguoiDung.updateMany({
+      where: { id: nguoiDung.id, email, matKhau: nguoiDung.matKhau },
       data: {
         resetPasswordToken: tokenHash,
         resetPasswordExpiry: hetHan,
       },
     });
+    if (!issued.count) return res.status(200).json(thongBaoChung);
 
     const resetLink = `${process.env.FRONTEND_URL}/dat-lai-mat-khau?token=${tokenGoc}&email=${encodeURIComponent(email)}`;
-    await guiEmailDatLaiMatKhau(email, nguoiDung.ten, resetLink);
+    try {
+      await guiEmailDatLaiMatKhau(email, nguoiDung.ten, resetLink);
+    } catch {
+      await prisma.nguoiDung.updateMany({ where: { id: nguoiDung.id, resetPasswordToken: tokenHash }, data: { resetPasswordToken: null, resetPasswordExpiry: null } });
+      return res.status(503).json({ message: 'Dịch vụ gửi email hiện chưa sẵn sàng. Vui lòng thử lại sau.' });
+    }
 
     res.status(200).json(thongBaoChung);
   } catch (error) {
@@ -261,13 +280,14 @@ async function quenMatKhau(req, res) {
 // CN3 - Bước 2: Đặt lại mật khẩu bằng token
 async function datLaiMatKhau(req, res) {
   try {
-    const { email, token, matKhauMoi } = req.body;
+    const email = normalizeEmail(req.body.email);
+    const { token, matKhauMoi } = req.body;
 
-    if (!email || !token || !matKhauMoi) {
+    if (!email || typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token) || typeof matKhauMoi !== 'string') {
       return res.status(400).json({ message: 'Thiếu thông tin bắt buộc' });
     }
-    if (matKhauMoi.length < AUTH.MIN_PASSWORD_LENGTH) {
-      return res.status(400).json({ message: `Mật khẩu mới phải có ít nhất ${AUTH.MIN_PASSWORD_LENGTH} ký tự` });
+    if (!validPassword(matKhauMoi)) {
+      return res.status(400).json({ message: passwordMessage });
     }
 
     const nguoiDung = await prisma.nguoiDung.findUnique({ where: { email } });
@@ -284,16 +304,17 @@ async function datLaiMatKhau(req, res) {
     }
 
     const matKhauMaHoa = await bcrypt.hash(matKhauMoi, AUTH.SALT_ROUNDS);
-    await prisma.nguoiDung.update({
-      where: { id: nguoiDung.id },
+    const consumed = await prisma.nguoiDung.updateMany({
+      where: { id: nguoiDung.id, email, resetPasswordToken: tokenHash, resetPasswordExpiry: { gt: new Date() }, matKhau: nguoiDung.matKhau },
       data: {
         matKhau: matKhauMaHoa,
-        matKhauDoiLuc: new Date(),
+        matKhauDoiLuc: new Date(Math.max(Date.now(), nguoiDung.matKhauDoiLuc.getTime() + 1)),
         resetPasswordToken: null,
         resetPasswordExpiry: null,
       },
     });
 
+    if (!consumed.count) return res.status(400).json({ message: 'Liên kết không hợp lệ hoặc đã được sử dụng' });
     res.status(200).json({ message: 'Đặt lại mật khẩu thành công, bạn có thể đăng nhập lại' });
   } catch (error) {
     console.error(error);

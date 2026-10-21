@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-21",
+  "backendTestsPassed": 96,
+  "backendTestsFailed": 0,
+  "frontendTestsPassed": 12,
+  "pwaTestsPassed": 7,
+  "lint": "passed, zero errors and warnings",
+  "migration": "six migrations deployed successfully to a fresh isolated database",
+  "database": "slh_bugfix_20261021 on loopback:55439",
+  "deployed": false,
+  "uiChecks": [
+    "110% weights rejected; 100% accepted with GPA 6.80",
+    "Group dialog focus trap, Escape, scroll lock and focus restoration",
+    "Public timetable has zero edit/delete controls",
+    "Disabling share invalidates public view",
+    "Deletion dialog shows class, time and room",
+    "Profile loads with 100-character name limit",
+    "Signing out in one tab redirects another tab to login"
+  ]
+}

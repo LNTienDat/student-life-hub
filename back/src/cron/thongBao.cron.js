@@ -1,3 +1,4 @@
+const { vietnamParts, monthRange } = require('../utils/date.util');
 const cron = require('node-cron');
 const prisma = require('../prismaClient');
 const { guiEmail, escapeHtml } = require('../utils/email.util');
@@ -8,6 +9,7 @@ const { guiEmail, escapeHtml } = require('../utils/email.util');
 // qua API, tránh việc 1 tài khoản bất kỳ có thể spam email tới TẤT CẢ người dùng).
 async function nhacDeadlineQuaEmail(idNguoiDungLoc = null) {
   try {
+    const failures = [];
     const now = new Date();
     const gioiHan = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
@@ -43,7 +45,7 @@ async function nhacDeadlineQuaEmail(idNguoiDungLoc = null) {
           (d) => `
             <li style="margin-bottom:8px;">
               <strong>${escapeHtml(d.tieuDe)}</strong>${d.monHoc ? ` (${escapeHtml(d.monHoc.ten)})` : ''}<br/>
-              Hạn chót: ${new Date(d.hanChot).toLocaleString('vi-VN')}
+              Hạn chót: ${new Date(d.hanChot).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}
             </li>`
         )
         .join('');
@@ -66,10 +68,13 @@ async function nhacDeadlineQuaEmail(idNguoiDungLoc = null) {
         });
         console.log(`[Cron] Đã gửi email nhắc deadline cho ${nguoiDung.email}`);
       } catch (err) {
-        console.error(`[Cron] Gửi email thất bại cho ${nguoiDung.email}:`, err.message);
+        console.error('[Cron] Gửi email thất bại:', err.message);
+        failures.push(err);
       }
     }
+    if (failures.length) throw new Error('Không gửi được một hoặc nhiều email. Vui lòng thử lại sau.');
   } catch (error) {
+    if (idNguoiDungLoc) throw error;
     console.error('[Cron] Lỗi khi chạy nhacDeadlineQuaEmail:', error);
   }
 }
@@ -79,9 +84,9 @@ async function nhacDeadlineQuaEmail(idNguoiDungLoc = null) {
 // Có thể truyền idNguoiDungLoc để chỉ chạy cho 1 người dùng (dùng khi test thủ công).
 async function canhBaoNganSachQuaEmail(idNguoiDungLoc = null) {
   try {
+    const failures = [];
     const now = new Date();
-    const thang = now.getMonth() + 1;
-    const nam = now.getFullYear();
+    const { month: thang, year: nam } = vietnamParts(now);
 
     const nganSachs = await prisma.nganSach.findMany({
       where: {
@@ -97,8 +102,7 @@ async function canhBaoNganSachQuaEmail(idNguoiDungLoc = null) {
       return;
     }
 
-    const from = new Date(nam, thang - 1, 1);
-    const to = new Date(nam, thang, 1);
+    const { from, to } = monthRange(thang, nam);
 
     // Gom theo người dùng để tính chi tiêu 1 lần cho mỗi người
     const theoNguoiDung = {};
@@ -164,10 +168,13 @@ async function canhBaoNganSachQuaEmail(idNguoiDungLoc = null) {
         });
         console.log(`[Cron] Đã gửi email cảnh báo ngân sách cho ${nguoiDung.email}`);
       } catch (err) {
-        console.error(`[Cron] Gửi email thất bại cho ${nguoiDung.email}:`, err.message);
+        console.error('[Cron] Gửi email thất bại:', err.message);
+        failures.push(err);
       }
     }
+    if (failures.length) throw new Error('Không gửi được một hoặc nhiều email. Vui lòng thử lại sau.');
   } catch (error) {
+    if (idNguoiDungLoc) throw error;
     console.error('[Cron] Lỗi khi chạy canhBaoNganSachQuaEmail:', error);
   }
 }
@@ -178,10 +185,10 @@ async function canhBaoNganSachQuaEmail(idNguoiDungLoc = null) {
 // Render/Railway...), khiến "07:00" thực tế chạy lúc 14:00 giờ Việt Nam.
 function khoiDongCronJobs() {
   // Mỗi ngày lúc 07:00 (giờ Việt Nam) - nhắc deadline sắp hết hạn (CN32)
-  cron.schedule('0 7 * * *', nhacDeadlineQuaEmail, { timezone: 'Asia/Ho_Chi_Minh' });
+  cron.schedule('0 7 * * *', () => nhacDeadlineQuaEmail(), { timezone: 'Asia/Ho_Chi_Minh' });
 
   // Mỗi ngày lúc 08:00 (giờ Việt Nam) - cảnh báo vượt ngân sách (CN33)
-  cron.schedule('0 8 * * *', canhBaoNganSachQuaEmail, { timezone: 'Asia/Ho_Chi_Minh' });
+  cron.schedule('0 8 * * *', () => canhBaoNganSachQuaEmail(), { timezone: 'Asia/Ho_Chi_Minh' });
 
   console.log('[Cron] Đã khởi động lịch nhắc deadline (07:00) và cảnh báo ngân sách (08:00) mỗi ngày (giờ VN).');
 }

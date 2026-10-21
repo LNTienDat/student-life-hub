@@ -3,7 +3,8 @@ jest.mock('../../src/prismaClient', () => ({
   nganSach: { upsert: jest.fn() },
   monHoc: { create: jest.fn(), updateMany: jest.fn(), findFirst: jest.fn() },
   diem: { create: jest.fn() },
-  thoiKhoaBieu: { create: jest.fn(), findFirst: jest.fn(), updateMany: jest.fn(), findUnique: jest.fn() },
+  thoiKhoaBieu: { create: jest.fn(), findMany: jest.fn(), findFirst: jest.fn(), updateMany: jest.fn(), findUnique: jest.fn() },
+  $transaction: jest.fn(),
 }));
 
 const prisma = require('../../src/prismaClient');
@@ -17,7 +18,11 @@ const response = () => {
   return res;
 };
 const request = (body) => ({ user: { id: 42 }, params: { id: '7' }, body });
-beforeEach(() => jest.resetAllMocks());
+beforeEach(() => {
+  jest.resetAllMocks();
+  prisma.$transaction.mockImplementation(callback => callback(prisma));
+  prisma.thoiKhoaBieu.findMany.mockResolvedValue([]);
+});
 
 describe('financial input and updates', () => {
   test('accepts a decimal amount sent as a form string', async () => {
@@ -43,7 +48,7 @@ describe('financial input and updates', () => {
     await finance.suaGiaoDich(request({ ngayGiaoDich: '2026-09-20' }), res);
     expect(prisma.giaoDich.updateMany).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 7, idNguoiDung: 42 },
-      data: expect.objectContaining({ ngayGiaoDich: new Date('2026-09-20') }),
+      data: expect.objectContaining({ ngayGiaoDich: new Date('2026-09-20T00:00:00+07:00') }),
     }));
   });
 

@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node --test tests/today.test.js tests/dataEvents.test.js tests/finance.test.js",
+    "test": "node --test tests/today.test.js tests/dataEvents.test.js tests/finance.test.js tests/session.test.js tests/backendConnection.test.js",
     "test:pwa": "npm run build && node --test tests/pwa.test.js"
   },
   "dependencies": {

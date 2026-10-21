@@ -24,3 +24,9 @@ README.md
 
 # Local backups are not deployment source.
 improvement-backups/
+
+# Generated local files
+*.log
+coverage/
+__pycache__/
+*.pyc

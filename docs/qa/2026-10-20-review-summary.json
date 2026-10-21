@@ -1,0 +1,49 @@
+{
+  "at": "2026-10-20T16:15:53.4503261Z",
+  "scope": "Current uncommitted group/share features compared with a21746f",
+  "backend": {
+    "suites": 14,
+    "database": "isolated slh_review_20261020; schema supplied with db push because migrations are missing",
+    "failed": 0,
+    "passed": 88
+  },
+  "frontend": {
+    "logicPassed": 10,
+    "build": "passed",
+    "pwaPassed": 7,
+    "lintErrors": 12.0,
+    "lintWarnings": 2.0
+  },
+  "migrationCheck": {
+    "newGroupTablesCreated": false,
+    "shareColumnsCreated": false,
+    "migrationCount": 5
+  },
+  "lintFiles": [
+    {
+      "file": "front\\src\\pages\\ChiTietNhom.jsx",
+      "errors": 4,
+      "warnings": 1
+    },
+    {
+      "file": "front\\src\\pages\\ChiaSeTKB.jsx",
+      "errors": 3,
+      "warnings": 0
+    },
+    {
+      "file": "front\\src\\pages\\NhomHocTap.jsx",
+      "errors": 2,
+      "warnings": 1
+    },
+    {
+      "file": "front\\src\\pages\\ThoiKhoaBieu.jsx",
+      "errors": 1,
+      "warnings": 0
+    },
+    {
+      "file": "front\\src\\pages\\thoikhoabieu\\TimetableShareModal.jsx",
+      "errors": 2,
+      "warnings": 0
+    }
+  ]
+}

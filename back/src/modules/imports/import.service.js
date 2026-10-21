@@ -1,3 +1,4 @@
+const { overlaps } = require('../thoikhoabieu/conflicts');
 const ExcelJS = require('exceljs');
 const { Readable } = require('stream');
 
@@ -118,6 +119,13 @@ async function commitImport(prisma, userId, preview) {
           throw error;
         }
         const data = checked.rows.filter((row) => !row.skip).map((row) => ({ ...row.data, idNguoiDung: userId }));
+        if (checked.kind === 'timetable' && data.length) {
+          const schedules = await tx.thoiKhoaBieu.findMany({ where: { idNguoiDung: userId } });
+          for (const row of data) {
+            if (schedules.some(other => overlaps(row, other))) throw new Error(`Lịch của ${row.tenMon} bị trùng giờ. Chưa nhập dòng nào.`);
+            schedules.push(row);
+          }
+        }
         if (data.length) await (checked.kind === 'subjects' ? tx.monHoc : tx.thoiKhoaBieu).createMany({ data });
         return { count: data.length, skipped: checked.rows.length - data.length };
       }, { isolationLevel: 'Serializable' });

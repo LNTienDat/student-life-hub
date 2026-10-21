@@ -68,7 +68,21 @@ const CHATBOT = {
   CONTEXT_DEADLINE_DAYS: 7, // Số ngày tới để lấy deadline sắp hạn
 };
 
-// 7. Cấu hình Rate Limiting (Số lượt / Khoảng thời gian)
+// 7. Cấu hình Nhóm học tập (Study Groups)
+const NHOM = {
+  MAX_TEN_LENGTH: 100,
+  MAX_MO_TA_LENGTH: 500,
+  CODE_LENGTH: 6,
+  MAX_MEMBERS_PER_GROUP: 30,
+  VAI_TRO: {
+    CHU_NHOM: 'chu_nhom',
+    THANH_VIEN: 'thanh_vien',
+  },
+  TRANG_THAI_TIEN_DO: ['chua_lam', 'dang_lam', 'hoan_thanh'],
+  DEFAULT_TRANG_THAI_TIEN_DO: 'chua_lam',
+};
+
+// 8. Cấu hình Rate Limiting (Số lượt / Khoảng thời gian)
 const RATE_LIMIT = {
   GLOBAL_WINDOW_MS: 15 * 60 * 1000,
   GLOBAL_MAX: 300,
@@ -87,5 +101,6 @@ module.exports = {
   DEADLINE,
   THOIKHOABIEU,
   CHATBOT,
+  NHOM,
   RATE_LIMIT,
 };

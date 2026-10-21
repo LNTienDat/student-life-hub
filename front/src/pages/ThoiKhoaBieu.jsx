@@ -5,12 +5,13 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import timetableService from '../services/timetableService';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
-import { Plus, X, CalendarDays } from 'lucide-react';
+import { Plus, X, CalendarDays, Share2 } from 'lucide-react';
 import { CAC_THU, gioSangPhut } from './thoikhoabieu/timetableUtils';
 
 import TimetableForm from './thoikhoabieu/TimetableForm';
 import TimetableGrid from './thoikhoabieu/TimetableGrid';
 import TimetableMobile from './thoikhoabieu/TimetableMobile';
+import TimetableShareModal from './thoikhoabieu/TimetableShareModal';
 import { PageSkeleton } from '../components/Skeleton';
 
 function ThoiKhoaBieu() {
@@ -23,6 +24,7 @@ function ThoiKhoaBieu() {
   const saveLock = useRef(false);
   const [hienForm, setHienForm] = useState(false);
   const [dangSuaId, setDangSuaId] = useState(null);
+  const [hienModalShare, setHienModalShare] = useState(false);
 
   const [tenMon, setTenMon] = useState('');
   const [thu, setThu] = useState(2);
@@ -55,7 +57,9 @@ function ThoiKhoaBieu() {
       setLoadError('');
       setDanhSach(res.data.thoiKhoaBieu || []);
     }).catch((error) => {
-      if (version === loadVersion.current) setLoadError(error.response?.data?.message || 'Chưa tải được dữ liệu. Kiểm tra kết nối và thử lại.');
+      if (version !== loadVersion.current) return;
+      console.error(error);
+      setLoadError('Không thể tải thời khóa biểu. Vui lòng kiểm tra kết nối mạng.');
     }).finally(() => {
       if (version === loadVersion.current) setDangTai(false);
     });
@@ -94,11 +98,11 @@ function ThoiKhoaBieu() {
 
   async function xuLySubmit(e) {
     e.preventDefault();
+    if (saveLock.current) return;
     if (gioSangPhut(gioKetThuc) <= gioSangPhut(gioBatDau)) {
       hienToast('error', 'Giờ kết thúc phải sau giờ bắt đầu');
       return;
     }
-    if (saveLock.current) return;
     saveLock.current = true;
     setSaving(true);
     try {
@@ -128,8 +132,7 @@ function ThoiKhoaBieu() {
       subTitle: 'Hành động này sẽ xóa buổi học khỏi thời khóa biểu của bạn.',
       itemInfo: {
         label: bh.tenMon,
-        value: `${thuHoc} • ${bh.gioBatDau} - ${bh.gioKetThuc}`,
-        extra: bh.phongHoc ? `Phòng ${bh.phongHoc}` : '',
+        value: `${thuHoc} • ${bh.gioBatDau} - ${bh.gioKetThuc}${bh.phongHoc ? ` • Phòng ${bh.phongHoc}` : ''}`,
       },
       message: 'Bạn có chắc chắn muốn xóa buổi học này không? Dữ liệu đã xóa không thể hoàn tác.',
       confirmText: 'Xác nhận xóa',
@@ -178,7 +181,14 @@ function ThoiKhoaBieu() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              onClick={() => setHienModalShare(true)}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium text-sm transition-colors shadow-sm"
+            >
+              <Share2 className="w-4 h-4 text-ink-600 dark:text-ink-400" />
+              Chia sẻ TKB
+            </button>
             <button
               onClick={moFormThem}
               aria-expanded={hienForm}
@@ -246,6 +256,12 @@ function ThoiKhoaBieu() {
           </div>
         )}
       </div>
+
+      {/* Modal chia sẻ TKB */}
+      {hienModalShare && <TimetableShareModal
+        isOpen={hienModalShare}
+        onClose={() => setHienModalShare(false)}
+      />}
 
       {/* Modal xác nhận xóa hiện đại */}
       <ConfirmModal

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const { corsOrigins } = require('./src/corsOrigins');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const compression = require('compression');
@@ -17,6 +18,7 @@ const financeRoutes = require('./src/modules/finance/finance.routes');
 const thoiKhoaBieuRoutes = require('./src/modules/thoikhoabieu/thoikhoabieu.routes');
 const thongBaoRoutes = require('./src/modules/thongbao/thongbao.routes');
 const chatbotRoutes = require('./src/modules/chatbot/chatbot.routes');
+const nhomRoutes = require('./src/modules/nhom/nhom.routes');
 const { khoiDongCronJobs } = require('./src/cron/thongBao.cron');
 const prisma = require('./src/prismaClient');
 
@@ -38,7 +40,7 @@ app.use(helmet());
 // Chỉ cho phép đúng domain frontend gọi API
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: corsOrigins(process.env),
     credentials: true,
   })
 );
@@ -59,6 +61,7 @@ app.use('/api', gioiHanChung);
 
 // Health check endpoint phục vụ Docker / Render / UptimeRobot
 app.get('/api/health', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
   try {
     await prisma.$queryRaw`SELECT 1`;
     res.json({ status: 'ok', uptime: Math.round(process.uptime()), timestamp: new Date().toISOString() });
@@ -81,6 +84,7 @@ app.use('/api/finance', financeRoutes);
 app.use('/api/thoi-khoa-bieu', thoiKhoaBieuRoutes);
 app.use('/api/thong-bao', thongBaoRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/nhom', nhomRoutes);
 app.use('/api/imports', require('./src/modules/imports/import.routes'));
 
 // 404 handler cho các route API không tồn tại

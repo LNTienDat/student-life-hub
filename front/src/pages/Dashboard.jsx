@@ -51,7 +51,7 @@ function Dashboard() {
     let active = true;
     const update = (change) => setResult((previous) => change(previous?.key === queryKey ? previous : { key: queryKey, data: {}, errors: [], done: false }));
     const sources = [
-      ['gpa', () => academicService.tinhGPA(semester), (r) => r.data.gpa],
+      ['gpa', () => academicService.tinhGPA(semester), (r) => r.data.hasGrades === false ? null : r.data.gpa],
       ['deadlinesSapToi', () => deadlineService.layDeadlineSapToi(7, semester), (r) => r.data.deadlines || []],
       ['monNguyCo', () => academicService.canhBaoMonNguyCo(5, semester), (r) => r.data.monNguyCo || []],
       ['thongKeTaiChinh', () => financeService.layThongKe(), (r) => r.data],

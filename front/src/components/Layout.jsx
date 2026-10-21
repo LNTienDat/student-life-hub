@@ -79,6 +79,7 @@ function Layout({ children }) {
     { path: '/mon-hoc', label: 'Học tập' },
     { path: '/deadline', label: 'Deadline' },
     { path: '/thoi-khoa-bieu', label: 'Thời khóa biểu' },
+    { path: '/nhom', label: 'Nhóm học' },
     { path: '/tai-chinh', label: 'Tài chính' },
     { path: '/ho-so', label: 'Hồ sơ' },
   ];

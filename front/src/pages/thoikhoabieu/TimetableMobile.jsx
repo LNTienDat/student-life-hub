@@ -1,7 +1,7 @@
 import { Clock, MapPin, User, Edit2, Trash2 } from 'lucide-react';
 import { CAC_THU, mauChoMon } from './timetableUtils';
 
-function TimetableMobile({ buoiTheoThu = {}, onSua, onXoa }) {
+function TimetableMobile({ buoiTheoThu = {}, onSua, onXoa, readOnly = false }) {
   return (
     <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-700/60">
       {CAC_THU.map((t) => {
@@ -20,22 +20,22 @@ function TimetableMobile({ buoiTheoThu = {}, onSua, onXoa }) {
                 <div key={bh.id} className={`relative rounded-xl p-4 border ${mauChoMon(bh.tenMon)}`}>
                   <div className="flex justify-between items-start mb-2">
                     <h4 className="font-bold text-base leading-tight pr-4">{bh.tenMon}</h4>
-                    <div className="flex items-center gap-2">
+                    {!readOnly && <div className="flex items-center gap-2">
                       <button
-                        onClick={() => onSua(bh)}
+                        onClick={() => onSua?.(bh)}
                         aria-label={`Sửa buổi học ${bh.tenMon}`}
                         className="p-1.5 bg-white/50 dark:bg-black/20 rounded shadow-sm"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
-                        onClick={() => onXoa(bh)}
+                        onClick={() => onXoa?.(bh)}
                         aria-label={`Xóa buổi học ${bh.tenMon}`}
                         className="p-1.5 bg-white/50 dark:bg-black/20 rounded shadow-sm text-rose-600 dark:text-rose-400"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                    </div>
+                    </div>}
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-sm font-medium opacity-90 mt-3">
                     <div className="flex items-center gap-1.5">

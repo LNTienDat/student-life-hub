@@ -1,3 +1,5 @@
+const { validText, positiveId } = require('../../utils/validation.util');
+const { parseVietnamDate } = require('../../utils/date.util');
 const { validateChecklist } = require('./checklist');
 const prisma = require('../../prismaClient');
 const { DEADLINE } = require('../../constants');
@@ -6,17 +8,18 @@ const { DEADLINE } = require('../../constants');
 async function themDeadline(req, res) {
   try {
     const { tieuDe, moTa, hanChot, idMonHoc, doUuTien, checklist } = req.body;
+    if ((tieuDe !== undefined && !validText(tieuDe, 200)) || (moTa != null && !validText(moTa, 5000, false)) || (idMonHoc !== undefined && idMonHoc !== null && !positiveId(idMonHoc))) return res.status(400).json({ message: 'Thông tin deadline không hợp lệ' });
     const idNguoiDung = req.user.id;
     if (checklist !== undefined && validateChecklist(checklist)) return res.status(400).json({ message: validateChecklist(checklist) });
 
-    if (!tieuDe || !hanChot) {
+    if (!validText(tieuDe, 200) || !hanChot) {
       return res.status(400).json({ message: 'Vui lòng nhập tiêu đề và hạn chót' });
     }
-    const hanChotDate = new Date(hanChot);
+    const hanChotDate = parseVietnamDate(hanChot);
     if (isNaN(hanChotDate.getTime())) {
       return res.status(400).json({ message: 'Hạn chót không hợp lệ' });
     }
-    if (doUuTien && !DEADLINE.DO_UU_TIEN.includes(doUuTien)) {
+    if (doUuTien !== undefined && !DEADLINE.DO_UU_TIEN.includes(doUuTien)) {
       return res.status(400).json({ message: 'Độ ưu tiên không hợp lệ' });
     }
 
@@ -33,7 +36,7 @@ async function themDeadline(req, res) {
 
     const deadline = await prisma.deadline.create({
       data: {
-        tieuDe,
+        tieuDe: tieuDe?.trim(),
         checklist,
         moTa,
         hanChot: hanChotDate,
@@ -79,15 +82,16 @@ async function suaDeadline(req, res) {
     const { id } = req.params;
     const idNguoiDung = req.user.id;
     const { tieuDe, moTa, hanChot, doUuTien, trangThai, idMonHoc, checklist } = req.body;
+    if ((tieuDe !== undefined && !validText(tieuDe, 200)) || (moTa != null && !validText(moTa, 5000, false)) || (idMonHoc !== undefined && idMonHoc !== null && !positiveId(idMonHoc))) return res.status(400).json({ message: 'Thông tin deadline không hợp lệ' });
 
     if (checklist !== undefined && validateChecklist(checklist)) return res.status(400).json({ message: validateChecklist(checklist) });
-    if (hanChot && isNaN(new Date(hanChot).getTime())) {
+    if (hanChot !== undefined && isNaN(parseVietnamDate(hanChot).getTime())) {
       return res.status(400).json({ message: 'Hạn chót không hợp lệ' });
     }
-    if (doUuTien && !DEADLINE.DO_UU_TIEN.includes(doUuTien)) {
+    if (doUuTien !== undefined && !DEADLINE.DO_UU_TIEN.includes(doUuTien)) {
       return res.status(400).json({ message: 'Độ ưu tiên không hợp lệ' });
     }
-    if (trangThai && !DEADLINE.TRANG_THAI.includes(trangThai)) {
+    if (trangThai !== undefined && !DEADLINE.TRANG_THAI.includes(trangThai)) {
       return res.status(400).json({ message: 'Trạng thái deadline không hợp lệ' });
     }
 
@@ -104,10 +108,10 @@ async function suaDeadline(req, res) {
     const ketQua = await prisma.deadline.updateMany({
       where: { id: parseInt(id), idNguoiDung },
       data: {
-        tieuDe,
+        tieuDe: tieuDe?.trim(),
         checklist,
         moTa,
-        hanChot: hanChot ? new Date(hanChot) : undefined,
+        hanChot: hanChot ? parseVietnamDate(hanChot) : undefined,
         doUuTien,
         trangThai,
         idMonHoc: idMonHoc !== undefined ? (idMonHoc ? parseInt(idMonHoc) : null) : undefined,

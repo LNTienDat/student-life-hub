@@ -63,7 +63,7 @@ function MonHoc() {
       if (version !== loadVersion.current) return;
       setLoadError('');
       setDanhSach(resMonHoc.data.monHocs || []);
-      setGpa(resGpa.data.gpa);
+      setGpa(resGpa.data.hasGrades === false ? null : resGpa.data.gpa);
       setGpaTheoKy(resGpaKy.data.theoKy || []);
     }).catch((error) => {
       if (version === loadVersion.current) setLoadError(error.response?.data?.message || 'Chưa tải được dữ liệu. Kiểm tra kết nối và thử lại.');

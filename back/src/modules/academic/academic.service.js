@@ -32,7 +32,7 @@ function tinhGPAService(monHocs) {
   });
 
   const gpa = tongTinChi > 0 ? (tongDiemTinChi / tongTinChi).toFixed(2) : '0';
-  return { gpa, chiTiet };
+  return { gpa, chiTiet, hasGrades: tongTinChi > 0 };
 }
 
 /**
