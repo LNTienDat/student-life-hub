@@ -72,7 +72,7 @@ function Dashboard() {
           <p className="mt-2 text-sm text-slate-500">{new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
         <div aria-label="Thêm nhanh" className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
-          {[['deadline', 'Thêm việc', Plus], ['class', 'Thêm lịch', CalendarPlus], ['expense', 'Ghi khoản chi', Wallet]].map(([kind, label, Icon]) => <button key={kind} type="button" onClick={() => setQuickEntry(quickEntry === kind ? null : kind)} aria-expanded={quickEntry === kind} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 py-2 text-sm font-semibold sm:px-3 ${kind === 'deadline' ? 'bg-ink-600 text-white hover:bg-ink-700' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}><Icon aria-hidden="true" className="hidden h-4 w-4 sm:block" />{label}</button>)}
+          {[['deadline', 'Thêm việc', Plus], ['class', 'Thêm lịch', CalendarPlus], ['expense', 'Ghi khoản chi', Wallet]].map(([kind, label, Icon]) => <button key={kind} type="button" onClick={() => setQuickEntry(quickEntry === kind ? null : kind)} aria-expanded={quickEntry === kind} aria-pressed={quickEntry === kind} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 py-2 text-sm font-semibold sm:px-3 ${quickEntry === kind ? 'bg-ink-600 text-white hover:bg-ink-700' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}><Icon aria-hidden="true" className="hidden h-4 w-4 sm:block" />{label}</button>)}
         </div>
       </header>
 

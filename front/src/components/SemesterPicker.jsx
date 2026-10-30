@@ -37,16 +37,16 @@ export default function SemesterPicker() {
     catch(failure){setMessage(failure.response?.data?.message||failure.message||'Chưa lưu được học kỳ.');}
   }
   return <section aria-label="Thiết lập học kỳ" className="mb-6 w-full min-w-0 text-sm">
-    <div className="flex min-w-0 flex-col gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800 ">
       <div className="flex min-w-0 items-center gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink-50 text-ink-600 dark:bg-ink-500/10 dark:text-ink-300"><GraduationCap className="h-5 w-5" aria-hidden="true"/></span>
+        <span className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink-50 text-ink-600 dark:bg-ink-500/10 dark:text-ink-300"><GraduationCap className="h-5 w-5" aria-hidden="true"/></span>
         <div className="min-w-0 flex-1">
           <p className="text-xs text-slate-500 dark:text-slate-400">Học kỳ đang học</p>
           <p className="mt-1 break-words font-semibold text-slate-900 dark:text-white">{currentSemester||'Chưa chọn học kỳ'}</p>
         </div>
 
       </div>
-        <button type="button" disabled={loading||saving} onClick={openChange} className="self-end sm:self-auto inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-3 font-medium text-ink-600 hover:bg-ink-50 disabled:opacity-50 dark:text-ink-300 dark:hover:bg-slate-700"><Pencil className="h-4 w-4" aria-hidden="true"/>{currentSemester?'Đổi học kỳ':'Chọn học kỳ'}</button>
+        <button type="button" disabled={loading||saving} onClick={openChange} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-2 font-medium text-ink-600 hover:bg-ink-50 disabled:opacity-50 dark:text-ink-300 dark:hover:bg-slate-700"><Pencil className="h-4 w-4" aria-hidden="true"/>{currentSemester?'Đổi học kỳ':'Chọn học kỳ'}</button>
     </div>
     {error&&<p role="alert" className="mt-2 text-rose-600">{error} <button type="button" onClick={retry} className="min-h-11 underline">Thử lại</button></p>}
     <ModalDialog wide open={changing} title={currentSemester?'Đổi học kỳ':'Chọn học kỳ đang học'} busy={saving} onClose={()=>{if(!saving)setChanging(false);}}>

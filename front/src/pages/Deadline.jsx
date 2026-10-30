@@ -235,13 +235,13 @@ function Deadline() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+          <div className="grid grid-cols-1 gap-2 md:flex md:flex-wrap md:items-center">
+          <div className="grid grid-cols-2 items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
             <button
               onClick={() => setCheDoXem('list')}
               aria-label="Xem dạng danh sách"
               aria-pressed={cheDoXem === 'list'}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex min-h-11 justify-center items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 cheDoXem === 'list'
                   ? 'bg-white dark:bg-slate-700 text-ink-600 dark:text-ink-200 shadow-sm'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
@@ -253,7 +253,7 @@ function Deadline() {
               onClick={() => setCheDoXem('calendar')}
               aria-label="Xem dạng lịch"
               aria-pressed={cheDoXem === 'calendar'}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex min-h-11 justify-center items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 cheDoXem === 'calendar'
                   ? 'bg-white dark:bg-slate-700 text-ink-600 dark:text-ink-200 shadow-sm'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
@@ -264,7 +264,7 @@ function Deadline() {
           </div>
           <button type="button" aria-expanded={hienFormThem}
             onClick={moFormThem}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
+            className={`flex min-h-11 justify-center items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
               hienFormThem
                 ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                 : 'bg-ink-600 dark:bg-ink-500 text-white hover:bg-ink-700 dark:hover:bg-ink-400 shadow-sm shadow-ink-500/20'

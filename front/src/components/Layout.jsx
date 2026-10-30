@@ -10,7 +10,7 @@ import api from '../services/api';
 import { dinhDangNgay } from '../utils/formatters';
 import Chatbot from './Chatbot';
 import GlowingNav from './GlowingNav';
-import { Bell, Sun, Moon, Menu, X, LogOut, Clock, BookOpen, Wallet, Home, CalendarDays, UserRound } from 'lucide-react';
+import { Bell, Sun, Moon, X, LogOut, Clock, BookOpen, Wallet, Home, CalendarDays, UserRound } from 'lucide-react';
 
 function Layout({ children }) {
   const [semester] = useSemester();
@@ -19,7 +19,6 @@ function Layout({ children }) {
   const revision = useDataRevision();
   const navigate = useNavigate();
   const location = useLocation();
-  const [menuMoMobile, setMenuMoMobile] = useState(false);
   const [thongBaos, setThongBaos] = useState([]);
   const [notificationError, setNotificationError] = useState(false);
   const [chuongMo, setChuongMo] = useState(false);
@@ -31,8 +30,6 @@ function Layout({ children }) {
     } catch { return []; }
   });
   const chuongRef = useRef(null);
-  const menuRef = useRef(null);
-  const menuButtonRef = useRef(null);
 
   useEffect(() => {
     let active = true;
@@ -54,17 +51,15 @@ function Layout({ children }) {
   useEffect(() => {
     function closeOutside(event) {
       if (!chuongRef.current?.contains(event.target) && !event.target.closest('.btn-chuong')) setChuongMo(false);
-      if (!menuRef.current?.contains(event.target) && !menuButtonRef.current?.contains(event.target)) setMenuMoMobile(false);
     }
     function closeOnEscape(event) {
       if (event.key !== 'Escape' || event.defaultPrevented) return;
       if (chuongMo) { setChuongMo(false); document.querySelector('.btn-chuong:not([hidden])')?.focus(); }
-      if (menuMoMobile) { setMenuMoMobile(false); menuButtonRef.current?.focus(); }
     }
     document.addEventListener('mousedown', closeOutside);
     document.addEventListener('keydown', closeOnEscape);
     return () => { document.removeEventListener('mousedown', closeOutside); document.removeEventListener('keydown', closeOnEscape); };
-  }, [chuongMo, menuMoMobile]);
+  }, [chuongMo]);
 
   function xuLyDangXuat() { dangXuat(); navigate('/login'); }
   function remember(ids) {
@@ -89,14 +84,14 @@ function Layout({ children }) {
     <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[90] focus:rounded-lg focus:bg-ink-600 focus:px-4 focus:py-3 focus:text-white">Chuyển đến nội dung chính</a>
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white dark:bg-slate-800">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
-        <Link to="/dashboard" aria-label="LifeHub — trang Hôm nay" className="flex shrink-0 items-center gap-2" onClick={() => { setMenuMoMobile(false); setChuongMo(false); }}>
+        <Link to="/dashboard" aria-label="LifeHub — trang Hôm nay" className="flex shrink-0 items-center gap-2" onClick={() => { setChuongMo(false); }}>
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ink-600 text-white"><BookOpen aria-hidden="true" className="h-5 w-5" /></span>
           <span className="hidden text-lg font-bold tracking-tight text-slate-900 min-[360px]:inline">LifeHub</span>
         </Link>
         <nav aria-label="Điều hướng chính" className="hidden min-w-0 lg:block"><GlowingNav menu={menu} /></nav>
         <div className="flex shrink-0 items-center gap-1">
           <InstallButton />
-          <button type="button" onClick={() => { setChuongMo(!chuongMo); setMenuMoMobile(false); }} className="btn-chuong shell-icon relative" aria-label={`Thông báo${soChuaXem ? ` (${soChuaXem} chưa đọc)` : ''}`} aria-expanded={chuongMo} aria-controls="notification-panel">
+          <button type="button" onClick={() => { setChuongMo(!chuongMo); }} className="btn-chuong shell-icon relative" aria-label={`Thông báo${soChuaXem ? ` (${soChuaXem} chưa đọc)` : ''}`} aria-expanded={chuongMo} aria-controls="notification-panel">
             <Bell aria-hidden="true" className="h-5 w-5" />
             {soChuaXem > 0 && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500" />}
           </button>
@@ -105,14 +100,10 @@ function Layout({ children }) {
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink-50 text-sm font-semibold text-ink-600">{user?.ten?.charAt(0).toUpperCase()}</span>
             <span className="hidden max-w-24 truncate text-sm font-medium text-slate-700 xl:block">{user?.ten}</span>
           </Link>
-          <button type="button" onClick={xuLyDangXuat} className="shell-icon hidden lg:inline-flex" aria-label="Đăng xuất khỏi tài khoản" title="Đăng xuất"><LogOut aria-hidden="true" className="h-4 w-4" /></button>
-          <button ref={menuButtonRef} type="button" className="shell-icon lg:hidden" onClick={() => { setMenuMoMobile(!menuMoMobile); setChuongMo(false); }} aria-label={menuMoMobile ? 'Đóng menu điều hướng' : 'Mở menu điều hướng'} aria-expanded={menuMoMobile} aria-controls="mobile-navigation">{menuMoMobile ? <X aria-hidden="true" className="h-5 w-5" /> : <Menu aria-hidden="true" className="h-5 w-5" />}</button>
+          <button type="button" onClick={xuLyDangXuat} className="shell-icon" aria-label="Đăng xuất khỏi tài khoản" title="Đăng xuất"><LogOut aria-hidden="true" className="h-4 w-4" /></button>
+
         </div>
       </div>
-      {menuMoMobile && <nav id="mobile-navigation" ref={menuRef} aria-label="Điều hướng trên điện thoại" className="absolute left-0 w-full border-b border-t border-slate-200 bg-white p-4 shadow-lg lg:hidden">
-        <div className="grid grid-cols-2 gap-2">{menu.map(item => <Link key={item.path} to={item.path} onClick={() => setMenuMoMobile(false)} aria-current={location.pathname === item.path ? 'page' : undefined} className={`rounded-xl px-3 py-3 text-sm font-medium ${location.pathname === item.path ? 'bg-ink-50 text-ink-600' : 'text-slate-700 hover:bg-slate-50'}`}>{item.label}</Link>)}</div>
-        <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-200 pt-3"><span className="min-w-0 truncate text-sm text-slate-600">{user?.ten}</span><button type="button" onClick={xuLyDangXuat} className="inline-flex min-h-11 shrink-0 items-center gap-2 text-sm text-rose-600"><LogOut className="h-4 w-4" />Đăng xuất</button></div>
-      </nav>}
       {chuongMo && <section id="notification-panel" ref={chuongRef} aria-label="Thông báo" className="absolute right-4 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg sm:right-6">
         <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3"><h2 className="text-sm font-semibold text-slate-900">Thông báo ({soChuaXem})</h2><button type="button" className="shell-icon" onClick={() => setChuongMo(false)} aria-label="Đóng thông báo"><X className="h-4 w-4" /></button></div>
         {thongBaos.length > 0 && <button type="button" onClick={() => remember(thongBaos.map(item => item.id))} className="min-h-11 px-4 text-xs font-semibold text-ink-600">Đánh dấu tất cả đã đọc</button>}
@@ -135,7 +126,7 @@ function Layout({ children }) {
       {menu.map((item, index) => {
         const Icon = [Home, BookOpen, CalendarDays, Clock, Wallet, UserRound][index];
         const active = location.pathname === item.path;
-        return <Link key={item.path} to={item.path} aria-label={item.label} aria-current={active ? 'page' : undefined} onClick={() => { setMenuMoMobile(false); setChuongMo(false); }} className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-medium ${active ? 'bg-ink-50 text-ink-600 dark:bg-ink-900 dark:text-ink-200' : 'text-slate-600 dark:text-slate-300'}`}><Icon aria-hidden="true" className="h-5 w-5"/><span>{index === 2 ? 'Lịch học' : item.label}</span></Link>;
+        return <Link key={item.path} to={item.path} aria-label={item.label} aria-current={active ? 'page' : undefined} onClick={() => { setChuongMo(false); }} className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-medium ${active ? 'bg-ink-50 text-ink-600 dark:bg-ink-900 dark:text-ink-200' : 'text-slate-600 dark:text-slate-300'}`}><Icon aria-hidden="true" className="h-5 w-5"/><span>{index === 2 ? 'Lịch học' : item.label}</span></Link>;
       })}
     </nav>
     <Chatbot />
