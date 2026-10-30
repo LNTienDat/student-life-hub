@@ -94,8 +94,37 @@ async function recognizeTimetableInternal(file, { signal, onProgress = () => {},
     const ctx = canvas.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     await worker.setParameters({ tessedit_pageseg_mode: PSM.SPARSE_TEXT, preserve_interword_spaces: '1' });
     const initial = await recognize(canvas);
-    const columns = getTimetableColumns(initial);
-    const rows = [], texts = [];
+    let columns = getTimetableColumns(initial);
+    if (!columns.length) {
+      // Read the small weekday header separately: full-grid OCR can merge or omit it.
+      const header = document.createElement('canvas');
+      const factor = Math.min(4, 4500 / bitmap.width);
+      header.width = Math.round(bitmap.width * factor);
+      header.height = Math.round(bitmap.height * 0.2 * factor);
+      try {
+        const context = header.getContext('2d');
+        context.fillStyle = '#fff'; context.fillRect(0, 0, header.width, header.height);
+        context.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height * 0.2, 0, 0, header.width, header.height);
+        const reading = await recognize(header);
+        initial.headerText = reading.text;
+        let headerColumns = getTimetableColumns(reading);
+        if (!headerColumns.length) {
+          let headerWorker;
+          try {
+            const readyHeader = createWorker(['eng'], 1, { workerPath: base + 'worker.min.js', workerBlobURL: false, corePath: base, langPath: base, gzip: true, errorHandler: () => rejectFatal(new Error('Chưa đọc được hàng thứ.')) });
+            readyHeader.then(instance => { if (signal?.aborted) instance.terminate().catch(() => {}); }, () => {});
+            headerWorker = await whileActive(Promise.race([readyHeader, fatal]), signal);
+            await headerWorker.setParameters({ tessedit_pageseg_mode: PSM.SPARSE_TEXT });
+            const english = await whileActive(Promise.race([headerWorker.recognize(header, {}, { text: true, blocks: true }), fatal]), signal);
+            headerColumns = getTimetableColumns(english.data);
+          } finally { await headerWorker?.terminate().catch(() => {}); }
+        }
+        columns = headerColumns.map(column => ({ ...column,
+          left: column.left / factor * initialScale, right: column.right / factor * initialScale,
+          top: column.top / factor * initialScale }));
+      } finally { header.width = header.height = 1; }
+    }
+    const rows = [], texts = [initial.headerText || ''];
     if (columns.length) {
       for (let index = 0; index < columns.length; index++) {
         const column = columns[index];
@@ -110,7 +139,7 @@ async function recognizeTimetableInternal(file, { signal, onProgress = () => {},
           // A small colored note or a room code can disappear in block segmentation.
           // Read that column once more with separated lines; only replace fields whose
           // second reading has structural evidence (note label or a valid room line).
-          if (parsed.some(row => !row.phongHoc)) {
+          if (parsed.some(row => !row.phongHoc || !row.tenMon)) {
             const detail = cropImage(bitmap, { left: crop.left, right: column.right / initialScale, top: crop.top, bottom: bitmap.height }, 4, true, true);
             try {
               await worker.setParameters({ tessedit_pageseg_mode: PSM.SPARSE_TEXT, tessedit_char_whitelist: '' });
@@ -122,7 +151,7 @@ async function recognizeTimetableInternal(file, { signal, onProgress = () => {},
                 const match = alternatives.find(item => item.timeBox &&
                   Math.abs(item.timeBox.y0 / detail.factor - row.timeBox.y0 / crop.factor) < 8);
                 if (!match) continue;
-                if (match.annotationBeforeTime && !row.annotationBeforeTime) {
+                if ((!row.tenMon && match.tenMon) || (match.annotationBeforeTime && !row.annotationBeforeTime)) {
                   row.tenMon = match.tenMon;
                   row.annotationBeforeTime = true;
                 }

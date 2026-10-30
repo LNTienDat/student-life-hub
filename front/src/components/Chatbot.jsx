@@ -109,9 +109,9 @@ function Chatbot() {
   }
 
   return (
-    <div className="fixed bottom-3 right-3 sm:bottom-5 sm:right-5 z-40">
+    <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-3 lg:bottom-5 lg:right-5 z-40">
       {moChat && (
-        <section id={dialogId} role="dialog" aria-labelledby={titleId} className="flex flex-col w-[calc(100vw-1.5rem)] sm:w-[420px] h-[640px] max-h-[calc(100dvh-2rem)] rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-2xl overflow-hidden">
+        <section id={dialogId} role="dialog" aria-labelledby={titleId} className="flex flex-col w-[calc(100vw-1.5rem)] sm:w-[420px] h-[640px] max-h-[calc(100dvh-7rem)] lg:max-h-[calc(100dvh-2rem)] rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-2xl overflow-hidden">
           <header className="flex shrink-0 items-center gap-2 px-4 py-2 border-b dark:border-gray-700">
             <MessageCircle size={20} aria-hidden="true" />
             <h2 id={titleId} className="font-semibold flex-1">Trợ lý LifeHub</h2>

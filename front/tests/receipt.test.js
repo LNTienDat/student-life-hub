@@ -55,3 +55,12 @@ test('OCR card masks and quantity artifacts are not foreign currency; final tota
  const wrong=extractReceipt('Tong Cong VND 600,000.00');
  assert.equal(mergeReceiptReadings(wrong,[alternate,alternate]).soTien,'');
 });
+
+test('short Tong label with OCR border noise identifies final cafe total', () => {
+ const r=extractReceipt('CÀ PHÊ HOÀNG PHÚC\nNgày: 18/02/2019\nCà phê đá 10,000\nẠ Tổng: 54,000');
+ assert.equal(r.soTien,'54000');assert.equal(r.ngayGiaoDich,'2019-02-18');
+ assert.equal(r.danhMuc,'an_uong');assert.equal(r.moTa,'CÀ PHÊ HOÀNG PHÚC');
+ assert.equal(r.hasFinalTotal,true);
+ assert.equal(extractReceipt('Tổng số lượng: 4\nCà phê 10,000').soTien,'');
+ assert.equal(extractReceipt('Tổng: 54,000\nTổng: 55,000').soTien,'');
+});

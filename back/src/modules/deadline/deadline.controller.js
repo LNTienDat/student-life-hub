@@ -136,7 +136,7 @@ async function xoaDeadline(req, res) {
     const { id } = req.params;
     const idNguoiDung = req.user.id;
 
-    const ketQua = await prisma.deadline.deleteMany({ where: { id: parseInt(id), idNguoiDung } });
+    const ketQua = await prisma.deadline.updateMany({ where: { id: parseInt(id), idNguoiDung, xoaLuc: null }, data: { xoaLuc: new Date() } });
 
     if (ketQua.count === 0) {
       return res.status(404).json({ message: 'Không tìm thấy deadline hoặc bạn không có quyền xóa' });

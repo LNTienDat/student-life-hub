@@ -10,7 +10,7 @@ import api from '../services/api';
 import { dinhDangNgay } from '../utils/formatters';
 import Chatbot from './Chatbot';
 import GlowingNav from './GlowingNav';
-import { Bell, Sun, Moon, Menu, X, LogOut, Clock, BookOpen, Wallet } from 'lucide-react';
+import { Bell, Sun, Moon, Menu, X, LogOut, Clock, BookOpen, Wallet, Home, CalendarDays, UserRound } from 'lucide-react';
 
 function Layout({ children }) {
   const [semester] = useSemester();
@@ -131,6 +131,13 @@ function Layout({ children }) {
         {children || <Outlet />}
       </div>
     </main>
+    <nav aria-label="Điều hướng dưới trên điện thoại" className="fixed inset-x-2 bottom-2 z-40 grid grid-cols-6 gap-0.5 rounded-2xl border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800 lg:hidden" style={{ paddingBottom: 'max(4px, env(safe-area-inset-bottom))' }}>
+      {menu.map((item, index) => {
+        const Icon = [Home, BookOpen, CalendarDays, Clock, Wallet, UserRound][index];
+        const active = location.pathname === item.path;
+        return <Link key={item.path} to={item.path} aria-label={item.label} aria-current={active ? 'page' : undefined} onClick={() => { setMenuMoMobile(false); setChuongMo(false); }} className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-medium ${active ? 'bg-ink-50 text-ink-600 dark:bg-ink-900 dark:text-ink-200' : 'text-slate-600 dark:text-slate-300'}`}><Icon aria-hidden="true" className="h-5 w-5"/><span>{index === 2 ? 'Lịch học' : item.label}</span></Link>;
+      })}
+    </nav>
     <Chatbot />
   </div>;
 }

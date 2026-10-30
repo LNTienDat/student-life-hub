@@ -65,6 +65,17 @@ test('turning off still retains tasks whose enabled 24-hour window already expir
   await call(a, 'put', '/cai-dat', { tuDongXoaDeadline: false });
   expect((await call(a, 'get', '')).body.daXoa.map(r => r.id)).toContain(d.id);
   expect((await call(b, 'delete', '/' + d.id)).status).toBe(404);
+  expect((await call(a, 'delete', '/' + d.id)).status).toBe(404);
+  expect((await prisma.deadline.findUnique({ where: { id: d.id } })).xoaLuc).not.toBeNull();
+});
+
+test.each(['cho_xu_ly', 'hoan_thanh'])('manual deletion moves %s into recoverable trash even with cleanup off', async trangThai => {
+  const d = await row(a, { trangThai });
+  expect((await call(b, 'delete', '/' + d.id)).status).toBe(404);
   expect((await call(a, 'delete', '/' + d.id)).status).toBe(200);
-  expect(await prisma.deadline.findUnique({ where: { id: d.id } })).toBeNull();
+  const list = (await call(a, 'get', '')).body;
+  expect(list.deadlines).toEqual([]);
+  expect(list.daXoa.map(r => r.id)).toEqual([d.id]);
+  expect((await call(a, 'patch', '/' + d.id + '/khoi-phuc')).status).toBe(200);
+  expect((await call(a, 'get', '')).body.deadlines[0].trangThai).toBe('cho_xu_ly');
 });

@@ -166,7 +166,7 @@ function Deadline() {
         value: formatDeadlineDate(d.hanChot),
         extra: d.doUuTien === 'cao' ? 'Khẩn cấp' : d.doUuTien === 'thap' ? 'Ưu tiên thấp' : 'Bình thường',
       },
-      message: 'Bạn có chắc chắn muốn xóa deadline này không? Thao tác này không thể hoàn tác.',
+      message: 'Chuyển deadline này vào Đã xóa? Bạn có thể khôi phục lại sau.',
       confirmText: 'Xác nhận xóa',
       cancelText: 'Hủy bỏ',
       type: 'danger',
@@ -181,7 +181,7 @@ function Deadline() {
       setModalXacNhan((prev) => ({ ...prev, isLoading: true }));
       await deadlineService.xoaDeadline(id);
       setModalXacNhan((prev) => ({ ...prev, isOpen: false, isLoading: false }));
-      hienToast('success', 'Đã xóa deadline thành công!');
+      hienToast('success', 'Đã chuyển deadline vào Đã xóa.');
       clearCache('dashboard_cache');
       taiDuLieu();
     } catch (error) {
@@ -344,12 +344,12 @@ function Deadline() {
         )}
         {!dangTai && !loadError && <details className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
           <summary className="min-h-11 cursor-pointer py-2 font-semibold text-slate-600 dark:text-slate-300">Đã xóa ({daXoa.length})</summary>
-          <p className="mb-3 text-xs text-slate-500">Các việc tự xóa sau 24 giờ được giữ ở đây để xem lại. Khôi phục sẽ đưa về chưa hoàn thành.</p>
+          <p className="mb-3 text-xs text-slate-500">Các việc bạn xóa hoặc được tự xóa sau 24 giờ đều được giữ ở đây. Khôi phục sẽ đưa về chưa hoàn thành.</p>
           <div className="grid gap-2">{daXoa.map(item => <article key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
             <div className="min-w-0 flex-1"><h3 className="break-words text-sm font-medium dark:text-slate-100">{item.tieuDe}</h3><p className="text-xs text-slate-500">{formatDeadlineDate(item.hanChot)}</p></div>
             <button type="button" disabled={saving} onClick={() => khoiPhuc(item)} className="min-h-11 rounded-lg border px-3 text-sm text-ink-600 dark:border-slate-600 dark:text-ink-200">Khôi phục</button>
             <button type="button" disabled={saving} onClick={() => yeuCauXoa(item)} className="min-h-11 rounded-lg px-3 text-sm text-rose-600 dark:text-rose-300">Xóa vĩnh viễn</button>
-          </article>)}{!daXoa.length && <p className="text-sm text-slate-500">Chưa có việc tự xóa.</p>}</div>
+          </article>)}{!daXoa.length && <p className="text-sm text-slate-500">Chưa có việc đã xóa.</p>}</div>
         </details>}
       </div>
 

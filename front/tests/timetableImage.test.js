@@ -105,3 +105,12 @@ test('note labels are excluded without dropping wrapped course titles', () => {
   ]), 5);
   assert.equal(rows[0].tenMon, 'Môn có tiêu đề màu cam xuống dòng thứ hai');
 });
+
+test('OCR Lop trinh is a course title, not a class metadata line',()=>{
+ const r=extractImageTimetable({text:'Lộp trình Python - Thực hành\n13:00 - 17:15'},2);
+ // Fixed-day extraction uses positioned OCR words.
+ const words=[word('Lộp trình Python - Thực hành',100,100),word('13:00 - 17:15',100,125)];
+ const parsed=extractImageTimetable(data(words),2);
+ assert.equal(parsed[0].tenMon,'Lộp trình Python - Thực hành');
+ assert.deepEqual(r,[]);
+});

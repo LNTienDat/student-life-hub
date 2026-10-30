@@ -21,7 +21,7 @@ function wordLines(words) {
   }
   return lines.sort((a,b) => a.y-b.y).map(line => ({ ...line, coloredNote: line.words.some(word => word.coloredNote), text: line.words.sort((a,b) => a.bbox.x0-b.bbox.x0).map(w=>w.text).join(' ') }));
 }
-function metadata(text) { return /^(?:tiet|phong|lop|gv|ths|ts[. ]|pgs|dh\d|ghi\s*chu|tam ngung|nghi hoc)/.test(fold(text).replace(/^[^a-z0-9]+/, '')) || /\b[il]\d[-–]\d{2}\b/i.test(text); }
+function metadata(text) { return /^(?:tiet|phong|lop(?:\s*:|\s+(?:dh|[0-9]))|gv|ths|ts[. ]|pgs|dh\d|ghi\s*chu|tam ngung|nghi hoc)/.test(fold(text).replace(/^[^a-z0-9]+/, '')) || /\b[il]\d[-–]\d{2}\b/i.test(text); }
 function sessions(lines, day) {
   const output = [];
   let previousTime = -1;

@@ -13,9 +13,9 @@ export function extractReceipt(value) {
   const candidates=[];
   const excluded=line=>/khach (?:dua|tra)|tien (?:thua|tra lai|khach)|cash|change|tam tinh|subtotal|giam gia|chiet khau/.test(fold(line));
   for(let index=0;index<lines.length;index++){
-    const normalized=fold(lines[index]);
+    const normalized=fold(lines[index]).replace(/^[^a-z0-9]+/, '');
     if(excluded(normalized))continue;
-    const score=/tong thanh toan|(?:can|phai) thanh toan|grand total|amount due/.test(normalized)?4:/tong cong|tong tien|\bt[.\s]*cong\b|^total\b/.test(normalized)?3:/^thanh tien\b/.test(normalized)?2:/^tien mat\b/.test(normalized)?1:0;
+    const score=/tong thanh toan|(?:can|phai) thanh toan|grand total|amount due/.test(normalized)?4:/(?:^|[^a-z])tong\s*[:：]|tong cong|tong tien|\bt[.\s]*cong\b|^total\b/.test(normalized)?3:/^thanh tien\b/.test(normalized)?2:/^tien mat\b/.test(normalized)?1:0;
     if(!score)continue;
     let source=lines[index];
     if(/\bt[.\s]*cong\b/.test(normalized))source=source.replace(/(t[.\s]*cộng\s+)\d{1,3}\s+(?=\d{1,3}[.,]\d{3}\b)/iu,'$1');
@@ -59,6 +59,11 @@ export function mergeReceiptReadings(primary, alternatives) {
    if(!primary.hasFinalTotal||!primary.soTien||primary.soTien===totals[0]) {
      result.soTien=totals[0];result.hasFinalTotal=true;
    } else { result.soTien='';result.hasFinalTotal=false; }
+ }
+ for (const key of ['danhMuc', 'moTa']) {
+   if ((key === 'danhMuc' && primary[key] !== 'khac') || (key === 'moTa' && primary[key] !== 'Hóa đơn')) continue;
+   const values = [...new Set(alternatives.map(item => item[key]).filter(value => value && value !== 'khac' && value !== 'Hóa đơn'))];
+   if (values.length === 1) result[key] = values[0];
  }
  const dates=[...new Set([primary,...alternatives].map(item=>item.ngayGiaoDich).filter(Boolean))];
  result.ngayGiaoDich=dates.length===1?dates[0]:'';

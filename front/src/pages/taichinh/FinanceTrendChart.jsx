@@ -17,12 +17,13 @@ function FinanceTrendChart({ xuHuong = [], periodLabel }) {
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
               <XAxis dataKey="thang" fontSize={12} tickLine={false} axisLine={false} tick={{ fill: '#64748b' }} />
               <YAxis
+                domain={[0, xuHuong.some(item => Number(item.thu) > 0 || Number(item.chi) > 0) ? 'auto' : 100000]}
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 tick={{ fill: '#64748b' }}
                 tickFormatter={(value) =>
-                  value >= 1000000 ? `${(value / 1000000).toFixed(1)}tr` : `${value / 1000}k`
+                  value >= 1000000 ? `${(value / 1000000).toFixed(1)}tr` : value >= 1000 ? `${value / 1000}k` : `${value}đ`
                 }
               />
               <Legend verticalAlign="top" height={28} />
