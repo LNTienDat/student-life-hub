@@ -116,8 +116,35 @@ test('an already-installing worker is observed without missing the updatefound e
   client.start(); await Promise.resolve();
   assert.equal(client.getSnapshot().updateReady, false);
   registration.installing.state = 'installed';
+  registration.waiting = registration.installing;
   registration.installing.dispatchEvent(new Event('statechange'));
   assert.equal(client.getSnapshot().updateReady, true);
+  client.dispose();
+});
+test('first installation and a worker that already activated do not leave a stale update banner', async () => {
+  const { client, registration, serviceWorker, window } = browserHarness();
+  registration.waiting = null;
+  const worker = Object.assign(new EventTarget(), { state: 'installing' });
+  registration.installing = worker;
+  client.start(); await Promise.resolve();
+  serviceWorker.controller = worker;
+  worker.state = 'installed';
+  worker.dispatchEvent(new Event('statechange'));
+  assert.equal(client.getSnapshot().updateReady, false);
+  registration.waiting = { postMessage() {} };
+  registration.dispatchEvent(new Event('updatefound'));
+  worker.dispatchEvent(new Event('statechange'));
+  assert.equal(client.getSnapshot().updateReady, true);
+  registration.waiting = null;
+  serviceWorker.dispatchEvent(new Event('controllerchange'));
+  assert.equal(client.getSnapshot().updateReady, false);
+  assert.equal(window.reloads, 0);
+  registration.waiting = { postMessage() {} };
+  worker.dispatchEvent(new Event('statechange'));
+  registration.waiting = null;
+  assert.equal(client.applyUpdate(), false);
+  assert.equal(client.getSnapshot().updateReady, false);
+  assert.equal(window.reloads, 0);
   client.dispose();
 });
 test('manifest icons exist at declared PNG sizes; production bundle contains a versioned worker', () => {

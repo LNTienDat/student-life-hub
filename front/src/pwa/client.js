@@ -18,7 +18,10 @@ export function createPwaClient({ window, navigator, enabled }) {
     target.addEventListener(name, callback);
     cleanups.push(() => target.removeEventListener(name, callback));
   }
-  function checkWaiting() { update({ updateReady: Boolean(registration?.waiting) }); }
+  function checkWaiting() {
+    const updateReady = Boolean(registration?.waiting);
+    if (updateReady !== state.updateReady) update({ updateReady });
+  }
   return {
     getSnapshot: () => state,
     subscribe: (listener) => { listeners.add(listener); return () => listeners.delete(listener); },
@@ -38,7 +41,11 @@ export function createPwaClient({ window, navigator, enabled }) {
       });
       if (!enabled || !window.isSecureContext || !navigator.serviceWorker) return;
       listen(navigator.serviceWorker, 'controllerchange', () => {
-        if (applyingUpdate) window.location.reload();
+        checkWaiting();
+        if (applyingUpdate) {
+          applyingUpdate = false;
+          window.location.reload();
+        }
       });
       navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).then((result) => {
         if (disposed) return;
@@ -47,7 +54,7 @@ export function createPwaClient({ window, navigator, enabled }) {
         const watchInstalling = () => {
           const worker = result.installing;
           if (worker) listen(worker, 'statechange', () => {
-            if (worker.state === 'installed') update({ updateReady: Boolean(result.waiting || navigator.serviceWorker.controller) });
+            if (['installed', 'activated', 'redundant'].includes(worker.state)) checkWaiting();
           });
         };
         watchInstalling();
@@ -63,7 +70,10 @@ export function createPwaClient({ window, navigator, enabled }) {
       return choice.outcome;
     },
     applyUpdate() {
-      if (!registration?.waiting) return false;
+      if (!registration?.waiting) {
+        checkWaiting();
+        return false;
+      }
       applyingUpdate = true;
       registration.waiting.postMessage({ type: 'ACTIVATE_UPDATE' });
       return true;
