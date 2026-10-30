@@ -1,3 +1,4 @@
+const { categoryLabels } = require('../modules/finance/category.service');
 const { vietnamParts, monthRange } = require('../utils/date.util');
 const cron = require('node-cron');
 const prisma = require('../prismaClient');
@@ -139,12 +140,13 @@ async function canhBaoNganSachQuaEmail(idNguoiDungLoc = null) {
         .filter((ns) => ns.daChi > ns.soTienToiDa);
 
       if (vuot.length === 0) continue;
+      const labels = await categoryLabels(uid);
 
       const danhSachHtml = vuot
         .map(
           (ns) => `
             <li style="margin-bottom:8px;">
-              <strong>${escapeHtml(ns.danhMuc.replace('_', ' '))}</strong>: đã chi
+              <strong>${escapeHtml(labels[ns.danhMuc] || ns.danhMuc)}</strong>: đã chi
               ${ns.daChi.toLocaleString('vi-VN')}đ / hạn mức ${ns.soTienToiDa.toLocaleString('vi-VN')}đ
             </li>`
         )

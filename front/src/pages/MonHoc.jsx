@@ -1,5 +1,8 @@
+import useSessionDraft from '../hooks/useSessionDraft';
 import DataLoadError from '../components/DataLoadError';
+import useDataRevision from '../hooks/useDataRevision';
 import ImportPanel from '../components/ImportPanel';
+import { useCurrentSemester } from '../context/SemesterContext';
 import { useSemester } from '../hooks/useSemester';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import academicService from '../services/academicService';
@@ -15,25 +18,27 @@ import { PageSkeleton } from '../components/Skeleton';
 
 function MonHoc() {
   const [semester] = useSemester();
+  const { currentSemester } = useCurrentSemester();
   const [danhSach, setDanhSach] = useState([]);
   const [gpa, setGpa] = useState(null);
   const [gpaTheoKy, setGpaTheoKy] = useState([]);
   const [dangTai, setDangTai] = useState(true);
+  const externalRevision = useDataRevision({ externalOnly: true });
   const [loadError, setLoadError] = useState('');
   const [saving, setSaving] = useState(false);
   const saveLock = useRef(false);
-  const [hienFormThem, setHienFormThem] = useState(false);
-  const [dangSuaId, setDangSuaId] = useState(null);
+  const [hienFormThem, setHienFormThem] = useSessionDraft('MonHoc.jsx:hienFormThem', false);
+  const [dangSuaId, setDangSuaId] = useSessionDraft('MonHoc.jsx:dangSuaId', null);
 
-  const [monThemDiemId, setMonThemDiemId] = useState(null);
-  const [dangSuaDiemId, setDangSuaDiemId] = useState(null);
-  const [loaiDanhGia, setLoaiDanhGia] = useState('');
-  const [diemSo, setDiemSo] = useState('');
-  const [trongSo, setTrongSo] = useState('');
+  const [monThemDiemId, setMonThemDiemId] = useSessionDraft('MonHoc.jsx:monThemDiemId', null);
+  const [dangSuaDiemId, setDangSuaDiemId] = useSessionDraft('MonHoc.jsx:dangSuaDiemId', null);
+  const [loaiDanhGia, setLoaiDanhGia] = useSessionDraft('MonHoc.jsx:loaiDanhGia', '');
+  const [diemSo, setDiemSo] = useSessionDraft('MonHoc.jsx:diemSo', '');
+  const [trongSo, setTrongSo] = useSessionDraft('MonHoc.jsx:trongSo', '');
 
-  const [tenMon, setTenMon] = useState('');
-  const [tinChi, setTinChi] = useState('');
-  const [hocKy, setHocKy] = useState('');
+  const [tenMon, setTenMon] = useSessionDraft('MonHoc.jsx:tenMon', '');
+  const [tinChi, setTinChi] = useSessionDraft('MonHoc.jsx:tinChi', '');
+  const [hocKy, setHocKy] = useSessionDraft('MonHoc.jsx:hocKy', '');
 
   // State modal xác nhận hiện đại
   const [modalXacNhan, setModalXacNhan] = useState({
@@ -76,9 +81,10 @@ function MonHoc() {
     const counter = loadVersion;
     taiDuLieu();
     return () => { counter.current++; };
-  }, [taiDuLieu]);
+  }, [taiDuLieu, externalRevision]);
 
   function moFormSua(mon) {
+    if (saveLock.current) return;
     setTenMon(mon.ten);
     setTinChi(mon.tinChi);
     setHocKy(mon.hocKy);
@@ -88,9 +94,10 @@ function MonHoc() {
   }
 
   function moFormThem() {
+    if (saveLock.current) return;
     setTenMon('');
     setTinChi('');
-    setHocKy(semester);
+    setHocKy(semester || currentSemester);
     setDangSuaId(null);
     setHienFormThem(!hienFormThem);
   }
@@ -139,6 +146,8 @@ function MonHoc() {
   }
 
   async function thucHienXoaMon(id, tenMonXoa) {
+    if (saveLock.current) return;
+    saveLock.current = true; setSaving(true);
     try {
       setModalXacNhan((prev) => ({ ...prev, isLoading: true }));
       await academicService.xoaMonHoc(id);
@@ -150,10 +159,11 @@ function MonHoc() {
       console.error(error);
       setModalXacNhan((prev) => ({ ...prev, isLoading: false }));
       hienToast('error', error.response?.data?.message || 'Không thể xóa môn học! Hãy thử lại.');
-    }
+    } finally { saveLock.current = false; setSaving(false); }
   }
 
   function moFormThemDiem(monId) {
+    if (saveLock.current) return;
     if (monThemDiemId === monId && !dangSuaDiemId) {
       setMonThemDiemId(null);
     } else {
@@ -166,6 +176,7 @@ function MonHoc() {
   }
 
   function moFormSuaDiem(monId, diem) {
+    if (saveLock.current) return;
     setMonThemDiemId(monId);
     setDangSuaDiemId(diem.id);
     setLoaiDanhGia(diem.loaiDanhGia);
@@ -227,6 +238,8 @@ function MonHoc() {
   }
 
   async function thucHienXoaDiem(diemId, loaiDanhGiaXoa) {
+    if (saveLock.current) return;
+    saveLock.current = true; setSaving(true);
     try {
       setModalXacNhan((prev) => ({ ...prev, isLoading: true }));
       await academicService.xoaDiem(diemId);
@@ -238,7 +251,7 @@ function MonHoc() {
       console.error(error);
       setModalXacNhan((prev) => ({ ...prev, isLoading: false }));
       hienToast('error', error.response?.data?.message || 'Không thể xóa điểm! Hãy thử lại.');
-    }
+    } finally { saveLock.current = false; setSaving(false); }
   }
 
   async function xuLyXuatBangDiem() {
@@ -264,7 +277,7 @@ function MonHoc() {
 
   return (
     <>
-      <div className="max-w-5xl mx-auto space-y-6 pb-12">
+      <div className="w-full min-w-0 space-y-6 pb-12">
         {/* Header & Tiện ích */}
         <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
           <div>

@@ -8,3 +8,16 @@ export function readSession(storage, now = Date.now()) {
     return user;
   } catch { return null; }
 }
+
+export function subscribeSessionChanges(storage, target, onChange) {
+  const sync = (event) => {
+    // Login writes token first, user last. Wait for that commit before reading
+    // the pair so another tab never redirects on a temporary ID mismatch.
+    if (event.key === null || event.key === 'user'
+      || (event.key === 'token' && event.newValue === null)) {
+      onChange(readSession(storage));
+    }
+  };
+  target.addEventListener('storage', sync);
+  return () => target.removeEventListener('storage', sync);
+}

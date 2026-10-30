@@ -1,12 +1,16 @@
+import useSessionDraft from '../hooks/useSessionDraft';
+import TimetableAdjustmentModal from './thoikhoabieu/TimetableAdjustmentModal';
+import {monday,addDays} from './thoikhoabieu/weekUtils';
 import DataLoadError from '../components/DataLoadError';
-import ImportPanel from '../components/ImportPanel';
+import useDataRevision from '../hooks/useDataRevision';
 import TimetableImageImport from '../components/TimetableImageImport';
+import { useCurrentSemester } from '../context/SemesterContext';
 import { useSemester } from '../hooks/useSemester';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import timetableService from '../services/timetableService';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
-import { Plus, X, CalendarDays, Share2 } from 'lucide-react';
+import { Plus, X, CalendarDays, CalendarRange, CalendarCheck, ChevronLeft, ChevronRight, Share2, Trash2 } from 'lucide-react';
 import { CAC_THU, gioSangPhut } from './thoikhoabieu/timetableUtils';
 
 import TimetableForm from './thoikhoabieu/TimetableForm';
@@ -17,22 +21,31 @@ import { PageSkeleton } from '../components/Skeleton';
 
 function ThoiKhoaBieu() {
   const [semester] = useSemester();
-  const [classSemester, setClassSemester] = useState(semester);
+  const [week,setWeek]=useState(()=>monday());
+  const [adjusting,setAdjusting]=useState(null);
+  const [adjustments,setAdjustments]=useState([]);
+  const { currentSemester } = useCurrentSemester();
+  const [classSemester, setClassSemester] = useSessionDraft('ThoiKhoaBieu.jsx:classSemester', semester);
   const [danhSach, setDanhSach] = useState([]);
+  const [baseList,setBaseList]=useState([]);
   const [dangTai, setDangTai] = useState(true);
+  const [loadedSemester, setLoadedSemester] = useState(null);
+  const [refreshVersion, setRefreshVersion] = useState(0);
+  const [importVersion, setImportVersion] = useState(0);
+  const externalRevision = useDataRevision({ externalOnly: true });
   const [loadError, setLoadError] = useState('');
   const [saving, setSaving] = useState(false);
   const saveLock = useRef(false);
-  const [hienForm, setHienForm] = useState(false);
-  const [dangSuaId, setDangSuaId] = useState(null);
+  const [hienForm, setHienForm] = useSessionDraft('ThoiKhoaBieu.jsx:hienForm', false);
+  const [dangSuaId, setDangSuaId] = useSessionDraft('ThoiKhoaBieu.jsx:dangSuaId', null);
   const [hienModalShare, setHienModalShare] = useState(false);
 
-  const [tenMon, setTenMon] = useState('');
-  const [thu, setThu] = useState(2);
-  const [gioBatDau, setGioBatDau] = useState('07:00');
-  const [gioKetThuc, setGioKetThuc] = useState('09:00');
-  const [phongHoc, setPhongHoc] = useState('');
-  const [giangVien, setGiangVien] = useState('');
+  const [tenMon, setTenMon] = useSessionDraft('ThoiKhoaBieu.jsx:tenMon', '');
+  const [thu, setThu] = useSessionDraft('ThoiKhoaBieu.jsx:thu', 2);
+  const [gioBatDau, setGioBatDau] = useSessionDraft('ThoiKhoaBieu.jsx:gioBatDau', '07:00');
+  const [gioKetThuc, setGioKetThuc] = useSessionDraft('ThoiKhoaBieu.jsx:gioKetThuc', '09:00');
+  const [phongHoc, setPhongHoc] = useSessionDraft('ThoiKhoaBieu.jsx:phongHoc', '');
+  const [giangVien, setGiangVien] = useSessionDraft('ThoiKhoaBieu.jsx:giangVien', '');
 
   // State modal xác nhận hiện đại
   const [modalXacNhan, setModalXacNhan] = useState({
@@ -53,27 +66,30 @@ function ThoiKhoaBieu() {
   const loadVersion = useRef(0);
   const taiDuLieu = useCallback(() => {
     const version = ++loadVersion.current;
-    return timetableService.layThoiKhoaBieu(semester).then((res) => {
+    return timetableService.layThoiKhoaBieu(semester,week).then((res) => {
       if (version !== loadVersion.current) return;
       setLoadError('');
       setDanhSach(res.data.thoiKhoaBieu || []);
+      setAdjustments(res.data.dieuChinhs||[]);
+      setBaseList(res.data.lichLap||res.data.thoiKhoaBieu||[]);
     }).catch((error) => {
       if (version !== loadVersion.current) return;
       console.error(error);
       setLoadError('Không thể tải thời khóa biểu. Vui lòng kiểm tra kết nối mạng.');
     }).finally(() => {
-      if (version === loadVersion.current) setDangTai(false);
+      if (version === loadVersion.current) { setDangTai(false); setLoadedSemester(semester+':'+week); }
     });
-  }, [semester]);
+  }, [semester,week]);
 
   useEffect(() => {
     const counter = loadVersion;
     taiDuLieu();
     return () => { counter.current++; };
-  }, [taiDuLieu]);
+  }, [taiDuLieu, externalRevision, refreshVersion]);
 
   function moFormThem() {
-    setClassSemester(semester);
+    if (saveLock.current) return;
+    setClassSemester(semester || currentSemester);
     setDangSuaId(null);
     setTenMon('');
     setThu(2);
@@ -85,6 +101,8 @@ function ThoiKhoaBieu() {
   }
 
   function moFormSua(bh) {
+    if (saveLock.current) return;
+    bh=baseList.find(item=>item.id===bh.id)||bh;
     setHienForm(true);
     setClassSemester(bh.hocKy || '');
     setDangSuaId(bh.id);
@@ -130,7 +148,7 @@ function ThoiKhoaBieu() {
     setModalXacNhan({
       isOpen: true,
       title: 'Xóa buổi học?',
-      subTitle: 'Hành động này sẽ xóa buổi học khỏi thời khóa biểu của bạn.',
+      subTitle: 'Xóa lịch lặp ở tất cả các tuần và các điều chỉnh riêng của buổi này.',
       itemInfo: {
         label: bh.tenMon,
         value: `${thuHoc} • ${bh.gioBatDau} - ${bh.gioKetThuc}${bh.phongHoc ? ` • Phòng ${bh.phongHoc}` : ''}`,
@@ -145,6 +163,8 @@ function ThoiKhoaBieu() {
   }
 
   async function thucHienXoa(id) {
+    if (saveLock.current) return;
+    saveLock.current = true; setSaving(true);
     setModalXacNhan((prev) => ({ ...prev, isLoading: true }));
     try {
       await timetableService.xoaBuoiHoc(id);
@@ -154,7 +174,49 @@ function ThoiKhoaBieu() {
     } catch (error) {
       setModalXacNhan((prev) => ({ ...prev, isLoading: false }));
       hienToast('error', error.response?.data?.message || 'Xóa buổi học thất bại');
-    }
+    } finally { saveLock.current = false; setSaving(false); }
+  }
+
+
+  function yeuCauXoaLich() {
+    if (saveLock.current || dangTai || loadedSemester !== semester+':'+week || loadError || !baseList.length) return;
+    const ids = [...new Set(baseList.map(item => item.id))];
+    const scope = semester ? 'Lịch lặp của học kỳ ' + semester : 'Lịch lặp của tất cả học kỳ đang xem';
+    const shared = semester && baseList.some(item => !item.hocKy);
+    setModalXacNhan({
+      isOpen: true,
+      title: 'Xóa lịch hiện tại?',
+      itemInfo: { label: scope, value: ids.length + ' buổi học' },
+      message: 'Sẽ xóa ' + ids.length + ' lịch lặp trong phạm vi này ở tất cả các tuần, cùng các điều chỉnh riêng.' +
+        (shared ? ' Bao gồm lịch cũ chưa gắn học kỳ đang được hiển thị chung.' : '') +
+        ' Dữ liệu đã xóa không thể hoàn tác.',
+      confirmText: 'Xóa ' + ids.length + ' buổi học',
+      cancelText: 'Hủy bỏ',
+      type: 'danger',
+      isLoading: false,
+      onConfirm: async () => {
+        if (saveLock.current) return;
+        saveLock.current = true;
+        setSaving(true);
+        setModalXacNhan(previous => ({ ...previous, isLoading: true }));
+        try {
+          const { data } = await timetableService.xoaNhieuBuoiHoc(ids);
+          setModalXacNhan(previous => ({ ...previous, isOpen: false, isLoading: false }));
+          setDanhSach(previous => previous.filter(item => !ids.includes(item.id)));
+          if (ids.includes(dangSuaId)) { setHienForm(false); setDangSuaId(null); }
+          setImportVersion(value => value + 1);
+          setRefreshVersion(value => value + 1);
+          hienToast('success', 'Đã xóa ' + data.count + ' buổi học.');
+        } catch (error) {
+          setModalXacNhan(previous => ({ ...previous, isLoading: false }));
+          setRefreshVersion(value => value + 1);
+          hienToast('error', error.response?.data?.message || 'Chưa xóa được lịch học. Hãy thử lại.');
+        } finally {
+          saveLock.current = false;
+          setSaving(false);
+        }
+      },
+    });
   }
 
   const buoiTheoThu = useMemo(() => {
@@ -170,12 +232,12 @@ function ThoiKhoaBieu() {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto space-y-6 pb-12">
+      <div className="w-full min-w-0 space-y-6 pb-12">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
           <div>
             <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Thời khóa biểu tuần
+              Thời khóa biểu
             </h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
               Bạn có {soMonHoc} buổi học trong tuần này
@@ -183,6 +245,11 @@ function ThoiKhoaBieu() {
           </div>
 
           <div className="flex items-center gap-2.5 flex-wrap">
+            <button type="button" onClick={yeuCauXoaLich}
+              disabled={saving || dangTai || loadedSemester !== semester+':'+week || !!loadError || !baseList.length || baseList.length > 1000}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-40 dark:border-rose-900/50 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-rose-950/30">
+              <Trash2 className="h-4 w-4" aria-hidden="true" />Xóa lịch hiện tại
+            </button>
             <button
               onClick={() => setHienModalShare(true)}
               className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium text-sm transition-colors shadow-sm"
@@ -205,9 +272,18 @@ function ThoiKhoaBieu() {
           </div>
         </div>
 
+        <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem_2.75rem] items-center gap-2 sm:flex">
+          <button type="button" disabled={saving} aria-label="Tuần trước" title="Tuần trước" onClick={() => setWeek(addDays(week, -7))} className="inline-flex h-11 w-11 items-center justify-center rounded-xl border dark:border-slate-600"><ChevronLeft aria-hidden="true" className="h-5 w-5" /></button>
+          <label title="Chọn tuần bắt đầu" className="inline-flex min-h-11 min-w-0 items-center gap-2 rounded-xl border bg-white px-2 text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">
+            <CalendarRange aria-hidden="true" className="hidden h-5 w-5 shrink-0 sm:block" />
+            <input type="date" min="1000-01-01" max="9999-12-24" aria-label="Tuần bắt đầu" value={week} onChange={e => { if (e.target.value) setWeek(monday(e.target.value)); }} className="min-h-11 w-full min-w-0 bg-transparent text-sm sm:w-auto" />
+          </label>
+          <button type="button" disabled={saving} aria-label="Tuần sau" title="Tuần sau" onClick={() => setWeek(addDays(week, 7))} className="inline-flex h-11 w-11 items-center justify-center rounded-xl border dark:border-slate-600"><ChevronRight aria-hidden="true" className="h-5 w-5" /></button>
+          <button type="button" disabled={saving} aria-label="Về tuần hiện tại" title="Về tuần hiện tại" onClick={() => setWeek(monday())} className="inline-flex h-11 w-11 items-center justify-center rounded-xl border text-ink-600 hover:bg-ink-50 dark:border-slate-600 dark:text-ink-200 dark:hover:bg-slate-700"><CalendarCheck aria-hidden="true" className="h-5 w-5" /></button>
+        </div>
+        {!!adjustments.length&&<details className="rounded-xl border border-slate-200 p-3 text-sm dark:border-slate-700"><summary className="min-h-11 cursor-pointer py-2 font-medium">Điều chỉnh trong tuần ({adjustments.length})</summary>{adjustments.map(item=><div key={item.id} className="flex flex-wrap items-center justify-between gap-2 border-t py-2 dark:border-slate-700"><span className="min-w-0 break-words">{item.tenMon} · {item.ngayGoc} · {item.loai==='nghi'?'Nghỉ':('Đổi sang '+item.ngayMoi+' '+item.gioBatDau+'–'+item.gioKetThuc)}</span><button type="button" disabled={saving} onClick={async()=>{if(saveLock.current)return;saveLock.current=true;setSaving(true);try{await timetableService.xoaDieuChinh(item.id);setRefreshVersion(n=>n+1);hienToast('success','Đã hoàn tác điều chỉnh.');}catch(e){hienToast('error',e.response?.data?.message||'Chưa hoàn tác được.');}finally{saveLock.current=false;setSaving(false);}}} className="min-h-11 shrink-0 px-3 text-ink-600">Hoàn tác điều chỉnh</button></div>)}</details>}
         {semester && danhSach.some((item) => !item.hocKy) && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">Lịch cũ chưa xếp học kỳ vẫn được hiển thị. Sửa buổi học để gắn vào học kỳ phù hợp.</p>}
-        <TimetableImageImport semester={semester} onImported={taiDuLieu} />
-        <ImportPanel kind="timetable" onImported={taiDuLieu} />
+        <TimetableImageImport key={(semester || currentSemester) + ':' + importVersion} semester={semester || currentSemester} onImported={taiDuLieu} />
         {/* Form thêm mới */}
         <TimetableForm
           hocKy={classSemester}
@@ -231,7 +307,7 @@ function ThoiKhoaBieu() {
           onCancel={moFormThem}
         />
 
-        {loadError ? <DataLoadError message={loadError} onRetry={taiDuLieu} /> : dangTai ? (
+        {loadError ? <DataLoadError message={loadError} onRetry={taiDuLieu} /> : dangTai || loadedSemester !== semester+':'+week ? (
           <PageSkeleton />
         ) : soMonHoc === 0 ? (
           <div className="flex flex-col items-center justify-center p-16 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60 text-center">
@@ -239,10 +315,10 @@ function ThoiKhoaBieu() {
               <CalendarDays className="w-8 h-8 text-slate-400" />
             </div>
             <h3 className="text-lg font-display font-semibold text-slate-800 dark:text-slate-200">
-              Lịch học trống
+              {baseList.length?'Tuần này không có buổi học':'Lịch học trống'}
             </h3>
             <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
-              Bạn chưa có buổi học nào. Hãy bắt đầu thêm các môn học vào thời khóa biểu nhé.
+              {baseList.length?'Các buổi trong tuần đã được điều chỉnh. Bạn có thể xem tuần khác hoặc hoàn tác điều chỉnh.':'Thêm lịch lặp hoặc nhập thời khóa biểu từ ảnh để bắt đầu.'}
             </p>
             <button
               onClick={moFormThem}
@@ -253,14 +329,16 @@ function ThoiKhoaBieu() {
           </div>
         ) : (
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 overflow-hidden">
-            <TimetableGrid buoiTheoThu={buoiTheoThu} onSua={moFormSua} onXoa={yeuCauXoa} />
-            <TimetableMobile buoiTheoThu={buoiTheoThu} onSua={moFormSua} onXoa={yeuCauXoa} />
+            <TimetableGrid buoiTheoThu={buoiTheoThu} onSua={moFormSua} onXoa={yeuCauXoa} onDieuChinh={setAdjusting} disabled={saving} />
+            <TimetableMobile buoiTheoThu={buoiTheoThu} onSua={moFormSua} onXoa={yeuCauXoa} onDieuChinh={setAdjusting} disabled={saving} />
           </div>
         )}
       </div>
 
+      {adjusting&&<TimetableAdjustmentModal key={adjusting.occurrenceId} item={adjusting} onClose={()=>setAdjusting(null)} onSaved={()=>setRefreshVersion(n=>n+1)}/>}
       {/* Modal chia sẻ TKB */}
       {hienModalShare && <TimetableShareModal
+        semester={semester || currentSemester}
         isOpen={hienModalShare}
         onClose={() => setHienModalShare(false)}
       />}
@@ -268,7 +346,7 @@ function ThoiKhoaBieu() {
       {/* Modal xác nhận xóa hiện đại */}
       <ConfirmModal
         isOpen={modalXacNhan.isOpen}
-        onClose={() => setModalXacNhan((prev) => ({ ...prev, isOpen: false }))}
+        onClose={() => { if (!modalXacNhan.isLoading) setModalXacNhan((prev) => ({ ...prev, isOpen: false })); }}
         onConfirm={modalXacNhan.onConfirm}
         title={modalXacNhan.title}
         subTitle={modalXacNhan.subTitle}

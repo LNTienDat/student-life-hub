@@ -1,7 +1,9 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { normalizeSemester } = require('../../utils/semester.util');
 const prisma = require('../../prismaClient');
+const { serializable } = require('../../utils/transaction.util');
 const { guiEmailDatLaiMatKhau } = require('../../utils/email.util');
 const { AUTH } = require('../../constants');
 
@@ -101,12 +103,12 @@ async function xemHoSo(req, res) {
 // Cập nhật hồ sơ
 async function suaHoSo(req, res) {
   try {
-    const { ten, truong, nganh, khoaHoc, avatar } = req.body;
+    const { ten, truong, nganh, khoaHoc, avatar, hocKyHienTai } = req.body;
 
-    const limits = { ten: AUTH.MAX_TEN_LENGTH, truong: AUTH.MAX_TRUONG_LENGTH, nganh: AUTH.MAX_NGANH_LENGTH, khoaHoc: AUTH.MAX_KHOA_HOC_LENGTH, avatar: AUTH.MAX_AVATAR_LENGTH };
+    const limits = { ten: AUTH.MAX_TEN_LENGTH, truong: AUTH.MAX_TRUONG_LENGTH, nganh: AUTH.MAX_NGANH_LENGTH, khoaHoc: AUTH.MAX_KHOA_HOC_LENGTH, avatar: AUTH.MAX_AVATAR_LENGTH, hocKyHienTai: 100 };
     for (const [field, max] of Object.entries(limits)) {
       const value = req.body[field];
-      if (value !== undefined && (typeof value !== 'string' || value.length > max || (field === 'ten' && !value.trim()))) {
+      if (value !== undefined && (typeof value !== 'string' || value.length > max || (['ten', 'hocKyHienTai'].includes(field) && !value.trim()))) {
         return res.status(400).json({ message: `Thông tin hồ sơ không hợp lệ (tối đa ${max} ký tự)` });
       }
     }
@@ -127,9 +129,15 @@ async function suaHoSo(req, res) {
       return res.status(400).json({ message: 'Đường dẫn avatar quá dài' });
     }
 
-    const nguoiDung = await prisma.nguoiDung.update({
-      where: { id: req.user.id },
-      data: { ten: ten?.trim(), truong: truong?.trim(), nganh: nganh?.trim(), khoaHoc: khoaHoc?.trim(), avatar: avatar?.trim() },
+    const nguoiDung = await serializable(prisma, async tx => {
+      await tx.$queryRaw`SELECT id FROM "NguoiDung" WHERE id = ${req.user.id} FOR UPDATE`;
+      const previous = await tx.nguoiDung.findUnique({where:{id:req.user.id}});
+      const history = [...new Set([...(previous.hocKyDaLuu || []), previous.hocKyHienTai, hocKyHienTai].map(normalizeSemester).filter(Boolean))];
+      return tx.nguoiDung.update({
+        where: { id: req.user.id },
+        data: { ten: ten?.trim(), truong: truong?.trim(), nganh: nganh?.trim(), khoaHoc: khoaHoc?.trim(), avatar: avatar?.trim(),
+          hocKyHienTai: hocKyHienTai === undefined ? undefined : normalizeSemester(hocKyHienTai), hocKyDaLuu: history },
+      });
     });
     const { matKhau: _, resetPasswordToken: __, resetPasswordExpiry: ___, ...thongTin } = nguoiDung;
     res.json({ message: 'Cập nhật hồ sơ thành công', user: thongTin });

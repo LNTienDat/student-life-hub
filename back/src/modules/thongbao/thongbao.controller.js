@@ -1,8 +1,10 @@
 const { vietnamParts, monthRange } = require('../../utils/date.util');
 const prisma = require('../../prismaClient');
+const { tongHopGiaoDich } = require('../finance/finance.repository');
 const { nhacDeadlineQuaEmail, canhBaoNganSachQuaEmail } = require('../../cron/thongBao.cron');
 const { canhBaoMonNguyCoService } = require('../academic/academic.service');
 const { kiemTraNganSachService } = require('../finance/finance.service');
+const { categoryLabels } = require('../finance/category.service');
 const { ACADEMIC } = require('../../constants');
 
 // CN31: Tổng hợp thông báo in-app (chuông) — gộp 3 nguồn: deadline sắp hết hạn,
@@ -11,7 +13,8 @@ async function layThongBao(req, res) {
   try {
     const idNguoiDung = req.user.id;
     const now = new Date();
-    const gioiHan = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const part=vietnamParts(now);
+    const gioiHan = new Date(Date.UTC(part.year,part.month-1,part.day+4)-7*3600000-1);
     const { month: thang, year: nam } = vietnamParts(now);
     const { from, to } = monthRange(thang, nam);
 
@@ -19,8 +22,8 @@ async function layThongBao(req, res) {
       prisma.deadline.findMany({
         where: {
           idNguoiDung,
-          trangThai: 'dang_dien_hanh',
-          hanChot: { gte: now, lte: gioiHan },
+          trangThai: { not: 'hoan_thanh' },
+          hanChot: { lte: gioiHan },
         },
         orderBy: { hanChot: 'asc' },
       }),
@@ -29,9 +32,7 @@ async function layThongBao(req, res) {
         include: { diems: true },
       }),
       prisma.nganSach.findMany({ where: { idNguoiDung, thang, nam } }),
-      prisma.giaoDich.findMany({
-        where: { idNguoiDung, loai: 'chi', ngayGiaoDich: { gte: from, lt: to } },
-      }),
+      tongHopGiaoDich({ idNguoiDung, loai: 'chi', ngayGiaoDich: { gte: from, lt: to } }),
     ]);
 
     // 2. Môn học nguy cơ điểm thấp (dùng chung service của academic)
@@ -41,16 +42,17 @@ async function layThongBao(req, res) {
     const nganSachVuot = kiemTraNganSachService(nganSachs, giaoDichs).filter((ns) => ns.vuotNganSach);
 
     // Gộp thành 1 danh sách thông báo có id thống nhất để frontend đánh dấu "đã đọc"
+    const labels = await categoryLabels(idNguoiDung);
     const thongBaos = [
       ...deadlines.map((d) => ({
-        id: `deadline-${d.id}`,
+        id: `deadline-${d.id}-${new Date(d.hanChot).getTime()}`,
         loai: 'deadline',
-        tieuDe: `Deadline sắp hết hạn: ${d.tieuDe}`,
+        tieuDe: `Deadline: ${d.tieuDe}`,
         moTa: `Hạn chót: ${new Date(d.hanChot).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`,
         thoiGian: d.hanChot,
       })),
       ...monNguyCo.map((mon) => ({
-        id: `hoctap-${mon.ten}`,
+        id: `hoctap-${mon.id}`,
         loai: 'hoc_tap',
         tieuDe: `Môn nguy cơ điểm thấp: ${mon.ten}`,
         moTa: `Điểm hiện tại: ${mon.diemHienTai}/10`,
@@ -59,7 +61,7 @@ async function layThongBao(req, res) {
       ...nganSachVuot.map((ns) => ({
         id: `ngansach-${ns.danhMuc}-${thang}-${nam}`,
         loai: 'ngan_sach',
-        tieuDe: `Vượt ngân sách: ${ns.danhMuc.replace('_', ' ')}`,
+        tieuDe: `Vượt ngân sách: ${labels['chi:'+ns.danhMuc] || labels[ns.danhMuc] || ns.danhMuc}`,
         moTa: `Đã chi ${ns.daChi.toLocaleString('vi-VN')}đ / hạn mức ${ns.soTienToiDa.toLocaleString('vi-VN')}đ`,
         thoiGian: now,
       })),

@@ -1,3 +1,4 @@
+import { normalizeSemester } from '../utils/semester';
 import { useCallback, useSyncExternalStore } from 'react';
 import { useAuth } from '../context/AuthContext';
 
@@ -9,10 +10,10 @@ function subscribe(callback) {
 export function useSemester() {
   const { user } = useAuth();
   const key = `slh:semester:${user?.id}`;
-  const getSnapshot = useCallback(() => localStorage.getItem(key) || '', [key]);
+  const getSnapshot = useCallback(() => normalizeSemester(localStorage.getItem(key)), [key]);
   const semester = useSyncExternalStore(subscribe, getSnapshot);
   const setSemester = useCallback((value) => {
-    localStorage.setItem(key, value.trim());
+    localStorage.setItem(key, normalizeSemester(value));
     window.dispatchEvent(new Event('slh:semester'));
   }, [key]);
   return [semester, setSemester];

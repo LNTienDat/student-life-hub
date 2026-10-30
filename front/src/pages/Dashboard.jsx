@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useCurrentSemester } from '../context/SemesterContext';
 import { useAuth } from '../context/AuthContext';
 import useDataRevision from '../hooks/useDataRevision';
 import QuickEntry from './dashboard/QuickEntry';
 import { academicService } from '../services/academicService';
 import { deadlineService } from '../services/deadlineService';
 import { financeService } from '../services/financeService';
-import { Plus, CalendarPlus, Wallet, ChevronDown } from 'lucide-react';
+import { Plus, CalendarPlus, Wallet } from 'lucide-react';
 
 import DashboardKpiCards from './dashboard/DashboardKpiCards';
-import DashboardWarnings from './dashboard/DashboardWarnings';
-import DashboardCharts from './dashboard/DashboardCharts';
 import DashboardToday from './dashboard/DashboardToday';
 import { PageSkeleton } from '../components/Skeleton';
 
@@ -35,12 +34,12 @@ const itemVariants = {
 
 function Dashboard() {
   const { user } = useAuth();
+  const { currentSemester } = useCurrentSemester();
   const revision = useDataRevision();
   const semester = ''; // Today always shows all semesters; filters belong to the detail pages.
   const [result, setResult] = useState(null);
   const [retry, setRetry] = useState(0);
   const [quickEntry, setQuickEntry] = useState(null);
-  const [showCharts, setShowCharts] = useState(false);
 
   const queryKey = `${revision}:${semester}:${retry}:${user?.id}`;
   const data = result?.key === queryKey ? result.data : {};
@@ -52,10 +51,7 @@ function Dashboard() {
     const sources = [
       ['gpa', () => academicService.tinhGPA(semester), (r) => r.data.hasGrades === false ? null : r.data.gpa],
       ['deadlinesSapToi', () => deadlineService.layDeadlineSapToi(7, semester), (r) => r.data.deadlines || []],
-      ['monNguyCo', () => academicService.canhBaoMonNguyCo(5, semester), (r) => r.data.monNguyCo || []],
       ['thongKeTaiChinh', () => financeService.layThongKe(), (r) => r.data],
-      ['nganSachVuot', () => financeService.layNganSach(), (r) => r.data.ketQua?.filter((item) => item.vuotNganSach) || []],
-      ['gpaTheoKy', () => academicService.gpaTheoKy(), (r) => r.data.theoKy || []],
     ];
     Promise.allSettled(sources.map(async ([key, request, select]) => {
       try {
@@ -69,7 +65,7 @@ function Dashboard() {
   }, [queryKey, semester]);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="w-full min-w-0 space-y-6">
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="min-w-0">
           <h1 className="break-words font-display text-2xl font-bold tracking-tight text-slate-900">Xin chào, {user?.ten || 'bạn'}!</h1>
@@ -89,14 +85,7 @@ function Dashboard() {
       {loading && Object.keys(data).length === 0 ? <PageSkeleton /> : <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-5">
         <section aria-label="Tổng quan">
         <DashboardKpiCards gpa={data.gpa} deadlinesSapToi={data.deadlinesSapToi} thongKeTaiChinh={data.thongKeTaiChinh} itemVariants={itemVariants} deadlineUnavailable={!data.deadlinesSapToi} semester={semester} /></section>
-        <DashboardToday key={user?.id} userId={user?.id} semester={semester} />
-        <DashboardWarnings monNguyCo={data.monNguyCo} nganSachVuot={data.nganSachVuot} itemVariants={itemVariants} />
-        {(data.gpaTheoKy?.length > 0 || Object.keys(data.thongKeTaiChinh?.theoDanhMuc || {}).length > 0) && <section>
-          <button type="button" onClick={() => setShowCharts(!showCharts)} aria-expanded={showCharts} aria-controls="dashboard-charts" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-ink-600">
-            {showCharts ? 'Thu gọn biểu đồ' : 'Xem biểu đồ'}<ChevronDown aria-hidden="true" className={`h-4 w-4 transition-transform ${showCharts ? 'rotate-180' : ''}`} />
-          </button>
-          {showCharts && <div id="dashboard-charts" className="mt-3"><DashboardCharts thongKeTaiChinh={data.thongKeTaiChinh} gpaTheoKy={data.gpaTheoKy} itemVariants={itemVariants} /></div>}
-        </section>}
+        <DashboardToday key={user?.id} userId={user?.id} semester={currentSemester} />
       </motion.div>}
 
     </div>

@@ -1,6 +1,6 @@
-import { Search, Filter, TrendingUp, TrendingDown, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { DANH_MUC, TEN_DANH_MUC } from '../../constants';
-import { dinhDangTien, dinhDangNgay } from '../../utils/formatters';
+import { Search, Filter, TrendingUp, TrendingDown, Trash2, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useFinanceCategories } from '../../context/FinanceCategoryContext';
+import { dinhDangTien } from '../../utils/formatters';
 
 function TransactionTable({
   giaoDichs = [],
@@ -8,24 +8,26 @@ function TransactionTable({
   timKiem,
   locLoai,
   locDanhMuc,
-  chiThangNay,
   trangHienTai,
   soTrang,
   onTimKiemChange,
   onLocLoaiChange,
   onLocDanhMucChange,
-  onChiThangNayChange,
   onChonTrang,
   onYeuCauXoa,
+  onEdit,
+  disabled = false,
   error = '',
   onRetry,
 }) {
+  const { categories, label } = useFinanceCategories();
+  const grouped=new Map();for(const item of categories.filter(item=>!locLoai||item.loai===locLoai)){const previous=grouped.get(item.ma);grouped.set(item.ma,previous?{...item,ten:[...new Set([previous.ten,item.ten])].join(' / '),daAn:previous.daAn&&item.daAn}:item);}const options=[...grouped.values()];
   return (
     <>
       {/* Bộ lọc */}
       <div className="p-4 md:p-6 border-b border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800">
         <div className="flex flex-col md:flex-row gap-4 items-end">
-          <div className="flex-1 w-full relative">
+          <div className="min-w-0 flex-1 w-full relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-4 w-4 text-slate-400" />
             </div>
@@ -38,12 +40,12 @@ function TransactionTable({
               className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
             />
           </div>
-          <div className="flex gap-4 w-full md:w-auto">
+          <div className="flex min-w-0 gap-4 w-full md:w-auto">
             <select
               value={locLoai}
               onChange={(e) => onLocLoaiChange(e.target.value)}
               aria-label="Lọc theo loại giao dịch"
-              className="w-full md:w-auto bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
+              className="min-w-0 flex-1 w-full md:w-auto md:max-w-[220px] bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
             >
               <option value="">Tất cả loại</option>
               <option value="thu">Thu nhập</option>
@@ -53,25 +55,16 @@ function TransactionTable({
               value={locDanhMuc}
               onChange={(e) => onLocDanhMucChange(e.target.value)}
               aria-label="Lọc theo danh mục"
-              className="w-full md:w-auto bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
+              className="min-w-0 flex-1 w-full md:w-auto md:max-w-[220px] bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
             >
               <option value="">Tất cả danh mục</option>
-              {DANH_MUC.map((dm) => (
+              {options.map(({ma:dm,daAn,ten}) => (
                 <option key={dm} value={dm}>
-                  {TEN_DANH_MUC[dm]}
+                  {ten}{daAn ? " (đã xóa khỏi danh sách)" : ""}
                 </option>
               ))}
             </select>
           </div>
-          <label className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-full md:w-auto">
-            <input
-              type="checkbox"
-              checked={chiThangNay}
-              onChange={(e) => onChiThangNayChange(e.target.checked)}
-              className="rounded border-slate-300 text-ink-600 focus:ring-ink-500"
-            />
-            Chỉ tháng này
-          </label>
         </div>
       </div>
 
@@ -88,14 +81,16 @@ function TransactionTable({
             <div className="w-12 h-12 bg-slate-50 dark:bg-slate-900/50 rounded-full flex items-center justify-center mb-3">
               <Filter className="w-6 h-6 text-slate-400" />
             </div>
-            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">{timKiem || locLoai || locDanhMuc || chiThangNay ? 'Không tìm thấy giao dịch phù hợp' : 'Chưa có giao dịch nào'}</h3>
-            <p className="text-sm text-slate-500 mt-1">{timKiem || locLoai || locDanhMuc || chiThangNay ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.' : 'Chọn “Thêm giao dịch” để ghi khoản thu hoặc chi đầu tiên.'}</p>
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">{timKiem || locLoai || locDanhMuc ? 'Không tìm thấy giao dịch phù hợp' : 'Chưa có giao dịch trong tháng đã chọn'}</h3>
+            <p className="text-sm text-slate-500 mt-1">{timKiem || locLoai || locDanhMuc ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.' : 'Chọn “Thêm giao dịch” để ghi khoản thu hoặc chi đầu tiên.'}</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
+          <div role="list" aria-label="Danh sách giao dịch" className="divide-y divide-slate-100 dark:divide-slate-700/50">
             {giaoDichs.map((gd) => (
               <div
                 key={gd.id}
+                role="listitem"
+                data-transaction-id={gd.id}
                 className="p-4 md:p-6 flex flex-wrap gap-3 justify-between items-center hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group"
               >
                 <div className="flex min-w-0 items-center gap-3">
@@ -110,10 +105,10 @@ function TransactionTable({
                   </div>
                   <div>
                     <p className="font-semibold text-slate-900 dark:text-white">
-                      {TEN_DANH_MUC[gd.danhMuc] || gd.danhMuc}
+                      {label(gd.danhMuc,gd.loai)}
                     </p>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5 flex flex-wrap items-center gap-2">
-                      <span>{dinhDangNgay(gd.ngayGiaoDich)}</span>
+                      <span>{new Date(gd.ngayGiaoDich).toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}</span>
                       {gd.moTa && (
                         <>
                           <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
@@ -134,16 +129,19 @@ function TransactionTable({
                     {gd.loai === 'thu' ? '+' : '-'}
                     {dinhDangTien(gd.soTien)}
                   </span>
-                  <button
+                  <div className="flex gap-1">
+                  <button type="button" disabled={disabled} onClick={event => onEdit(gd, event.currentTarget)} aria-label={`Sửa giao dịch ${label(gd.danhMuc,gd.loai)} số tiền ${dinhDangTien(gd.soTien)}`} className="min-h-11 min-w-11 flex items-center justify-center rounded-lg text-slate-500 hover:text-ink-600 hover:bg-ink-50 disabled:opacity-40 dark:hover:bg-slate-700"><Pencil size={16} /></button>
+                  <button type="button" disabled={disabled}
                     onClick={() => onYeuCauXoa(gd)}
-                    className="min-h-9 min-w-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                    className="min-h-11 min-w-11 flex items-center justify-center rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
                     title="Xóa giao dịch"
-                    aria-label={`Xóa giao dịch ${TEN_DANH_MUC[gd.danhMuc] || gd.danhMuc} số tiền ${dinhDangTien(
+                    aria-label={`Xóa giao dịch ${label(gd.danhMuc,gd.loai)} số tiền ${dinhDangTien(
                       gd.soTien
                     )}`}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -160,17 +158,17 @@ function TransactionTable({
           <div className="flex gap-2">
             <button
               onClick={() => onChonTrang(trangHienTai - 1)}
-              disabled={dangTaiGD || trangHienTai <= 1}
+              disabled={disabled || dangTaiGD || trangHienTai <= 1}
               aria-label="Trang trước"
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 transition-colors"
+              className="min-h-11 min-w-11 flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={() => onChonTrang(trangHienTai + 1)}
-              disabled={dangTaiGD || trangHienTai >= soTrang}
+              disabled={disabled || dangTaiGD || trangHienTai >= soTrang}
               aria-label="Trang sau"
-              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 transition-colors"
+              className="min-h-11 min-w-11 flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 transition-colors"
             >
               <ChevronRight className="w-5 h-5" />
             </button>

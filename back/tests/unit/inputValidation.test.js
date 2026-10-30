@@ -1,4 +1,6 @@
 jest.mock('../../src/prismaClient', () => ({
+  dieuChinhLich: { findMany: jest.fn() },
+  danhMucTaiChinh: { findFirst: jest.fn().mockResolvedValue(null) },
   giaoDich: { create: jest.fn(), updateMany: jest.fn(), findFirst: jest.fn(), findUnique: jest.fn() },
   nganSach: { upsert: jest.fn() },
   monHoc: { create: jest.fn(), updateMany: jest.fn(), findFirst: jest.fn() },
@@ -22,15 +24,17 @@ beforeEach(() => {
   jest.resetAllMocks();
   prisma.$transaction.mockImplementation(callback => callback(prisma));
   prisma.thoiKhoaBieu.findMany.mockResolvedValue([]);
+  prisma.thoiKhoaBieu.create.mockResolvedValue({id:7});
+  prisma.dieuChinhLich.findMany.mockResolvedValue([]);
 });
 
 describe('financial input and updates', () => {
-  test('accepts a decimal amount sent as a form string', async () => {
+  test('accepts an integer dong amount sent as a form string', async () => {
     const res = response();
-    await finance.themGiaoDich(request({ loai: 'chi', danhMuc: 'an_uong', soTien: '25000.50' }), res);
+    await finance.themGiaoDich(request({ loai: 'chi', danhMuc: 'an_uong', soTien: '25000' }), res);
     expect(res.status).toHaveBeenCalledWith(201);
     expect(prisma.giaoDich.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ soTien: 25000.5, idNguoiDung: 42 }),
+      data: expect.objectContaining({ soTien: 25000, idNguoiDung: 42 }),
     }));
   });
 

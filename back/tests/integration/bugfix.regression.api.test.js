@@ -52,7 +52,7 @@ test('concurrent class creation rejects conflicts, while imports stay atomic', a
   const csv = 'tenMon,thu,gioBatDau,gioKetThuc,phongHoc,giangVien,hocKy\nConflict,4,08:00,10:00,A1,QA,Conflict QA';
   const imported = await call('post', '/api/imports/commit', { kind: 'timetable', filename: 'conflict.csv', content: Buffer.from(csv).toString('base64') });
   expect(imported.status).toBe(400);
-  expect(await prisma.thoiKhoaBieu.count({ where: { idNguoiDung: owner.id, hocKy: 'Conflict QA' } })).toBe(1);
+  expect(await prisma.thoiKhoaBieu.count({ where: { idNguoiDung: owner.id, hocKy: 'CONFLICT QA' } })).toBe(1);
 });
 test('group membership and deadline group are both required for progress writes', async () => {
   const a = await group(owner), b = await group(other);

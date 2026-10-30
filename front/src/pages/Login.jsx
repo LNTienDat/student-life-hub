@@ -1,7 +1,8 @@
+import PasswordToggle from '../components/PasswordToggle';
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { GraduationCap, CalendarDays, Wallet, Eye, EyeOff } from 'lucide-react';
+import { GraduationCap, CalendarDays, Wallet, } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import NotebookLines from '../components/NotebookLines';
@@ -153,18 +154,10 @@ function Login() {
                   type={hienMatKhau ? 'text' : 'password'}
                   value={matKhau}
                   onChange={(e) => setMatKhau(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg pl-3 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
+                  className="w-full border border-slate-300 rounded-lg pl-3 pr-12 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
                   required
                 />
-                <button
-                  type="button"
-                  onClick={() => setHienMatKhau(!hienMatKhau)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
-                  title={hienMatKhau ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                  aria-label={hienMatKhau ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                >
-                  {hienMatKhau ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+                <PasswordToggle visible={hienMatKhau} onClick={() => setHienMatKhau(!hienMatKhau)} />
               </div>
             </motion.div>
 

@@ -44,3 +44,19 @@ test('successful mutations clear stale caches; preview, reads, prediction and fa
   stop(); notifyDataChanged();
   assert.equal(changes, 3);
 });
+
+test('external-only listeners refresh other tabs and foreground return without repeating own writes', () => {
+  globalThis.window = Object.assign(new EventTarget(), { location: { pathname: '/' } });
+  globalThis.document = Object.assign(new EventTarget(), { visibilityState: 'visible' });
+  globalThis.localStorage = { setItem() {} };
+  let changes = 0;
+  const stop = subscribeDataChanges(() => changes++, { externalOnly: true });
+  notifyDataChanged(); assert.equal(changes, 0);
+  document.visibilityState = 'hidden';
+  window.dispatchEvent(Object.assign(new Event('storage'), { key: 'slh:data-changed' }));
+  assert.equal(changes, 0);
+  document.visibilityState = 'visible'; document.dispatchEvent(new Event('visibilitychange'));
+  assert.equal(changes, 1);
+  window.dispatchEvent(Object.assign(new Event('storage'), { key: 'slh:data-changed' }));
+  assert.equal(changes, 2); stop();
+});

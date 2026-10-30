@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getTodayClasses, getUrgentDeadlines, getDailyBudget, localDayKey } from '../src/pages/dashboard/todayUtils.js';
+import { getTodayClasses, getUrgentDeadlines, getDailyBudget, getDeadlineAlert, localDayKey } from '../src/pages/dashboard/todayUtils.js';
 
 test('Sunday uses database day 8; classes change status at exact boundaries', () => {
   const classes = [
@@ -79,4 +79,29 @@ test('timed deadlines including midnight and 23:59 retain their time on edit', a
     assert.equal(deadlineInputValue(iso), input);
   }
   for (const bad of ['', '2026-02-30', '2026-10-25T24:00', '2026-10-25T', 'tomorrow']) assert.throws(() => deadlineToISO(bad));
+});
+
+test('deadline alert covers today through the third Vietnam calendar day, including date-only end of day', () => {
+  const now = new Date('2026-10-25T09:00:00+07:00');
+  for (let day = 25; day <= 28; day++) {
+    const result = getDeadlineAlert({ trangThai: 'cho_xu_ly', hanChot: '2026-10-' + day + 'T23:59:59.999+07:00' }, now);
+    assert.equal(result.kind, 'soon');
+  }
+  assert.equal(getDeadlineAlert({ hanChot: '2026-10-29T00:00:00+07:00' }, now), null);
+});
+test('overdue deadlines warn, while finished deadlines and invalid dates do not', () => {
+  const now = new Date('2026-10-25T09:00:00+07:00');
+  assert.equal(getDeadlineAlert({ hanChot: '2026-10-25T08:59:59+07:00' }, now).kind, 'overdue');
+  assert.equal(getDeadlineAlert({ hanChot: now }, now).label, 'Đến hạn hôm nay');
+  assert.equal(getDeadlineAlert({ trangThai: 'hoan_thanh', hanChot: '2026-10-24T09:00:00+07:00' }, now), null);
+  assert.equal(getDeadlineAlert({ hanChot: 'invalid' }, now), null);
+  assert.equal(getDeadlineAlert({ hanChot: now }, new Date('invalid')), null);
+});
+test('three-day warning follows Vietnam midnight and crosses month/year/leap-day boundaries', () => {
+  assert.equal(getDeadlineAlert({ hanChot: '2026-10-29T00:00:00+07:00' }, new Date('2026-10-25T23:59:59+07:00')), null);
+  assert.equal(getDeadlineAlert({ hanChot: '2026-10-29T00:00:00+07:00' }, new Date('2026-10-26T00:00:00+07:00')).label, 'Còn 3 ngày');
+  for (const [now, due] of [
+    ['2026-12-30T12:00:00+07:00', '2027-01-02T23:59:59+07:00'],
+    ['2028-02-27T12:00:00+07:00', '2028-03-01T23:59:59+07:00'],
+  ]) assert.equal(getDeadlineAlert({ hanChot: due }, new Date(now)).label, 'Còn 3 ngày');
 });

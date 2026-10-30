@@ -1,9 +1,12 @@
 import { lazy, Suspense } from 'react';
+import { MotionConfig } from 'framer-motion';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
 import Layout from './components/Layout';
+import { FinanceCategoryProvider } from './context/FinanceCategoryContext';
+import { SemesterProvider } from './context/SemesterContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import PwaStatus from './components/PwaStatus';
 import BackendStatus from './components/BackendStatus';
@@ -18,6 +21,7 @@ const MonHoc = lazy(() => import('./pages/MonHoc'));
 const Deadline = lazy(() => import('./pages/Deadline'));
 const TaiChinh = lazy(() => import('./pages/TaiChinh'));
 const ThoiKhoaBieu = lazy(() => import('./pages/ThoiKhoaBieu'));
+const TaiLieu = lazy(() => import('./pages/TaiLieu'));
 const Profile = lazy(() => import('./pages/Profile'));
 const NhomHocTap = lazy(() => import('./pages/NhomHocTap'));
 const ChiTietNhom = lazy(() => import('./pages/ChiTietNhom'));
@@ -33,53 +37,61 @@ function PageLoader() {
   );
 }
 
+function SessionToastProvider({ children }) {
+  const { user } = useAuth();
+  return <ToastProvider key={user?.id || 'guest'}>{children}</ToastProvider>;
+}
+
 function AuthenticatedLayout() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" />;
   return (
-    <Layout key={user.id}>
+    <SemesterProvider key={user.id}><FinanceCategoryProvider><Layout key={user.id}>
       <Outlet />
-    </Layout>
+    </Layout></FinanceCategoryProvider></SemesterProvider>
   );
 }
 
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-        <AuthProvider>
-          <ToastProvider>
+      <MotionConfig reducedMotion="user">
+        <ThemeProvider>
+          <AuthProvider>
             <BrowserRouter>
-              <PwaStatus />
-              <BackendStatus />
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  {/* Public routes */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/quen-mat-khau" element={<QuenMatKhau />} />
-                  <Route path="/dat-lai-mat-khau" element={<DatLaiMatKhau />} />
-                  <Route path="/chia-se-tkb/:token" element={<ChiaSeTKB />} />
+              <SessionToastProvider>
+                <PwaStatus />
+                <BackendStatus />
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    {/* Public routes */}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/quen-mat-khau" element={<QuenMatKhau />} />
+                    <Route path="/dat-lai-mat-khau" element={<DatLaiMatKhau />} />
+                    <Route path="/chia-se-tkb/:token" element={<ChiaSeTKB />} />
 
-                  {/* Authenticated routes */}
-                  <Route element={<AuthenticatedLayout />}>
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/mon-hoc" element={<MonHoc />} />
-                    <Route path="/deadline" element={<Deadline />} />
-                    <Route path="/tai-chinh" element={<TaiChinh />} />
-                    <Route path="/thoi-khoa-bieu" element={<ThoiKhoaBieu />} />
-                    <Route path="/nhom" element={<NhomHocTap />} />
-                    <Route path="/nhom/:id" element={<ChiTietNhom />} />
-                    <Route path="/ho-so" element={<Profile />} />
-                  </Route>
-                  <Route path="/" element={<Navigate to="/dashboard" />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
+                    {/* Authenticated routes */}
+                    <Route element={<AuthenticatedLayout />}>
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/mon-hoc" element={<MonHoc />} />
+                      <Route path="/deadline" element={<Deadline />} />
+                      <Route path="/tai-chinh" element={<TaiChinh />} />
+                      <Route path="/thoi-khoa-bieu" element={<ThoiKhoaBieu />} />
+                      <Route path="/nhom" element={<NhomHocTap />} />
+                      <Route path="/nhom/:id" element={<ChiTietNhom />} />
+                      <Route path="/tai-lieu" element={<TaiLieu />} />
+                      <Route path="/ho-so" element={<Profile />} />
+                    </Route>
+                    <Route path="/" element={<Navigate to="/dashboard" />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </SessionToastProvider>
             </BrowserRouter>
-          </ToastProvider>
-        </AuthProvider>
-      </ThemeProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </MotionConfig>
     </ErrorBoundary>
   );
 }

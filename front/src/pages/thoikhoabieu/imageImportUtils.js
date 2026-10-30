@@ -6,7 +6,7 @@ export function imageDay(text) {
   return found ? Number(found[1]) : null;
 }
 export function timeRange(text) {
-  const times = [...String(text).matchAll(/\b(?:(\d{1,2})\s*[:h.]\s*([0-5]\d)|([0-2]\d)([0-5]\d))\b/g)].map(m => `${(m[1] || m[3]).padStart(2, '0')}:${m[2] || m[4]}`);
+  const times = [...String(text).replace(/([-–])\s*(\d{1,2})\s*\/\s*([0-5]\d)\b/g, '$1 $2:$3').matchAll(/\b(?:(\d{1,2})\s*[:h.]\s*([0-5]\d)|([0-2]\d)([0-5]\d))\b/g)].map(m => `${(m[1] || m[3]).padStart(2, '0')}:${m[2] || m[4]}`);
   return times.length >= 2 && times[0] < '24:00' && times[1] < '24:00' ? times.slice(0, 2) : null;
 }
 function wordLines(words) {
@@ -19,9 +19,9 @@ function wordLines(words) {
     if (line) { line.words.push(word); line.y = (line.y * (line.words.length - 1) + y) / line.words.length; }
     else lines.push({ y, words: [word] });
   }
-  return lines.sort((a,b) => a.y-b.y).map(line => ({ ...line, text: line.words.sort((a,b) => a.bbox.x0-b.bbox.x0).map(w=>w.text).join(' ') }));
+  return lines.sort((a,b) => a.y-b.y).map(line => ({ ...line, coloredNote: line.words.some(word => word.coloredNote), text: line.words.sort((a,b) => a.bbox.x0-b.bbox.x0).map(w=>w.text).join(' ') }));
 }
-function metadata(text) { return /^(?:tiet|phong|lop|gv|ths|ts[. ]|pgs|dh\d|ghi chu|tam ngung|nghi hoc)/.test(fold(text).replace(/^[^a-z0-9]+/, '')) || /\b[il]\d[-–]\d{2}\b/i.test(text); }
+function metadata(text) { return /^(?:tiet|phong|lop|gv|ths|ts[. ]|pgs|dh\d|ghi\s*chu|tam ngung|nghi hoc)/.test(fold(text).replace(/^[^a-z0-9]+/, '')) || /\b[il]\d[-–]\d{2}\b/i.test(text); }
 function sessions(lines, day) {
   const output = [];
   let previousTime = -1;
@@ -30,11 +30,13 @@ function sessions(lines, day) {
     if (!range) continue;
     const before = lines.slice(Math.max(previousTime + 1, index - 4), index);
     const title = [];
+    const isNote = (line, position) => (line.coloredNote && position > 0 && !before[position - 1].coloredNote && !metadata(before[position - 1].text) && !timeRange(before[position - 1].text)) || /^(?:[^a-z]*)(?:ghi\s*chu|t[ao]m ngung|nghi hoc)/.test(fold(line.text));
+    const annotationBeforeTime = before.some(isNote);
     for (let j=before.length-1; j>=0; j--) {
       const text = before[j].text.trim();
       const height=before[j].words?.reduce((sum,w)=>sum+w.bbox.y1-w.bbox.y0,0)/(before[j].words?.length || 1) || 12;
       if(title.length && before[j+1] && before[j+1].y-before[j].y>Math.max(35,height*2.5))break;
-      if (/^(?:[^a-z]*)(?:ghi chu|t[ao]m ngung|nghi hoc)/.test(fold(text))) continue;
+      if (isNote(before[j], j)) continue;
       if (!text || metadata(text) || imageDay(text) || /\d{1,2}\s*(?:th|thang)\d/i.test(fold(text))) break;
       title.unshift(text.replace(/^[^\p{L}\p{N}]+/u,''));
       if (title.length >= 3) break;
@@ -48,12 +50,12 @@ function sessions(lines, day) {
     const teacher=after.find(l=>/(?:^|\s)(?:gv[. :]|ths[. ]|ts[. ]|pgs[. ])/.test(fold(l.text)) && !/bao hoc|nghi|tam ngung/.test(fold(l.text)));
     const classCode=after.findIndex(l=>/dh\d/i.test(l.text));
     const plainTeacher=classCode>=0?after[classCode+1]?.text.replace(/^[^\p{L}]+/u,''):'';
-    output.push({ id:`ocr-${day || 'unknown'}-${index}`, selected:!suspended, tenMon:title.join(' '), thu:day || '', gioBatDau:range[0], gioKetThuc:range[1], phongHoc:room ? room.text.replace(/^[^\p{L}\p{N}]+/u,'').slice(0,50) : '', giangVien:teacher ? teacher.text.replace(/^[^\p{L}]+/u,'').slice(0,100) : plainTeacher && !metadata(plainTeacher) && !timeRange(plainTeacher) ? plainTeacher.slice(0,100) : '', warning:suspended ? 'Ảnh có dấu hiệu tạm ngưng/nghỉ học. Đã bỏ chọn; kiểm tra trước khi thêm.' : !day ? 'Chưa xác định được thứ. Hãy chọn lại.' : '', source:lines[index].text });
+    output.push({ id:`ocr-${day || 'unknown'}-${index}`, selected:!suspended, annotationBeforeTime, tenMon:title.join(' '), thu:day || '', gioBatDau:range[0], gioKetThuc:range[1], phongHoc:room ? room.text.replace(/^[^\p{L}\p{N}]+/u,'').slice(0,50) : '', giangVien:teacher ? teacher.text.replace(/^[^\p{L}]+/u,'').slice(0,100) : plainTeacher && !metadata(plainTeacher) && !timeRange(plainTeacher) ? plainTeacher.slice(0,100) : '', warning:suspended ? 'Ảnh có dấu hiệu tạm ngưng/nghỉ học. Đã bỏ chọn; kiểm tra trước khi thêm.' : !day ? 'Chưa xác định được thứ. Hãy chọn lại.' : '', source:lines[index].text, timeBox:lines[index].words?.length ? { x0:Math.min(...lines[index].words.map(w=>w.bbox.x0)), x1:Math.max(...lines[index].words.map(w=>w.bbox.x1)), y0:Math.min(...lines[index].words.map(w=>w.bbox.y0)), y1:Math.max(...lines[index].words.map(w=>w.bbox.y1)) } : null });
     previousTime=index;
   }
   return output;
 }
-export function extractImageTimetable(data) {
+export function getTimetableColumns(data) {
   const words=(data.blocks || []).flatMap(block=>(block.paragraphs || []).flatMap(p=>(p.lines || []).flatMap(line=>line.words || []))).filter(w=>w.text?.trim() && w.bbox);
   const headers=words.map(word=>({ day:imageDay(word.text), x:(word.bbox.x0+word.bbox.x1)/2, y:word.bbox.y1 })).filter(h=>h.day);
   const firstHeader=headers.length ? Math.min(...headers.map(h=>h.y)) : 0;
@@ -67,13 +69,16 @@ export function extractImageTimetable(data) {
     if(step>20) {
       const start=unique.reduce((s,h)=>s+h.x-(h.day-2)*step,0)/unique.length;
       const y=Math.max(...unique.map(h=>h.y));
-      return Array.from({length:7},(_,i)=>{
-        const center=start+i*step;
-        const column=words.filter(w=>(w.bbox.y0>y) && (w.bbox.x0+w.bbox.x1)/2>=center-step/2 && (w.bbox.x0+w.bbox.x1)/2<center+step/2);
-        return sessions(wordLines(column),i+2);
-      }).flat().slice(0,100);
+      return Array.from({length:7},(_,i)=>({day:i+2,left:start+i*step-step/2,right:start+i*step+step/2,top:y}));
     }
   }
+  return [];
+}
+export function extractImageTimetable(data, fixedDay = null) {
+  const words=(data.blocks || []).flatMap(block=>(block.paragraphs || []).flatMap(p=>(p.lines || []).flatMap(line=>line.words || []))).filter(w=>w.text?.trim() && w.bbox);
+  if (fixedDay) return sessions(wordLines(words), fixedDay).slice(0,100);
+  const columns=getTimetableColumns(data);
+  if(columns.length) return columns.flatMap(column=>sessions(wordLines(words.filter(w=>w.bbox.y0>column.top && (w.bbox.x0+w.bbox.x1)/2>=column.left && (w.bbox.x0+w.bbox.x1)/2<column.right)),column.day)).slice(0,100);
   const lines=words.length?wordLines(words):(data.text || '').split(/\r?\n/).map((text,i)=>({text,y:i}));
   let day=null;const sections=[];let current=[];
   for(const line of lines){const found=imageDay(line.text);if(found){sections.push(...sessions(current,day));current=[];day=found;}else current.push(line);}
@@ -89,10 +94,9 @@ export function validateImageRows(rows, semester, existing=[]) {
     if(![2,3,4,5,6,7,8].includes(Number(row.thu)))errors.push('Chọn thứ.');
     const pattern=/^([01]\d|2[0-3]):[0-5]\d$/;
     if(!pattern.test(row.gioBatDau)||!pattern.test(row.gioKetThuc)||row.gioKetThuc<=row.gioBatDau)errors.push('Kiểm tra giờ bắt đầu/kết thúc.');
-    if(!semester.trim()||semester.trim().length>100)errors.push('Nhập học kỳ.');
     if(row.phongHoc.length>50||row.giangVien.length>100)errors.push('Phòng tối đa 50 ký tự; giảng viên tối đa 100 ký tự.');
-    if(existing.some(item=>same(item,row,semester)))duplicate=true;
-    const peers=[...existing,...rows.slice(0,index).filter(item=>item.selected).map(item=>({...item,hocKy:semester}))];
+    if(semester.trim() && existing.some(item=>same(item,row,semester)))duplicate=true;
+    const peers=[...(semester.trim()?existing:[]),...rows.slice(0,index).filter(item=>item.selected).map(item=>({...item,hocKy:semester}))];
     if(!duplicate && peers.some(item=>Number(item.thu)===Number(row.thu) && (!item.hocKy||!semester||item.hocKy===semester) && item.gioBatDau<row.gioKetThuc && item.gioKetThuc>row.gioBatDau))errors.push('Trùng giờ với một buổi đã có hoặc dòng được chọn phía trên.');
     return {errors,duplicate};
   });

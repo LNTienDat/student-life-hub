@@ -5,13 +5,13 @@ export default function Toast({ toast, onClose }) {
   return (
     <AnimatePresence>
       {toast && (
-        <div role="status" aria-live="polite" className="fixed top-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+        <div role="status" aria-live="polite" className="fixed top-6 left-1/2 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 z-[120] pointer-events-none">
           <motion.div
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className={`pointer-events-auto flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-md text-sm font-medium ${
+            className={`pointer-events-auto flex w-full items-center gap-3 px-4 py-2 rounded-2xl shadow-xl border backdrop-blur-md text-sm font-medium ${
               toast.type === 'error'
                 ? 'bg-rose-50/95 dark:bg-rose-950/90 border-rose-200 dark:border-rose-800/80 text-rose-800 dark:text-rose-200 shadow-rose-500/10'
                 : toast.type === 'info'
@@ -27,12 +27,12 @@ export default function Toast({ toast, onClose }) {
               <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
             )}
 
-            <span className="leading-tight">{toast.message}</span>
+            <span className="min-w-0 flex-1 break-words [overflow-wrap:anywhere] leading-tight">{toast.message}</span>
 
             <button
               onClick={onClose}
               aria-label="Đóng thông báo"
-              className="ml-2 p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-current opacity-70 hover:opacity-100 transition-opacity"
+              className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-current opacity-70 hover:opacity-100 transition-opacity"
             >
               <X className="w-3.5 h-3.5" />
             </button>

@@ -1,28 +1,49 @@
-import { useState, useSyncExternalStore } from 'react';
-import { Download, RefreshCw, WifiOff, X } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
+import { useLocation } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { RefreshCw, WifiOff } from 'lucide-react';
 import pwaClient from '../pwa/runtime';
+import { useAuth } from '../context/AuthContext';
+import InstallButton from './InstallButton';
+import ModalDialog from './ModalDialog';
 
 export default function PwaStatus() {
   const { online, installed, canInstall, updateReady } = useSyncExternalStore(pwaClient.subscribe, pwaClient.getSnapshot);
+  const { user } = useAuth();
+  const { pathname } = useLocation();
+  const authPage = ['/login', '/register', '/quen-mat-khau', '/dat-lai-mat-khau'].includes(pathname);
   const [help, setHelp] = useState(false);
-  const [dismissed, setDismissed] = useState(() => sessionStorage.getItem('slh:install-dismissed') === '1');
   const [message, setMessage] = useState('');
-  const [busy, setBusy] = useState(false);
-  async function install() {
-    if (!canInstall) { setHelp(!help); return; }
-    setBusy(true); setMessage('');
+  const lock = useRef(false);
+  const install = useCallback(async () => {
+    if (lock.current || installed || !online) return;
+    setMessage('');
+    if (!canInstall) { setHelp(true); return; }
+    lock.current = true;
     try {
       const result = await pwaClient.install();
-      if (result === 'dismissed') setMessage('Bạn có thể cài LifeHub sau từ menu trình duyệt.');
-    } catch { setMessage('Chưa cài được. Hãy thử từ menu trình duyệt.'); }
-    finally { setBusy(false); }
-  }
+      if (result !== 'accepted') {
+        setMessage('Bạn vẫn có thể cài LifeHub từ menu trình duyệt.'); setHelp(true);
+      }
+    } catch { setMessage('Chưa cài được. Hãy thử từ menu trình duyệt.'); setHelp(true); }
+    finally { lock.current = false; }
+  }, [canInstall, installed, online]);
+  useEffect(() => {
+    window.addEventListener('slh:install-request', install);
+    return () => window.removeEventListener('slh:install-request', install);
+  }, [install]);
   return <div className="text-sm">
     {!online && <div role="status" className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-amber-800"><div className="mx-auto flex max-w-7xl items-start gap-2"><WifiOff className="mt-0.5 h-4 w-4 shrink-0"/><p>Đang mất kết nối. Điểm, deadline và chi tiêu cần mạng để cập nhật; các thao tác chưa lưu sẽ không tự gửi lại.</p></div></div>}
     {updateReady && <div className="border-b border-ink-200 bg-ink-50 px-4 py-3 text-ink-700 dark:text-ink-200"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3"><p role="status">Có phiên bản LifeHub mới. Lưu việc đang nhập trước khi tải lại.</p><button type="button" onClick={() => pwaClient.applyUpdate()} className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-ink-600 px-3 text-white"><RefreshCw className="h-4 w-4"/>Cập nhật và tải lại</button></div></div>}
-    {!installed && !dismissed && <div className="border-b border-slate-200 bg-white px-4 py-2"><div className="mx-auto flex max-w-7xl items-center gap-2"><span className="mr-auto text-xs text-slate-500">Dùng LifeHub như ứng dụng</span><button type="button" onClick={install} disabled={busy || !online} aria-expanded={help} className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 font-semibold text-ink-600 disabled:opacity-50"><Download className="h-4 w-4"/>{canInstall ? 'Cài LifeHub' : 'Hướng dẫn cài'}</button><button type="button" aria-label="Ẩn lời mời cài ứng dụng" onClick={() => { sessionStorage.setItem('slh:install-dismissed', '1'); setDismissed(true); }} className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"><X className="h-4 w-4"/></button></div>
-      {help && <div className="mx-auto max-w-7xl py-3 text-slate-600 space-y-2"><div className="flex items-center justify-between gap-3"><strong>Cài trên thiết bị</strong><button type="button" aria-label="Đóng hướng dẫn cài" onClick={() => setHelp(false)} className="p-2"><X className="h-4 w-4"/></button></div><p>Android: mở bằng Chrome, chọn menu ⋮ → Cài đặt ứng dụng hoặc Thêm vào màn hình chính.</p><p>iPhone: mở bằng Safari, chọn Chia sẻ → Thêm vào Màn hình chính.</p><p>Máy tính: tìm biểu tượng cài đặt ở thanh địa chỉ. Nếu chưa có tùy chọn này, bạn vẫn có thể dùng LifeHub ngay trên trình duyệt.</p><p className="text-xs">Cài trên điện thoại cần địa chỉ HTTPS công khai. Địa chỉ localhost chỉ dùng thử trên chính máy đang chạy dự án.</p></div>}
-      {message && <p role="status" className="mx-auto max-w-7xl py-2 text-slate-600">{message}</p>}
-    </div>}
+    {!user && <div className="fixed right-4 top-4 z-40 flex gap-2">{authPage && <ThemeToggle />}{!installed && <InstallButton className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-ink-600 shadow-sm disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-ink-200"/>}</div>}
+    <ModalDialog open={help && !installed} onClose={() => setHelp(false)} title="Cài LifeHub">
+      <div className="space-y-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+        {message && <p role="status">{message}</p>}
+        <p><strong>Android:</strong> mở bằng Chrome, chọn menu ⋮ → Cài đặt ứng dụng hoặc Thêm vào màn hình chính.</p>
+        <p><strong>iPhone:</strong> mở bằng Safari, chọn Chia sẻ → Thêm vào Màn hình chính.</p>
+        <p><strong>Máy tính:</strong> chọn biểu tượng cài đặt ở thanh địa chỉ hoặc menu trình duyệt.</p>
+        <p className="text-xs">Trên điện thoại, dùng địa chỉ HTTPS của LifeHub. Nếu trình duyệt chưa hỗ trợ cài đặt, bạn vẫn sử dụng web bình thường.</p>
+      </div>
+    </ModalDialog>
   </div>;
 }

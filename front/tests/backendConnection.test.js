@@ -112,3 +112,58 @@ test('HTML returned to a write is rejected and never retried as if it were a suc
   await assert.rejects(api.post('/deadline',{}),/Chưa xác nhận thao tác đã được lưu/);
   assert.equal(writes,1);
 });
+
+test('AI provider timeout preserves its useful message and does not wake the backend again', async () => {
+  let unavailable=0;
+  const gate=connection(); gate.markUnavailable=()=>unavailable++;
+  const api=createApiClient({connection:gate});
+  api.defaults.adapter=async config=>{throw new axios.AxiosError('AI timed out','ERR_BAD_RESPONSE',config,null,{status:504,data:{code:'CHATBOT_TIMEOUT',message:'AI timed out'},config});};
+  await assert.rejects(api.post('/chatbot/hoi-dap',{}),e=>e.response.data.message==='AI timed out');
+  assert.equal(unavailable,0);
+});
+
+test('a queued write is canceled if the account changes while the backend wakes up', async () => {
+  const previousStorage = globalThis.localStorage;
+  let token = 'account-A', release, sent = 0;
+  globalThis.localStorage = { getItem: () => token };
+  try {
+    const api = createApiClient({ connection: connection(() => new Promise(resolve => { release = resolve; })) });
+    api.defaults.adapter = async config => { sent++; return response(config); };
+    const pending = api.post('/deadline', { tieuDe: 'A private task' });
+    const rejection = assert.rejects(pending, error => axios.isCancel(error));
+    await new Promise(resolve => setTimeout(resolve, 0));
+    token = 'account-B'; release(); await rejection;
+    assert.equal(sent, 0);
+  } finally { if (previousStorage === undefined) delete globalThis.localStorage; else globalThis.localStorage = previousStorage; }
+});
+test('late successful data from the old account is discarded', async () => {
+  const previousStorage = globalThis.localStorage;
+  let token = 'account-A', release;
+  globalThis.localStorage = { getItem: () => token };
+  try {
+    const api = createApiClient();
+    api.defaults.adapter = config => new Promise(resolve => { release = () => resolve(response(config, { secret: 'A data' })); });
+    const pending = api.get('/academic/mon-hoc');
+    const rejection = assert.rejects(pending, error => axios.isCancel(error));
+    await new Promise(resolve => setTimeout(resolve, 0));
+    token = 'account-B'; release(); await rejection;
+  } finally { if (previousStorage === undefined) delete globalThis.localStorage; else globalThis.localStorage = previousStorage; }
+});
+test('an old 401 response cannot clear the new account session or redirect it', async () => {
+  const previousStorage = globalThis.localStorage, previousWindow = globalThis.window;
+  let token = 'account-A', rejectOld; const removed = [];
+  globalThis.localStorage = { getItem: () => token, removeItem: key => removed.push(key) };
+  globalThis.window = { location: { pathname: '/dashboard', href: '/dashboard' }, navigator: { onLine: true } };
+  try {
+    const api = createApiClient();
+    api.defaults.adapter = config => new Promise((resolve, reject) => { rejectOld = () => reject(new axios.AxiosError('Old auth error', 'ERR_BAD_REQUEST', config, null, { status: 401, data: {}, config })); });
+    const pending = api.get('/academic/mon-hoc');
+    const rejection = assert.rejects(pending, error => axios.isCancel(error));
+    await new Promise(resolve => setTimeout(resolve, 0));
+    token = 'account-B'; rejectOld(); await rejection;
+    assert.deepEqual(removed, []); assert.equal(window.location.href, '/dashboard');
+  } finally {
+    if (previousStorage === undefined) delete globalThis.localStorage; else globalThis.localStorage = previousStorage;
+    if (previousWindow === undefined) delete globalThis.window; else globalThis.window = previousWindow;
+  }
+});

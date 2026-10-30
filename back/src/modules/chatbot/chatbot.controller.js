@@ -1,110 +1,36 @@
+const { answerDocumentQuestion } = require('../rag/rag.service');
 const { CHATBOT } = require('../../constants');
-const { layNguCanhSinhVien } = require('./chatbot.service');
+const { layDuLieuSinhVien, timChuDe, traLoiDuLieu } = require('./chatbot.service');
+const { cauHinhAI, hoiGemini } = require('./gemini.service');
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || CHATBOT.DEFAULT_MODEL;
-const GEMINI_API_URL = (model) =>
-  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-
-// Hướng dẫn hệ thống: cho Gemini biết nó là trợ lý cá nhân có quyền truy cập dữ liệu sinh viên
-const HUONG_DAN_HE_THONG = `Bạn là trợ lý ảo cá nhân tên "SLH Bot" trong ứng dụng "Student Life Hub" — hệ thống quản lý học tập,
-deadline và tài chính cho sinh viên Việt Nam. Bạn CÓ QUYỀN TRUY CẬP dữ liệu cá nhân của sinh viên.
-
-Nhiệm vụ của bạn:
-1. Trả lời ngắn gọn, thân thiện, bằng tiếng Việt (trừ khi người dùng hỏi bằng ngôn ngữ khác).
-2. Sử dụng DỮ LIỆU CÁ NHÂN bên dưới để trả lời chính xác các câu hỏi về GPA, deadline, tài chính, lịch học.
-3. Khi được hỏi về dữ liệu cá nhân, hãy trích dẫn con số cụ thể từ dữ liệu, không đoán mò.
-4. Hướng dẫn sinh viên cách dùng các chức năng của app nếu được hỏi.
-5. Có thể đưa ra lời khuyên về học tập, quản lý thời gian, tài chính dựa trên dữ liệu thực.
-6. Nếu không có dữ liệu hoặc câu hỏi ngoài phạm vi, hãy thành thật nói rằng bạn không có thông tin.
-Trả lời trong khoảng 2-6 câu. Dùng emoji phù hợp. Có thể dùng bullet list ngắn nếu cần liệt kê.`;
-
-/**
- * POST /api/chatbot/hoi-dap
- * Xử lý tin nhắn từ người dùng, inject context cá nhân, gọi Gemini API
- * @param {Object} req.body - { tinNhan: string, lichSu: Array }
- */
+function trangThaiChatbot(req, res) {
+  const { sanSang, model } = cauHinhAI();
+  res.set('Cache-Control', 'no-store');
+  return res.json({ aiSanSang: sanSang, model, duLieuSanSang: true });
+}
 async function guiTinNhan(req, res) {
+  res.set('Cache-Control', 'no-store');
+  const { tinNhan, lichSu = [], cheDo = 'du_lieu', dongYGuiAI, dungDuLieuCaNhan = false, dungAI = false } = req.body || {};
+  if (typeof tinNhan !== 'string' || !tinNhan.trim() || tinNhan.length > CHATBOT.MAX_MESSAGE_LENGTH) return res.status(400).json({ message: 'Nhập câu hỏi từ 1 đến 2000 ký tự.' });
+  if (!['du_lieu', 'ai', 'tai_lieu'].includes(cheDo) || typeof dungDuLieuCaNhan !== 'boolean') return res.status(400).json({ message: 'Chế độ trò chuyện không hợp lệ.' });
+  if (!Array.isArray(lichSu) || lichSu.length > CHATBOT.MAX_HISTORY_LENGTH || lichSu.some(t => !t || !['user', 'bot'].includes(t.vaiTro) || typeof t.noiDung !== 'string' || !t.noiDung.trim() || t.noiDung.length > CHATBOT.MAX_MESSAGE_LENGTH) || lichSu.reduce((n, t) => n + t.noiDung.length, 0) > CHATBOT.MAX_HISTORY_CHARACTERS) return res.status(400).json({ message: 'Lịch sử trò chuyện quá dài hoặc không hợp lệ. Hãy bắt đầu cuộc trò chuyện mới.' });
   try {
-    const { tinNhan, lichSu } = req.body;
-
-    if (typeof tinNhan !== 'string' || !tinNhan.trim()) {
-      return res.status(400).json({ message: 'Vui lòng nhập nội dung tin nhắn' });
+    if (cheDo === 'tai_lieu') return res.json(await answerDocumentQuestion(req.user.id, tinNhan.trim(), { dungAI, dongYGuiAI }));
+    if (cheDo === 'du_lieu') {
+      const topics = timChuDe(tinNhan);
+      if (!topics.length) return res.json({ nguon: 'du_lieu', traLoi: 'Mình tra cứu được GPA, deadline quá hạn và 7 ngày tới, thu/chi tháng này, lịch học hôm nay hoặc ngày mai. Để hỏi cách học hay lập kế hoạch, bạn chọn Hỏi AI.' });
+      const data = await layDuLieuSinhVien(req.user.id, topics);
+      return res.json({ nguon: 'du_lieu', traLoi: traLoiDuLieu(data, tinNhan), capNhatLuc: data.capNhatLuc });
     }
-    if (tinNhan.length > 2000) {
-      return res.status(400).json({ message: 'Tin nhắn quá dài, vui lòng rút gọn lại (tối đa 2000 ký tự)' });
-    }
-
-    if (!process.env.GEMINI_API_KEY) {
-      return res.json({
-        traLoi:
-          'Trợ lý AI hiện chưa sẵn sàng. Bạn vẫn có thể dùng các chức năng quản lý học tập và thu chi.',
-        daCauHinh: false,
-      });
-    }
-
-    // --- Context Injection: lấy dữ liệu cá nhân sinh viên ---
-    let nguCanh = '';
-    try {
-      nguCanh = await layNguCanhSinhVien(req.user.id);
-    } catch (err) {
-      console.error('Lỗi lấy ngữ cảnh sinh viên:', err.message);
-      // Vẫn tiếp tục trả lời dù không có context — graceful degradation
-    }
-
-    // Nối system prompt + dữ liệu cá nhân
-    const systemPrompt = nguCanh
-      ? `${HUONG_DAN_HE_THONG}\n\n--- DỮ LIỆU CÁ NHÂN CỦA SINH VIÊN ---\n${nguCanh}`
-      : HUONG_DAN_HE_THONG;
-
-    // Ghép lịch sử hội thoại gần nhất (tối đa 10 lượt) làm ngữ cảnh cho Gemini
-    const contents = [];
-    if (Array.isArray(lichSu)) {
-      lichSu.slice(-CHATBOT.MAX_HISTORY_LENGTH).forEach((tin) => {
-        contents.push({
-          role: tin.vaiTro === 'bot' ? 'model' : 'user',
-          parts: [{ text: tin.noiDung }],
-        });
-      });
-    }
-    contents.push({ role: 'user', parts: [{ text: tinNhan }] });
-
-    const response = await fetch(GEMINI_API_URL(GEMINI_MODEL), {
-      method: 'POST',
-      signal: AbortSignal.timeout(CHATBOT.TIMEOUT_MS),
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': process.env.GEMINI_API_KEY,
-      },
-      body: JSON.stringify({
-        contents,
-        systemInstruction: {
-          parts: [{ text: systemPrompt }],
-        },
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: CHATBOT.MAX_OUTPUT_TOKENS,
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      const loiChiTiet = await response.text();
-      console.error('Lỗi Gemini API:', response.status, loiChiTiet);
-      return res.status(502).json({
-        message: 'Chatbot hiện không phản hồi được (lỗi từ Gemini API). Vui lòng thử lại sau.',
-      });
-    }
-
-    const data = await response.json();
-    const traLoi =
-      data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join('') ||
-      'Xin lỗi, mình chưa có câu trả lời phù hợp cho câu hỏi này.';
-
-    res.json({ traLoi, daCauHinh: true });
+    if (dongYGuiAI !== true) return res.status(400).json({ code: 'CHATBOT_CONSENT', message: 'Vui lòng đồng ý gửi câu hỏi đến Google trước khi dùng AI.' });
+    if (!cauHinhAI().sanSang) return res.status(503).json({ code: 'CHATBOT_NOT_CONFIGURED', message: 'Phần tư vấn AI chưa được bật. Bạn vẫn có thể chọn Xem dữ liệu để tra cứu.' });
+    const data = dungDuLieuCaNhan ? await layDuLieuSinhVien(req.user.id) : null;
+    const answer = await hoiGemini({ tinNhan: tinNhan.trim(), lichSu, duLieu: data });
+    return res.json({ ...answer, nguon: 'ai', coDuLieuCaNhan: dungDuLieuCaNhan, capNhatLuc: data?.capNhatLuc });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Lỗi server khi gọi chatbot' });
+    if (cheDo === 'tai_lieu' && error.statusCode) return res.status(error.statusCode).json({ code: error.code || 'CHATBOT_DOCUMENT', message: error.message });
+    if (error.code?.startsWith('CHATBOT_')) return res.status(error.statusCode).json({ code: error.code, message: error.message });
+    return res.status(503).json({ code: 'CHATBOT_DATA', message: 'Chưa đọc được dữ liệu của bạn. Hãy thử lại sau; mình chưa gửi câu hỏi đến AI.' });
   }
 }
-
-module.exports = { guiTinNhan };
+module.exports = { guiTinNhan, trangThaiChatbot };

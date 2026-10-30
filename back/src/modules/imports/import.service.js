@@ -1,3 +1,5 @@
+const { normalizeSemester } = require('../../utils/semester.util');
+const { assertNoDatedConflicts } = require('../thoikhoabieu/adjustments.service');
 const { overlaps } = require('../thoikhoabieu/conflicts');
 const ExcelJS = require('exceljs');
 const { Readable } = require('stream');
@@ -35,7 +37,7 @@ function validateRow(kind, row) {
   return errors;
 }
 function rowKey(kind, row) {
-  return JSON.stringify((kind === 'subjects' ? [row.ten, row.hocKy] : [row.tenMon, row.hocKy, row.thu, row.gioBatDau, row.gioKetThuc]).map((value) => typeof value === 'string' ? value.normalize('NFC').toLocaleLowerCase('vi') : value));
+  return JSON.stringify((kind === 'subjects' ? [row.ten, normalizeSemester(row.hocKy)] : [row.tenMon, normalizeSemester(row.hocKy), row.thu, row.gioBatDau, row.gioKetThuc]).map((value) => typeof value === 'string' ? value.normalize('NFC').toLocaleLowerCase('vi') : value));
 }
 
 // Reject oversized compressed workbooks before ExcelJS expands their contents.
@@ -91,6 +93,7 @@ async function parseUpload({ kind, filename, content }) {
         const value = cell.value;
         data[key] = ['tinChi', 'thu'].includes(key) ? Number(text(value)) : key.startsWith('gio') ? time(value) : text(value);
       });
+      data.hocKy = normalizeSemester(data.hocKy);
       errors.push(...validateRow(kind, data));
     } catch (error) { errors.push(error.message); }
     const key = rowKey(kind, data);
@@ -126,7 +129,9 @@ async function commitImport(prisma, userId, preview) {
             schedules.push(row);
           }
         }
+        const beforeIds=checked.kind==='timetable'?(await tx.thoiKhoaBieu.findMany({where:{idNguoiDung:userId},select:{id:true}})).map(row=>row.id):[];
         if (data.length) await (checked.kind === 'subjects' ? tx.monHoc : tx.thoiKhoaBieu).createMany({ data });
+        if(checked.kind==='timetable'&&data.length){const all=await tx.thoiKhoaBieu.findMany({where:{idNguoiDung:userId},select:{id:true}});await assertNoDatedConflicts(tx,userId,all.filter(row=>!beforeIds.includes(row.id)).map(row=>row.id));}
         return { count: data.length, skipped: checked.rows.length - data.length };
       }, { isolationLevel: 'Serializable' });
     } catch (error) {

@@ -30,7 +30,7 @@ function FinanceKpiCards({ thongKe }) {
         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
           <Wallet className="w-20 h-20 text-ink-500 dark:text-ink-400" />
         </div>
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 relative z-10">Số dư hiện tại</p>
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 relative z-10">Số dư trong tháng</p>
         <p
           className={`font-display text-3xl font-bold relative z-10 ${
             thongKe.soDu >= 0 ? 'text-ink-600 dark:text-ink-300' : 'text-rose-600 dark:text-rose-400'

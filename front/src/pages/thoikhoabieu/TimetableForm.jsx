@@ -30,8 +30,9 @@ function TimetableForm({
     >
       <div className="absolute left-0 top-0 bottom-0 w-1 bg-ink-600 dark:bg-ink-400" />
       <h3 className="font-display font-semibold text-lg text-slate-800 dark:text-slate-200 mb-5 ml-2">
-        {dangSuaId ? 'Cập nhật buổi học' : 'Thêm buổi học mới'}
+        {dangSuaId ? 'Cập nhật lịch lặp hằng tuần' : 'Thêm lịch lặp hằng tuần'}
       </h3>
+      <p className="mb-4 ml-2 text-sm text-slate-500 dark:text-slate-400">Lưu ở đây cập nhật lịch lặp cho các tuần trong học kỳ. Icon lịch trên từng môn chỉ dùng khi nghỉ hoặc đổi riêng một ngày.</p>
 
       <label className="mb-4 ml-2 block text-sm text-slate-600">Học kỳ (để trống nếu dùng chung)<input value={hocKy} onChange={(e) => onHocKyChange(e.target.value)} maxLength={100} className="mt-1 block w-full rounded-xl border border-slate-200 px-3 py-2" /></label>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 ml-2">
@@ -41,6 +42,7 @@ function TimetableForm({
           </label>
           <input
             id="tkb-ten-mon"
+            maxLength={100}
             value={tenMon}
             onChange={(e) => onTenMonChange(e.target.value)}
             placeholder="VD: Toán cao cấp A1"
@@ -102,6 +104,7 @@ function TimetableForm({
           </label>
           <input
             id="tkb-phong-hoc"
+            maxLength={50}
             value={phongHoc}
             onChange={(e) => onPhongHocChange(e.target.value)}
             placeholder="VD: D5-201"
@@ -115,6 +118,7 @@ function TimetableForm({
           </label>
           <input
             id="tkb-giang-vien"
+            maxLength={100}
             value={giangVien}
             onChange={(e) => onGiangVienChange(e.target.value)}
             placeholder="VD: TS. Nguyễn Văn A"

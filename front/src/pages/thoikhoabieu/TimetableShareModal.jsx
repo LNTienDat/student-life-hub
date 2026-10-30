@@ -1,161 +1,74 @@
 import ModalDialog from '../../components/ModalDialog';
 import { useState, useEffect } from 'react';
-import { Share2, Copy, Check, Globe, Lock } from 'lucide-react';
+import { Copy } from 'lucide-react';
 import timetableService from '../../services/timetableService';
 import { useToast } from '../../context/ToastContext';
 
-function TimetableShareModal({ isOpen, onClose }) {
-  const [shareEnabled, setShareEnabled] = useState(false);
-  const [shareToken, setShareToken] = useState(null);
-  const [dangXuLy, setDangXuLy] = useState(false);
-  const [daCopy, setDaCopy] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
+export default function TimetableShareModal({ isOpen, onClose, semester = '' }) {
+  const [status, setStatus] = useState(null);
+  const [scope, setScope] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
   const { hienToast } = useToast();
-
   useEffect(() => {
     if (!isOpen) return;
     let active = true;
-    async function taiTrangThai() {
-      try {
-        const res = await timetableService.layTrangThaiChiaSe();
-        if (!active) return;
-        setShareEnabled(res.data.shareEnabled);
-        setShareToken(res.data.shareToken);
-      } catch (error) {
-        if (active) setLoadError(error.response?.data?.message || 'Chưa tải được trạng thái chia sẻ. Vui lòng đóng và mở lại.');
-      } finally { if (active) setLoading(false); }
-    }
-    taiTrangThai();
+    timetableService.layTrangThaiChiaSe().then(({ data }) => {
+      if (!active) return;
+      if (!Array.isArray(data.hocKys) || !Object.hasOwn(data, 'hocKyChiaSe')) throw new Error('Cần cập nhật máy chủ trước khi chia sẻ theo học kỳ.');
+      setStatus(data);
+      setScope(data.shareEnabled ? data.hocKyChiaSe : semester && data.hocKys.includes(semester) ? semester : data.hocKyDeXuat);
+    }).catch(failure => { if (active) setError(failure.response?.data?.message || failure.message || 'Chưa tải được trạng thái chia sẻ. Vui lòng đóng và mở lại.'); });
     return () => { active = false; };
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
-  const publicUrl = shareToken
-    ? `${window.location.origin}/chia-se-tkb/${shareToken}`
-    : '';
-
-  async function xuLyBatChiaSe() {
-    if (dangXuLy || loading || loadError) return;
-    setDangXuLy(true);
+  }, [isOpen, semester]);
+  const scopeLabel = value => value || 'Lịch dùng chung (chưa gắn học kỳ)';
+  const options = [...new Set([...(status?.hocKys || []), ...(status?.hocKyChiaSe ? [status.hocKyChiaSe] : [])])];
+  const publicUrl = status?.shareEnabled && status.shareToken ? window.location.origin + '/chia-se-tkb/' + status.shareToken : '';
+  async function enable() {
+    if (busy || !status || scope === null) return;
+    setBusy(true); setError('');
     try {
-      const res = await timetableService.batChiaSe();
-      setShareEnabled(true);
-      setShareToken(res.data.shareToken);
-      hienToast('success', 'Đã bật chia sẻ thời khóa biểu công khai!');
-    } catch {
-      hienToast('error', 'Có lỗi khi bật chia sẻ');
-    } finally {
-      setDangXuLy(false);
-    }
+      const { data } = await timetableService.batChiaSe(scope);
+      setStatus(previous => ({ ...previous, ...data, canTaoLaiLienKet: false }));
+      hienToast('success', 'Đã chia sẻ ' + scopeLabel(data.hocKyChiaSe) + '.');
+    } catch (failure) { setError(failure.response?.data?.message || failure.message || 'Chưa bật được chia sẻ.'); }
+    finally { setBusy(false); }
   }
-
-  async function xuLyTatChiaSe() {
-    if (dangXuLy || loading || loadError) return;
-    setDangXuLy(true);
-    try {
-      await timetableService.tatChiaSe();
-      setShareEnabled(false);
-      hienToast('info', 'Đã tắt chia sẻ thời khóa biểu.');
-    } catch {
-      hienToast('error', 'Có lỗi khi tắt chia sẻ');
-    } finally {
-      setDangXuLy(false);
-    }
+  async function disable() {
+    if (busy) return;
+    setBusy(true); setError('');
+    try { await timetableService.tatChiaSe(); setStatus(previous => ({ ...previous, shareEnabled: false, shareToken: null })); hienToast('info', 'Đã tắt chia sẻ thời khóa biểu.'); }
+    catch (failure) { setError(failure.response?.data?.message || failure.message || 'Chưa tắt được chia sẻ.'); }
+    finally { setBusy(false); }
   }
-
-  async function saoChepLink() {
-    if (!publicUrl) return;
-    try { await navigator.clipboard.writeText(publicUrl); } catch { hienToast('error', 'Chưa sao chép được. Bạn có thể chọn liên kết để sao chép thủ công.'); return; }
-    setDaCopy(true);
-    hienToast('success', 'Đã sao chép liên kết vào bộ nhớ tạm!');
-    setTimeout(() => setDaCopy(false), 2000);
+  async function copy() {
+    try { await navigator.clipboard.writeText(publicUrl); hienToast('success', 'Đã sao chép liên kết.'); }
+    catch { hienToast('error', 'Bạn có thể chọn liên kết để sao chép thủ công.'); }
   }
+  return <ModalDialog open={isOpen} onClose={onClose} title="Chia sẻ thời khóa biểu" busy={busy}>
+    {!status && !error && <p role="status" className="text-sm text-slate-500">Đang tải trạng thái chia sẻ…</p>}
+    {error && <p role="alert" className="mb-3 text-sm text-rose-600">{error}</p>}
+    {status && <div className="space-y-4 text-sm">
+      <p className="text-slate-500 dark:text-slate-300">Chọn phạm vi trước khi bật. Người có liên kết chỉ xem được lịch của phạm vi này.</p>
+      {status.canTaoLaiLienKet && <p className="text-amber-700 dark:text-amber-300">Liên kết cũ chưa có phạm vi học kỳ. Chọn học kỳ và bật lại để tạo liên kết mới.</p>}
+      <label className="block font-medium">Học kỳ chia sẻ
+        <select aria-label="Học kỳ chia sẻ" value={scope ?? '__choose__'} disabled={busy} onChange={event => setScope(event.target.value)} className="mt-2 min-h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3 dark:border-slate-600 dark:bg-slate-900 dark:text-white">
+          {scope === null && <option value="__choose__" disabled>Chọn học kỳ</option>}
+          {options.map(value => <option key={value} value={value}>{value}</option>)}
+          <option value="">Lịch dùng chung (chưa gắn học kỳ)</option>
+        </select>
+      </label>
+      <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">Khi chọn học kỳ, lịch dùng chung cũng được hiển thị. Nghỉ/đổi riêng từng ngày vẫn được áp dụng. Đổi phạm vi tạo liên kết mới và vô hiệu hóa liên kết trước.</p>
+      <div className="flex flex-wrap gap-2">
+        {(!status.shareEnabled || scope !== status.hocKyChiaSe) && <button type="button" onClick={enable} disabled={busy || scope === null} className="min-h-11 rounded-xl bg-ink-600 px-4 font-semibold text-white disabled:opacity-50">{busy ? 'Đang lưu…' : status.shareEnabled ? 'Đổi phạm vi chia sẻ' : 'Bật chia sẻ'}</button>}
+        {status.shareEnabled && <button type="button" onClick={disable} disabled={busy} className="min-h-11 rounded-xl border border-rose-200 px-4 font-semibold text-rose-600 disabled:opacity-50">Tắt chia sẻ</button>}
+      </div>
+      {publicUrl && <section aria-label="Liên kết đang chia sẻ" className="space-y-2 rounded-xl bg-slate-50 p-3 dark:bg-slate-900/50">
+        <p className="break-words font-medium">Đang chia sẻ: {scopeLabel(status.hocKyChiaSe)}</p>
+        <div className="flex min-w-0 gap-2"><input aria-label="Liên kết chia sẻ" readOnly value={publicUrl} className="min-h-11 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-xs dark:border-slate-600 dark:bg-slate-800" /><button type="button" onClick={copy} aria-label="Sao chép liên kết" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-ink-600 text-white"><Copy className="h-4 w-4"/></button></div>
+        <p className="text-xs text-slate-500">Đổi học kỳ đang học sau này không làm thay đổi phạm vi của liên kết đã tạo.</p>
+      </section>}
+    </div>}
 
-  return (
-    <ModalDialog open={isOpen} onClose={onClose} title="Chia sẻ thời khóa biểu" busy={dangXuLy}>
-        {loading && <p role="status" className="mb-3 text-sm text-slate-500">Đang tải trạng thái chia sẻ…</p>}
-        {loadError && <p role="alert" className="mb-3 text-sm text-rose-600">{loadError}</p>}
-        <div className="flex items-center gap-2.5 mb-2">
-          <div className="w-9 h-9 rounded-xl bg-ink-50 dark:bg-ink-950/60 text-ink-600 dark:text-ink-400 flex items-center justify-center">
-            <Share2 className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-              Chia sẻ thời khóa biểu
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Cho phép bạn bè cùng lớp xem lịch học của bạn
-            </p>
-          </div>
-        </div>
-
-        <div className="my-5 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {shareEnabled ? (
-                <Globe className="w-4 h-4 text-emerald-500" />
-              ) : (
-                <Lock className="w-4 h-4 text-slate-400" />
-              )}
-              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                {shareEnabled ? 'Đang bật chia sẻ công khai' : 'Đang ở chế độ riêng tư'}
-              </span>
-            </div>
-
-            <button
-              onClick={shareEnabled ? xuLyTatChiaSe : xuLyBatChiaSe}
-              disabled={dangXuLy || loading || !!loadError}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                shareEnabled
-                  ? 'bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
-                  : 'bg-ink-600 hover:bg-ink-700 text-white'
-              }`}
-            >
-              {dangXuLy ? 'Đang lưu...' : shareEnabled ? 'Tắt chia sẻ' : 'Bật chia sẻ'}
-            </button>
-          </div>
-
-          {shareEnabled && (
-            <div className="space-y-1.5 pt-2 border-t border-slate-200/60 dark:border-slate-800">
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                Liên kết chia sẻ (Chỉ xem):
-              </label>
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="text"
-                  readOnly
-                  value={publicUrl}
-                  className="w-full text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-700 dark:text-slate-200 truncate select-all focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={saoChepLink}
-                  className="p-2 rounded-lg bg-ink-600 hover:bg-ink-700 text-white flex-shrink-0 transition-colors"
-                  title="Sao chép"
-                >
-                  {daCopy ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4" />}
-                </button>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Ai có liên kết này đều có thể xem thời khóa biểu tuần của bạn mà không cần đăng nhập.
-              </p>
-            </div>
-          )}
-        </div>
-
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-          >
-            Đóng
-          </button>
-        </div>
-    </ModalDialog>
-  );
+  </ModalDialog>;
 }
-
-export default TimetableShareModal;

@@ -4,6 +4,7 @@
  * Tách biệt thuật toán tính toán điểm khỏi tầng Controller.
  */
 
+const { normalizeSemester } = require('../../utils/semester.util');
 const { tinhDiemMon } = require('../../utils/grade.util');
 const { ACADEMIC } = require('../../constants');
 
@@ -46,6 +47,7 @@ function canhBaoMonNguyCoService(monHocs, nguong = ACADEMIC.DEFAULT_NGUONG_CANH_
     .map((mon) => {
       const { diemTrungBinh: diemHienTai, tongTrongSo: tongTrongSoDaCham } = tinhDiemMon(mon.diems);
       return {
+        id: mon.id,
         ten: mon.ten,
         diemHienTai: diemHienTai.toFixed(2),
         tongTrongSoDaCham,
@@ -62,7 +64,8 @@ function canhBaoMonNguyCoService(monHocs, nguong = ACADEMIC.DEFAULT_NGUONG_CANH_
 function gpaTheoKyService(monHocs) {
   const theoKy = {};
 
-  monHocs.forEach((mon) => {
+  monHocs.forEach((source) => {
+    const mon = { ...source, hocKy: normalizeSemester(source.hocKy) };
     const { diemTrungBinh: diemMon, tongTrongSo } = tinhDiemMon(mon.diems);
     if (tongTrongSo === 0) return;
 

@@ -57,3 +57,52 @@ test('money entry keeps a caret next to the same digit when grouping changes', a
   assert.equal(moneyCaret('1 234 567', 4), 5);
   assert.equal(moneyCaret('1 234 567', 7), 9);
 });
+
+test('finance period navigation handles year boundaries and rejects invalid values', async () => {
+  const { readFinancePeriod, shiftFinancePeriod } = await import('../src/pages/taichinh/financeUtils.js');
+  assert.deepEqual(readFinancePeriod('2026-01'), { thang: 1, nam: 2026 });
+  for (const invalid of ['', '2026-13', '2026-1', '0999-12', '10000-01']) assert.equal(readFinancePeriod(invalid), null);
+  assert.equal(shiftFinancePeriod('2026-01', -1), '2025-12');
+  assert.equal(shiftFinancePeriod('2026-12', 1), '2027-01');
+  assert.equal(shiftFinancePeriod('1000-01', -1), null);
+  assert.equal(shiftFinancePeriod('9999-12', 1), null);
+});
+test('new transactions default to the viewed month, not silently to today in another month', async () => {
+  const { defaultTransactionDate } = await import('../src/pages/taichinh/financeUtils.js');
+  const now = new Date('2026-10-23T18:00:00Z');
+  assert.equal(defaultTransactionDate('2026-10', now), '2026-10-24');
+  assert.equal(defaultTransactionDate('2026-01', now), '2026-01-01');
+});
+test('editing preserves exact original timestamp unless the calendar date changes', async () => {
+  const { transactionDraft, transactionPayload } = await import('../src/pages/taichinh/financeUtils.js');
+  const original = { id: 1, loai: 'chi', danhMuc: 'an_uong', soTien: 20000, ngayGiaoDich: '2026-01-14T18:30:00.000Z', moTa: 'Lunch' };
+  const draft = transactionDraft(original, '2026-01');
+  assert.equal(draft.ngayGiaoDich, '2026-01-15');
+  assert.equal(transactionPayload({ ...draft, soTien: '35000' }, original).ngayGiaoDich, original.ngayGiaoDich);
+  assert.equal(transactionPayload({ ...draft, ngayGiaoDich: '2026-02-15' }, original).ngayGiaoDich, '2026-02-15');
+  for (const soTien of ['0', '-1', '1.5', '9007199254740993']) assert.throws(() => transactionPayload({ ...draft, soTien }, original));
+  assert.throws(() => transactionPayload({ ...draft, ngayGiaoDich: '2026-02-30' }, original));
+});
+test('finance dates remain in Vietnam time on devices in other timezones', () => {
+  const old = process.env.TZ; process.env.TZ = 'America/Los_Angeles';
+  try { assert.equal(localDateInput(new Date('2026-01-31T17:01:00Z')), '2026-02-01'); }
+  finally { if (old === undefined) delete process.env.TZ; else process.env.TZ = old; }
+});
+
+test('shared date labels follow Vietnam time instead of the device timezone', async () => {
+  const { dinhDangNgay } = await import('../src/utils/formatters.js');
+  const old = process.env.TZ; process.env.TZ = 'America/Los_Angeles';
+  try { assert.equal(dinhDangNgay('2026-01-31T17:30:00Z'), '01/02/2026'); }
+  finally { if (old === undefined) delete process.env.TZ; else process.env.TZ = old; }
+});
+
+test('switching transaction type clears incompatible categories but keeps compatible or all-type filters', async () => {
+  const { updateTransactionFilters } = await import('../src/pages/taichinh/financeUtils.js');
+  const categories=[{ma:'an_uong',loai:'chi'},{ma:'khac',loai:'thu'},{ma:'khac',loai:'chi'},{ma:'custom_old',loai:'chi',daAn:true}];
+  const filters={timKiem:'cơm',locLoai:'chi',locDanhMuc:'an_uong'};
+  assert.equal(updateTransactionFilters(filters,'locLoai','thu',categories).locDanhMuc,'');
+  assert.equal(filters.locDanhMuc,'an_uong');
+  assert.equal(updateTransactionFilters({...filters,locDanhMuc:'khac'},'locLoai','thu',categories).locDanhMuc,'khac');
+  assert.equal(updateTransactionFilters({...filters,locDanhMuc:'custom_old'},'locLoai','',categories).locDanhMuc,'custom_old');
+  assert.equal(updateTransactionFilters(filters,'timKiem','cafe',categories).locDanhMuc,'an_uong');
+});

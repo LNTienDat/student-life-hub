@@ -22,3 +22,17 @@ export function deadlineInputValue(value) {
 export function formatDeadlineDate(value) {
   return dinhDangNgay(value, deadlineHasTime(value));
 }
+
+export function defaultDeadlineDate(now = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);
+  const part = name => parts.find(p=>p.type===name).value;
+  return part('year')+'-'+part('month')+'-'+part('day');
+}
+export function deadlineCountdown(value, now = Date.now()) {
+  const due = new Date(value).getTime(), current = new Date(now).getTime();
+  if(!value||!Number.isFinite(due)||!Number.isFinite(current))return '';
+  const day = time => Math.floor(Date.parse(defaultDeadlineDate(new Date(time))+'T00:00:00Z')/86400000);
+  const difference=day(due)-day(current);
+  if(due<current)return difference<0?'Quá '+Math.abs(difference)+' ngày':'Đã quá hạn';
+  return difference===0?'Hôm nay':'Còn '+difference+' ngày';
+}

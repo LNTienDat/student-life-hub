@@ -1,7 +1,8 @@
+import CloseButton from './CloseButton';
 import { useEffect, useRef, useId } from 'react';
 import { createPortal } from 'react-dom';
 
-export default function ModalDialog({ open, onClose, title, children, busy = false }) {
+export default function ModalDialog({ open, onClose, title, children, busy = false, wide = false, closeLabel = 'Đóng' }) {
   const dialog = useRef(null);
   const state = useRef({ onClose, busy });
   const titleId = useId();
@@ -13,7 +14,7 @@ export default function ModalDialog({ open, onClose, title, children, busy = fal
     document.body.style.overflow = 'hidden';
     const element = dialog.current;
     const focusable = () => [...element.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]')].filter(el => el.getClientRects().length);
-    (focusable()[0] || element).focus();
+    (focusable().find(node=>!node.hasAttribute('data-dialog-close')) || focusable()[0] || element).focus();
     function keydown(event) {
       if (event.key === 'Escape') { event.preventDefault(); if (!state.current.busy) state.current.onClose(); }
       if (event.key !== 'Tab') return;
@@ -27,8 +28,11 @@ export default function ModalDialog({ open, onClose, title, children, busy = fal
   }, [open]);
   if (!open) return null;
   return createPortal(<div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-    <section ref={dialog} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-800">
-      <h2 id={titleId} className="mb-4 text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
+    <section ref={dialog} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className={'max-h-[90dvh] w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-800 '+(wide?'max-w-2xl':'max-w-lg')}>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <h2 id={titleId} className="min-w-0 break-words pt-2 text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
+        <CloseButton data-dialog-close onClick={()=>{if(!busy)onClose();}} disabled={busy} label={closeLabel} className="-mr-2 -mt-1"/>
+      </div>
       {children}
     </section>
   </div>, document.body);

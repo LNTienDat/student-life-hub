@@ -191,3 +191,14 @@ summary:focus-visible { border-radius: 0.5rem; }
 @media (max-width: 639px) {
   input:not([type="checkbox"]):not([type="radio"]), select, textarea { font-size: 16px; }
 }
+
+/* A soft alert halo; honor the user's reduced-motion preference. */
+.deadline-alert { position: relative; isolation: isolate; background: #ef4444; color: #fff; }
+.deadline-alert::before { content: ''; position: absolute; inset: -3px; z-index: -1; border-radius: 999px; background: rgba(239, 68, 68, 0.2); }
+@keyframes deadline-alert-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.5); opacity: 0.2; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .deadline-alert::before { animation: deadline-alert-pulse 2.4s ease-in-out infinite; }
+}

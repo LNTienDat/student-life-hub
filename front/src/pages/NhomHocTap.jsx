@@ -104,14 +104,14 @@ function NhomHocTap() {
 
   if (dangTai) {
     return (
-      <div className="max-w-7xl mx-auto space-y-6 pb-12">
+      <div className="w-full min-w-0 space-y-6 pb-12">
         <PageSkeleton />
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-12">
+    <div className="w-full min-w-0 space-y-6 pb-12">
       {/* Tiêu đề & Nút thao tác */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

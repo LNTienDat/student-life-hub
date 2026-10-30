@@ -1,6 +1,7 @@
 import { createContext, useState, useContext, useCallback, useMemo, useEffect } from 'react';
+import { clearDrafts } from '../services/drafts';
 import { clearCache } from '../services/apiCache';
-import { readSession } from '../services/session';
+import { readSession, subscribeSessionChanges } from '../services/session';
 
 const AuthContext = createContext();
 
@@ -15,15 +16,11 @@ export function AuthProvider({ children }) {
     }
   });
 
-  useEffect(() => {
-    const sync = (event) => {
-      if (event.key !== null && !['user', 'token'].includes(event.key)) return;
-      clearCache();
-      setUser(readSession(localStorage));
-    };
-    window.addEventListener('storage', sync);
-    return () => window.removeEventListener('storage', sync);
-  }, []);
+  useEffect(() => subscribeSessionChanges(localStorage, window, (session) => {
+    clearCache();
+    if (!session) clearDrafts(sessionStorage);
+    setUser(session);
+  }), []);
 
   const dangNhap = useCallback((userData, token) => {
     clearCache();
@@ -34,6 +31,7 @@ export function AuthProvider({ children }) {
 
   const dangXuat = useCallback(() => {
     clearCache();
+    clearDrafts(sessionStorage);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);

@@ -14,6 +14,9 @@ const {
 
 router.use(xacThuc);
 
+const { saveSettings, restore } = require('./completion.service');
+router.put('/cai-dat', saveSettings);
+router.patch('/:id/khoi-phuc', restore);
 router.post('/', themDeadline);
 router.get('/', layDanhSachDeadline);
 router.put('/:id', suaDeadline);

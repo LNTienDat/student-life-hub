@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist','playwright-report','test-results']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [
@@ -18,9 +18,10 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  { files: ['e2e/**/*.js','playwright.config.js'], languageOptions: { globals: globals.node } },
   {
     files: ['src/context/*Context.jsx'],
-    rules: { 'react-refresh/only-export-components': ['error', { allowExportNames: ['useAuth', 'useTheme', 'useToast'] }] },
+    rules: { 'react-refresh/only-export-components': ['error', { allowExportNames: ['useAuth', 'useTheme', 'useToast', 'useCurrentSemester', 'useFinanceCategories'] }] },
   },
   {
     files: ['tests/ui-preview.jsx'],

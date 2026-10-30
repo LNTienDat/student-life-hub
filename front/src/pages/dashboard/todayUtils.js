@@ -42,3 +42,20 @@ export function getDailyBudget(budgets, now) {
   return { remaining, daysLeft, perDay: Math.floor(remaining / daysLeft),
     exceeded: budgets.filter((item) => item.daChi > item.soTienToiDa).length };
 }
+
+const vietnamDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit' });
+function dayNumber(date) {
+  const parts = Object.fromEntries(vietnamDay.formatToParts(date).map(part => [part.type, part.value]));
+  return Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day)) / 86400000;
+}
+
+// Include all of the third calendar day, including date-only deadlines at 23:59.
+export function getDeadlineAlert(deadline, now = new Date()) {
+  if (!deadline || deadline.trangThai === 'hoan_thanh') return null;
+  const due = new Date(deadline.hanChot), current = new Date(now);
+  if (!Number.isFinite(due.getTime()) || !Number.isFinite(current.getTime())) return null;
+  if (due < current) return { kind: 'overdue', label: 'Quá hạn' };
+  const days = dayNumber(due) - dayNumber(current);
+  if (days > 3) return null;
+  return { kind: 'soon', label: days === 0 ? 'Đến hạn hôm nay' : days === 1 ? 'Đến hạn ngày mai' : 'Còn ' + days + ' ngày' };
+}

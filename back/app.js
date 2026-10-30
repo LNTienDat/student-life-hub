@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { corsOrigins } = require('./src/corsOrigins');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
+const { createApiLimiter, createHealthLimiter } = require('./src/middlewares/apiRateLimit');
 const compression = require('compression');
 require('dotenv').config();
 const { deploymentConfig } = require('./src/deployment');
@@ -25,9 +25,10 @@ const prisma = require('./src/prismaClient');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDoc = require('./src/docs/swagger.json');
 
-const { RATE_LIMIT } = require('./src/constants');
 
 const app = express();
+// Never retain private API responses in browser/shared HTTP caches.
+app.use('/api', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 
 // Chỉ tin header X-Forwarded-For khi THẬT SỰ chạy sau 1 lớp reverse proxy
 if (process.env.TRUST_PROXY === 'true') {
@@ -49,21 +50,17 @@ app.use(
 );
 
 app.use(compression());
+app.use('/api/tai-lieu', express.json({ limit: '6mb' }));
 app.use('/api/imports', express.json({ limit: '2mb' }));
 app.use(express.json({ limit: '500kb' }));
 
-// Rate limiter toàn cục
-const gioiHanChung = rateLimit({
-  windowMs: RATE_LIMIT.GLOBAL_WINDOW_MS,
-  max: RATE_LIMIT.GLOBAL_MAX,
-  message: { message: 'Quá nhiều yêu cầu. Vui lòng thử lại sau.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api', gioiHanChung);
+// Screen data and health probes have independent quotas. Auth/AI keep stricter route limits.
+app.use('/api', createApiLimiter());
+
+app.get('/api/version', (req, res) => res.json(require('../scripts/release-info.cjs').releaseInfo()));
 
 // Health check endpoint phục vụ Docker / Render / UptimeRobot
-app.get('/api/health', async (req, res) => {
+app.get('/api/health', createHealthLimiter(), async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
     await prisma.$queryRaw`SELECT 1`;
@@ -81,12 +78,14 @@ if (!deployment.serveFrontend) {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 app.use('/api/auth', authRoutes);
+app.use('/api/hoc-ky', require('./src/modules/semester/semester.routes'));
 app.use('/api/academic', academicRoutes);
 app.use('/api/deadline', deadlineRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/thoi-khoa-bieu', thoiKhoaBieuRoutes);
 app.use('/api/thong-bao', thongBaoRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/tai-lieu', require('./src/modules/rag/rag.routes'));
 app.use('/api/nhom', nhomRoutes);
 app.use('/api/imports', require('./src/modules/imports/import.routes'));
 
@@ -105,7 +104,7 @@ if (deployment.serveFrontend) mountFrontend(app, path.resolve(__dirname, '../fro
 app.use((req, res) => res.status(404).json({ message: 'Đường dẫn không tồn tại' }));
 
 app.use((err, req, res, next) => {
-  if (err.type === 'entity.too.large') return res.status(413).json({ message: 'Tệp quá lớn. Tối đa 1 MB.' });
+  if (err.type === 'entity.too.large') return res.status(413).json({ message: 'Tệp hoặc nội dung gửi lên quá lớn.' });
   if (err.type === 'entity.parse.failed') return res.status(400).json({ message: 'Dữ liệu gửi lên không hợp lệ.' });
   console.error('Lỗi chưa xử lý:', err);
   res.status(500).json({ message: 'Đã có lỗi xảy ra ở server' });

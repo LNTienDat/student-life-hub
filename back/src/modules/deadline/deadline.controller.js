@@ -1,3 +1,4 @@
+const { readDeadlines, updateActive } = require('./completion.service');
 const { validText, positiveId } = require('../../utils/validation.util');
 const { parseVietnamDate } = require('../../utils/date.util');
 const { validateChecklist } = require('./checklist');
@@ -49,7 +50,7 @@ async function themDeadline(req, res) {
     res.status(201).json({ message: 'Thêm deadline thành công', deadline });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
   }
 }
 
@@ -63,16 +64,10 @@ async function layDanhSachDeadline(req, res) {
     if (trangThai) where.trangThai = trangThai;
     if (req.query.hocKy) where.OR = [{ monHoc: { hocKy: String(req.query.hocKy) } }, { idMonHoc: null }];
 
-    const danhSach = await prisma.deadline.findMany({
-      where,
-      include: { monHoc: true },
-      orderBy: { hanChot: 'asc' },
-    });
-
-    res.json({ deadlines: danhSach });
+    res.json(await readDeadlines(idNguoiDung, where));
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
   }
 }
 
@@ -105,9 +100,7 @@ async function suaDeadline(req, res) {
       }
     }
 
-    const ketQua = await prisma.deadline.updateMany({
-      where: { id: parseInt(id), idNguoiDung },
-      data: {
+    const deadline = await updateActive(idNguoiDung, parseInt(id), {
         tieuDe: tieuDe?.trim(),
         checklist,
         moTa,
@@ -115,21 +108,11 @@ async function suaDeadline(req, res) {
         doUuTien,
         trangThai,
         idMonHoc: idMonHoc !== undefined ? (idMonHoc ? parseInt(idMonHoc) : null) : undefined,
-      },
-    });
-
-    if (ketQua.count === 0) {
-      return res.status(404).json({ message: 'Không tìm thấy deadline hoặc bạn không có quyền sửa' });
-    }
-
-    const deadline = await prisma.deadline.findUnique({
-      where: { id: parseInt(id) },
-      include: { monHoc: true },
-    });
+      });
     res.json({ message: 'Cập nhật thành công', deadline });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
   }
 }
 
@@ -139,20 +122,11 @@ async function hoanThanhDeadline(req, res) {
     const { id } = req.params;
     const idNguoiDung = req.user.id;
 
-    const ketQua = await prisma.deadline.updateMany({
-      where: { id: parseInt(id), idNguoiDung },
-      data: { trangThai: DEADLINE.TRANG_THAI_HOAN_THANH },
-    });
-
-    if (ketQua.count === 0) {
-      return res.status(404).json({ message: 'Không tìm thấy deadline hoặc bạn không có quyền cập nhật' });
-    }
-
-    const deadline = await prisma.deadline.findUnique({ where: { id: parseInt(id) } });
+    const deadline = await updateActive(idNguoiDung, parseInt(id), { trangThai: DEADLINE.TRANG_THAI_HOAN_THANH });
     res.json({ message: 'Đã đánh dấu hoàn thành', deadline });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
   }
 }
 
@@ -170,7 +144,7 @@ async function xoaDeadline(req, res) {
     res.json({ message: 'Xóa deadline thành công' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
   }
 }
 
@@ -198,7 +172,7 @@ async function deadlineSapToi(req, res) {
     res.json({ soNgay, deadlines: danhSach });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
   }
 }
 

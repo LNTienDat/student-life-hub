@@ -1,6 +1,8 @@
 const { serializable, httpError } = require('../../utils/transaction.util');
 const { overlaps } = require('./conflicts');
-const crypto = require('crypto');
+const { normalizeSemester, filterSemester } = require('../../utils/semester.util');
+const { loadWeek, assertNoDatedConflicts } = require('./adjustments.service');
+const { sharingStatus, enableSharing, filterSharedScope } = require('./sharing.service');
 const prisma = require('../../prismaClient');
 const { THOIKHOABIEU } = require('../../constants');
 const { finiteNumber } = require('../../utils/number.util');
@@ -39,11 +41,13 @@ async function themBuoiHoc(req, res) {
     if (!tenMon || !thu || !gioBatDau || !gioKetThuc || typeof hocKy !== 'string' || hocKy.length > 100) return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin buổi học hợp lệ' });
     const invalid = validateBuoiHoc(req.body);
     if (invalid) return res.status(400).json({ message: invalid });
-    const data = { idNguoiDung: req.user.id, tenMon: tenMon.trim(), thu: finiteNumber(thu), gioBatDau, gioKetThuc, phongHoc, giangVien, hocKy: hocKy.trim() };
+    const data = { idNguoiDung: req.user.id, tenMon: tenMon.trim(), thu: finiteNumber(thu), gioBatDau, gioKetThuc, phongHoc, giangVien, hocKy: normalizeSemester(hocKy) };
     const buoiHoc = await serializable(prisma, async tx => {
       const others = await tx.thoiKhoaBieu.findMany({ where: { idNguoiDung: req.user.id, thu: data.thu } });
       if (others.some(other => overlaps(data, other))) throw httpError(409, 'Buổi học bị trùng giờ với lịch đã có. Vui lòng kiểm tra lại.');
-      return tx.thoiKhoaBieu.create({ data });
+      const made=await tx.thoiKhoaBieu.create({ data });
+      await assertNoDatedConflicts(tx,req.user.id,[made.id]);
+      return made;
     });
     res.status(201).json({ message: 'Thêm buổi học thành công', buoiHoc });
   } catch (error) { res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Chưa lưu được lịch học. Vui lòng thử lại.' }); }
@@ -52,14 +56,15 @@ async function themBuoiHoc(req, res) {
 async function layThoiKhoaBieu(req, res) {
   try {
     const idNguoiDung = req.user.id;
-    const danhSach = await prisma.thoiKhoaBieu.findMany({
-      where: { idNguoiDung, ...(req.query.hocKy ? { OR: [{ hocKy: String(req.query.hocKy) }, { hocKy: '' }] } : {}) },
+    const danhSach = filterSemester(await prisma.thoiKhoaBieu.findMany({
+      where: { idNguoiDung },
       orderBy: [{ thu: 'asc' }, { gioBatDau: 'asc' }],
-    });
+    }), req.query.hocKy, true);
+    if(req.query.tuNgay)return res.json(await loadWeek(prisma,idNguoiDung,danhSach,String(req.query.tuNgay)));
     res.json({ thoiKhoaBieu: danhSach });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(error.statusCode||500).json({ message:error.statusCode?error.message:'Lỗi server' });
   }
 }
 
@@ -78,10 +83,14 @@ async function suaBuoiHoc(req, res) {
       data.thu = finiteNumber(data.thu);
       const others = await tx.thoiKhoaBieu.findMany({ where: { idNguoiDung: req.user.id, thu: data.thu, id: { not: id } } });
       if (others.some(other => overlaps(data, other))) throw httpError(409, 'Buổi học bị trùng giờ với lịch đã có.');
-      if (input.thu !== undefined) input.thu = finiteNumber(input.thu);
+      if (input.thu !== undefined) {
+        input.thu = finiteNumber(input.thu);
+        if(input.thu!==current.thu&&await tx.dieuChinhLich.count({where:{idBuoiHoc:id}}))throw httpError(409,'Buổi này có điều chỉnh theo ngày. Hoàn tác các điều chỉnh trước khi đổi thứ của lịch lặp.');
+      }
       if (input.tenMon !== undefined) input.tenMon = input.tenMon.trim();
-      if (input.hocKy !== undefined) input.hocKy = input.hocKy.trim();
+      if (input.hocKy !== undefined) input.hocKy = normalizeSemester(input.hocKy);
       await tx.thoiKhoaBieu.updateMany({ where: { id, idNguoiDung: req.user.id }, data: input });
+      await assertNoDatedConflicts(tx,req.user.id,[id]);
       return tx.thoiKhoaBieu.findUnique({ where: { id } });
     });
     res.json({ message: 'Cập nhật thành công', buoiHoc });
@@ -101,41 +110,38 @@ async function xoaBuoiHoc(req, res) {
     res.json({ message: 'Xóa buổi học thành công' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    res.status(error.statusCode||500).json({ message:error.statusCode?error.message:'Lỗi server' });
+  }
+}
+
+
+async function xoaNhieuBuoiHoc(req, res) {
+  const ids = req.body?.ids;
+  if (!Array.isArray(ids) || !ids.length || ids.length > 1000 ||
+      ids.some(id => !Number.isSafeInteger(id) || id <= 0 || id > 2147483647) ||
+      new Set(ids).size !== ids.length) {
+    return res.status(400).json({ message: 'Chọn từ 1 đến 1.000 buổi học hợp lệ, không trùng nhau.' });
+  }
+  try {
+    const result = await serializable(prisma, async tx => {
+      const where = { idNguoiDung: req.user.id, id: { in: ids } };
+      const count = await tx.thoiKhoaBieu.count({ where });
+      if (count !== ids.length) throw httpError(409, 'Danh sách lịch đã thay đổi hoặc có buổi không thuộc tài khoản. Hãy tải lại trước khi xóa.');
+      return tx.thoiKhoaBieu.deleteMany({ where });
+    });
+    res.json({ message: 'Đã xóa các buổi học đã chọn.', count: result.count });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Chưa xóa được lịch học. Hãy thử lại.' });
   }
 }
 
 // Bật / tạo link chia sẻ công khai thời khóa biểu
 async function batChiaSeTKB(req, res) {
   try {
-    const idNguoiDung = req.user.id;
-    const nguoiDung = await prisma.nguoiDung.findUnique({
-      where: { id: idNguoiDung },
-      select: { shareToken: true, shareEnabled: true },
-    });
-
-    let token = nguoiDung ? nguoiDung.shareToken : null;
-    if (!token || !nguoiDung.shareEnabled) {
-      token = crypto.randomUUID();
-    }
-
-    const updated = await prisma.nguoiDung.update({
-      where: { id: idNguoiDung },
-      data: {
-        shareToken: token,
-        shareEnabled: true,
-      },
-      select: { shareToken: true, shareEnabled: true },
-    });
-
-    res.json({
-      message: 'Đã bật chia sẻ thời khóa biểu',
-      shareToken: updated.shareToken,
-      shareEnabled: updated.shareEnabled,
-    });
+    const data = await enableSharing(prisma, req.user.id, req.body?.hocKy);
+    res.json({ message: 'Đã bật chia sẻ thời khóa biểu', ...data });
   } catch (error) {
-    console.error('Lỗi bật chia sẻ TKB:', error);
-    res.status(500).json({ message: 'Lỗi server khi bật chia sẻ' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Chưa bật được chia sẻ.' });
   }
 }
 
@@ -157,21 +163,8 @@ async function tatChiaSeTKB(req, res) {
 
 // Lấy trạng thái chia sẻ hiện tại của user
 async function layTrangThaiChiaSe(req, res) {
-  try {
-    const idNguoiDung = req.user.id;
-    const nguoiDung = await prisma.nguoiDung.findUnique({
-      where: { id: idNguoiDung },
-      select: { shareToken: true, shareEnabled: true },
-    });
-
-    res.json({
-      shareToken: nguoiDung ? nguoiDung.shareToken : null,
-      shareEnabled: Boolean(nguoiDung && nguoiDung.shareEnabled),
-    });
-  } catch (error) {
-    console.error('Lỗi lấy trạng thái chia sẻ:', error);
-    res.status(500).json({ message: 'Lỗi server' });
-  }
+  try { res.json(await sharingStatus(prisma, req.user.id)); }
+  catch (error) { res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Chưa tải được trạng thái chia sẻ.' }); }
 }
 
 // PUBLIC: Xem thời khóa biểu qua link chia sẻ (không cần đăng nhập)
@@ -191,10 +184,11 @@ async function xemTKBChiaSe(req, res) {
         nganh: true,
         khoaHoc: true,
         shareEnabled: true,
+        shareHocKy: true,
       },
     });
 
-    if (!nguoiDung || !nguoiDung.shareEnabled) {
+    if (!nguoiDung || !nguoiDung.shareEnabled || nguoiDung.shareHocKy == null) {
       return res.status(404).json({ message: 'Thời khóa biểu này không tồn tại hoặc đã tắt chia sẻ công khai' });
     }
 
@@ -203,6 +197,8 @@ async function xemTKBChiaSe(req, res) {
       orderBy: [{ thu: 'asc' }, { gioBatDau: 'asc' }],
     });
 
+    const scoped = filterSharedScope(thoiKhoaBieu, normalizeSemester(nguoiDung.shareHocKy));
+    const displayed = req.query.tuNgay ? (await loadWeek(prisma,nguoiDung.id,scoped,String(req.query.tuNgay))).thoiKhoaBieu : scoped;
     res.json({
       chuSoHuu: {
         ten: nguoiDung.ten,
@@ -210,11 +206,12 @@ async function xemTKBChiaSe(req, res) {
         nganh: nguoiDung.nganh,
         khoaHoc: nguoiDung.khoaHoc,
       },
-      thoiKhoaBieu,
+      hocKyChiaSe: normalizeSemester(nguoiDung.shareHocKy),
+      thoiKhoaBieu:displayed,
     });
   } catch (error) {
     console.error('Lỗi xem TKB chia sẻ:', error);
-    res.status(500).json({ message: 'Lỗi server khi tải thời khóa biểu' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server khi tải thời khóa biểu' });
   }
 }
 
@@ -223,6 +220,7 @@ module.exports = {
   layThoiKhoaBieu,
   suaBuoiHoc,
   xoaBuoiHoc,
+  xoaNhieuBuoiHoc,
   batChiaSeTKB,
   tatChiaSeTKB,
   layTrangThaiChiaSe,

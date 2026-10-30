@@ -539,7 +539,7 @@
     },
     "/api/finance/xu-huong": {
       "get": {
-        "summary": "Lấy biểu đồ xu hướng thu - chi 6 tháng gần nhất",
+        "summary": "Thu chi N tháng kết thúc tại kỳ đã chọn (mặc định tháng hiện tại)",
         "tags": [
           "Finance"
         ],
@@ -547,7 +547,31 @@
           "200": {
             "description": "Chuỗi dữ liệu 6 tháng"
           }
-        }
+        },
+        "parameters": [
+          {
+            "in": "query",
+            "name": "thang",
+            "required": false,
+            "description": "Send thang and nam together; omit both for the current Vietnam month.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 12
+            }
+          },
+          {
+            "in": "query",
+            "name": "nam",
+            "required": false,
+            "description": "Send thang and nam together; omit both for the current Vietnam month.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999
+            }
+          }
+        ]
       }
     },
     "/api/finance/xuat-bao-cao": {

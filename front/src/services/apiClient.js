@@ -8,16 +8,26 @@ function userError(error, config, message = error.message) {
   return error;
 }
 function availabilityError(error) {
+  // Provider errors must not mark the LifeHub backend as offline.
+  if (error.response?.data?.code?.startsWith('CHATBOT_')) return false;
   if (axios.isCancel(error) || error.code === 'ERR_BACKEND_UNAVAILABLE') return false;
   return error.code === 'ERR_BACKEND_HTML'
     || (!error.response && ['ERR_NETWORK', 'ECONNABORTED', 'ETIMEDOUT'].includes(error.code))
     || [502, 504].includes(error.response?.status)
     || (error.response?.status === 503 && error.config?.method === 'get');
 }
+function sessionToken() { return typeof localStorage === 'undefined' ? null : localStorage.getItem('token'); }
+function sessionChanged(config) {
+  return config && Object.hasOwn(config, 'slhSessionToken') && config.slhSessionToken !== sessionToken();
+}
+function sessionCanceled(config) { return new axios.CanceledError('Phiên đăng nhập đã thay đổi. Hãy kiểm tra lại dữ liệu.', config); }
 export function createApiClient({ baseURL = '/api', connection } = {}) {
   const api = axios.create({ baseURL, timeout: 20000 });
   let redirecting = false;
   api.interceptors.request.use(async config => {
+    // Bind the operation to its original session before waiting for a sleeping backend.
+    if (!Object.hasOwn(config, 'slhSessionToken')) config.slhSessionToken = sessionToken();
+    if (sessionChanged(config)) throw sessionCanceled(config);
     if (typeof window !== 'undefined' && window.navigator?.onLine === false) {
       throw userError(new axios.AxiosError('Thiết bị đang mất mạng. Kết nối lại để lưu dữ liệu.', 'ERR_NETWORK', config), config);
     }
@@ -26,12 +36,14 @@ export function createApiClient({ baseURL = '/api', connection } = {}) {
       catch (error) { throw userError(error, config); }
     }
     if (config.signal?.aborted) throw new axios.CanceledError('Request canceled', config);
-    const token = typeof localStorage !== 'undefined' && localStorage.getItem('token');
+    if (sessionChanged(config)) throw sessionCanceled(config);
+    const token = config.slhSessionToken;
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   });
   async function handleError(error) {
     const config = error.config;
+    if (sessionChanged(config)) throw sessionCanceled(config);
     if (connection?.enabled && availabilityError(error)) {
       connection.markUnavailable();
       // Only GET can be retried. A lost POST/PUT/PATCH/DELETE response is ambiguous.
@@ -60,12 +72,13 @@ export function createApiClient({ baseURL = '/api', connection } = {}) {
     throw error;
   }
   api.interceptors.response.use(response => {
+    if (sessionChanged(response.config)) throw sessionCanceled(response.config);
     if (String(response.headers?.['content-type'] || '').includes('text/html')) {
       return handleError(new axios.AxiosError('Máy chủ chưa sẵn sàng.', 'ERR_BACKEND_HTML', response.config, null, response));
     }
     connection?.enabled && connection.confirmReady();
     if (['post', 'put', 'patch', 'delete'].includes(response.config.method)
-      && /^\/(academic|deadline|finance|thoi-khoa-bieu|imports)(\/|$)/.test(response.config.url)
+      && /^\/(academic|deadline|finance|thoi-khoa-bieu|imports|hoc-ky)(\/|$)/.test(response.config.url)
       && !response.config.url.includes('/preview') && !response.config.url.endsWith('/du-doan')) notifyDataChanged();
     return response;
   }, handleError);

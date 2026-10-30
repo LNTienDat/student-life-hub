@@ -1,3 +1,4 @@
+const { normalizeSemester, filterSemester } = require('../../utils/semester.util');
 const { validText } = require('../../utils/validation.util');
 const { serializable, httpError } = require('../../utils/transaction.util');
 const prisma = require('../../prismaClient');
@@ -35,7 +36,7 @@ async function themMonHoc(req, res) {
     }
 
     const monHoc = await prisma.monHoc.create({
-      data: { ten: ten.trim(), tinChi: tinChiSo, hocKy: hocKy.trim(), idNguoiDung },
+      data: { ten: ten.trim(), tinChi: tinChiSo, hocKy: normalizeSemester(hocKy), idNguoiDung },
     });
 
     res.status(201).json({ message: 'Thêm môn học thành công', monHoc });
@@ -50,11 +51,11 @@ async function layDanhSachMonHoc(req, res) {
   try {
     const idNguoiDung = req.user.id;
 
-    const danhSach = await prisma.monHoc.findMany({
-      where: { idNguoiDung, ...(req.query.hocKy ? { hocKy: String(req.query.hocKy) } : {}) },
+    const danhSach = filterSemester(await prisma.monHoc.findMany({
+      where: { idNguoiDung },
       include: { diems: true },
       orderBy: { ngayTao: 'desc' },
-    });
+    }), req.query.hocKy);
 
     res.json({ monHocs: danhSach });
   } catch (error) {
@@ -77,7 +78,7 @@ async function suaMonHoc(req, res) {
 
     const ketQua = await prisma.monHoc.updateMany({
       where: { id: parseInt(id), idNguoiDung },
-      data: { ten: ten?.trim(), tinChi: tinChi !== undefined ? finiteNumber(tinChi) : undefined, hocKy: hocKy?.trim(), trangThai },
+      data: { ten: ten?.trim(), tinChi: tinChi !== undefined ? finiteNumber(tinChi) : undefined, hocKy: hocKy === undefined ? undefined : normalizeSemester(hocKy), trangThai },
     });
 
     if (ketQua.count === 0) {
@@ -174,10 +175,10 @@ async function tinhGPA(req, res) {
   try {
     const idNguoiDung = req.user.id;
 
-    const monHocs = await prisma.monHoc.findMany({
-      where: { idNguoiDung, ...(req.query.hocKy ? { hocKy: String(req.query.hocKy) } : {}) },
+    const monHocs = filterSemester(await prisma.monHoc.findMany({
+      where: { idNguoiDung },
       include: { diems: true },
-    });
+    }), req.query.hocKy);
 
     res.json(tinhGPAService(monHocs));
   } catch (error) {
@@ -232,10 +233,10 @@ async function canhBaoMonNguyCo(req, res) {
     const idNguoiDung = req.user.id;
     const nguong = req.query.nguong ? parseFloat(req.query.nguong) : ACADEMIC.DEFAULT_NGUONG_CANH_BAO;
 
-    const monHocs = await prisma.monHoc.findMany({
-      where: { idNguoiDung, ...(req.query.hocKy ? { hocKy: String(req.query.hocKy) } : {}) },
+    const monHocs = filterSemester(await prisma.monHoc.findMany({
+      where: { idNguoiDung },
       include: { diems: true },
-    });
+    }), req.query.hocKy);
 
     const monNguyCo = canhBaoMonNguyCoService(monHocs, nguong);
     res.json({ nguong, monNguyCo });
@@ -249,10 +250,10 @@ async function canhBaoMonNguyCo(req, res) {
 async function gpaTheoKy(req, res) {
   try {
     const idNguoiDung = req.user.id;
-    const monHocs = await prisma.monHoc.findMany({
-      where: { idNguoiDung, ...(req.query.hocKy ? { hocKy: String(req.query.hocKy) } : {}) },
+    const monHocs = filterSemester(await prisma.monHoc.findMany({
+      where: { idNguoiDung },
       include: { diems: true },
-    });
+    }), req.query.hocKy);
 
     const theoKy = gpaTheoKyService(monHocs);
     res.json({ theoKy });
@@ -268,11 +269,11 @@ async function xuatBangDiemPDF(req, res) {
     const idNguoiDung = req.user.id;
 
     const nguoiDung = await prisma.nguoiDung.findUnique({ where: { id: idNguoiDung } });
-    const monHocs = await prisma.monHoc.findMany({
-      where: { idNguoiDung, ...(req.query.hocKy ? { hocKy: String(req.query.hocKy) } : {}) },
+    const monHocs = filterSemester(await prisma.monHoc.findMany({
+      where: { idNguoiDung },
       include: { diems: true },
       orderBy: { hocKy: 'asc' },
-    });
+    }), req.query.hocKy);
 
     // Tính điểm từng môn (thang 10, có trọng số) - dùng đúng công thức của tinhGPA
     let tongDiemTinChi = 0;

@@ -1,22 +1,27 @@
 const { readPeriod, monthRange, vietnamParts, parseVietnamDate } = require('../../utils/date.util');
 const prisma = require('../../prismaClient');
+const { tongHopGiaoDich } = require('./finance.repository');
 const ExcelJS = require('exceljs');
 const { FINANCE } = require('../../constants');
+const { httpError } = require('../../utils/transaction.util');
+const { validDong } = require('../../utils/money.util');
 const { finiteNumber } = require('../../utils/number.util');
+const { validText } = require('../../utils/validation.util');
 const {
   chongCongThuc,
   thongKeTaiChinhService,
   kiemTraNganSachService,
 } = require('./finance.service');
 
-const { DANH_MUC_CHI, DANH_MUC_THU, DANH_MUC_HOP_LE } = FINANCE;
+const { validCategory, categoryLabels } = require('./category.service');
 
 // ===== GIAO DỊCH =====
 
 // Thêm giao dịch mới
 async function themGiaoDich(req, res) {
   try {
-    const { loai, danhMuc, soTien, moTa, ngayGiaoDich } = req.body;
+    const { loai, danhMuc, soTien, moTa, ngayGiaoDich, anhHoaDonHash, choPhepTrungHoaDon } = req.body;
+    if (moTa != null && !validText(moTa, 5000, false)) return res.status(400).json({ message: 'Mô tả phải là văn bản không quá 5000 ký tự.' });
     const idNguoiDung = req.user.id;
 
     if (!loai || !danhMuc || soTien === undefined) {
@@ -25,23 +30,21 @@ async function themGiaoDich(req, res) {
     if (!['thu', 'chi'].includes(loai)) {
       return res.status(400).json({ message: 'Loại giao dịch không hợp lệ (chỉ nhận "thu" hoặc "chi")' });
     }
-    if (loai === 'chi' && !DANH_MUC_CHI.includes(danhMuc)) {
-      return res.status(400).json({ message: 'Danh mục chi tiêu không hợp lệ' });
-    }
-    if (loai === 'thu' && !DANH_MUC_THU.includes(danhMuc) && !DANH_MUC_CHI.includes(danhMuc)) {
-      return res.status(400).json({ message: 'Danh mục thu nhập không hợp lệ' });
-    }
-    if (!Number.isFinite(finiteNumber(soTien)) || finiteNumber(soTien) <= 0) {
-      return res.status(400).json({ message: 'Số tiền phải là số dương' });
+    if (!await validCategory(idNguoiDung, danhMuc, loai)) return res.status(400).json({message:'Danh mục thu/chi không hợp lệ.'});
+    if (!validDong(soTien)) {
+      return res.status(400).json({ message: 'Số tiền phải là số nguyên từ 1 đến 1.000.000.000.000 đồng.' });
     }
     if (ngayGiaoDich !== undefined && isNaN(parseVietnamDate(ngayGiaoDich).getTime())) {
       return res.status(400).json({ message: 'Ngày giao dịch không hợp lệ' });
     }
 
-    const giaoDich = await prisma.giaoDich.create({
+    if(anhHoaDonHash!==undefined&&(typeof anhHoaDonHash!=='string'||! /^[a-f0-9]{64}$/.test(anhHoaDonHash)))return res.status(400).json({message:'Mã ảnh hóa đơn không hợp lệ.'});
+    if(choPhepTrungHoaDon!==undefined&&typeof choPhepTrungHoaDon!=='boolean')return res.status(400).json({message:'Xác nhận hóa đơn không hợp lệ.'});
+    const create=client=>client.giaoDich.create({
       data: {
         loai,
         danhMuc,
+        anhHoaDonHash,
         soTien: finiteNumber(soTien),
         moTa,
         ngayGiaoDich: ngayGiaoDich ? parseVietnamDate(ngayGiaoDich) : undefined,
@@ -49,10 +52,21 @@ async function themGiaoDich(req, res) {
       },
     });
 
+    const giaoDich = anhHoaDonHash ? await prisma.$transaction(async tx=>{
+      await tx.$queryRaw`SELECT id FROM "NguoiDung" WHERE id = ${idNguoiDung} FOR UPDATE`;
+      const candidates=[{anhHoaDonHash}];
+      if(loai==='chi'&&typeof moTa==='string'&&moTa.trim().length>=3&&moTa.trim().toLocaleLowerCase('vi')!=='hóa đơn'){
+        const p=vietnamParts(ngayGiaoDich?parseVietnamDate(ngayGiaoDich):new Date());
+        const from=new Date(Date.UTC(p.year,p.month-1,p.day)-7*3600000),to=new Date(from.getTime()+86400000);
+        candidates.push({loai,soTien:finiteNumber(soTien),moTa:{equals:moTa.trim(),mode:'insensitive'},ngayGiaoDich:{gte:from,lt:to}});
+      }
+      if(!choPhepTrungHoaDon && await tx.giaoDich.findFirst({where:{idNguoiDung,OR:candidates},select:{id:true}}))throw Object.assign(httpError(409,'Đã có giao dịch cùng ảnh, hoặc cùng mô tả, ngày và số tiền. Kiểm tra lại trước khi ghi thêm một khoản riêng.'),{code:'RECEIPT_DUPLICATE'});
+      return create(tx);
+    }) : await create(prisma);
     res.status(201).json({ message: 'Thêm giao dịch thành công', giaoDich });
   } catch (error) {
     console.error(error);
-    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server', ...(error.code==='RECEIPT_DUPLICATE'?{code:error.code}:{}) });
   }
 }
 
@@ -61,6 +75,7 @@ async function layDanhSachGiaoDich(req, res) {
   try {
     const idNguoiDung = req.user.id;
     const { thang, nam, q, loai, danhMuc, trang, soLuong } = req.query;
+    if ((q !== undefined && !validText(q, 200, false)) || (loai !== undefined && !['thu', 'chi'].includes(loai)) || (danhMuc !== undefined && !await validCategory(idNguoiDung,danhMuc))) return res.status(400).json({ message: 'Bộ lọc giao dịch không hợp lệ.' });
 
     const where = { idNguoiDung };
 
@@ -78,20 +93,25 @@ async function layDanhSachGiaoDich(req, res) {
     }
 
     if (q) {
+      const fold=text=>String(text).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase();
+      const labels=await categoryLabels(idNguoiDung);
+      const codes=[];for(const type of ['chi','thu'])for(const code of Object.keys(labels).filter(key=>!key.includes(':'))){if(fold(labels[type+':'+code]||labels[code]).includes(fold(q)))codes.push({loai:type,danhMuc:code});}
       where.OR = [
         { moTa: { contains: q, mode: 'insensitive' } },
+        ...codes,
         { danhMuc: { contains: q, mode: 'insensitive' } },
       ];
     }
 
     if ((trang !== undefined && !/^[1-9]\d*$/.test(String(trang))) || (soLuong !== undefined && !/^[1-9]\d*$/.test(String(soLuong)))) return res.status(400).json({ message: 'Trang và số lượng phải là số nguyên dương' });
+    if (trang !== undefined && (!Number.isSafeInteger(Number(trang)) || Number(trang) > 21474836)) return res.status(400).json({ message: 'Số trang vượt giới hạn.' });
     const trangSo = Math.max(Number(trang) || 1, 1);
     const kichThuoc = Math.min(Math.max(parseInt(soLuong) || FINANCE.DEFAULT_PAGE_SIZE, 1), FINANCE.MAX_PAGE_SIZE);
 
     const [danhSach, tongSo] = await Promise.all([
       prisma.giaoDich.findMany({
         where,
-        orderBy: { ngayGiaoDich: 'desc' },
+        orderBy: [{ ngayGiaoDich: 'desc' }, { id: 'desc' }],
         skip: (trangSo - 1) * kichThuoc,
         take: kichThuoc,
       }),
@@ -106,7 +126,7 @@ async function layDanhSachGiaoDich(req, res) {
     });
   } catch (error) {
     console.error(error);
-    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server', ...(error.code==='RECEIPT_DUPLICATE'?{code:error.code}:{}) });
   }
 }
 
@@ -115,16 +135,17 @@ async function suaGiaoDich(req, res) {
   try {
     const { id } = req.params;
     const idNguoiDung = req.user.id;
-    const { loai, danhMuc, soTien, moTa, ngayGiaoDich } = req.body;
+    const { loai, danhMuc, soTien, moTa, ngayGiaoDich, anhHoaDonHash, choPhepTrungHoaDon } = req.body;
+    if (moTa != null && !validText(moTa, 5000, false)) return res.status(400).json({ message: 'Mô tả phải là văn bản không quá 5000 ký tự.' });
 
     if (loai !== undefined && !['thu', 'chi'].includes(loai)) {
       return res.status(400).json({ message: 'Loại giao dịch không hợp lệ (chỉ nhận "thu" hoặc "chi")' });
     }
-    if (danhMuc !== undefined && !DANH_MUC_HOP_LE.includes(danhMuc)) {
+    if (danhMuc !== undefined && !await validCategory(idNguoiDung,danhMuc)) {
       return res.status(400).json({ message: 'Danh mục không hợp lệ' });
     }
-    if (soTien !== undefined && (!Number.isFinite(finiteNumber(soTien)) || finiteNumber(soTien) <= 0)) {
-      return res.status(400).json({ message: 'Số tiền phải là số dương' });
+    if (soTien !== undefined && (!validDong(soTien))) {
+      return res.status(400).json({ message: 'Số tiền phải là số nguyên từ 1 đến 1.000.000.000.000 đồng.' });
     }
     if (ngayGiaoDich !== undefined && (typeof ngayGiaoDich !== 'string' || !ngayGiaoDich.trim() || isNaN(parseVietnamDate(ngayGiaoDich).getTime()))) {
       return res.status(400).json({ message: 'Ngày giao dịch không hợp lệ' });
@@ -136,7 +157,7 @@ async function suaGiaoDich(req, res) {
     }
     const loaiMoi = loai ?? hienTai.loai;
     const danhMucMoi = danhMuc ?? hienTai.danhMuc;
-    if (loaiMoi === 'chi' && !DANH_MUC_CHI.includes(danhMucMoi)) {
+    if (!await validCategory(idNguoiDung,danhMucMoi,loaiMoi)) {
       return res.status(400).json({ message: 'Vui lòng chọn danh mục chi tiêu phù hợp' });
     }
 
@@ -159,7 +180,7 @@ async function suaGiaoDich(req, res) {
     res.json({ message: 'Cập nhật thành công', giaoDich });
   } catch (error) {
     console.error(error);
-    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server', ...(error.code==='RECEIPT_DUPLICATE'?{code:error.code}:{}) });
   }
 }
 
@@ -177,7 +198,7 @@ async function xoaGiaoDich(req, res) {
     res.json({ message: 'Xóa giao dịch thành công' });
   } catch (error) {
     console.error(error);
-    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server', ...(error.code==='RECEIPT_DUPLICATE'?{code:error.code}:{}) });
   }
 }
 
@@ -189,9 +210,7 @@ async function thongKeTheoThang(req, res) {
 
     const { from, to } = monthRange(thang, nam);
 
-    const giaoDichs = await prisma.giaoDich.findMany({
-      where: { idNguoiDung, ngayGiaoDich: { gte: from, lt: to } },
-    });
+    const giaoDichs = await tongHopGiaoDich({ idNguoiDung, ngayGiaoDich: { gte: from, lt: to } });
 
     const { tongThu, tongChi, soDu, theoDanhMuc } = thongKeTaiChinhService(giaoDichs);
 
@@ -205,7 +224,7 @@ async function thongKeTheoThang(req, res) {
     });
   } catch (error) {
     console.error(error);
-    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server', ...(error.code==='RECEIPT_DUPLICATE'?{code:error.code}:{}) });
   }
 }
 
@@ -220,11 +239,11 @@ async function datNganSach(req, res) {
     if (!danhMuc || soTienToiDa === undefined || !thang || !nam) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin ngân sách' });
     }
-    if (!DANH_MUC_CHI.includes(danhMuc)) {
+    if (!await validCategory(idNguoiDung,danhMuc,'chi')) {
       return res.status(400).json({ message: 'Danh mục ngân sách không hợp lệ (ngân sách chỉ áp dụng cho chi tiêu)' });
     }
-    if (!Number.isFinite(finiteNumber(soTienToiDa)) || finiteNumber(soTienToiDa) <= 0) {
-      return res.status(400).json({ message: 'Hạn mức ngân sách phải là số dương' });
+    if (!validDong(soTienToiDa)) {
+      return res.status(400).json({ message: 'Hạn mức phải là số nguyên từ 1 đến 1.000.000.000.000 đồng.' });
     }
     if (!Number.isInteger(finiteNumber(thang)) || finiteNumber(thang) < 1 || finiteNumber(thang) > 12) {
       return res.status(400).json({ message: 'Tháng không hợp lệ (phải từ 1 đến 12)' });
@@ -244,7 +263,7 @@ async function datNganSach(req, res) {
     res.status(200).json({ message: 'Đã lưu ngân sách', nganSach });
   } catch (error) {
     console.error(error);
-    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server', ...(error.code==='RECEIPT_DUPLICATE'?{code:error.code}:{}) });
   }
 }
 
@@ -260,16 +279,14 @@ async function kiemTraNganSach(req, res) {
 
     const { from, to } = monthRange(thang, nam);
 
-    const giaoDichs = await prisma.giaoDich.findMany({
-      where: { idNguoiDung, loai: 'chi', ngayGiaoDich: { gte: from, lt: to } },
-    });
+    const giaoDichs = await tongHopGiaoDich({ idNguoiDung, loai: 'chi', ngayGiaoDich: { gte: from, lt: to } });
 
     const ketQua = kiemTraNganSachService(nganSachs, giaoDichs);
 
     res.json({ thang, nam, ketQua });
   } catch (error) {
     console.error(error);
-    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server', ...(error.code==='RECEIPT_DUPLICATE'?{code:error.code}:{}) });
   }
 }
 
@@ -279,12 +296,11 @@ async function xuHuongNThang(req, res) {
     const idNguoiDung = req.user.id;
     // Giới hạn soThang trong khoảng [1, 24]
     const soThang = Math.min(Math.max(parseInt(req.query.soThang) || FINANCE.DEFAULT_TREND_MONTHS, 1), 24);
-    const parts = vietnamParts();
-    const now = new Date(Date.UTC(parts.year, parts.month - 1, 15));
+    const { thang: endMonth, nam: endYear } = readPeriod(req.query, true);
 
     // Tính khoảng thời gian bao phủ toàn bộ N tháng
-    const from = monthRange(parts.month - (soThang - 1), parts.year).from;
-    const to = monthRange(parts.month, parts.year).to;
+    const from = monthRange(endMonth - (soThang - 1), endYear).from;
+    const to = monthRange(endMonth, endYear).to;
 
     // 1 query duy nhất thay vì N queries tuần tự
     const giaoDichs = await prisma.giaoDich.findMany({
@@ -295,9 +311,9 @@ async function xuHuongNThang(req, res) {
     // Tạo map kết quả khởi tạo sẵn cho tất cả N tháng
     const thangMap = {};
     for (let i = soThang - 1; i >= 0; i--) {
-      const thoiDiem = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const thang = thoiDiem.getMonth() + 1;
-      const nam = thoiDiem.getFullYear();
+      const thoiDiem = new Date(Date.UTC(endYear, endMonth - 1 - i, 15));
+      const thang = thoiDiem.getUTCMonth() + 1;
+      const nam = thoiDiem.getUTCFullYear();
       thangMap[`${thang}/${nam}`] = { thang: `${thang}/${nam}`, thu: 0, chi: 0 };
     }
 
@@ -315,7 +331,7 @@ async function xuHuongNThang(req, res) {
     res.json({ xuHuong: Object.values(thangMap) });
   } catch (error) {
     console.error(error);
-    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server' });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Lỗi server', ...(error.code==='RECEIPT_DUPLICATE'?{code:error.code}:{}) });
   }
 }
 
@@ -334,11 +350,13 @@ async function xuatBaoCaoTaiChinhExcel(req, res) {
 
     const giaoDichs = await prisma.giaoDich.findMany({
       where,
-      orderBy: { ngayGiaoDich: 'asc' },
+      orderBy: [{ ngayGiaoDich: 'asc' }, { id: 'asc' }],
       // Giới hạn an toàn tải dữ liệu vào bộ nhớ khi xuất file
-      take: FINANCE.MAX_EXPORT_RECORDS,
+      take: FINANCE.MAX_EXPORT_RECORDS + 1,
     });
 
+    if (giaoDichs.length > FINANCE.MAX_EXPORT_RECORDS) return res.status(400).json({ message: 'Báo cáo vượt giới hạn 10.000 giao dịch. Hãy chọn một tháng có ít giao dịch hơn.' });
+    const labels = await categoryLabels(idNguoiDung);
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'Student Life Hub';
     workbook.created = new Date();
@@ -358,9 +376,9 @@ async function xuatBaoCaoTaiChinhExcel(req, res) {
     let tongChi = 0;
     giaoDichs.forEach((gd) => {
       sheet1.addRow({
-        ngay: new Date(gd.ngayGiaoDich).toLocaleDateString('vi-VN'),
+        ngay: new Date(gd.ngayGiaoDich).toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),
         loai: gd.loai === 'thu' ? 'Thu nhập' : 'Chi tiêu',
-        danhMuc: chongCongThuc(gd.danhMuc),
+        danhMuc: chongCongThuc(labels[gd.loai+':'+gd.danhMuc] || labels[gd.danhMuc] || gd.danhMuc),
         moTa: chongCongThuc(gd.moTa || ''),
         soTien: gd.soTien,
       });
@@ -385,7 +403,7 @@ async function xuatBaoCaoTaiChinhExcel(req, res) {
     });
     Object.entries(theoDanhMuc).forEach(([key, tong]) => {
       const [danhMuc, loai] = key.split('__');
-      sheet2.addRow({ danhMuc: chongCongThuc(danhMuc), loai: loai === 'thu' ? 'Thu nhập' : 'Chi tiêu', tong });
+      sheet2.addRow({ danhMuc: chongCongThuc(labels[loai+':'+danhMuc] || labels[danhMuc] || danhMuc), loai: loai === 'thu' ? 'Thu nhập' : 'Chi tiêu', tong });
     });
     sheet2.getColumn('tong').numFmt = '#,##0" đ"';
 
@@ -415,7 +433,17 @@ async function xuatBaoCaoTaiChinhExcel(req, res) {
   }
 }
 
+
+async function xoaNganSach(req,res) {
+  try {
+    const deleted=await prisma.nganSach.deleteMany({where:{id:Number(req.params.id),idNguoiDung:req.user.id}});
+    if(!deleted.count)return res.status(404).json({message:'Không tìm thấy ngân sách của tài khoản.'});
+    res.json({message:'Đã gỡ hạn mức. Các giao dịch được giữ nguyên.'});
+  }catch{res.status(500).json({message:'Chưa gỡ được ngân sách.'});}
+}
+
 module.exports = {
+  xoaNganSach,
   themGiaoDich,
   layDanhSachGiaoDich,
   suaGiaoDich,

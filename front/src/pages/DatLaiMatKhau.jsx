@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import PasswordToggle from '../components/PasswordToggle';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ShieldCheck, KeyRound, Cloud } from 'lucide-react';
@@ -15,6 +16,8 @@ const bienTheField = {
 };
 
 function DatLaiMatKhau() {
+  const [hienMoi, setHienMoi] = useState(false);
+  const [hienXacNhan, setHienXacNhan] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token');
@@ -25,9 +28,13 @@ function DatLaiMatKhau() {
   const [loi, setLoi] = useState('');
   const [thongBao, setThongBao] = useState('');
   const [dangTai, setDangTai] = useState(false);
+  const submitLock = useRef(false);
+  const redirectTimer = useRef(null);
+  useEffect(() => () => clearTimeout(redirectTimer.current), []);
 
   async function xuLySubmit(e) {
     e.preventDefault();
+    if (submitLock.current || thongBao) return;
     setLoi('');
     setThongBao('');
 
@@ -40,14 +47,16 @@ function DatLaiMatKhau() {
       return;
     }
 
+    submitLock.current = true;
     setDangTai(true);
     try {
       const res = await api.post('/auth/dat-lai-mat-khau', { email, token, matKhauMoi });
       setThongBao(res.data.message || 'Đặt lại mật khẩu thành công! Đang chuyển đến trang đăng nhập...');
-      setTimeout(() => navigate('/login'), 2000);
+      redirectTimer.current = setTimeout(() => navigate('/login', { replace: true }), 2000);
     } catch (error) {
       setLoi(error.response?.data?.message || 'Đã có lỗi xảy ra');
     } finally {
+      submitLock.current = false;
       setDangTai(false);
     }
   }
@@ -151,37 +160,37 @@ function DatLaiMatKhau() {
           <form onSubmit={xuLySubmit} className="space-y-4">
             <motion.div custom={1} initial="an" animate="hien" variants={bienTheField}>
               <label htmlFor="reset-new-password" className="block text-sm font-medium text-slate-600 mb-1">Mật khẩu mới</label>
-              <input
+              <div className="relative"><input
                 id="reset-new-password"
-                type="password"
+                type={hienMoi ? 'text' : 'password'}
                 value={matKhauMoi}
                 onChange={(e) => setMatKhauMoi(e.target.value)}
                 placeholder="Tối thiểu 6 ký tự"
                 minLength={6}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
-                required
-              />
+                className="w-full border border-slate-300 rounded-lg pl-3 pr-12 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
+                autoComplete="new-password" required
+              /><PasswordToggle visible={hienMoi} onClick={() => setHienMoi(!hienMoi)} label="mật khẩu mới" /></div>
             </motion.div>
 
             <motion.div custom={2} initial="an" animate="hien" variants={bienTheField}>
               <label htmlFor="reset-confirm-password" className="block text-sm font-medium text-slate-600 mb-1">Xác nhận mật khẩu mới</label>
-              <input
+              <div className="relative"><input
                 id="reset-confirm-password"
-                type="password"
+                type={hienXacNhan ? 'text' : 'password'}
                 value={xacNhan}
                 onChange={(e) => setXacNhan(e.target.value)}
                 placeholder="Nhập lại mật khẩu mới"
                 minLength={6}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
-                required
-              />
+                className="w-full border border-slate-300 rounded-lg pl-3 pr-12 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
+                autoComplete="new-password" required
+              /><PasswordToggle visible={hienXacNhan} onClick={() => setHienXacNhan(!hienXacNhan)} label="xác nhận mật khẩu mới" /></div>
             </motion.div>
 
             <motion.div custom={3} initial="an" animate="hien" variants={bienTheField}>
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                disabled={dangTai}
+                disabled={dangTai || Boolean(thongBao)}
                 className="w-full bg-ink-600 text-white font-medium py-2.5 rounded-lg hover:bg-ink-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors shadow-sm"
               >
                 {dangTai ? 'Đang cập nhật...' : 'Lưu mật khẩu mới'}

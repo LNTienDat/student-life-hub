@@ -1,3 +1,4 @@
+import {monday} from './thoikhoabieu/weekUtils';
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { CalendarDays, BookOpen, AlertCircle } from 'lucide-react';
@@ -10,6 +11,7 @@ import { PageSkeleton } from '../components/Skeleton';
 function ChiaSeTKB() {
   const { token } = useParams();
   const [chuSoHuu, setChuSoHuu] = useState(null);
+  const [hocKyChiaSe, setHocKyChiaSe] = useState('');
   const [danhSach, setDanhSach] = useState([]);
   const [dangTai, setDangTai] = useState(true);
   const [loi, setLoi] = useState(null);
@@ -19,10 +21,11 @@ function ChiaSeTKB() {
     let active = true;
     async function taiTKB() {
       try {
-        const res = await timetableService.xemPublic(token);
+        const res = await timetableService.xemPublic(token,monday());
         if (!active) return;
         setLoi(null);
         setChuSoHuu(res.data.chuSoHuu);
+        setHocKyChiaSe(res.data.hocKyChiaSe || '');
         setDanhSach(res.data.thoiKhoaBieu || []);
       } catch (error) {
         if (!active) return;
@@ -93,7 +96,7 @@ function ChiaSeTKB() {
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {[chuSoHuu?.truong, chuSoHuu?.nganh, chuSoHuu?.khoaHoc].filter(Boolean).join(' • ') || 'Sinh viên'}
+                {hocKyChiaSe ? 'Học kỳ: ' + hocKyChiaSe + ' · gồm lịch dùng chung' : 'Lịch dùng chung (chưa gắn học kỳ)'}
               </p>
             </div>
           </div>

@@ -1,7 +1,9 @@
+import PasswordToggle from '../components/PasswordToggle';
+import CloseButton from '../components/CloseButton';
 import { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { User, Lock, Save, KeyRound, CheckCircle2, AlertCircle, Mail, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { User, Lock, Save, KeyRound, CheckCircle2, AlertCircle, Mail, ShieldCheck } from 'lucide-react';
 
 function Profile() {
   const { dangNhap, user } = useAuth();
@@ -27,7 +29,7 @@ function Profile() {
   const [hienMKCu, setHienMKCu] = useState(false);
   const [hienMKMoi, setHienMKMoi] = useState(false);
   const [thongBaoMK, setThongBaoMK] = useState(null);
-  
+
   const [dangTai, setDangTai] = useState(false);
   const [dangTaiMK, setDangTaiMK] = useState(false);
 
@@ -125,7 +127,7 @@ function Profile() {
   if (profileError) return <div role="alert" className="p-6"><p>{profileError}</p><button type="button" className="mt-3 font-semibold text-ink-600" onClick={() => { setProfileError(''); setProfileLoading(true); setRetry(n => n + 1); }}>Thử tải lại</button></div>;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="w-full min-w-0 space-y-6">
       <div className="mb-8">
         <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
           Hồ sơ cá nhân
@@ -136,11 +138,11 @@ function Profile() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        
+
         {/* Cột 1: Thông tin cá nhân */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 relative overflow-hidden flex flex-col h-full justify-between">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-ink-600 dark:bg-ink-400" />
-          
+
           <div>
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2.5 bg-ink-50 dark:bg-ink-500/20 text-ink-600 dark:text-ink-300 rounded-xl">
@@ -164,20 +166,20 @@ function Profile() {
             <form onSubmit={xuLySuaHoSo} className="space-y-4">
               <div>
                 <label htmlFor="profile-name" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Họ tên</label>
-                <input 
+                <input
                   id="profile-name"
-                  value={ten} 
-                  onChange={(e) => setTen(e.target.value)} 
+                  value={ten}
+                  onChange={(e) => setTen(e.target.value)}
                   maxLength={100}
                   placeholder="Nhập họ và tên..."
-                  className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 dark:focus:ring-ink-500/30 transition-shadow" 
-                  required 
+                  className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 dark:focus:ring-ink-500/30 transition-shadow"
+                  required
                 />
               </div>
 
               <div className="pt-1">
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={dangTai}
                   className="w-full flex items-center justify-center gap-2 bg-ink-600 dark:bg-ink-500 text-white font-medium px-4 py-2.5 rounded-xl hover:bg-ink-700 dark:hover:bg-ink-400 disabled:opacity-70 transition-colors shadow-sm"
                 >
@@ -201,11 +203,11 @@ function Profile() {
               </div>
 
               <div className="relative">
-                <input 
+                <input
                   id="profile-email"
-                  value={email} 
+                  value={email}
                   disabled
-                  className="w-full bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 font-medium rounded-xl pl-10 pr-4 py-2.5 text-sm cursor-not-allowed select-none" 
+                  className="w-full bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 font-medium rounded-xl pl-10 pr-4 py-2.5 text-sm cursor-not-allowed select-none"
                 />
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
               </div>
@@ -250,15 +252,7 @@ function Profile() {
                         className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg pl-3 pr-8 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ink-500/30 dark:focus:ring-ink-500/30"
                         required
                       />
-                      <button
-                        type="button"
-                        onClick={() => setHienMKXacNhan(!hienMKXacNhan)}
-                        className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600"
-                        title={hienMKXacNhan ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                        aria-label={hienMKXacNhan ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                      >
-                        {hienMKXacNhan ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      </button>
+                      <PasswordToggle visible={hienMKXacNhan} onClick={() => setHienMKXacNhan(!hienMKXacNhan)} />
                     </div>
                   </div>
 
@@ -270,13 +264,7 @@ function Profile() {
                     >
                       {dangTaiEmail ? 'Đang xác thực...' : 'Xác nhận đổi email'}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setHienFormEmail(false)}
-                      className="px-3 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                    >
-                      Đóng
-                    </button>
+                    <CloseButton onClick={()=>setHienFormEmail(false)} disabled={dangTaiEmail} label="Đóng đổi email"/>
                   </div>
                 </form>
               )}
@@ -287,7 +275,7 @@ function Profile() {
         {/* Cột 2: Đổi mật khẩu */}
         <form onSubmit={xuLyDoiMatKhau} className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 relative overflow-hidden flex flex-col h-full justify-between">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500" />
-          
+
           <div>
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2.5 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-xl">
@@ -312,57 +300,41 @@ function Profile() {
               <div>
                 <label htmlFor="profile-current-password" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Mật khẩu hiện tại</label>
                 <div className="relative">
-                  <input 
+                  <input
                     id="profile-current-password"
                     type={hienMKCu ? 'text' : 'password'}
-                    value={matKhauCu} 
-                    onChange={(e) => setMatKhauCu(e.target.value)} 
+                    value={matKhauCu}
+                    onChange={(e) => setMatKhauCu(e.target.value)}
                     placeholder="Nhập mật khẩu đang dùng"
-                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl pl-4 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 transition-shadow" 
-                    required 
+                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl pl-4 pr-12 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 transition-shadow"
+                    required
                   />
-                  <button
-                    type="button"
-                    onClick={() => setHienMKCu(!hienMKCu)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
-                    title={hienMKCu ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                    aria-label={hienMKCu ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                  >
-                    {hienMKCu ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                  <PasswordToggle visible={hienMKCu} onClick={() => setHienMKCu(!hienMKCu)} />
                 </div>
               </div>
 
               <div>
                 <label htmlFor="profile-new-password" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Mật khẩu mới</label>
                 <div className="relative">
-                  <input 
+                  <input
                     id="profile-new-password"
                     type={hienMKMoi ? 'text' : 'password'}
-                    value={matKhauMoi} 
-                    onChange={(e) => setMatKhauMoi(e.target.value)} 
+                    value={matKhauMoi}
+                    onChange={(e) => setMatKhauMoi(e.target.value)}
                     placeholder="Tối thiểu 6 ký tự"
                     minLength={6}
-                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl pl-4 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 transition-shadow" 
-                    required 
+                    className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl pl-4 pr-12 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 transition-shadow"
+                    required
                   />
-                  <button
-                    type="button"
-                    onClick={() => setHienMKMoi(!hienMKMoi)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
-                    title={hienMKMoi ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                    aria-label={hienMKMoi ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                  >
-                    {hienMKMoi ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                  <PasswordToggle visible={hienMKMoi} onClick={() => setHienMKMoi(!hienMKMoi)} />
                 </div>
               </div>
             </div>
           </div>
 
           <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-700/50">
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={dangTaiMK}
               className="w-full flex items-center justify-center gap-2 bg-slate-800 dark:bg-slate-700 text-white font-medium px-4 py-2.5 rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 disabled:opacity-70 transition-colors shadow-sm"
             >

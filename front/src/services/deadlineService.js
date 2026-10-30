@@ -1,6 +1,8 @@
 import api from './api';
 
 export const deadlineService = {
+  luuCaiDat: (tuDongXoaDeadline) => api.put('/deadline/cai-dat', { tuDongXoaDeadline }),
+  khoiPhuc: (id) => api.patch(`/deadline/${id}/khoi-phuc`),
   layDanhSachDeadline: (hocKy) => api.get('/deadline', { params: { hocKy } }),
   themDeadline: (data) => api.post('/deadline', data),
   suaDeadline: (id, data) => api.put(`/deadline/${id}`, data),

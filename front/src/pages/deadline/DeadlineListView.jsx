@@ -1,129 +1,62 @@
 import { AlertTriangle, CheckCircle2, Circle, Clock, Edit2, Trash2 } from 'lucide-react';
 import { badgeUuTien, textUuTien } from './deadlineUtils';
-import { formatDeadlineDate } from './deadlineDate';
+import { useEffect, useState } from 'react';
+import { formatDeadlineDate, deadlineCountdown } from './deadlineDate';
+import { completionCountdown } from './completionTime';
+import { getDeadlineAlert } from '../dashboard/todayUtils';
 
-function DeadlineListView({
-  dangDienHanh = [],
-  daHoanThanh = [],
-  onHoanThanh,
-  onSua,
-  onXoa,
-}) {
-  return (
-    <div className="space-y-8">
-      {/* Đang tiến hành */}
-      <div>
-        <h2 className="font-display font-semibold text-lg text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-amber-500" />
-          Cần hoàn thành ({dangDienHanh.length})
-        </h2>
+const actionStyle = 'inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-slate-400 transition-colors disabled:opacity-50';
 
-        {dangDienHanh.length === 0 ? (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60 p-12 text-center text-slate-500">
-            Bạn đã hoàn thành mọi công việc! Tuyệt vời!
-          </div>
-        ) : (
-          <div className="grid gap-3">
-            {dangDienHanh.map((d) => (
-              <div
-                key={d.id}
-                className="bg-white dark:bg-slate-800 p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 flex items-start gap-4 group hover:border-ink-300 dark:hover:border-ink-500 transition-colors"
-              >
-                <button
-                  onClick={() => onHoanThanh(d.id, false)}
-                  className="mt-0.5 flex-shrink-0"
-                  title="Đánh dấu hoàn thành"
-                  aria-label={`Đánh dấu hoàn thành: ${d.tieuDe}`}
-                >
-                  <Circle className="w-6 h-6 text-slate-300 dark:text-slate-600 hover:text-emerald-500 hover:fill-emerald-50 transition-all" />
-                </button>
+function DeadlineRow({ item, completed = false, onHoanThanh, onSua, onXoa, disabled, now, autoDelete }) {
+  const countdownWarning = !completed && Boolean(getDeadlineAlert(item, now));
+  return <article className={`grid grid-cols-[2.75rem_minmax(0,1fr)] items-start gap-x-2 gap-y-1 rounded-xl border p-3 sm:flex sm:items-center sm:gap-3 ${completed
+    ? 'border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50'
+    : 'border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800'}`}>
+    <button type="button" disabled={disabled} onClick={() => onHoanThanh(item.id, completed)}
+      title={completed ? 'Hoàn tác' : 'Đánh dấu hoàn thành'}
+      aria-label={`${completed ? 'Đánh dấu chưa hoàn thành' : 'Đánh dấu hoàn thành'}: ${item.tieuDe}`}
+      className={actionStyle + ' shrink-0 hover:bg-emerald-50 dark:hover:bg-slate-700'}>
+      {completed ? <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+        : <Circle className="h-6 w-6 text-slate-300 hover:text-emerald-500 dark:text-slate-500" />}
+    </button>
+    <div className="min-w-0 flex-1">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <h3 className={'min-w-0 break-words [overflow-wrap:anywhere] text-sm font-semibold ' + (completed ? 'text-slate-500 line-through dark:text-slate-400' : 'text-slate-900 dark:text-white')}>{item.tieuDe}</h3>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-2">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="break-words font-semibold text-slate-900 dark:text-white text-base">{d.tieuDe}</h3>
-                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${badgeUuTien(d.doUuTien)}`}>
-                          {textUuTien(d.doUuTien)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 md:flex-col md:items-end">
-                      <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                        <Clock className="w-4 h-4 text-ink-500" />
-                        {formatDeadlineDate(d.hanChot)}
-                      </div>
-                    </div>
-                  </div>
-
-
-                </div>
-
-                <div className="flex flex-col gap-2 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex-shrink-0 ml-2">
-                  <button
-                    onClick={() => onSua(d)}
-                    className="p-2 text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                    title="Sửa"
-                    aria-label={`Sửa deadline: ${d.tieuDe}`}
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => onXoa(d)}
-                    className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
-                    title="Xóa"
-                    aria-label={`Xóa deadline: ${d.tieuDe}`}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
-
-      {/* Đã hoàn thành */}
-      {daHoanThanh.length > 0 && (
-        <div>
-          <h2 className="font-display font-semibold text-lg text-slate-500 dark:text-slate-400 mb-4 flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-            Đã hoàn thành ({daHoanThanh.length})
-          </h2>
-          <div className="grid gap-2 opacity-70 hover:opacity-100 transition-opacity">
-            {daHoanThanh.map((d) => (
-              <div
-                key={d.id}
-                className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2 sm:gap-4 group flex-wrap sm:flex-nowrap"
-              >
-                <button
-                  onClick={() => onHoanThanh(d.id, true)}
-                  className="flex-shrink-0"
-                  title="Hoàn tác"
-                  aria-label={`Đánh dấu chưa hoàn thành: ${d.tieuDe}`}
-                >
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                </button>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-slate-500 dark:text-slate-400 line-through truncate">{d.tieuDe}</h3>
-                </div>
-                <div className="text-xs text-slate-400 flex-shrink-0 mr-4">{formatDeadlineDate(d.hanChot)}</div>
-                <button
-                  onClick={() => onXoa(d)}
-                  className="p-1.5 text-slate-400 hover:text-rose-500 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 transition-opacity flex-shrink-0"
-                  title="Xóa"
-                  aria-label={`Xóa deadline: ${d.tieuDe}`}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400"><Clock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />{formatDeadlineDate(item.hanChot)}</p>
     </div>
-  );
+    <div className="col-span-2 flex min-w-0 shrink-0 items-center justify-end gap-2 sm:ml-2">
+      <div className="flex min-w-0 flex-wrap items-center justify-end gap-1">
+        {completed && autoDelete && <span className="rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-200">{completionCountdown(item, now)}</span>}
+        {!completed && <span className={`min-w-[5.5rem] shrink-0 rounded-full text-center px-2 py-0.5 text-[11px] font-semibold ${badgeUuTien(item.doUuTien)}`}>{textUuTien(item.doUuTien)}</span>}
+
+      {!completed&&<span className={`min-w-[6.5rem] rounded-full px-2 py-0.5 text-center text-[11px] font-medium ${countdownWarning ? badgeUuTien('cao') : 'border border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-600 dark:bg-slate-900/40 dark:text-slate-300'}`}>{deadlineCountdown(item.hanChot,now)}</span>}
+      </div><div className="flex shrink-0">
+      {!completed && <button type="button" disabled={disabled} onClick={() => onSua(item)} title="Sửa" aria-label={`Sửa deadline: ${item.tieuDe}`}
+        className={actionStyle + ' hover:bg-slate-100 hover:text-ink-600 dark:hover:bg-slate-700 dark:hover:text-ink-300'}><Edit2 className="h-4 w-4" /></button>}
+      <button type="button" disabled={disabled} onClick={() => onXoa(item)} title="Xóa" aria-label={`Xóa deadline: ${item.tieuDe}`}
+        className={actionStyle + ' hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-900/20'}><Trash2 className="h-4 w-4" /></button>
+      </div>
+    </div>
+  </article>;
 }
 
-export default DeadlineListView;
+export default function DeadlineListView({ dangDienHanh = [], daHoanThanh = [], onHoanThanh, onSua, onXoa, autoDelete = false, disabled = false, emptyMessage = 'Không còn công việc cần hoàn thành.' }) {
+  const [now,setNow]=useState(Date.now);
+  useEffect(()=>{const refresh=()=>setNow(Date.now());const timer=setInterval(refresh,60000);document.addEventListener('visibilitychange',refresh);return()=>{clearInterval(timer);document.removeEventListener('visibilitychange',refresh);};},[]);
+  const actions = { onHoanThanh, onSua, onXoa, disabled, now, autoDelete };
+  return <div className="space-y-6">
+    <section aria-label="Công việc cần hoàn thành">
+      <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-slate-800 dark:text-slate-200"><AlertTriangle className="h-5 w-5 text-amber-500" />Cần hoàn thành ({dangDienHanh.length})</h2>
+      {dangDienHanh.length ? <div className="grid gap-2">{dangDienHanh.map(item => <DeadlineRow key={item.id} item={item} {...actions} />)}</div>
+        : <p className="rounded-xl border border-slate-200 bg-white px-4 py-5 text-sm text-slate-500 dark:border-slate-700/60 dark:bg-slate-800">{emptyMessage}</p>}
+    </section>
+    <section aria-label="Công việc đã hoàn thành"><details>
+      <summary className="min-h-11 cursor-pointer py-2 font-display text-lg font-semibold text-slate-500 dark:text-slate-400">Đã hoàn thành ({daHoanThanh.length})</summary>
+      <div className="mt-2 grid gap-2">{daHoanThanh.map(item => <DeadlineRow key={item.id} item={item} completed {...actions} />)}
+        {!daHoanThanh.length && <p className="text-sm text-slate-500">Chưa có việc đã hoàn thành.</p>}
+      </div>
+    </details></section>
+  </div>;
+}

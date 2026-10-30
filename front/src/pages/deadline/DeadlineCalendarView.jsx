@@ -21,6 +21,8 @@ function DeadlineCalendarView({
   onHoanThanh,
   onSua,
   onXoa,
+  disabled = false,
+  priorityLabel,
 }) {
   const lichDuocMemo = useMemo(() => taoLich(thangXemLich), [thangXemLich]);
   const homNay = new Date();
@@ -127,7 +129,7 @@ function DeadlineCalendarView({
           {deadlinesNgayDuocChon.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-slate-400">
               <CheckCircle2 className="w-12 h-12 mb-2 text-slate-200 dark:text-slate-700" />
-              <p>Trống! Bạn có thể thư giãn vào ngày này.</p>
+              <p>{priorityLabel ? `Không có công việc mức ${priorityLabel} trong ngày này.` : 'Trống! Bạn có thể thư giãn vào ngày này.'}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -136,7 +138,7 @@ function DeadlineCalendarView({
                   key={d.id}
                   className="flex gap-4 p-4 rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30 group hover:border-slate-300 transition-colors"
                 >
-                  <button
+                  <button disabled={disabled}
                     onClick={() => onHoanThanh(d.id, d.trangThai === 'hoan_thanh')}
                     className="mt-0.5 flex-shrink-0"
                     aria-label={d.trangThai === 'hoan_thanh' ? 'Đánh dấu chưa hoàn thành' : 'Đánh dấu hoàn thành'}
@@ -175,14 +177,14 @@ function DeadlineCalendarView({
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                    <button
+                    <button disabled={disabled}
                       onClick={() => onSua(d)}
                       className="p-1.5 text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600"
                       title="Sửa" aria-label={`Sửa deadline: ${d.tieuDe}`}
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button
+                    <button disabled={disabled}
                       onClick={() => onXoa(d)}
                       className="p-1.5 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600"
                       title="Xóa"

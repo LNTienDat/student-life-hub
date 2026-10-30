@@ -59,11 +59,12 @@ const THOIKHOABIEU = {
 
 // 6. Cấu hình Chatbot AI
 const CHATBOT = {
-  // gemini-1.5-flash và mọi model Gemini 1.x/2.0 đã bị Google khai tử hoàn toàn (trả về 404)
-  // Dùng gemini-3.6-flash là bản ổn định được khuyến nghị chính thức
-  DEFAULT_MODEL: 'gemini-3.6-flash',
+  // Free Tier availability/quotas depend on the Google project; see docs/guides/CHATBOT_AI.md.
+  DEFAULT_MODEL: 'gemini-3.5-flash-lite',
   TIMEOUT_MS: 15000,
-  MAX_HISTORY_LENGTH: 10,
+  MAX_HISTORY_LENGTH: 6,
+  MAX_MESSAGE_LENGTH: 2000,
+  MAX_HISTORY_CHARACTERS: 8000,
   MAX_OUTPUT_TOKENS: 500,
   CONTEXT_DEADLINE_DAYS: 7, // Số ngày tới để lấy deadline sắp hạn
 };
@@ -85,7 +86,10 @@ const NHOM = {
 // 8. Cấu hình Rate Limiting (Số lượt / Khoảng thời gian)
 const RATE_LIMIT = {
   GLOBAL_WINDOW_MS: 15 * 60 * 1000,
-  GLOBAL_MAX: 300,
+  GLOBAL_MAX: 1200,
+  DEV_GLOBAL_MAX: 3000,
+  HEALTH_WINDOW_MS: 60 * 1000,
+  HEALTH_MAX: 120,
   AUTH_WINDOW_MS: 15 * 60 * 1000,
   AUTH_MAX: 10,
   CHATBOT_WINDOW_MS: 5 * 60 * 1000,

@@ -1,14 +1,16 @@
 import { useSemester } from '../hooks/useSemester';
 import SemesterPicker from './SemesterPicker';
+import InstallButton from './InstallButton';
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import useDataRevision from '../hooks/useDataRevision';
 import api from '../services/api';
+import { dinhDangNgay } from '../utils/formatters';
 import Chatbot from './Chatbot';
 import GlowingNav from './GlowingNav';
-import { Bell, Sun, Moon, Menu, X, LogOut, Clock, BookOpen, Wallet, AlertCircle } from 'lucide-react';
+import { Bell, Sun, Moon, Menu, X, LogOut, Clock, BookOpen, Wallet } from 'lucide-react';
 
 function Layout({ children }) {
   const [semester] = useSemester();
@@ -18,8 +20,6 @@ function Layout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuMoMobile, setMenuMoMobile] = useState(false);
-  const [deadlinesGap, setDeadlinesGap] = useState([]);
-  const [bannerAn, setBannerAn] = useState(false);
   const [thongBaos, setThongBaos] = useState([]);
   const [notificationError, setNotificationError] = useState(false);
   const [chuongMo, setChuongMo] = useState(false);
@@ -27,7 +27,7 @@ function Layout({ children }) {
   const [daXemId, setDaXemId] = useState(() => {
     try {
       const parsed = JSON.parse(localStorage.getItem(notificationKey) || '[]');
-      return Array.isArray(parsed) ? parsed : [];
+      return Array.isArray(parsed) ? parsed.filter(value => typeof value === 'string').slice(-500) : [];
     } catch { return []; }
   });
   const chuongRef = useRef(null);
@@ -37,19 +37,18 @@ function Layout({ children }) {
   useEffect(() => {
     let active = true;
     async function refresh() {
-      const [notifications, upcoming] = await Promise.allSettled([
-        api.get('/thong-bao'), api.get('/deadline/sap-toi?soNgay=1'),
-      ]);
-      if (!active) return;
-      setNotificationError(notifications.status === 'rejected');
-      if (notifications.status === 'fulfilled') setThongBaos(notifications.value.data.thongBaos || []);
-      if (upcoming.status === 'fulfilled') setDeadlinesGap(upcoming.value.data.deadlines || []);
+      try {
+        const notifications = await api.get('/thong-bao');
+        if (!active) return;
+        setNotificationError(false);
+        setThongBaos(notifications.data.thongBaos || []);
+      } catch {
+        if (active) setNotificationError(true);
+      }
     }
     refresh();
     const timer = setInterval(() => { if (document.visibilityState === 'visible') refresh(); }, 5 * 60 * 1000);
-    const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
-    document.addEventListener('visibilitychange', onVisible);
-    return () => { active = false; clearInterval(timer); document.removeEventListener('visibilitychange', onVisible); };
+    return () => { active = false; clearInterval(timer); };
   }, [revision, user?.id]);
 
   useEffect(() => {
@@ -71,14 +70,14 @@ function Layout({ children }) {
   function remember(ids) {
     const next = [...new Set([...daXemId, ...ids])].slice(-500);
     setDaXemId(next);
-    localStorage.setItem(notificationKey, JSON.stringify(next));
+    try { localStorage.setItem(notificationKey, JSON.stringify(next)); } catch { /* Reading notifications still works without storage. */ }
   }
   const soChuaXem = thongBaos.filter((item) => !daXemId.includes(item.id)).length;
   const menu = [
     { path: '/dashboard', label: 'Hôm nay' },
     { path: '/mon-hoc', label: 'Học tập' },
-    { path: '/deadline', label: 'Deadline' },
     { path: '/thoi-khoa-bieu', label: 'Thời khóa biểu' },
+    { path: '/deadline', label: 'Deadline' },
     { path: '/tai-chinh', label: 'Tài chính' },
     { path: '/ho-so', label: 'Hồ sơ' },
   ];
@@ -92,10 +91,11 @@ function Layout({ children }) {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <Link to="/dashboard" aria-label="LifeHub — trang Hôm nay" className="flex shrink-0 items-center gap-2" onClick={() => { setMenuMoMobile(false); setChuongMo(false); }}>
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ink-600 text-white"><BookOpen aria-hidden="true" className="h-5 w-5" /></span>
-          <span className="text-lg font-bold tracking-tight text-slate-900">LifeHub</span>
+          <span className="hidden text-lg font-bold tracking-tight text-slate-900 min-[360px]:inline">LifeHub</span>
         </Link>
         <nav aria-label="Điều hướng chính" className="hidden min-w-0 lg:block"><GlowingNav menu={menu} /></nav>
         <div className="flex shrink-0 items-center gap-1">
+          <InstallButton />
           <button type="button" onClick={() => { setChuongMo(!chuongMo); setMenuMoMobile(false); }} className="btn-chuong shell-icon relative" aria-label={`Thông báo${soChuaXem ? ` (${soChuaXem} chưa đọc)` : ''}`} aria-expanded={chuongMo} aria-controls="notification-panel">
             <Bell aria-hidden="true" className="h-5 w-5" />
             {soChuaXem > 0 && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500" />}
@@ -119,13 +119,12 @@ function Layout({ children }) {
         <div className="max-h-[60dvh] overflow-y-auto">
           {notificationError ? <p role="alert" className="p-5 text-sm text-rose-600">Chưa tải được thông báo. Kiểm tra kết nối rồi mở lại trang.</p>
             : thongBaos.length === 0 ? <p className="p-6 text-center text-sm text-slate-500">Bạn chưa có thông báo mới.</p>
-              : thongBaos.map(item => <button type="button" key={item.id} onClick={() => remember([item.id])} className={`flex w-full items-start gap-3 border-t border-slate-100 px-4 py-3 text-left ${!daXemId.includes(item.id) ? 'bg-ink-50' : 'hover:bg-slate-50'}`}>
-                <span className="mt-0.5 shrink-0">{iconFor(item.loai)}</span><span className="min-w-0"><span className="block break-words text-sm font-semibold text-slate-800">{item.tieuDe}</span><span className="mt-1 block break-words text-xs leading-relaxed text-slate-500">{item.moTa}</span></span>
+              : thongBaos.map(item => <button type="button" key={item.id} onClick={() => { remember([item.id]); setChuongMo(false); navigate(item.loai === 'deadline' ? '/deadline' : item.loai === 'hoc_tap' ? '/mon-hoc' : '/tai-chinh'); }} className={`flex w-full items-start gap-3 border-t border-slate-100 px-4 py-3 text-left ${!daXemId.includes(item.id) ? 'bg-ink-50' : 'hover:bg-slate-50'}`}>
+                <span className="mt-0.5 shrink-0">{iconFor(item.loai)}</span><span className="min-w-0"><span className="block break-words text-sm font-semibold text-slate-800">{item.loai === 'deadline' ? item.tieuDe.replace(/^Deadline sắp hết hạn:\s*/u, 'Deadline: ') : item.tieuDe}</span><span className="mt-1 block break-words text-xs leading-relaxed text-slate-500">{item.loai === 'deadline' ? dinhDangNgay(item.thoiGian) || 'Chưa xác định ngày' : item.moTa}</span></span>
               </button>)}
         </div>
       </section>}
     </header>
-    {deadlinesGap.length > 0 && !bannerAn && location.pathname !== '/dashboard' && <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800"><div className="mx-auto flex max-w-6xl items-center gap-3"><AlertCircle aria-hidden="true" className="h-5 w-5 shrink-0" /><Link to="/deadline" className="flex-1 underline underline-offset-2">{deadlinesGap.length} việc đến hạn trong 24 giờ tới. Xem deadline</Link><button type="button" onClick={() => setBannerAn(true)} className="min-h-11 min-w-11" aria-label="Đóng cảnh báo"><X className="mx-auto h-4 w-4" /></button></div></div>}
     <main id="main-content" tabIndex={-1} className="mx-auto w-full min-w-0 max-w-7xl p-4 pb-24 sm:p-6 sm:pb-24 lg:p-8 lg:pb-24">
       <div key={`${location.pathname}:${semester}`}>
         {['/mon-hoc', '/thoi-khoa-bieu'].includes(location.pathname) && <SemesterPicker />}

@@ -1,286 +1,188 @@
 import { useState, useRef, useEffect, useId } from 'react';
+import { Link } from 'react-router-dom';
+import DocumentSources from './DocumentSources';
+import { MessageCircle, X, Send, RotateCcw } from 'lucide-react';
 import api from '../services/api';
+import { chatbotHistory } from '../services/chatbotHistory';
 
-// Các câu gợi ý nhanh cho người dùng
-const GOI_Y_NHANH = [
-  { icon: '📊', text: 'GPA hiện tại của mình?' },
-  { icon: '📅', text: 'Deadline sắp tới?' },
-  { icon: '💰', text: 'Tháng này chi bao nhiêu?' },
-  { icon: '🗓️', text: 'Hôm nay học gì?' },
-];
+const GOI_Y = {
+  du_lieu: ['GPA hiện tại của mình?', 'Deadline sắp tới?', 'Tháng này chi bao nhiêu?', 'Hôm nay học gì?'],
+  tai_lieu: ['LifeHub tính GPA như thế nào?', 'Nhập thời khóa biểu từ ảnh ra sao?'],
+  ai: ['Gợi ý cách ôn thi hiệu quả', 'Giúp mình lập kế hoạch học trong tuần'],
+};
+const LOI_CHAO = { vaiTro: 'bot', noiDung: 'Bạn muốn xem GPA, deadline, thu/chi hay lịch học? Chọn một câu bên dưới để bắt đầu.' };
 
-/**
- * Render markdown cơ bản: **bold**, *italic*, bullet list (- item), xuống dòng
- */
+// Text is escaped by React. Never render model output as HTML or execute links.
 function renderMarkdown(text) {
-  if (!text) return null;
-
-  const lines = text.split('\n');
-  const elements = [];
-  let currentList = [];
-
-  function flushList() {
-    if (currentList.length > 0) {
-      elements.push(
-        <ul key={`list-${elements.length}`} className="list-disc list-inside space-y-0.5 my-1">
-          {currentList.map((item, i) => (
-            <li key={i}>{formatInline(item)}</li>
-          ))}
-        </ul>
-      );
-      currentList = [];
-    }
-  }
-
-  function formatInline(str) {
-    // Bold: **text** → <strong>
-    // Italic: *text* → <em>
-    const parts = [];
-    const regex = /(\*\*(.+?)\*\*|\*(.+?)\*)/g;
-    let lastIndex = 0;
-    let match;
-
-    while ((match = regex.exec(str)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push(str.slice(lastIndex, match.index));
-      }
-      if (match[2]) {
-        parts.push(<strong key={match.index}>{match[2]}</strong>);
-      } else if (match[3]) {
-        parts.push(<em key={match.index}>{match[3]}</em>);
-      }
-      lastIndex = regex.lastIndex;
-    }
-    if (lastIndex < str.length) {
-      parts.push(str.slice(lastIndex));
-    }
-    return parts.length > 0 ? parts : str;
-  }
-
-  lines.forEach((line, i) => {
-    const trimmed = line.trim();
-
-    // Bullet list items: "- item" hoặc "• item"
-    if (/^[-•]\s+/.test(trimmed)) {
-      currentList.push(trimmed.replace(/^[-•]\s+/, ''));
-      return;
-    }
-
-    flushList();
-
-    if (trimmed === '') {
-      // Dòng trống → khoảng cách nhỏ
-      elements.push(<div key={`br-${i}`} className="h-1" />);
-    } else {
-      elements.push(
-        <p key={`p-${i}`} className="my-0.5">
-          {formatInline(trimmed)}
-        </p>
-      );
-    }
-  });
-
-  flushList();
-  return elements;
+  return text.split('\n').map((line, i) => (
+    <p key={i} className="my-1 whitespace-pre-wrap">
+      {line.split(/(\*\*.*?\*\*)/g).map((part, j) => part.startsWith('**') && part.endsWith('**')
+        ? <strong key={j}>{part.slice(2, -2)}</strong> : part)}
+    </p>
+  ));
 }
 
 function Chatbot() {
   const [moChat, setMoChat] = useState(false);
-  const [tinNhans, setTinNhans] = useState([
-    { vaiTro: 'bot', noiDung: 'Chào bạn! Mình là SLH Bot 🤖 — trợ lý cá nhân của bạn. Mình có thể xem GPA, deadline, tài chính và lịch học của bạn. Hỏi mình bất cứ gì nhé!' },
-  ]);
-  const [dangGui, setDangGui] = useState(false);
+  const [cheDo, setCheDo] = useState('du_lieu');
+  const [tinNhans, setTinNhans] = useState([LOI_CHAO]);
   const [noiDungNhap, setNoiDungNhap] = useState('');
+  const [dangGui, setDangGui] = useState(false);
+  const [loi, setLoi] = useState(null);
+  const [trangThai, setTrangThai] = useState(null);
+  const [taiTrangThai, setTaiTrangThai] = useState(0);
+  const [dongY, setDongY] = useState(false);
+  const [dungDuLieu, setDungDuLieu] = useState(false);
+  const [dungAIRag, setDungAIRag] = useState(false);
   const danhSachRef = useRef(null);
   const inputRef = useRef(null);
   const launcherRef = useRef(null);
+  const daMo = useRef(false);
+  const requestRef = useRef(null);
   const dialogId = useId();
-
-  // Chỉ hiển thị gợi ý nhanh khi chỉ có tin welcome ban đầu
-  const hienGoiY = tinNhans.length <= 1;
+  const titleId = useId();
+  const inputId = useId();
 
   useEffect(() => {
-    if (moChat && danhSachRef.current) {
-      // Chỉ cuộn lịch sử chat, không kéo cả trang đang xem theo.
-      danhSachRef.current.scrollTop = danhSachRef.current.scrollHeight;
-    }
-  }, [tinNhans, moChat, dangGui]);
+    if (moChat && danhSachRef.current) danhSachRef.current.scrollTop = danhSachRef.current.scrollHeight;
+  }, [tinNhans, moChat, dangGui, loi]);
 
   useEffect(() => {
     if (!moChat) return undefined;
-
-    const launcher = launcherRef.current;
-    const focusFrame = requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
-    function handleKeyDown(e) {
-      if (e.key === 'Escape' && !e.defaultPrevented && !document.querySelector('[aria-modal="true"]')) {
-        e.preventDefault();
-        setMoChat(false);
+    const frame = requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
+    const statusRequest = new AbortController();
+    api.get('/chatbot/trang-thai', { signal: statusRequest.signal })
+      .then(res => setTrangThai(res.data)).catch(error => { if (error.code !== 'ERR_CANCELED') setTrangThai({ loi: true }); });
+    function keydown(event) {
+      if (event.key === 'Escape' && !event.defaultPrevented && !document.querySelector('[aria-modal="true"]')) {
+        event.preventDefault(); setMoChat(false);
       }
     }
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', keydown);
     return () => {
-      cancelAnimationFrame(focusFrame);
-      window.removeEventListener('keydown', handleKeyDown);
-      launcher?.focus({ preventScroll: true });
+      cancelAnimationFrame(frame); statusRequest.abort(); requestRef.current?.abort();
+      window.removeEventListener('keydown', keydown);
     };
+  }, [moChat, taiTrangThai]);
+  useEffect(() => () => requestRef.current?.abort(), []);
+  useEffect(() => {
+    if (moChat) daMo.current = true;
+    else if (daMo.current) {
+      launcherRef.current?.focus({ preventScroll: true });
+      daMo.current = false;
+    }
   }, [moChat]);
 
-  async function guiTinNhan(noiDung) {
-    if (!noiDung || !noiDung.trim() || dangGui) return;
+  function batDauMoi(mode = cheDo) {
+    requestRef.current?.abort(); requestRef.current = null;
+    setDangGui(false); setLoi(null); setNoiDungNhap('');
+    setTinNhans([mode === 'du_lieu' ? LOI_CHAO : mode === 'tai_lieu' ? { vaiTro: 'bot', noiDung: 'Hỏi rõ nội dung bạn muốn tìm trong tài liệu. Mình sẽ tìm các đoạn liên quan và hiển thị nguồn để bạn kiểm tra.' } : { vaiTro: 'bot', noiDung: 'Mình có thể gợi ý cách học, lập kế hoạch và quản lý chi tiêu. Câu trả lời AI có thể sai; bạn hãy kiểm tra trước khi áp dụng.' }]);
+  }
+  function doiCheDo(mode) {
+    if (mode === cheDo) return;
+    batDauMoi(mode); setCheDo(mode); setDongY(false); setDungDuLieu(false); setDungAIRag(false);
+  }
+  const coTheGui = cheDo === 'du_lieu' || (cheDo === 'tai_lieu' && !dungAIRag) || (trangThai?.aiSanSang && dongY);
 
-    const tinNhanMoi = { vaiTro: 'user', noiDung };
-    const lichSuHienTai = [...tinNhans, tinNhanMoi];
-    setTinNhans(lichSuHienTai);
-    setNoiDungNhap('');
-    setDangGui(true);
-
+  async function guiTinNhan(text) {
+    const content = text.trim();
+    if (!content || content.length > 2000 || requestRef.current || !coTheGui) return;
+    const controller = new AbortController();
+    requestRef.current = controller;
+    const lichSu = cheDo === 'ai' ? chatbotHistory(tinNhans) : [];
+    const truoc = tinNhans;
+    setTinNhans([...truoc, { vaiTro: 'user', noiDung: content, cheDo }]);
+    setNoiDungNhap(''); setDangGui(true); setLoi(null);
     try {
       const res = await api.post('/chatbot/hoi-dap', {
-        tinNhan: noiDung,
-        lichSu: tinNhans, // gửi lịch sử trước đó (chưa gồm tin vừa nhập) làm ngữ cảnh
-      });
-      setTinNhans((prev) => [...prev, { vaiTro: 'bot', noiDung: res.data.traLoi }]);
+        tinNhan: content, lichSu, cheDo, dongYGuiAI: dongY, dungDuLieuCaNhan: dungDuLieu, dungAI: dungAIRag,
+      }, { signal: controller.signal, timeout: 25000 });
+      if (!controller.signal.aborted) setTinNhans(prev => [...prev, { vaiTro: 'bot', noiDung: res.data.traLoi, ...res.data }]);
     } catch (error) {
-      setTinNhans((prev) => [
-        ...prev,
-        {
-          vaiTro: 'bot',
-          noiDung: error.response?.data?.message || 'Xin lỗi, mình đang gặp sự cố. Vui lòng thử lại sau.',
-        },
-      ]);
+      if (!controller.signal.aborted) {
+        setTinNhans(truoc);
+        setLoi({ text: content, message: error.response?.data?.message || 'Chưa nhận được câu trả lời. Hãy kiểm tra kết nối và thử lại.' });
+      }
     } finally {
-      setDangGui(false);
+      if (requestRef.current === controller) { requestRef.current = null; setDangGui(false); }
     }
-  }
-
-  function xuLyGui(e) {
-    e.preventDefault();
-    guiTinNhan(noiDungNhap.trim());
-  }
-
-  function xuLyGoiY(text) {
-    guiTinNhan(text);
   }
 
   return (
     <div className="fixed bottom-3 right-3 sm:bottom-5 sm:right-5 z-40">
       {moChat && (
-        <div
-          id={dialogId}
-          role="dialog"
-          aria-label="Trợ lý ảo SLH Bot"
-          className="w-[calc(100vw-1.5rem)] max-w-96 h-[32rem] max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2.5rem)] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border dark:border-gray-700 flex flex-col overflow-hidden"
-        >
-          {/* Header */}
-          <div className="shrink-0 bg-ink-600 dark:bg-ink-500 text-white px-4 py-3 flex justify-between items-center shadow-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🤖</span>
-              <div>
-                <span className="font-semibold text-sm">SLH Bot</span>
-                <span className="text-xs opacity-80 ml-1.5">Trợ lý cá nhân</span>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setMoChat(false)}
-              className="w-10 h-10 shrink-0 rounded-lg hover:bg-white/20 flex items-center justify-center transition-colors text-white text-base font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-              title="Đóng trợ lý ảo"
-              aria-label="Đóng trợ lý ảo"
-            >
-              ✕
-            </button>
+        <section id={dialogId} role="dialog" aria-labelledby={titleId} className="flex flex-col w-[calc(100vw-1.5rem)] sm:w-[420px] h-[640px] max-h-[calc(100dvh-2rem)] rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-2xl overflow-hidden">
+          <header className="flex shrink-0 items-center gap-2 px-4 py-2 border-b dark:border-gray-700">
+            <MessageCircle size={20} aria-hidden="true" />
+            <h2 id={titleId} className="font-semibold flex-1">Trợ lý LifeHub</h2>
+            <button type="button" onClick={() => batDauMoi()} className="p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Cuộc trò chuyện mới" title="Cuộc trò chuyện mới"><RotateCcw size={18} /></button>
+            <button type="button" onClick={() => setMoChat(false)} className="p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Đóng trợ lý"><X size={20} /></button>
+          </header>
+          <div className="grid shrink-0 grid-cols-3 gap-1 m-3 mb-0 rounded-xl bg-gray-100 dark:bg-gray-900 p-1" role="group" aria-label="Chế độ trợ lý">
+            {[['du_lieu', 'Xem dữ liệu'], ['tai_lieu', 'Hỏi tài liệu'], ['ai', 'Hỏi AI']].map(([mode, label]) => (
+              <button key={mode} type="button" aria-pressed={cheDo === mode} onClick={() => doiCheDo(mode)} className={'min-h-11 rounded-lg text-sm font-medium ' + (cheDo === mode ? 'bg-white dark:bg-ink-600 shadow-sm' : 'text-gray-600 dark:text-gray-300')}>{label}</button>
+            ))}
           </div>
-
-          {/* Danh sách tin nhắn */}
-          <div ref={danhSachRef} role="log" aria-label="Cuộc trò chuyện với trợ lý" aria-live="polite" className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 space-y-2">
+          <div className="min-h-0 max-h-[35%] shrink overflow-y-auto overscroll-contain">
+          {cheDo === 'du_lieu' ? (
+            <p className="px-4 pt-2 text-xs text-gray-500 dark:text-gray-400">Tra cứu trực tiếp từ LifeHub, không gửi đến AI.</p>
+          ) : cheDo === 'tai_lieu' ? (
+            <div className="px-4 pt-2 text-xs">
+              <Link to="/tai-lieu" onClick={() => setMoChat(false)} className="inline-flex min-h-11 items-center font-semibold text-ink-600 underline dark:text-ink-200">Quản lý tài liệu</Link>
+              <label className="flex min-h-11 items-center gap-2"><input type="checkbox" checked={dungAIRag} disabled={!trangThai?.aiSanSang} onChange={e => { batDauMoi(); setDungAIRag(e.target.checked); setDongY(false); }} className="h-4 w-4" />Nhờ AI giải thích kèm nguồn</label>
+              {!trangThai?.aiSanSang && <p className="mb-2 text-gray-500 dark:text-gray-300">AI chưa sẵn sàng; tìm và đọc tài liệu vẫn dùng được.</p>}
+              {dungAIRag && <label className="flex min-h-11 items-start gap-2"><input type="checkbox" checked={dongY} onChange={e => { batDauMoi(); setDongY(e.target.checked); }} className="mt-1 h-4 w-4 shrink-0" /><span>Tôi đồng ý gửi câu hỏi và các đoạn tài liệu liên quan đến Google. Với gói miễn phí, nội dung có thể được dùng để cải thiện sản phẩm.</span></label>}
+            </div>
+          ) : (
+            <div className="px-4 pt-3 text-xs space-y-2">
+              {!trangThai ? <p role="status">Đang kiểm tra kết nối AI…</p> : !trangThai.aiSanSang && (
+                <div className="rounded-lg bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200 p-2">
+                  {trangThai.loi ? 'Chưa kiểm tra được kết nối.' : 'AI chưa được bật. Chủ dự án cần cấu hình khóa Gemini Free ở máy chủ.'}
+                  <button type="button" className="block underline min-h-11" onClick={() => { setTrangThai(null); setTaiTrangThai(n => n + 1); }}>Kiểm tra lại</button>
+                </div>
+              )}
+              <label className="flex gap-2 items-start cursor-pointer min-h-11">
+                <input type="checkbox" checked={dongY} onChange={e => { batDauMoi(); setDongY(e.target.checked); }} className="mt-1 w-4 h-4 shrink-0" />
+                <span>Tôi đồng ý gửi câu hỏi và hội thoại AI đến Google. Với gói miễn phí, nội dung có thể được dùng để cải thiện sản phẩm.</span>
+              </label>
+              <label className="flex gap-2 items-center cursor-pointer min-h-11">
+                <input type="checkbox" checked={dungDuLieu} onChange={e => { batDauMoi(); setDungDuLieu(e.target.checked); }} className="w-4 h-4 shrink-0" />
+                <span>Kèm tóm tắt GPA, deadline, thu/chi và lịch học của tôi.</span>
+              </label>
+            </div>
+          )}
+          </div>
+          <div ref={danhSachRef} role="log" aria-label="Cuộc trò chuyện với trợ lý" aria-live="polite" className="min-h-12 flex-1 overflow-y-auto overscroll-contain px-3 py-3 space-y-3">
             {tinNhans.map((tin, i) => (
-              <div
-                key={i}
-                className={`flex ${tin.vaiTro === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[85%] break-words [overflow-wrap:anywhere] rounded-lg px-3 py-2 text-sm ${
-                    tin.vaiTro === 'user'
-                      ? 'bg-ink-600 dark:bg-ink-500 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100'
-                  }`}
-                >
+              <div key={i} className={'flex ' + (tin.vaiTro === 'user' ? 'justify-end' : 'justify-start')}>
+                <div className={'max-w-[92%] break-words [overflow-wrap:anywhere] rounded-xl px-3 py-2 text-sm ' + (tin.vaiTro === 'user' ? 'bg-ink-600 text-white' : 'bg-gray-100 dark:bg-gray-700')}>
+                  {tin.nguon && <div className="text-[11px] mb-1 text-gray-500 dark:text-gray-300">{tin.nguon === 'rag' ? 'AI dựa trên tài liệu' : tin.nguon === 'tai_lieu' ? 'Tra cứu tài liệu' : tin.nguon === 'ai' ? 'Gợi ý từ AI' : 'Dữ liệu LifeHub'}{tin.capNhatLuc && ' · ' + new Date(tin.capNhatLuc).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</div>}
                   {tin.vaiTro === 'bot' ? renderMarkdown(tin.noiDung) : tin.noiDung}
+                  <DocumentSources sources={tin.thamKhao} onOpen={() => setMoChat(false)} />
+                  {tin.biRutGon && <p className="mt-2 text-xs">Câu trả lời đã rút gọn. Bạn có thể hỏi tiếp từng ý.</p>}
                 </div>
               </div>
             ))}
-
-            {/* Gợi ý nhanh */}
-            {hienGoiY && !dangGui && (
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {GOI_Y_NHANH.map((gy) => (
-                  <button
-                    type="button"
-                    key={gy.text}
-                    onClick={() => xuLyGoiY(gy.text)}
-                    className="text-xs bg-ink-50 dark:bg-gray-700 text-ink-700 dark:text-ink-300 border border-ink-200 dark:border-gray-600 rounded-full px-3 py-1.5 hover:bg-ink-100 dark:hover:bg-gray-600 transition-colors"
-                  >
-                    {gy.icon} {gy.text}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {dangGui && (
-              <div className="flex justify-start" role="status" aria-label="Đang chờ phản hồi">
-                <div className="bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 rounded-lg px-3 py-2 text-sm italic flex items-center gap-2">
-                  <span className="inline-flex gap-0.5">
-                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </span>
-                  Đang phân tích...
-                </div>
-              </div>
-            )}
+            {tinNhans.length === 1 && <div className="flex flex-wrap gap-2">
+              {GOI_Y[cheDo].map(text => <button key={text} type="button" disabled={!coTheGui} onClick={() => guiTinNhan(text)} className="min-h-11 rounded-xl border border-ink-200 dark:border-gray-600 px-3 text-xs text-ink-700 dark:text-ink-200 disabled:opacity-50">{text}</button>)}
+            </div>}
+            {dangGui && <div role="status" className="text-sm text-gray-500 dark:text-gray-300">
+              {cheDo === 'ai' || dungAIRag ? 'Đang chờ AI trả lời…' : cheDo === 'tai_lieu' ? 'Đang tìm trong tài liệu…' : 'Đang đọc dữ liệu…'}
+              <button type="button" className="underline block min-h-11" onClick={() => { requestRef.current?.abort(); requestRef.current = null; setDangGui(false); setTinNhans(t => t.slice(0, -1)); }}>Dừng chờ</button>
+            </div>}
+            {loi && <div role="alert" className="rounded-xl bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-200 p-3 text-sm">
+              <p>{loi.message}</p><button type="button" onClick={() => guiTinNhan(loi.text)} className="underline min-h-11">Thử lại câu hỏi</button>
+            </div>}
           </div>
-
-          {/* Ô nhập */}
-          <form onSubmit={xuLyGui} className="shrink-0 border-t dark:border-gray-700 p-2 flex items-center gap-2">
-            <input
-              ref={inputRef}
-              value={noiDungNhap}
-              onChange={(e) => setNoiDungNhap(e.target.value)}
-              maxLength={2000}
-              placeholder="Hỏi về GPA, deadline, tài chính..."
-              aria-label="Nhập câu hỏi cho trợ lý ảo"
-              className="min-w-0 flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-full px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-400"
-            />
-            <button
-              type="submit"
-              disabled={dangGui || !noiDungNhap.trim()}
-              aria-label="Gửi tin nhắn"
-              className="bg-ink-600 dark:bg-ink-500 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-ink-700 dark:hover:bg-ink-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 flex-shrink-0"
-            >
-              ➤
-            </button>
+          <form onSubmit={e => { e.preventDefault(); guiTinNhan(noiDungNhap); }} className="shrink-0 border-t dark:border-gray-700 p-3 flex gap-2">
+            <label htmlFor={inputId} className="sr-only">Câu hỏi cho trợ lý</label>
+            <input id={inputId} ref={inputRef} type="text" value={noiDungNhap} onChange={e => setNoiDungNhap(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && e.nativeEvent.isComposing) e.preventDefault(); }} maxLength={2000} disabled={dangGui} autoComplete="off" placeholder={cheDo === 'tai_lieu' ? 'Hỏi rõ nội dung trong tài liệu…' : cheDo === 'ai' ? 'Hỏi cách học, lập kế hoạch…' : 'Hỏi về dữ liệu của bạn…'} className="min-w-0 flex-1 min-h-11 rounded-xl border dark:border-gray-600 bg-transparent px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-400" />
+            <button type="submit" disabled={dangGui || !coTheGui || !noiDungNhap.trim()} aria-label="Gửi tin nhắn" className="w-11 h-11 shrink-0 rounded-xl bg-ink-600 text-white flex items-center justify-center disabled:opacity-40"><Send size={19} /></button>
           </form>
-        </div>
+        </section>
       )}
-
-      {/* Nút bong bóng nổi - chỉ hiển thị khi chatbox đang đóng */}
-      {!moChat && (
-        <button
-          ref={launcherRef}
-          type="button"
-          onClick={() => setMoChat(true)}
-          className="w-14 h-14 rounded-full bg-ink-600 dark:bg-ink-500 text-white text-2xl shadow-xl hover:bg-ink-700 dark:hover:bg-ink-600 flex items-center justify-center transition-all hover:scale-105"
-          title="Hỏi đáp nhanh cùng SLH Bot"
-          aria-label="Mở trợ lý ảo SLH Bot"
-          aria-haspopup="dialog"
-          aria-expanded={moChat}
-          aria-controls={dialogId}
-        >
-          💬
-        </button>
-      )}
+      {!moChat && <button ref={launcherRef} type="button" onClick={() => setMoChat(true)} className="w-14 h-14 rounded-full bg-ink-600 dark:bg-ink-500 text-white shadow-xl flex items-center justify-center" aria-label="Mở trợ lý LifeHub" aria-haspopup="dialog" aria-expanded={moChat} aria-controls={dialogId}><MessageCircle size={25} /></button>}
     </div>
   );
 }
-
 export default Chatbot;

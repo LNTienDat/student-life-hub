@@ -1,7 +1,7 @@
-import { Clock, MapPin, User, Edit2, Trash2 } from 'lucide-react';
+import { Clock, MapPin, User, Edit2, Trash2, CalendarClock } from 'lucide-react';
 import { CAC_THU, mauChoMon } from './timetableUtils';
 
-function TimetableMobile({ buoiTheoThu = {}, onSua, onXoa, readOnly = false }) {
+function TimetableMobile({ buoiTheoThu = {}, onSua, onXoa, onDieuChinh, readOnly = false, disabled = false }) {
   return (
     <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-700/60">
       {CAC_THU.map((t) => {
@@ -17,39 +17,41 @@ function TimetableMobile({ buoiTheoThu = {}, onSua, onXoa, readOnly = false }) {
             </h3>
             <div className="space-y-3">
               {buois.map((bh) => (
-                <div key={bh.id} className={`relative rounded-xl p-4 border ${mauChoMon(bh.tenMon)}`}>
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-bold text-base leading-tight pr-4">{bh.tenMon}</h4>
-                    {!readOnly && <div className="flex items-center gap-2">
-                      <button
+                <div key={bh.occurrenceId||bh.id} className={`relative rounded-xl p-4 border ${mauChoMon(bh.tenMon)}`}>
+                  <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
+                    <h4 className="min-w-0 basis-full flex-1 break-words [overflow-wrap:anywhere] font-bold text-base leading-tight">{bh.tenMon}</h4>
+                    {!readOnly && <div className="ml-auto flex shrink-0 items-center gap-2">
+                      {onDieuChinh&&<button type="button" disabled={disabled} onClick={()=>onDieuChinh(bh)} aria-label={'Điều chỉnh ngày '+bh.tenMon} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded bg-white/50 dark:bg-black/20"><CalendarClock className="h-4 w-4"/></button>}
+                      <button type="button" disabled={disabled}
                         onClick={() => onSua?.(bh)}
                         aria-label={`Sửa buổi học ${bh.tenMon}`}
-                        className="p-1.5 bg-white/50 dark:bg-black/20 rounded shadow-sm"
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center p-1.5 bg-white/50 dark:bg-black/20 rounded shadow-sm"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                      <button
+                      <button type="button" disabled={disabled}
                         onClick={() => onXoa?.(bh)}
                         aria-label={`Xóa buổi học ${bh.tenMon}`}
-                        className="p-1.5 bg-white/50 dark:bg-black/20 rounded shadow-sm text-rose-600 dark:text-rose-400"
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center p-1.5 bg-white/50 dark:bg-black/20 rounded shadow-sm text-rose-600 dark:text-rose-400"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>}
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm font-medium opacity-90 mt-3">
+                  {bh.daDieuChinh&&<p className="mt-2 text-xs font-semibold">Đã đổi riêng ngày {bh.ngayHoc}</p>}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm font-medium opacity-90 mt-3">
                     <div className="flex items-center gap-1.5">
-                      <Clock className="w-4 h-4" />
+                      <Clock className="w-4 h-4 shrink-0" />
                       {bh.gioBatDau} - {bh.gioKetThuc}
                     </div>
                     {bh.phongHoc && (
-                      <div className="flex items-center gap-1.5">
-                        <MapPin className="w-4 h-4" />
-                        {bh.phongHoc}
+                      <div className="flex min-w-0 items-start gap-1.5">
+                        <MapPin className="mt-0.5 w-4 h-4 shrink-0" />
+                        <span className="min-w-0 break-words [overflow-wrap:anywhere]">{bh.phongHoc}</span>
                       </div>
                     )}
                     {bh.giangVien && (
-                      <div className="flex items-center gap-1.5 col-span-2 truncate">
+                      <div className="flex items-center gap-1.5 sm:col-span-2 truncate">
                         <User className="w-4 h-4 flex-shrink-0" />
                         <span className="truncate">{bh.giangVien}</span>
                       </div>

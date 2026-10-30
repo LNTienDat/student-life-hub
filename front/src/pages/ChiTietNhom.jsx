@@ -220,7 +220,7 @@ function ChiTietNhom() {
 
   if (dangTai || !nhom || loadedId !== id) {
     return (
-      <div className="max-w-7xl mx-auto space-y-6 pb-12">
+      <div className="w-full min-w-0 space-y-6 pb-12">
         <PageSkeleton />
       </div>
     );
@@ -229,7 +229,7 @@ function ChiTietNhom() {
   const laChuNhom = vaiTro === 'chu_nhom';
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-12">
+    <div className="w-full min-w-0 space-y-6 pb-12">
       {/* Header nhóm */}
       <div className="flex flex-col gap-4">
         <Link

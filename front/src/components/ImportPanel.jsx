@@ -1,16 +1,30 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api from '../services/api';
+import { useCurrentSemester } from '../context/SemesterContext';
+import { useSemester } from '../hooks/useSemester';
 
 const headers = { subjects: ['ten', 'tinChi', 'hocKy'], timetable: ['tenMon', 'thu', 'gioBatDau', 'gioKetThuc', 'phongHoc', 'giangVien', 'hocKy'] };
 export default function ImportPanel({ kind, onImported }) {
+  const { currentSemester } = useCurrentSemester();
+  const [semester] = useSemester();
   const [open, setOpen] = useState(false);
   const [preview, setPreview] = useState(null);
   const [upload, setUpload] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [committing, setCommitting] = useState(false);
   const [message, setMessage] = useState('');
   const fileRef = useRef(null);
+  const version = useRef(0), controller = useRef(null), commitLock = useRef(false);
+  useEffect(() => () => { version.current++; controller.current?.abort(); }, []);
+  function toggle() {
+    if (commitLock.current) return;
+    version.current++; controller.current?.abort(); setBusy(false); setOpen(!open);
+  }
   async function read(event) {
-    const file = event.target.files[0];
+    const file = event.target.files[0]; event.target.value = '';
+    const current = ++version.current;
+    controller.current?.abort();
+    const request = new AbortController(); controller.current = request;
     setPreview(null); setUpload(null); setMessage('');
     if (!file) return;
     if (file.size > 1024 * 1024 || !/\.(xlsx|csv)$/i.test(file.name)) { setMessage('Chọn tệp .xlsx hoặc .csv không quá 1 MB.'); return; }
@@ -18,31 +32,34 @@ export default function ImportPanel({ kind, onImported }) {
     try {
       const content = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = reject; reader.readAsDataURL(file); });
       const payload = { kind, filename: file.name, content };
-      const result = await api.post('/imports/preview', payload);
+      if (current !== version.current) return;
+      const result = await api.post('/imports/preview', payload, { signal: request.signal });
+      if (current !== version.current) return;
       setUpload(payload); setPreview(result.data);
-    } catch (error) { setMessage(error.response?.data?.message || 'Không đọc được tệp. Kiểm tra định dạng và thử lại.'); }
-    finally { setBusy(false); }
+    } catch (error) { if (current === version.current) setMessage(error.response?.data?.message || 'Không đọc được tệp. Kiểm tra định dạng và thử lại.'); }
+    finally { if (current === version.current) setBusy(false); }
   }
   function template() {
-    const sample = kind === 'subjects' ? ['Cơ sở dữ liệu', '3', 'HK1 2026–2027'] : ['Cơ sở dữ liệu', '2', '07:00', '09:00', 'A201', 'Nguyễn Văn An', 'HK1 2026–2027'];
+    const sample = kind === 'subjects' ? ['Cơ sở dữ liệu', '3', semester || currentSemester || 'HK1 2026–2027'] : ['Cơ sở dữ liệu', '2', '07:00', '09:00', 'A201', 'Nguyễn Văn An', 'HK1 2026–2027'];
     const url = URL.createObjectURL(new Blob(['\uFEFF' + headers[kind].join(',') + '\r\n' + sample.join(',')], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a'); link.href = url; link.download = `${kind}-mau.csv`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   async function commit() {
-    if (busy || !upload) return;
+    if (commitLock.current || busy || !upload) return;
+    commitLock.current = true; setCommitting(true);
     setBusy(true); setMessage('');
     try {
       const { data } = await api.post('/imports/commit', upload);
       setPreview(null); setUpload(null); if (fileRef.current) fileRef.current.value = '';
       setMessage(`Đã nhập ${data.count} dòng; bỏ qua ${data.skipped} dòng đã có.`);
-      onImported();
+      onImported?.();
     } catch (error) { setMessage(error.response?.data?.message || 'Chưa nhập được. Vui lòng thử lại.'); if (error.response?.data?.preview) setPreview(error.response.data.preview); }
-    finally { setBusy(false); }
+    finally { commitLock.current = false; setCommitting(false); setBusy(false); }
   }
   const invalid = preview?.rows.some((row) => row.errors.length);
   const count = preview?.rows.filter((row) => !row.errors.length && !row.skip).length || 0;
   return <section className="rounded-2xl border border-slate-200 bg-white p-4 text-sm">
-    <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="font-semibold text-ink-600">{open ? 'Ẩn nhập tệp' : 'Nhập từ Excel / CSV'}</button>
+    <button type="button" disabled={committing} onClick={toggle} aria-expanded={open} className="font-semibold text-ink-600">{open ? 'Ẩn nhập tệp' : 'Nhập từ Excel / CSV'}</button>
     {open && <div className="mt-4 space-y-3">
       <p className="text-slate-500">Tối đa 500 dòng, 1 MB. Dùng đúng cột trong mẫu; Excel chỉ có một trang tính. Các dòng đã tồn tại sẽ được bỏ qua.</p>
       <div className="flex flex-wrap gap-3 items-center"><button type="button" onClick={template} className="rounded-lg border px-3 py-2">Tải mẫu CSV</button><label className="min-w-0">Chọn tệp<input ref={fileRef} type="file" accept=".csv,.xlsx" disabled={busy} onChange={read} className="block mt-1 max-w-full"/></label></div>

@@ -1,0 +1,1 @@
+ALTER TABLE "NguoiDung" ADD COLUMN "hocKyHienTai" TEXT NOT NULL DEFAULT '';

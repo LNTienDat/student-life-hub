@@ -1,7 +1,7 @@
-import { Calendar as CalendarIcon, Clock, MapPin, User, Edit2, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, MapPin, User, Edit2, Trash2, CalendarClock } from 'lucide-react';
 import { CAC_THU, mauChoMon } from './timetableUtils';
 
-function TimetableGrid({ buoiTheoThu = {}, onSua, onXoa, readOnly = false }) {
+function TimetableGrid({ buoiTheoThu = {}, onSua, onXoa, onDieuChinh, readOnly = false, disabled = false }) {
   return (
     <>
       {/* Hàng tiêu đề các thứ (Desktop) */}
@@ -34,12 +34,12 @@ function TimetableGrid({ buoiTheoThu = {}, onSua, onXoa, readOnly = false }) {
                 ) : (
                   buois.map((bh) => (
                     <div
-                      key={bh.id}
+                      key={bh.occurrenceId||bh.id}
                       className={`group relative rounded-xl p-3 border transition-all hover:-translate-y-0.5 hover:shadow-md ${mauChoMon(
                         bh.tenMon
                       )}`}
                     >
-                      <h4 className="font-bold text-sm leading-tight mb-2 pr-4">{bh.tenMon}</h4>
+                      <h4 className="font-bold text-sm leading-tight mb-2 break-words [overflow-wrap:anywhere]">{bh.tenMon}</h4>
                       <div className="space-y-1.5 text-xs font-medium opacity-90">
                         <div className="flex items-center gap-1.5">
                           <Clock className="w-3 h-3" />
@@ -47,8 +47,8 @@ function TimetableGrid({ buoiTheoThu = {}, onSua, onXoa, readOnly = false }) {
                         </div>
                         {bh.phongHoc && (
                           <div className="flex items-center gap-1.5">
-                            <MapPin className="w-3 h-3" />
-                            {bh.phongHoc}
+                            <MapPin className="w-3 h-3 shrink-0" />
+                            <span className="min-w-0 break-words [overflow-wrap:anywhere]">{bh.phongHoc}</span>
                           </div>
                         )}
                         {bh.giangVien && (
@@ -59,19 +59,21 @@ function TimetableGrid({ buoiTheoThu = {}, onSua, onXoa, readOnly = false }) {
                         )}
                       </div>
 
+                      {bh.daDieuChinh&&<p className="mt-2 text-xs font-semibold">Đã đổi riêng ngày {bh.ngayHoc}</p>}
                       {/* Actions hover */}
-                      {!readOnly && <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity">
-                        <button
+                      {!readOnly && <div className="mt-3 flex justify-end gap-1 border-t border-current/10 pt-2">
+                        {onDieuChinh&&<button type="button" disabled={disabled} onClick={()=>onDieuChinh(bh)} title="Nghỉ hoặc đổi riêng ngày này" aria-label={'Điều chỉnh ngày '+bh.tenMon} className="inline-flex min-h-9 min-w-9 items-center justify-center rounded bg-white/50 dark:bg-black/20"><CalendarClock className="h-4 w-4"/></button>}
+                        <button type="button" disabled={disabled}
                           onClick={() => onSua?.(bh)}
                           aria-label={`Sửa buổi học ${bh.tenMon}`}
-                          className="p-1 bg-white/50 hover:bg-white dark:bg-black/20 dark:hover:bg-black/40 rounded shadow-sm text-slate-700 dark:text-slate-200"
+                          className="inline-flex min-h-9 min-w-9 items-center justify-center p-1 bg-white/50 hover:bg-white dark:bg-black/20 dark:hover:bg-black/40 rounded shadow-sm text-slate-700 dark:text-slate-200"
                         >
                           <Edit2 className="w-3 h-3" />
                         </button>
-                        <button
+                        <button type="button" disabled={disabled}
                           onClick={() => onXoa?.(bh)}
                           aria-label={`Xóa buổi học ${bh.tenMon}`}
-                          className="p-1 bg-white/50 hover:bg-white dark:bg-black/20 dark:hover:bg-black/40 rounded shadow-sm text-rose-600 dark:text-rose-400"
+                          className="inline-flex min-h-9 min-w-9 items-center justify-center p-1 bg-white/50 hover:bg-white dark:bg-black/20 dark:hover:bg-black/40 rounded shadow-sm text-rose-600 dark:text-rose-400"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>

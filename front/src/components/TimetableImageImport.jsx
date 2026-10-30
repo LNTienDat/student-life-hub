@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Camera, ImagePlus, Plus, Trash2, X } from 'lucide-react';
+import { Camera, ImagePlus, Plus, X } from 'lucide-react';
 import api from '../services/api';
 import timetableService from '../services/timetableService';
+import TimetableImagePreview from './TimetableImagePreview';
 import { recognizeTimetable } from '../services/timetableImage';
 import { imageRowsUpload, validateImageRows } from '../pages/thoikhoabieu/imageImportUtils';
 
@@ -42,7 +43,7 @@ export default function TimetableImageImport({ semester: initialSemester = '', o
     imageUrl.current=URL.createObjectURL(file);setImage(imageUrl.current);
     const timer=setTimeout(()=>abort.abort('timeout'),120000);
     try{
-      const result=await recognizeTimetable(file,{signal:abort.signal,onProgress:value=>{if(version===run.current)setProgress(value);}});
+      const result=await recognizeTimetable(file,{knownSubjects:existing.map(item=>item.tenMon),signal:abort.signal,onProgress:value=>{if(version===run.current)setProgress(value);}});
       if(version!==run.current)return;
       setRows(result.rows);setText(result.text);
       setMessage(result.rows.length?'Đã đọc ảnh. Kiểm tra từng buổi trước khi lưu.':'Chưa nhận ra buổi học. Thử ảnh rõ hơn hoặc thêm dòng để nhập lại.');
@@ -54,7 +55,8 @@ export default function TimetableImageImport({ semester: initialSemester = '', o
   const checks=validateImageRows(rows,semester,existing);
   const selected=rows.filter(row=>row.selected).length;
   const count=rows.filter((row,index)=>row.selected&&!checks[index].duplicate).length;
-  const invalid=checks.some(check=>check.errors.length);
+  const semesterError=!semester.trim()?'Nhập học kỳ trước khi lưu lịch.':semester.trim().length>100?'Học kỳ tối đa 100 ký tự.':'';
+  const invalid=!!semesterError||checks.some(check=>check.errors.length);
   async function save(){
     if(lock.current||busy||invalid||!count||!existingReady)return;
     lock.current=true;setSaving(true);setMessage('');
@@ -69,7 +71,7 @@ export default function TimetableImageImport({ semester: initialSemester = '', o
   return <section className="rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-800">
     <button type="button" onClick={toggle} disabled={saving} aria-expanded={open} className="inline-flex min-h-11 items-center gap-2 font-semibold text-ink-600 dark:text-ink-300"><ImagePlus aria-hidden="true" className="h-5 w-5" />{open?'Ẩn nhập lịch từ ảnh':'Nhập lịch từ ảnh'}</button>
     {open&&<div className="mt-3 space-y-4">
-      <p className="text-slate-500 dark:text-slate-300">Chọn ảnh → kiểm tra, chỉnh sửa → lưu lịch. Ảnh được đọc trên thiết bị của bạn.</p>
+      <p className="text-slate-500 dark:text-slate-300">Chọn ảnh → kiểm tra, chỉnh sửa → lưu lịch. Ảnh chỉ được xử lý trong trình duyệt, không tải lên máy chủ.</p>
       <div className="flex flex-wrap gap-2">
         <button type="button" disabled={busy||saving} onClick={()=>fileRef.current?.click()} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-ink-600 px-4 text-white disabled:opacity-50"><ImagePlus aria-hidden="true" className="h-4 w-4"/>Chọn ảnh</button>
         <button type="button" disabled={busy||saving} onClick={()=>cameraRef.current?.click()} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 px-4 disabled:opacity-50"><Camera aria-hidden="true" className="h-4 w-4"/>Chụp ảnh</button>
@@ -84,22 +86,9 @@ export default function TimetableImageImport({ semester: initialSemester = '', o
       {!busy&&(image||rows.length>0)&&<>
         <div className="rounded-xl bg-amber-50 p-3 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">Lịch sẽ lặp hằng tuần theo học kỳ. Nếu ảnh chỉ là một tuần mẫu, hãy bỏ chọn buổi nghỉ hoặc thay đổi trước khi lưu.</div>
         <label className="block max-w-md font-medium">Học kỳ<input value={semester} onChange={event=>{setSemester(event.target.value);setMessage('');}} disabled={saving} placeholder="Ví dụ: HK1 2026–2027" maxLength={100} className={inputStyle}/></label>
-        <fieldset disabled={saving} className="space-y-3" aria-label="Chỉnh sửa lịch nhận diện">
-          {rows.map((row,index)=><article key={row.id} className="rounded-xl border border-slate-200 p-3 dark:border-slate-600">
-            <div className="mb-3 flex items-center justify-between gap-3"><label className="inline-flex min-h-11 items-center gap-2 font-semibold"><input type="checkbox" checked={row.selected} onChange={event=>update(row.id,'selected',event.target.checked)}/>Buổi {index+1}</label><button type="button" onClick={()=>setRows(previous=>previous.filter(item=>item.id!==row.id))} aria-label={`Bỏ buổi ${index+1}`} className="inline-flex min-h-11 min-w-11 items-center justify-center text-rose-600"><Trash2 aria-hidden="true" className="h-4 w-4"/></button></div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <label>Tên môn<input value={row.tenMon} maxLength={100} onChange={e=>update(row.id,'tenMon',e.target.value)} className={inputStyle}/></label>
-              <label>Thứ<select value={row.thu} onChange={e=>update(row.id,'thu',e.target.value)} className={inputStyle}><option value="">Chọn thứ</option>{[2,3,4,5,6,7,8].map(day=><option key={day} value={day}>{day===8?'Chủ nhật':`Thứ ${day}`}</option>)}</select></label>
-              <label>Bắt đầu<input type="time" value={row.gioBatDau} onChange={e=>update(row.id,'gioBatDau',e.target.value)} className={inputStyle}/></label>
-              <label>Kết thúc<input type="time" value={row.gioKetThuc} onChange={e=>update(row.id,'gioKetThuc',e.target.value)} className={inputStyle}/></label>
-              <label>Phòng<input value={row.phongHoc} maxLength={50} onChange={e=>update(row.id,'phongHoc',e.target.value)} className={inputStyle}/></label>
-              <label>Giảng viên<input value={row.giangVien} maxLength={100} onChange={e=>update(row.id,'giangVien',e.target.value)} className={inputStyle}/></label>
-            </div>
-            {row.warning&&<p className="mt-2 text-amber-700 dark:text-amber-300">{row.warning}</p>}
-            {checks[index].duplicate&&row.selected&&<p className="mt-2 text-slate-500">Buổi này đã có, sẽ bỏ qua.</p>}
-            {checks[index].errors.length>0&&<p role="alert" className="mt-2 text-rose-600 dark:text-rose-300">{checks[index].errors.join(' ')}</p>}
-          </article>)}
-        </fieldset>
+        <TimetableImagePreview rows={rows} checks={checks} saving={saving} onUpdate={update} onRemove={id=>setRows(previous=>previous.filter(item=>item.id!==id))}/>
+
+        {semesterError&&selected>0&&<p role="alert" className="text-rose-600 dark:text-rose-300">{semesterError}</p>}
         <div className="flex flex-wrap items-center gap-3"><button type="button" disabled={saving||rows.length>=100} onClick={add} className="inline-flex min-h-11 items-center gap-2 rounded-xl border px-3"><Plus className="h-4 w-4"/>Thêm dòng</button><span className="text-slate-500">Đã chọn {selected} buổi · {count} buổi mới</span><button type="button" disabled={busy||saving||invalid||!count||!existingReady} onClick={save} className="min-h-11 rounded-xl bg-emerald-600 px-4 font-semibold text-white disabled:opacity-50">{saving?'Đang lưu…':`Lưu ${count} buổi học`}</button></div>
       </>}
       {text&&<details><summary className="cursor-pointer py-2 text-ink-600">Xem chữ nhận diện</summary><pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-xs dark:bg-slate-900">{text}</pre></details>}

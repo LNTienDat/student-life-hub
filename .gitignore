@@ -3,6 +3,8 @@ node_modules/
 
 # Environment variables
 .env
+.env.*
+!.env.example
 
 # Build output
 dist/
@@ -30,3 +32,10 @@ improvement-backups/
 coverage/
 __pycache__/
 *.pyc
+
+# Browser test reports and private synthetic sessions
+front/playwright-report/
+front/test-results/
+
+# Local screenshots and generated acceptance evidence may contain private data.
+docs/qa/
