@@ -64,3 +64,25 @@ test('short Tong label with OCR border noise identifies final cafe total', () =>
  assert.equal(extractReceipt('Tổng số lượng: 4\nCà phê 10,000').soTien,'');
  assert.equal(extractReceipt('Tổng: 54,000\nTổng: 55,000').soTien,'');
 });
+
+test('item table without total sums line amounts once and marks the result for review',()=>{
+ const text='NHÀ HÀNG HACODE\nTên SL Đơn giá Thành tiền\nRau muống 1 10.000 10.000\nBò xào 1 30.000 30.000\nNgày 05/04/2019';
+ const result=extractReceipt(text);
+ assert.equal(result.soTien,'40000');assert.equal(result.ngayGiaoDich,'2019-04-05');
+ assert.equal(result.computedFromItems,true);assert.equal(result.hasFinalTotal,false);
+ assert(result.warnings.some(w=>w.includes('Tạm cộng')));
+ const alternate=extractReceipt(text.replace('Tên SL','Ten 5'));
+ assert.equal(mergeReceiptReadings(result,[alternate]).soTien,'40000');
+ assert.equal(mergeReceiptReadings(result,[]).soTien,'');
+ assert.equal(extractReceipt(text+'\nTổng thanh toán 45000').soTien,'45000');
+ assert.equal(extractReceipt(text.replace('1 30.000 30.000','2 30.000 60.000')).soTien,'70000');
+});
+
+test('incomplete item tables, mismatched quantity and tax or discount need user review',()=>{
+ const header='Tên SL Đơn giá Thành tiền\nRau 1 10.000 10.000\n';
+ for(const row of ['Bò 30.000','Bò 2 30.000 50.000','Bò 1 30.000 30.000\nVAT 10%','Bò 1 30.000 30.000\nGiảm giá 5000'])assert.equal(extractReceipt(header+row).soTien,'',row);
+ assert.equal(extractReceipt('Rau 1 10.000 10.000\nBò 1 30.000 30.000').soTien,'');
+ const r=extractReceipt(header+'Bò 1 30.000 30.000');
+ const conflicting=extractReceipt(header+'Bò 1 40.000 40.000');
+ assert.equal(mergeReceiptReadings(r,[conflicting]).soTien,'');
+});

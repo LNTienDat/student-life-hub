@@ -117,6 +117,11 @@ async function recognizeTimetableInternal(file, { signal, onProgress = () => {},
             await headerWorker.setParameters({ tessedit_pageseg_mode: PSM.SPARSE_TEXT });
             const english = await whileActive(Promise.race([headerWorker.recognize(header, {}, { text: true, blocks: true }), fatal]), signal);
             headerColumns = getTimetableColumns(english.data);
+            if (!headerColumns.length) {
+              await headerWorker.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_BLOCK });
+              const block = await whileActive(Promise.race([headerWorker.recognize(header, {}, { text: true, blocks: true }), fatal]), signal);
+              headerColumns = getTimetableColumns(block.data);
+            }
           } finally { await headerWorker?.terminate().catch(() => {}); }
         }
         columns = headerColumns.map(column => ({ ...column,
@@ -139,7 +144,7 @@ async function recognizeTimetableInternal(file, { signal, onProgress = () => {},
           // A small colored note or a room code can disappear in block segmentation.
           // Read that column once more with separated lines; only replace fields whose
           // second reading has structural evidence (note label or a valid room line).
-          if (parsed.some(row => !row.phongHoc || !row.tenMon)) {
+          if (parsed.length) {
             const detail = cropImage(bitmap, { left: crop.left, right: column.right / initialScale, top: crop.top, bottom: bitmap.height }, 4, true, true);
             try {
               await worker.setParameters({ tessedit_pageseg_mode: PSM.SPARSE_TEXT, tessedit_char_whitelist: '' });
@@ -156,6 +161,7 @@ async function recognizeTimetableInternal(file, { signal, onProgress = () => {},
                   row.annotationBeforeTime = true;
                 }
                 if (!row.phongHoc && match.phongHoc) row.phongHoc = match.phongHoc;
+                row.alternateRange = [match.gioBatDau, match.gioKetThuc];
               }
             } finally { detail.canvas.width = detail.canvas.height = 1; }
           }
@@ -180,6 +186,7 @@ async function recognizeTimetableInternal(file, { signal, onProgress = () => {},
                 }
                 confirmed = confirmedTimeRange(ranges);
               }
+              if (confirmed && row.alternateRange && confirmed.join('|') !== row.alternateRange.join('|')) confirmed = null;
               [row.gioBatDau, row.gioKetThuc] = confirmed || ['', ''];
               if (!confirmed) row.timeUncertain = true;
             }
@@ -193,6 +200,7 @@ async function recognizeTimetableInternal(file, { signal, onProgress = () => {},
       if (restored !== row.tenMon) row.spellingAdjusted = true;
       row.tenMon = restored;
       delete row.timeBox;
+      delete row.alternateRange;
       delete row.annotationBeforeTime;
     }
     signal?.throwIfAborted(); onProgress(100);

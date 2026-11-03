@@ -7,6 +7,30 @@ export function parseDong(value) {
   const amount=Number(text.replace(/[.,\s]/g,''));
   return Number.isSafeInteger(amount)&&amount>0?amount:null;
 }
+// Only sum a recognizable item table, never arbitrary numbers, dates or unit prices.
+function sumReceiptItems(lines) {
+  const header=lines.findIndex(line=>/thanh tien/.test(fold(line))&&!/\d{1,3}[.,]\d{3}|\d{4,}/.test(line));
+  if(header<0)return null;
+  const amounts=[];
+  for(const line of lines.slice(header+1)) {
+    const normalized=fold(line);
+    if(/ngay|tong|thanh toan|tien mat|cam on|chuc quy|vat|thue|giam gia|phi dich vu|tam tinh/.test(normalized)) {
+      if(/vat|thue|giam gia|phi dich vu|tam tinh/.test(normalized))return null;
+      break;
+    }
+    const tokens=line.match(/\d{1,3}(?:[.,]\d{3})+(?:[.,]00)?|\d+/g)||[];
+    const money=tokens.map(parseDong).filter(value=>value>=1000);
+    if(!money.length)continue;
+    // Both unit price and line amount must be present; an incomplete row blocks summing.
+    if(money.length!==2||!/[a-z]/.test(normalized))return null;
+    const [unit,total]=money;
+    const quantity=/\b(\d{1,3})\s+(?=\d{1,3}[.,]\d{3})/.exec(line);
+    if(unit!==total&&(!quantity||Number(quantity[1])*unit!==total))return null;
+    amounts.push(total);
+  }
+  const sum=amounts.reduce((a,b)=>a+b,0);
+  return amounts.length>=2&&Number.isSafeInteger(sum)?sum:null;
+}
 export function extractReceipt(value) {
   const text=String(value||'').slice(0,50000).replaceAll('⁄','/');
   const lines=text.split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
@@ -29,7 +53,8 @@ export function extractReceipt(value) {
   const totals=[...new Set(candidates.filter(item=>item.score===maximum).map(item=>item.amount))];
   const moneyLines=lines.filter(line=>!/so the|\bluong\b|\bqty\b|\bquantity\b/.test(fold(line))).join('\n');
   const foreign=/\b(?:usd|eur|gbp|jpy|cny|thb)\b|[$€£¥]\s*\d|\d[\d., ]*\s*[$€£¥]/i.test(moneyLines);
-  const soTien=!foreign&&totals.length===1?String(totals[0]):'';
+  const itemSum=!foreign&&!candidates.length?sumReceiptItems(lines):null;
+  const soTien=!foreign&&totals.length===1?String(totals[0]):itemSum?String(itemSum):'';
   const dates=[];
   for(const line of lines) {
     if(/han su dung|\bhsd\b|expiry|expiration/.test(fold(line)))continue;
@@ -46,18 +71,23 @@ export function extractReceipt(value) {
   const danhMuc=/\b(?:com|pho|bun|banh|cafe|ca phe|nha hang|quan an|tra sua|food|restaurant|res|coca|sprite|soda)\b/.test(normalized)?'an_uong':/\b(?:taxi|xe buyt|xe bus|xang|gui xe|grab|be car|van chuyen)\b/.test(normalized)?'di_lai':'khac';
   const merchant=lines.find(line=>/coffee|ca phe|nha hang|restaurant|\bres\b|\bquan an\b|xang dau/.test(fold(line))&&!/@/.test(line))||lines.find(line=>/\b(?:res|restaurant)\b/.test(fold(line))&&!/\d/.test(line))||lines.find(line=>/[\p{L}]{3}/u.test(line)&&!/^hoa don|^phieu|^bill|^receipt|^invoice|^ngay|^date|^mst|^ma so|^tel|^dt|^dia chi/i.test(fold(line))&&!/\d{5,}/.test(line));
   const warnings=[];
+  if(itemSum)warnings.push('Tạm cộng từ thành tiền từng món, chưa có dòng tổng. Hãy kiểm tra các món và phụ phí trước khi lưu.');
   if(!soTien)warnings.push(foreign?'Hóa đơn có ngoại tệ. Hãy nhập số tiền đồng cần ghi nhận.':'Chưa xác định chắc tổng tiền thanh toán. Hãy đối chiếu ảnh và nhập lại.');
   if(!ngayGiaoDich)warnings.push('Chưa xác định chắc ngày giao dịch. Hãy chọn lại ngày.');
-  return {loai:'chi',danhMuc,soTien,ngayGiaoDich,moTa:merchant?.slice(0,200)||'Hóa đơn',warnings,text,hasFinalTotal:maximum>=3&&!!soTien};
+  return {loai:'chi',danhMuc,soTien,ngayGiaoDich,moTa:merchant?.slice(0,200)||'Hóa đơn',warnings,text,hasFinalTotal:maximum>=3&&!!soTien,computedFromItems:!!itemSum};
 }
 
 // Prefer agreement between independent English OCR passes for weak total labels.
 export function mergeReceiptReadings(primary, alternatives) {
  const result={...primary};
+ const computed=[primary,...alternatives].filter(item=>item.computedFromItems).map(item=>item.soTien);
+ if(!primary.hasFinalTotal&&computed.length>=2&&computed.every(value=>value===computed[0])) {
+   result.soTien=computed[0];result.computedFromItems=true;
+ } else if(primary.computedFromItems) { result.soTien='';result.computedFromItems=false; }
  const totals=alternatives.filter(item=>item.hasFinalTotal).map(item=>item.soTien);
  if(totals.length>=2&&totals.every(value=>value===totals[0])) {
    if(!primary.hasFinalTotal||!primary.soTien||primary.soTien===totals[0]) {
-     result.soTien=totals[0];result.hasFinalTotal=true;
+     result.soTien=totals[0];result.hasFinalTotal=true;result.computedFromItems=false;
    } else { result.soTien='';result.hasFinalTotal=false; }
  }
  for (const key of ['danhMuc', 'moTa']) {
@@ -69,6 +99,7 @@ export function mergeReceiptReadings(primary, alternatives) {
  result.ngayGiaoDich=dates.length===1?dates[0]:'';
  result.text=[primary,...alternatives].map(item=>item.text).join('\n\n');
  result.warnings=[];
+ if(result.computedFromItems&&result.soTien)result.warnings.push('Tạm cộng từ thành tiền từng món, chưa có dòng tổng. Hãy kiểm tra các món và phụ phí trước khi lưu.');
  if(!result.soTien)result.warnings.push('Chưa xác định chắc tổng tiền thanh toán. Hãy đối chiếu ảnh và nhập lại.');
  if(!result.ngayGiaoDich)result.warnings.push('Chưa xác định chắc ngày giao dịch. Hãy chọn lại ngày.');
  return result;

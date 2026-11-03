@@ -68,7 +68,7 @@ export default function DashboardToday({ userId, semester }) {
 
       <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2">
         <article className={cardStyle}>
-          <div className="mb-4 flex items-center gap-2 text-slate-800"><Clock aria-hidden="true" className="h-5 w-5 text-amber-600" /><h3 className="font-semibold">Deadline cần chú ý</h3></div>
+          <div className="mb-2 flex items-center justify-between gap-2 text-slate-800"><div className="flex items-center gap-2"><Clock aria-hidden="true" className="h-5 w-5 text-amber-600" /><h3 className="font-semibold">Deadline cần chú ý</h3></div><Link to="/deadline" aria-label="Mở mục Deadline" title="Mở mục Deadline" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-ink-600 hover:bg-slate-100"><ArrowUpRight aria-hidden="true" className="h-4 w-4" /></Link></div>
           <LoadingOrError result={data?.deadlines} loading={isLoading('deadlines')}>
             {deadlines.items.length ? <>
               <p className="mb-3 text-xs text-slate-500">{deadlines.overdue.length} quá hạn · {deadlines.dueToday.length} đến hạn hôm nay</p>
@@ -85,9 +85,8 @@ export default function DashboardToday({ userId, semester }) {
                 </li>;
               })}</ul>
               {deadlines.items.length > 4 && <p className="mt-3 text-xs text-slate-500">Còn {deadlines.items.length - 4} việc khác trong danh sách.</p>}
-            </> : <div className="py-2 text-sm text-slate-500"><CheckCircle2 aria-hidden="true" className="mb-2 h-6 w-6 text-emerald-600" />Không có việc gấp.</div>}
+            </> : <div className="flex items-center gap-2 py-1 text-sm text-slate-500"><CheckCircle2 aria-hidden="true" className="h-5 w-5 shrink-0 text-emerald-600" />Không có việc gấp.</div>}
           </LoadingOrError>
-          <Link to="/deadline" className={`${linkStyle} mt-auto pt-4`}>Mở mục Deadline <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" /></Link>
         </article>
 
         <article className={cardStyle}>

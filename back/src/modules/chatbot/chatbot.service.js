@@ -44,7 +44,7 @@ async function layDuLieuSinhVien(userId, topics = CHU_DE, now = new Date()) {
     };
   })());
   if (topics.includes('deadline')) jobs.push((async () => {
-    const base = { idNguoiDung: userId, trangThai: { not: 'hoan_thanh' } };
+    const base = { idNguoiDung: userId, xoaLuc: null, trangThai: { not: 'hoan_thanh' } };
     const overdue = { ...base, hanChot: { lt: now } };
     const upcoming = { ...base, hanChot: { gte: now, lte: nextWeek } };
     const select = { tieuDe: true, hanChot: true, doUuTien: true };

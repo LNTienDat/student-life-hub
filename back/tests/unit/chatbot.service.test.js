@@ -54,7 +54,10 @@ test('overdue work is included separately from upcoming work, scoped to this acc
   expect(result.deadline.tongQuaHan).toBe(6);
   expect(traLoiDuLieu(result, 'Deadline')).toContain('Hiển thị tối đa 5');
   expect(traLoiDuLieu(result, 'Deadline')).toContain('Khẩn cấp');
-  for (const [query] of prisma.deadline.findMany.mock.calls) expect(query.where.idNguoiDung).toBe(42);
+  for (const [query] of [...prisma.deadline.findMany.mock.calls,...prisma.deadline.count.mock.calls]) {
+    expect(query.where.idNguoiDung).toBe(42);
+    expect(query.where.xoaLuc).toBeNull();
+  }
   expect(prisma.deadline.findMany.mock.calls[0][0].where.hanChot).toEqual({ lt: now });
 });
 test('summary omits raw transaction descriptions and account secrets', async () => {
