@@ -9,6 +9,7 @@ import useDataRevision from '../hooks/useDataRevision';
 import api from '../services/api';
 import { dinhDangNgay } from '../utils/formatters';
 import Chatbot from './Chatbot';
+import { useTimetableImport } from '../context/TimetableImportContext';
 import GlowingNav from './GlowingNav';
 import { Bell, Sun, Moon, X, LogOut, Clock, BookOpen, Wallet, Home, CalendarDays, UserRound } from 'lucide-react';
 
@@ -19,6 +20,7 @@ function Layout({ children }) {
   const revision = useDataRevision();
   const navigate = useNavigate();
   const location = useLocation();
+  const imageDraft = useTimetableImport();
   const [thongBaos, setThongBaos] = useState([]);
   const [notificationError, setNotificationError] = useState(false);
   const [chuongMo, setChuongMo] = useState(false);
@@ -117,6 +119,10 @@ function Layout({ children }) {
       </section>}
     </header>
     <main id="main-content" tabIndex={-1} className="mx-auto w-full min-w-0 max-w-7xl p-4 pb-24 sm:p-6 sm:pb-24 lg:p-8 lg:pb-24">
+      {location.pathname !== '/thoi-khoa-bieu' && (imageDraft.busy || imageDraft.rows.length > 0) && <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-ink-200 bg-ink-50 px-4 py-2 text-sm dark:border-slate-600 dark:bg-slate-800">
+        <span>{imageDraft.busy ? `Đang đọc ảnh lịch học · ${imageDraft.progress}%` : `Đã nhận ${imageDraft.rows.length} buổi học · chưa lưu`}</span>
+        <Link to="/thoi-khoa-bieu" className="inline-flex min-h-11 items-center font-semibold text-ink-600 dark:text-ink-200">{imageDraft.busy ? 'Xem tiến trình' : 'Kiểm tra và lưu'}</Link>
+      </div>}
       <div key={`${location.pathname}:${semester}`}>
         {['/mon-hoc', '/thoi-khoa-bieu'].includes(location.pathname) && <SemesterPicker />}
         {children || <Outlet />}

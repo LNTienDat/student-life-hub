@@ -7,6 +7,7 @@ import { ToastProvider } from './context/ToastContext';
 import Layout from './components/Layout';
 import { FinanceCategoryProvider } from './context/FinanceCategoryContext';
 import { SemesterProvider } from './context/SemesterContext';
+import { TimetableImportProvider } from './context/TimetableImportContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import PwaStatus from './components/PwaStatus';
 import BackendStatus from './components/BackendStatus';
@@ -46,9 +47,9 @@ function AuthenticatedLayout() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" />;
   return (
-    <SemesterProvider key={user.id}><FinanceCategoryProvider><Layout key={user.id}>
+    <SemesterProvider key={user.id}><FinanceCategoryProvider><TimetableImportProvider><Layout key={user.id}>
       <Outlet />
-    </Layout></FinanceCategoryProvider></SemesterProvider>
+    </Layout></TimetableImportProvider></FinanceCategoryProvider></SemesterProvider>
   );
 }
 

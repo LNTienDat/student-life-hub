@@ -342,8 +342,8 @@ function Deadline() {
             onXoa={yeuCauXoa}
           />
         )}
-        {!dangTai && !loadError && <details className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-          <summary className="min-h-11 cursor-pointer py-2 font-semibold text-slate-600 dark:text-slate-300">Đã xóa ({daXoa.length})</summary>
+        {!dangTai && !loadError && <details className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+          <summary className="min-h-11 cursor-pointer py-2 text-base font-semibold text-slate-600 dark:text-slate-300">Đã xóa ({daXoa.length})</summary>
           <p className="mb-3 text-xs text-slate-500">Các việc bạn xóa hoặc được tự xóa sau 24 giờ đều được giữ ở đây. Khôi phục sẽ đưa về chưa hoàn thành.</p>
           <div className="grid gap-2">{daXoa.map(item => <article key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
             <div className="min-w-0 flex-1"><h3 className="break-words text-sm font-medium dark:text-slate-100">{item.tieuDe}</h3><p className="text-xs text-slate-500">{formatDeadlineDate(item.hanChot)}</p></div>

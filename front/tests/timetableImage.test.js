@@ -1,13 +1,21 @@
 import { Buffer } from 'node:buffer';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { imageDay, timeRange, getTimetableColumns, extractImageTimetable, validateImageRows, imageRowsUpload } from '../src/pages/thoikhoabieu/imageImportUtils.js';
+import { imageDay, timeRange, getTimetableColumns, getTimetableGridColumns, extractImageTimetable, validateImageRows, imageRowsUpload } from '../src/pages/thoikhoabieu/imageImportUtils.js';
 
 import { restoreCourseText, confirmedTimeRange } from '../src/pages/thoikhoabieu/ocrTextUtils.js';
 
 const row = (overrides={}) => ({id:'r1',selected:true,tenMon:'Cơ sở dữ liệu',thu:2,gioBatDau:'07:00',gioKetThuc:'09:00',phongHoc:'A201',giangVien:'Nguyễn Văn An',...overrides});
 const word=(text,x,y)=>({text,bbox:{x0:x-45,x1:x+45,y0:y,y1:y+14}});
 const data=words=>({blocks:[{paragraphs:[{lines:words.map(w=>({words:[w]}))}]}]});
+
+test('unreadable weekday headers may recover a full seven-column grid without guessing weekdays',()=>{
+ const width=700,height=240,pixels=new Uint8ClampedArray(width*height*4).fill(255);
+ for(let x=0;x<width;x+=100)for(let y=0;y<height;y++){const i=(y*width+x)*4;pixels[i]=pixels[i+1]=pixels[i+2]=230;}
+ const columns=getTimetableGridColumns({data:pixels,width,height});
+ assert.equal(columns.length,7);assert(columns.every(column=>column.day===null));
+ assert.deepEqual(getTimetableGridColumns({data:new Uint8ClampedArray(width*height*4).fill(255),width,height}),[]);
+});
 test('Vietnamese weekday and OCR time variants preserve correct day and range',()=>{
   assert.equal(imageDay('Thứ 2'),2);assert.equal(imageDay('T6'),6);assert.equal(imageDay('CN'),8);assert.equal(imageDay('Chủ nhật'),8);assert.equal(imageDay('12 Th10'),null);
   for(const text of ['07:00 - 11:15','© 0700 – 1115','13h00 - 17.15'])assert.deepEqual(timeRange(text),text.includes('13')?['13:00','17:15']:['07:00','11:15']);

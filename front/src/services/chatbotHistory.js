@@ -3,7 +3,7 @@ export function chatbotHistory(messages) {
   const turns = [];
   for (let i = 0; i < messages.length - 1; i++) {
     const user = messages[i], bot = messages[i + 1];
-    if (user.vaiTro === 'user' && user.cheDo === 'ai' && bot.vaiTro === 'bot' && bot.nguon === 'ai') {
+    if (user.vaiTro === 'user' && ['ai','auto'].includes(user.cheDo) && bot.vaiTro === 'bot' && bot.nguon === 'ai') {
       turns.push({ vaiTro: 'user', noiDung: user.noiDung }, { vaiTro: 'bot', noiDung: bot.noiDung.slice(0, 2000) });
       i++;
     }

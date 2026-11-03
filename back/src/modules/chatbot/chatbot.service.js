@@ -17,7 +17,7 @@ function chuanHoa(text) { return text.normalize('NFD').replace(/[\u0300-\u036f]/
 // Data mode only handles periods it actually queries.
 function timChuDe(text) {
   const q = chuanHoa(text);
-  if (/tu van|goi y|ke hoach|lam sao|nen |cach |muc tieu|tiet kiem|thang truoc|thang sau|nam ngoai|tuan truoc|hom qua|ngay kia|thang \d|thang mot|thang hai|thang ba/.test(q)) return [];
+  if (/tu van|goi y|ke hoach|lam sao|nen |cach |huong dan|ra sao|the nao|\b(?:nhap|them|sua|xoa|quet)\b|muc tieu|tiet kiem|thang truoc|thang sau|nam ngoai|tuan truoc|hom qua|ngay kia|thang \d|thang mot|thang hai|thang ba/.test(q)) return [];
   const topics = [];
   if (/\bgpa\b|diem|mon nguy co/.test(q)) topics.push('hocTap');
   if (/deadline|han chot|qua han|cong viec/.test(q)) topics.push('deadline');

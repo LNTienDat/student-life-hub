@@ -11,3 +11,8 @@ test('history keeps complete recent exchanges within backend limits', () => {
   assert.equal(result.length, 4);
   assert.equal(result.reduce((n, t) => n + t.noiDung.length, 0), 8000);
 });
+test('unified conversation sends only prior AI exchanges, never retrieved private documents',()=>{
+ const messages=[{vaiTro:'user',cheDo:'auto',noiDung:'Explain document'},{vaiTro:'bot',nguon:'tai_lieu',noiDung:'Private document'},
+ {vaiTro:'user',cheDo:'auto',noiDung:'Plan'},{vaiTro:'bot',nguon:'ai',noiDung:'Advice'}];
+ assert.deepEqual(chatbotHistory(messages),[{vaiTro:'user',noiDung:'Plan'},{vaiTro:'bot',noiDung:'Advice'}]);
+});

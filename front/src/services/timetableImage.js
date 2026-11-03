@@ -1,5 +1,5 @@
 import { withOcrDeadline } from './ocrDeadline';
-import { extractImageTimetable, getTimetableColumns, timeRange } from '../pages/thoikhoabieu/imageImportUtils';
+import { extractImageTimetable, getTimetableColumns, getTimetableGridColumns, timeRange } from '../pages/thoikhoabieu/imageImportUtils';
 import { confirmedTimeRange, restoreCourseText } from '../pages/thoikhoabieu/ocrTextUtils';
 
 function whileActive(promise, signal) {
@@ -95,16 +95,16 @@ async function recognizeTimetableInternal(file, { signal, onProgress = () => {},
     await worker.setParameters({ tessedit_pageseg_mode: PSM.SPARSE_TEXT, preserve_interword_spaces: '1' });
     const initial = await recognize(canvas);
     let columns = getTimetableColumns(initial);
-    if (!columns.length) {
+    {
       // Read the small weekday header separately: full-grid OCR can merge or omit it.
       const header = document.createElement('canvas');
-      const factor = Math.min(4, 4500 / bitmap.width);
+      const factor = Math.min(6, 6000 / bitmap.width);
       header.width = Math.round(bitmap.width * factor);
-      header.height = Math.round(bitmap.height * 0.2 * factor);
+      header.height = Math.round(bitmap.height * 0.12 * factor);
       try {
         const context = header.getContext('2d');
         context.fillStyle = '#fff'; context.fillRect(0, 0, header.width, header.height);
-        context.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height * 0.2, 0, 0, header.width, header.height);
+        context.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height * 0.12, 0, 0, header.width, header.height);
         const reading = await recognize(header);
         initial.headerText = reading.text;
         let headerColumns = getTimetableColumns(reading);
@@ -124,12 +124,13 @@ async function recognizeTimetableInternal(file, { signal, onProgress = () => {},
             }
           } finally { await headerWorker?.terminate().catch(() => {}); }
         }
-        columns = headerColumns.map(column => ({ ...column,
+        if (headerColumns.length) columns = headerColumns.map(column => ({ ...column,
           left: column.left / factor * initialScale, right: column.right / factor * initialScale,
           top: column.top / factor * initialScale }));
       } finally { header.width = header.height = 1; }
     }
     const rows = [], texts = [initial.headerText || ''];
+    if (!columns.length) columns = getTimetableGridColumns(ctx.getImageData(0,0,canvas.width,canvas.height));
     if (columns.length) {
       for (let index = 0; index < columns.length; index++) {
         const column = columns[index];
@@ -139,18 +140,18 @@ async function recognizeTimetableInternal(file, { signal, onProgress = () => {},
           await worker.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_BLOCK, tessedit_char_whitelist: '' });
           const data = await recognize(crop.canvas); texts.push(data.text);
           tagColoredNotes(data, crop.canvas);
-          const parsed = extractImageTimetable(data, column.day);
+          const parsed = extractImageTimetable(data, column.day || 'unknown');
 
           // A small colored note or a room code can disappear in block segmentation.
           // Read that column once more with separated lines; only replace fields whose
           // second reading has structural evidence (note label or a valid room line).
-          if (parsed.length) {
+          {
             const detail = cropImage(bitmap, { left: crop.left, right: column.right / initialScale, top: crop.top, bottom: bitmap.height }, 4, true, true);
             try {
               await worker.setParameters({ tessedit_pageseg_mode: PSM.SPARSE_TEXT, tessedit_char_whitelist: '' });
               const secondData = await recognize(detail.canvas);
               texts.push(secondData.text);
-              const alternatives = extractImageTimetable(secondData, column.day);
+              const alternatives = extractImageTimetable(secondData, column.day || 'unknown');
               for (const row of parsed) {
                 if (!row.timeBox) continue;
                 const match = alternatives.find(item => item.timeBox &&
@@ -163,9 +164,19 @@ async function recognizeTimetableInternal(file, { signal, onProgress = () => {},
                 if (!row.phongHoc && match.phongHoc) row.phongHoc = match.phongHoc;
                 row.alternateRange = [match.gioBatDau, match.gioKetThuc];
               }
+              // Block OCR can omit a whole class, especially in sparse weekly calendars.
+              // Recover only spatially distinct sessions; never merge two neighboring courses.
+              for (const alternative of alternatives) {
+                if (!alternative.timeBox || parsed.some(row => row.timeBox && Math.abs(row.timeBox.y0 / crop.factor - alternative.timeBox.y0 / detail.factor) < 8)) continue;
+                const factor = crop.factor / detail.factor;
+                parsed.push({ ...alternative, id: alternative.id + '-detail', timeBox: Object.fromEntries(Object.entries(alternative.timeBox).map(([key, value]) => [key, value * factor])) });
+              }
+              parsed.sort((a,b)=>(a.timeBox?.y0 ?? 0)-(b.timeBox?.y0 ?? 0));
             } finally { detail.canvas.width = detail.canvas.height = 1; }
           }
           for (const row of parsed) {
+            if (!column.day) { row.thu=''; row.warning='Chưa đọc chắc thứ. Đã tách theo cột; hãy chọn thứ theo ảnh gốc.'; }
+            row.id = `column-${index}-${row.id}`;
             if (row.timeBox) {
               const box = { left: crop.left + row.timeBox.x0 / crop.factor - 3, right: crop.left + row.timeBox.x1 / crop.factor + 3,
                 top: crop.top + row.timeBox.y0 / crop.factor - 3, bottom: crop.top + row.timeBox.y1 / crop.factor + 3 };

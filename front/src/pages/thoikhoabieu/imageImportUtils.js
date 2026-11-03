@@ -74,6 +74,29 @@ export function getTimetableColumns(data) {
   }
   return [];
 }
+// Geometry fallback for a complete seven-column calendar whose tiny weekday text is unreadable.
+// It separates classes but deliberately leaves weekdays unknown for user confirmation.
+export function getTimetableGridColumns({data,width,height}) {
+  const peaks=[];
+  for(let x=0;x<width;x++) {
+    let count=0,total=0;
+    for(let y=Math.floor(height*.15);y<height*.9;y++) {
+      const i=(y*width+x)*4,r=data[i],g=data[i+1],b=data[i+2];total++;
+      if(Math.min(r,g,b)>=180&&Math.max(r,g,b)<250&&Math.max(r,g,b)-Math.min(r,g,b)<10)count++;
+    }
+    if(count>total*.5)peaks.push(x);
+  }
+  const groups=[];for(const x of peaks){if(groups.length&&x-groups.at(-1).at(-1)<=2)groups.at(-1).push(x);else groups.push([x]);}
+  const lines=groups.map(group=>group.reduce((a,b)=>a+b,0)/group.length);
+  const gaps=lines.slice(1).map((x,i)=>x-lines[i]).filter(gap=>gap>width/12&&gap<width/5).sort((a,b)=>a-b);
+  if(gaps.length<4)return [];
+  const step=gaps[Math.floor(gaps.length/2)];
+  const lattice=lines.filter(x=>lines.some(other=>Math.abs(Math.abs(x-other)-step)<step*.08));
+  if(lattice.length<5)return [];
+  let start=lattice[0];while(start-step>=-step*.2)start-=step;
+  if(start< -step*.1||start+step*7>width+step*.25||step*7<width*.8)return [];
+  return Array.from({length:7},(_,i)=>({day:null,left:Math.max(0,start+i*step),right:Math.min(width,start+(i+1)*step),top:0}));
+}
 export function extractImageTimetable(data, fixedDay = null) {
   const words=(data.blocks || []).flatMap(block=>(block.paragraphs || []).flatMap(p=>(p.lines || []).flatMap(line=>line.words || []))).filter(w=>w.text?.trim() && w.bbox);
   if (fixedDay) return sessions(wordLines(words), fixedDay).slice(0,100);

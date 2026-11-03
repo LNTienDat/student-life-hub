@@ -52,8 +52,8 @@ export default function DeadlineListView({ dangDienHanh = [], daHoanThanh = [], 
       {dangDienHanh.length ? <div className="grid gap-2">{dangDienHanh.map(item => <DeadlineRow key={item.id} item={item} {...actions} />)}</div>
         : <p className="rounded-xl border border-slate-200 bg-white px-4 py-5 text-sm text-slate-500 dark:border-slate-700/60 dark:bg-slate-800">{emptyMessage}</p>}
     </section>
-    <section aria-label="Công việc đã hoàn thành"><details>
-      <summary className="min-h-11 cursor-pointer py-2 font-display text-lg font-semibold text-slate-500 dark:text-slate-400">Đã hoàn thành ({daHoanThanh.length})</summary>
+    <section aria-label="Công việc đã hoàn thành"><details className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+      <summary className="min-h-11 cursor-pointer py-2 text-base font-semibold text-slate-600 dark:text-slate-300">Đã hoàn thành ({daHoanThanh.length})</summary>
       <div className="mt-2 grid gap-2">{daHoanThanh.map(item => <DeadlineRow key={item.id} item={item} completed {...actions} />)}
         {!daHoanThanh.length && <p className="text-sm text-slate-500">Chưa có việc đã hoàn thành.</p>}
       </div>

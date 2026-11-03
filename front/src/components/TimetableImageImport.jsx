@@ -3,52 +3,37 @@ import { Camera, ImagePlus, Plus, X } from 'lucide-react';
 import api from '../services/api';
 import timetableService from '../services/timetableService';
 import TimetableImagePreview from './TimetableImagePreview';
-import { recognizeTimetable } from '../services/timetableImage';
+import { useTimetableImport } from '../context/TimetableImportContext';
 import { imageRowsUpload, validateImageRows } from '../pages/thoikhoabieu/imageImportUtils';
 
 const inputStyle='mt-1 min-h-11 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white';
 export default function TimetableImageImport({ semester: initialSemester = '', onImported }) {
-  const [open,setOpen]=useState(false);
-  const [semester,setSemester]=useState(initialSemester);
-  const [rows,setRows]=useState([]);
-  const [text,setText]=useState('');
-  const [image,setImage]=useState('');
-  const [busy,setBusy]=useState(false);
+  const draft=useTimetableImport();
+  const { job, open, rows, text, image, busy, progress, message }=draft;
+  const semester=draft.semester ?? initialSemester;
+  const setOpen=value=>job.set('open',value);
+  const setSemester=value=>job.set('semester',value);
+  const setRows=value=>job.set('rows',value);
+  const setText=value=>job.set('text',value);
+  const setMessage=value=>job.set('message',value);
   const [saving,setSaving]=useState(false);
-  const [progress,setProgress]=useState(0);
-  const [message,setMessage]=useState('');
   const [existing,setExisting]=useState([]);
   const [existingReady,setExistingReady]=useState(false);
   const [retry,setRetry]=useState(0);
   const fileRef=useRef(null);
   const cameraRef=useRef(null);
-  const run=useRef(0);
-  const controller=useRef(null);
-  const imageUrl=useRef('');
   const lock=useRef(false);
-  useEffect(()=>()=>{run.current++;controller.current?.abort();if(imageUrl.current)URL.revokeObjectURL(imageUrl.current);},[]);
   useEffect(()=>{
     if(!open)return;
     let active=true;
-    timetableService.layThoiKhoaBieu().then(({data})=>{if(active){setExisting(data.thoiKhoaBieu || []);setExistingReady(true);}}).catch(()=>{if(active)setMessage('Chưa tải được lịch hiện có. Bấm kiểm tra lại để tiếp tục.');});
+    timetableService.layThoiKhoaBieu().then(({data})=>{if(active){setExisting(data.thoiKhoaBieu || []);setExistingReady(true);}}).catch(()=>{if(active)job.set('message','Chưa tải được lịch hiện có. Bấm kiểm tra lại để tiếp tục.');});
     return ()=>{active=false;};
-  },[open,retry]);
-  function cancel(){run.current++;controller.current?.abort();setBusy(false);}
-  function toggle(){if(open)cancel();else{setExistingReady(false);}setOpen(!open);}
-  async function read(event){
+  },[open,retry,job]);
+  function cancel(){job.cancel();}
+  function toggle(){if(!open)setExistingReady(false);setOpen(!open);}
+  function read(event){
     const file=event.target.files?.[0];event.target.value='';if(!file)return;
-    cancel();const version=++run.current;const abort=new AbortController();controller.current=abort;
-    setMessage('');setRows([]);setText('');setProgress(0);setBusy(true);
-    if(imageUrl.current)URL.revokeObjectURL(imageUrl.current);
-    imageUrl.current=URL.createObjectURL(file);setImage(imageUrl.current);
-    const timer=setTimeout(()=>abort.abort('timeout'),120000);
-    try{
-      const result=await recognizeTimetable(file,{knownSubjects:existing.map(item=>item.tenMon),signal:abort.signal,onProgress:value=>{if(version===run.current)setProgress(value);}});
-      if(version!==run.current)return;
-      setRows(result.rows);setText(result.text);
-      setMessage(result.rows.length?'Đã đọc ảnh. Kiểm tra từng buổi trước khi lưu.':'Chưa nhận ra buổi học. Thử ảnh rõ hơn hoặc thêm dòng để nhập lại.');
-    }catch(error){if(version===run.current)setMessage(abort.signal.aborted?'Đã dừng đọc ảnh. Bạn có thể chọn ảnh khác.':error.message || 'Không đọc được ảnh. Thử chụp rõ và thẳng hơn.');}
-    finally{clearTimeout(timer);if(version===run.current)setBusy(false);}
+    job.read(file,semester,existing.map(item=>item.tenMon));
   }
   function update(id,key,value){setRows(previous=>previous.map(row=>row.id===id?{...row,[key]:value}:row));setMessage('');}
   function add(){setRows(previous=>[...previous,{id:crypto.randomUUID(),selected:true,tenMon:'',thu:'',gioBatDau:'',gioKetThuc:'',phongHoc:'',giangVien:'',warning:''}]);}

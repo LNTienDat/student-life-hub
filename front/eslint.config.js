@@ -21,7 +21,7 @@ export default defineConfig([
   { files: ['e2e/**/*.js','playwright.config.js'], languageOptions: { globals: globals.node } },
   {
     files: ['src/context/*Context.jsx'],
-    rules: { 'react-refresh/only-export-components': ['error', { allowExportNames: ['useAuth', 'useTheme', 'useToast', 'useCurrentSemester', 'useFinanceCategories'] }] },
+    rules: { 'react-refresh/only-export-components': ['error', { allowExportNames: ['useAuth', 'useTheme', 'useToast', 'useCurrentSemester', 'useFinanceCategories', 'useTimetableImport'] }] },
   },
   {
     files: ['tests/ui-preview.jsx'],

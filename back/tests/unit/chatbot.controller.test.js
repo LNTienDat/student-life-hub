@@ -1,5 +1,7 @@
 jest.mock('../../src/modules/chatbot/chatbot.service', () => ({ layDuLieuSinhVien: jest.fn(), timChuDe: jest.fn(), traLoiDuLieu: jest.fn() }));
 jest.mock('../../src/modules/chatbot/gemini.service', () => ({ cauHinhAI: jest.fn(), hoiGemini: jest.fn() }));
+jest.mock('../../src/modules/rag/rag.service',()=>({answerDocumentQuestion:jest.fn()}));
+const {answerDocumentQuestion}=require('../../src/modules/rag/rag.service');
 const service = require('../../src/modules/chatbot/chatbot.service');
 const ai = require('../../src/modules/chatbot/gemini.service');
 const { guiTinNhan, trangThaiChatbot } = require('../../src/modules/chatbot/chatbot.controller');
@@ -10,6 +12,7 @@ beforeEach(() => {
   service.timChuDe.mockReturnValue(['hocTap']); service.layDuLieuSinhVien.mockResolvedValue({ capNhatLuc: 'now' });
   service.traLoiDuLieu.mockReturnValue('GPA 8.00/10'); ai.cauHinhAI.mockReturnValue({ sanSang: true, model: 'test-model', key: 'not-for-client' });
   ai.hoiGemini.mockResolvedValue({ traLoi: 'AI answer' });
+  answerDocumentQuestion.mockResolvedValue({nguon:'tai_lieu',traLoi:'Chưa tìm thấy tài liệu.',thamKhao:[]});
 });
 test('status never discloses API key and is not cached', () => {
   const res = response(); trangThaiChatbot({}, res);
@@ -40,4 +43,20 @@ test('database failure never sends a fabricated empty context to AI', async () =
   const res = response(); await guiTinNhan({ user: { id: 42 }, body: { tinNhan: 'Help', cheDo: 'ai', dongYGuiAI: true, dungDuLieuCaNhan: true } }, res);
   expect(res.status).toHaveBeenCalledWith(503); expect(ai.hoiGemini).not.toHaveBeenCalled();
   expect(JSON.stringify(res.json.mock.calls)).not.toContain('private detail');
+});
+test('unified chat routes facts locally, documents with sources and advice only after consent',async()=>{
+ await ask({tinNhan:'GPA?',cheDo:'auto'});
+ expect(ai.hoiGemini).not.toHaveBeenCalled();expect(answerDocumentQuestion).not.toHaveBeenCalled();
+ service.timChuDe.mockReturnValue([]);
+ answerDocumentQuestion.mockResolvedValueOnce({nguon:'tai_lieu',traLoi:'Document',thamKhao:[{id:'source'}]});
+ const doc=response();await guiTinNhan({user:{id:42},body:{tinNhan:'Quy định?',cheDo:'auto'}},doc);
+ expect(doc.json.mock.calls[0][0].nguon).toBe('tai_lieu');expect(ai.hoiGemini).not.toHaveBeenCalled();
+ await ask({tinNhan:'Gợi ý học',cheDo:'auto'});expect(ai.hoiGemini).not.toHaveBeenCalled();
+ await ask({tinNhan:'Gợi ý học',cheDo:'auto',dongYGuiAI:true});
+ expect(ai.hoiGemini).toHaveBeenCalledWith(expect.objectContaining({duLieu:null}));
+});
+test('unified chat remains useful when AI is off and does not leak questions externally',async()=>{
+ service.timChuDe.mockReturnValue([]);ai.cauHinhAI.mockReturnValue({sanSang:false});
+ const res=response();await guiTinNhan({user:{id:42},body:{tinNhan:'Tư vấn',cheDo:'auto',dongYGuiAI:true}},res);
+ expect(res.json.mock.calls[0][0].traLoi).toContain('chưa được bật');expect(ai.hoiGemini).not.toHaveBeenCalled();
 });

@@ -27,6 +27,8 @@ test('recognizes supported facts and avoids answering advice or historical perio
   expect(timChuDe('Ngày mai học gì?')).toEqual(['lichHoc']);
   expect(timChuDe('Gợi ý kế hoạch học để tăng GPA')).toEqual([]);
   expect(timChuDe('Thu chi tháng trước?')).toEqual([]);
+  expect(timChuDe('Nhập thời khóa biểu từ ảnh ra sao?')).toEqual([]);
+  expect(timChuDe('LifeHub tính GPA như thế nào?')).toEqual([]);
 });
 test('queries only the requested topic and uses both Vietnam month bounds', async () => {
   await layDuLieuSinhVien(42, ['taiChinh'], now);
