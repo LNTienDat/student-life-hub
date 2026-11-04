@@ -21,7 +21,10 @@ test('chat schedule uses current semester, shared classes and actual cancellatio
  const data=await layDuLieuSinhVien(a.id,['lichHoc'],now);
  expect(data.lichHoc.hocKy).toBe('HK2');expect(data.lichHoc.homNay.map(c=>c.mon)).toEqual(['Shared']);
  expect(data.lichHoc.ngayMai).toEqual(expect.arrayContaining([expect.objectContaining({mon:'Moved in',batDau:'10:00'}),expect.objectContaining({mon:'Moved in',batDau:'14:00',phong:'B202'})]));
- expect(JSON.stringify(data)).not.toMatch(/Cancelled|Old semester|Other account/);
+ expect(JSON.stringify(data)).not.toMatch(/Old semester|Other account/);
+ expect(data.lichHoc.lich.filter(c=>c.ngay==='2026-11-01').map(c=>c.mon)).not.toContain('Cancelled');
+ // The cancellation applies to one occurrence, not the other weeks now in AI context.
+ expect(data.lichHoc.lich).toEqual(expect.arrayContaining([expect.objectContaining({ngay:'2026-11-08',mon:'Cancelled'})]));
 });
 test('chat with no current semester explains all-semester fallback and respects rescheduled time',async()=>{
  await prisma.nguoiDung.update({where:{id:a.id},data:{hocKyHienTai:''}});
