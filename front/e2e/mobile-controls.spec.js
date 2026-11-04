@@ -22,6 +22,9 @@ test('mobile quick actions highlight only selected form and academic controls al
  await page.getByRole('navigation',{name:'Điều hướng dưới trên điện thoại'}).locator('a[href="/thoi-khoa-bieu"]').click();
  const addClass=await page.getByRole('button',{name:'Thêm buổi học',exact:true}).first().boundingBox();
  const share=await page.getByRole('button',{name:'Chia sẻ TKB',exact:true}).boundingBox();
- expect(addClass.width).toBeGreaterThan(share.width*1.8);
+ const importImage=await page.getByRole('button',{name:'Nhập ảnh',exact:true}).boundingBox();
+ expect(Math.abs(addClass.width-importImage.width)).toBeLessThan(2);
+ expect(Math.abs(addClass.y-importImage.y)).toBeLessThan(2);
+ expect(Math.abs(addClass.width-share.width)).toBeLessThan(2);
  await page.screenshot({path:'../docs/qa/mobile-timetable-controls-20261103.png',fullPage:true});
 });
