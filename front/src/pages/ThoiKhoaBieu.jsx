@@ -10,7 +10,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import timetableService from '../services/timetableService';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
-import { Plus, X, CalendarDays, CalendarRange, CalendarCheck, ChevronLeft, ChevronRight, Share2, Trash2 } from 'lucide-react';
+import { Plus, X, CalendarDays, CalendarRange, CalendarCheck, ChevronLeft, ChevronRight, Share2, Trash2, ImagePlus } from 'lucide-react';
 import { CAC_THU, gioSangPhut } from './thoikhoabieu/timetableUtils';
 
 import TimetableForm from './thoikhoabieu/TimetableForm';
@@ -21,6 +21,7 @@ import { PageSkeleton } from '../components/Skeleton';
 
 function ThoiKhoaBieu() {
   const [semester] = useSemester();
+  const [imagePickerOpen,setImagePickerOpen] = useState(false);
   const [week,setWeek]=useState(()=>monday());
   const [adjusting,setAdjusting]=useState(null);
   const [adjustments,setAdjustments]=useState([]);
@@ -257,10 +258,11 @@ function ThoiKhoaBieu() {
               <Share2 className="w-4 h-4 text-ink-600 dark:text-ink-400" />
               Chia sẻ TKB
             </button>
+            <button type="button" onClick={()=>setImagePickerOpen(true)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium dark:border-slate-700 dark:bg-slate-800"><ImagePlus className="h-4 w-4"/>Nhập ảnh</button>
             <button
               onClick={moFormThem}
               aria-expanded={hienForm}
-              className={`col-span-2 flex min-h-11 items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
+              className={`flex min-h-11 items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 hienForm
                   ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   : 'bg-ink-600 dark:bg-ink-500 text-white hover:bg-ink-700 dark:hover:bg-ink-400 shadow-sm shadow-ink-500/20'
@@ -283,7 +285,7 @@ function ThoiKhoaBieu() {
         </div>
         {!!adjustments.length&&<details className="rounded-xl border border-slate-200 p-3 text-sm dark:border-slate-700"><summary className="min-h-11 cursor-pointer py-2 font-medium">Điều chỉnh trong tuần ({adjustments.length})</summary>{adjustments.map(item=><div key={item.id} className="flex flex-wrap items-center justify-between gap-2 border-t py-2 dark:border-slate-700"><span className="min-w-0 break-words">{item.tenMon} · {item.ngayGoc} · {item.loai==='nghi'?'Nghỉ':('Đổi sang '+item.ngayMoi+' '+item.gioBatDau+'–'+item.gioKetThuc)}</span><button type="button" disabled={saving} onClick={async()=>{if(saveLock.current)return;saveLock.current=true;setSaving(true);try{await timetableService.xoaDieuChinh(item.id);setRefreshVersion(n=>n+1);hienToast('success','Đã hoàn tác điều chỉnh.');}catch(e){hienToast('error',e.response?.data?.message||'Chưa hoàn tác được.');}finally{saveLock.current=false;setSaving(false);}}} className="min-h-11 shrink-0 px-3 text-ink-600">Hoàn tác điều chỉnh</button></div>)}</details>}
         {semester && danhSach.some((item) => !item.hocKy) && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">Lịch cũ chưa xếp học kỳ vẫn được hiển thị. Sửa buổi học để gắn vào học kỳ phù hợp.</p>}
-        <TimetableImageImport key={(semester || currentSemester) + ':' + importVersion} semester={semester || currentSemester} onImported={taiDuLieu} />
+        <TimetableImageImport key={(semester || currentSemester) + ':' + importVersion} semester={semester || currentSemester} onImported={taiDuLieu} pickerOpen={imagePickerOpen} onPickerClose={()=>setImagePickerOpen(false)} />
         {/* Form thêm mới */}
         <TimetableForm
           hocKy={classSemester}

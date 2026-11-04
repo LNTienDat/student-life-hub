@@ -22,7 +22,7 @@ function timChuDe(text) {
   if (/\bgpa\b|diem|mon nguy co/.test(q)) topics.push('hocTap');
   if (/deadline|han chot|qua han|cong viec/.test(q)) topics.push('deadline');
   if (/thu chi|chi tieu|chi bao nhieu|tong chi|tong thu|thu nhap|so du|ngan sach|tai chinh/.test(q)) topics.push('taiChinh');
-  if (/lich hoc|thoi khoa bieu|hoc gi|hoc mon nao/.test(q)) topics.push('lichHoc');
+  if (/lich hoc|thoi khoa bieu|hoc (?:mon )?(?:gi|nao)|(?:mai|hom nay) (?:co )?(?:hoc|lich)/.test(q)) topics.push('lichHoc');
   return topics;
 }
 
@@ -108,7 +108,7 @@ function traLoiDuLieu(data, text) {
     if (/ngan sach/.test(chuanHoa(text))) parts.push(f.nganSach.length ? f.nganSach.map(b => '- ' + b.danhMuc + ': đã chi ' + formatTien(b.daChi) + '/' + formatTien(b.hanMuc) + (b.vuot ? ' — vượt ngân sách' : '')).join('\n') : 'Bạn chưa đặt ngân sách tháng này.');
   }
   if (data.lichHoc) {
-    const isTomorrow = /ngay mai|mai hoc/.test(chuanHoa(text));
+    const isTomorrow = /\bmai\b/.test(chuanHoa(text));
     const title = isTomorrow ? 'Ngày mai' : 'Hôm nay';
     const classes = isTomorrow ? data.lichHoc.ngayMai : data.lichHoc.homNay;
     parts.push(classes.length ? '**' + title + ': ' + classes.length + ' buổi học**\n' + classes.map(c => '- ' + c.batDau + '–' + c.ketThuc + ': ' + c.mon + (c.phong ? ' · ' + c.phong : '') + (c.hocKy ? ' · ' + c.hocKy : '')).join('\n') : title + ' chưa có buổi học nào trong lịch đã nhập.');

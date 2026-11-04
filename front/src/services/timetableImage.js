@@ -152,6 +152,21 @@ async function recognizeTimetableInternal(file, { signal, onProgress = () => {},
               const secondData = await recognize(detail.canvas);
               texts.push(secondData.text);
               const alternatives = extractImageTimetable(secondData, column.day || 'unknown');
+              // Sparse layouts can preserve the time but lose the multi-line course title.
+              // Try column segmentation only for incomplete readings, matching by position below.
+              if (!parsed.length || parsed.some(row => !row.tenMon) || alternatives.some(row => !row.tenMon)) {
+                await worker.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_COLUMN, tessedit_char_whitelist: '' });
+                const recoveryData = await recognize(detail.canvas);
+                texts.push(recoveryData.text);
+                for (const recovered of extractImageTimetable(recoveryData, column.day || 'unknown')) {
+                  if (!recovered.timeBox || !recovered.tenMon) continue;
+                  const existing = alternatives.find(item => item.timeBox && Math.abs(item.timeBox.y0-recovered.timeBox.y0)/detail.factor < 8);
+                  if (existing) {
+                    if (!existing.tenMon) existing.tenMon = recovered.tenMon;
+                    if (!existing.phongHoc) existing.phongHoc = recovered.phongHoc;
+                  } else alternatives.push(recovered);
+                }
+              }
               for (const row of parsed) {
                 if (!row.timeBox) continue;
                 const match = alternatives.find(item => item.timeBox &&

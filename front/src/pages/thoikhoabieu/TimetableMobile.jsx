@@ -17,29 +17,13 @@ function TimetableMobile({ buoiTheoThu = {}, onSua, onXoa, onDieuChinh, readOnly
             </h3>
             <div className="space-y-3">
               {buois.map((bh) => (
-                <div key={bh.occurrenceId||bh.id} className={`relative rounded-xl p-4 border ${mauChoMon(bh.tenMon)}`}>
+                <div key={bh.occurrenceId||bh.id} className={`relative rounded-xl p-3 border ${mauChoMon(bh.tenMon)}`}>
                   <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
                     <h4 className="min-w-0 basis-full flex-1 break-words [overflow-wrap:anywhere] font-bold text-base leading-tight">{bh.tenMon}</h4>
-                    {!readOnly && <div className="ml-auto flex shrink-0 items-center gap-2">
-                      {onDieuChinh&&<button type="button" disabled={disabled} onClick={()=>onDieuChinh(bh)} aria-label={'Điều chỉnh ngày '+bh.tenMon} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded bg-white/50 dark:bg-black/20"><CalendarClock className="h-4 w-4"/></button>}
-                      <button type="button" disabled={disabled}
-                        onClick={() => onSua?.(bh)}
-                        aria-label={`Sửa buổi học ${bh.tenMon}`}
-                        className="inline-flex min-h-11 min-w-11 items-center justify-center p-1.5 bg-white/50 dark:bg-black/20 rounded shadow-sm"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button type="button" disabled={disabled}
-                        onClick={() => onXoa?.(bh)}
-                        aria-label={`Xóa buổi học ${bh.tenMon}`}
-                        className="inline-flex min-h-11 min-w-11 items-center justify-center p-1.5 bg-white/50 dark:bg-black/20 rounded shadow-sm text-rose-600 dark:text-rose-400"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>}
+
                   </div>
                   {bh.daDieuChinh&&<p className="mt-2 text-xs font-semibold">Đã đổi riêng ngày {bh.ngayHoc}</p>}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm font-medium opacity-90 mt-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-sm font-medium opacity-90 mt-2">
                     <div className="flex items-center gap-1.5">
                       <Clock className="w-4 h-4 shrink-0" />
                       {bh.gioBatDau} - {bh.gioKetThuc}
@@ -57,6 +41,23 @@ function TimetableMobile({ buoiTheoThu = {}, onSua, onXoa, onDieuChinh, readOnly
                       </div>
                     )}
                   </div>
+                    {!readOnly && <div className="flex shrink-0 items-center justify-end gap-1 border-t border-current/10 pt-2 mt-3">
+                      {onDieuChinh&&<button type="button" disabled={disabled} onClick={()=>onDieuChinh(bh)} aria-label={'Điều chỉnh ngày '+bh.tenMon} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg hover:bg-white/50 dark:hover:bg-black/20"><CalendarClock className="h-4 w-4"/></button>}
+                      <button type="button" disabled={disabled}
+                        onClick={() => onSua?.(bh)}
+                        aria-label={`Sửa buổi học ${bh.tenMon}`}
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center p-1.5 hover:bg-white/50 dark:hover:bg-black/20 rounded-lg"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button type="button" disabled={disabled}
+                        onClick={() => onXoa?.(bh)}
+                        aria-label={`Xóa buổi học ${bh.tenMon}`}
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center p-1.5 hover:bg-white/50 dark:hover:bg-black/20 rounded-lg text-rose-600 dark:text-rose-400"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>}
                 </div>
               ))}
             </div>

@@ -11,6 +11,8 @@ test('one chat preserves data and document questions; completed and trash panels
  const input=page.getByRole('textbox',{name:'Câu hỏi cho trợ lý'});
  await input.fill('GPA hiện tại của mình?');await page.getByRole('button',{name:'Gửi tin nhắn'}).click();
  await expect(page.getByRole('log')).toContainText('Chưa có điểm để tính GPA.');
+ await input.fill('mai học môn gì');await page.getByRole('button',{name:'Gửi tin nhắn'}).click();
+ await expect(page.getByRole('log')).toContainText('Ngày mai');
  await input.fill('Nhập thời khóa biểu từ ảnh ra sao?');await page.getByRole('button',{name:'Gửi tin nhắn'}).click();
  await expect(page.getByRole('log')).toContainText('Tra cứu tài liệu');
  await expect(page.getByRole('log')).toContainText('Chưa có điểm để tính GPA.');
@@ -20,7 +22,7 @@ test('one chat preserves data and document questions; completed and trash panels
 test('real timetable OCR continues across routes and retains the three editable sessions',async({session:page})=>{
  test.skip(!process.env.TEST_TIMETABLE_IMAGE,'Local opt-in real OCR sample');test.setTimeout(150000);
  await page.setViewportSize({width:390,height:844});await page.goto('/thoi-khoa-bieu');
- await page.getByRole('button',{name:'Nhập lịch từ ảnh',exact:true}).click();
+ await page.getByRole('button',{name:'Nhập ảnh',exact:true}).click();
  await page.getByLabel('Chọn ảnh thời khóa biểu',{exact:true}).setInputFiles(process.env.TEST_TIMETABLE_IMAGE);
  const nav=page.getByRole('navigation',{name:'Điều hướng dưới trên điện thoại'});
  await nav.locator('a[href="/mon-hoc"]').click();
@@ -36,3 +38,28 @@ test('real timetable OCR continues across routes and retains the three editable 
  await expect(page.getByLabel('Tên môn',{exact:true}).first()).toHaveValue('Bản nháp đã sửa');
  await page.screenshot({path:'../docs/qa/background-import-20261103.png',fullPage:true});
 });
+
+ test('compact mobile pickers and equal form actions',async({session:page,account})=>{
+  await page.setViewportSize({width:390,height:844});await page.goto('/tai-chinh');
+  await page.getByRole('button',{name:'Quét hóa đơn',exact:true}).click();
+  const picker=page.getByRole('dialog',{name:'Quét hóa đơn'});
+  const choose=await picker.getByRole('button',{name:'Chọn ảnh',exact:true}).boundingBox();
+  const camera=await picker.getByRole('button',{name:'Chụp ảnh',exact:true}).boundingBox();
+  expect(Math.abs(choose.y-camera.y)).toBeLessThan(2);expect(Math.abs(choose.width-camera.width)).toBeLessThan(2);
+  await page.screenshot({path:'../docs/qa/compact-receipt-picker-20261103.png',fullPage:true});
+  await picker.getByRole('button',{name:'Đóng',exact:true}).click();
+  await page.getByRole('button',{name:'Thêm giao dịch',exact:true}).click();
+  await page.getByLabel('Mô tả (Không bắt buộc)',{exact:true}).fill('Bản nháp');
+  const cancel=page.getByRole('button',{name:'Hủy',exact:true});const save=page.getByRole('button',{name:'Lưu',exact:true});
+  const a=await cancel.boundingBox(),b=await save.boundingBox();expect(Math.abs(a.width-b.width)).toBeLessThan(2);
+  await cancel.click();const confirm=page.getByRole('alertdialog',{name:'Bỏ thay đổi?'});
+  await expect(confirm).toBeVisible();
+  await expect.poll(()=>confirm.evaluate(node=>{const buttons=[...node.querySelectorAll('button')].slice(-2);return Math.abs(buttons[0].getBoundingClientRect().y-buttons[1].getBoundingClientRect().y);})).toBeLessThan(2);
+  await page.screenshot({path:'../docs/qa/compact-confirm-20261103.png',fullPage:true});
+  await confirm.getByRole('button',{name:'Bỏ thay đổi',exact:true}).click();
+  await account.api('POST','/thoi-khoa-bieu',{tenMon:'Lập trình Python',thu:2,gioBatDau:'13:00',gioKetThuc:'17:15',phongHoc:'A101',giangVien:'Giảng viên thử',hocKy:''});
+  await page.goto('/thoi-khoa-bieu');
+  const add=await page.getByRole('button',{name:'Thêm buổi học',exact:true}).first().boundingBox();
+  const image=await page.getByRole('button',{name:'Nhập ảnh',exact:true}).boundingBox();expect(Math.abs(add.y-image.y)).toBeLessThan(2);
+  await page.screenshot({path:'../docs/qa/compact-timetable-20261103.png',fullPage:true});
+ });

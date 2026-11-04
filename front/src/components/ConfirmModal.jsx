@@ -198,7 +198,7 @@ export default function ConfirmModal({
             </p>
 
             {/* Các nút hành động */}
-            <div className="mt-6 flex flex-wrap items-center justify-end gap-3 pt-2">
+            <div className="mt-5 grid grid-cols-2 gap-3">
               <button
                 ref={cancelBtnRef}
                 type="button"
@@ -212,7 +212,7 @@ export default function ConfirmModal({
                 type="button"
                 onClick={onConfirm}
                 disabled={isLoading}
-                className={`px-5 py-2.5 rounded-xl font-medium text-sm text-white shadow-sm transition-all flex items-center gap-2 disabled:opacity-60 ${
+                className={`px-5 py-2.5 rounded-xl font-medium text-sm text-white shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-60 ${
                   type === 'danger'
                     ? 'bg-rose-600 hover:bg-rose-700 active:bg-rose-800 shadow-rose-600/25'
                     : type === 'warning'

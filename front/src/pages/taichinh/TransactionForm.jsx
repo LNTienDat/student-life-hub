@@ -93,13 +93,13 @@ function TransactionForm({
 
         </div>
         {error && <p role="alert" className="text-sm text-rose-700 dark:text-rose-300">{error}</p>}
-        <div className="flex justify-end gap-3 pt-2">
-          <button type="button" onClick={onCancel} className="rounded-xl px-5 py-2.5 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">Hủy</button>
+        <div className="grid grid-cols-2 gap-3 pt-2 sm:flex sm:justify-end">
+          <button type="button" onClick={onCancel} className="min-h-11 rounded-xl border border-slate-200 dark:border-slate-600 px-5 py-2.5 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">Hủy</button>
           <button
             type="submit"
             className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition-colors"
           >
-            {dangLuu ? 'Đang lưu…' : editing ? 'Lưu thay đổi' : 'Lưu giao dịch'}
+            {dangLuu ? 'Đang lưu…' : editing ? 'Lưu thay đổi' : 'Lưu'}
           </button>
         </div>
         </fieldset>

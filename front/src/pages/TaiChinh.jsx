@@ -99,7 +99,7 @@ function FinancePeriod({ period, onPeriodChange }) {
   function withDiscard(action, protectBudget = true) {
     if (busy) return;
     if (!dirty && !(protectBudget && budgetDirty)) { action(); return; }
-    setConfirm({ isOpen: true, type: 'warning', title: 'Bạn đang có thay đổi chưa lưu', message: 'Tiếp tục sẽ bỏ các thay đổi đang nhập.', confirmText: 'Bỏ thay đổi và tiếp tục', cancelText: 'Tiếp tục nhập', onConfirm: () => { setConfirm({ isOpen: false }); action(); } });
+    setConfirm({ isOpen: true, type: 'warning', title: 'Bỏ thay đổi?', message: 'Nội dung đang nhập chưa được lưu.', confirmText: 'Bỏ thay đổi', cancelText: 'Nhập tiếp', onConfirm: () => { setConfirm({ isOpen: false }); action(); } });
   }
   function choosePeriod(value) {
     if (!busy && readFinancePeriod(value) && value !== period) onPeriodChange(value);

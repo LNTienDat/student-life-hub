@@ -74,9 +74,15 @@ test('today and tomorrow follow Vietnam weekdays and keep semester scope explici
   const data = await layDuLieuSinhVien(42, ['lichHoc'], now);
   expect(traLoiDuLieu(data, 'Ngày mai học gì?')).toContain('Monday');
   expect(traLoiDuLieu(data, 'Ngày mai học gì?')).not.toContain('Sunday');
+  expect(traLoiDuLieu(data, 'mai học môn gì')).toContain('Monday');
+  expect(traLoiDuLieu(data, 'mai có lịch không')).not.toContain('Sunday');
   expect(traLoiDuLieu(data, 'Hôm nay học gì?')).toContain('HK1');
 });
 test('a data failure is propagated rather than returned as an empty account', async () => {
   prisma.monHoc.findMany.mockRejectedValue(new Error('DB unavailable'));
   await expect(layDuLieuSinhVien(42, ['hocTap'], now)).rejects.toThrow('DB unavailable');
 });
+
+ test.each(['Mai học môn gì?', 'Mai có lịch không?', 'Ngày mai mình học môn nào?', 'Hôm nay có học không?'])('recognizes natural schedule question: %s', question => {
+  expect(timChuDe(question)).toEqual(['lichHoc']);
+ });
