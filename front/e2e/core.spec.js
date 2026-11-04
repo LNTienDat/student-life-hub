@@ -115,7 +115,7 @@ test('finance creates, edits and deletes exact dong amounts',async({session:page
   await page.getByLabel('Loại',{exact:true}).selectOption(type);
   await page.getByLabel('Số tiền (đồng)',{exact:true}).fill(amount);
   await page.getByLabel('Mô tả (Không bắt buộc)',{exact:true}).fill(desc);
-  await page.getByRole('button',{name:'Lưu giao dịch',exact:true}).click();
+  await page.getByRole('button',{name:'Lưu',exact:true}).click();
   await expect(page.getByLabel('Số tiền (đồng)',{exact:true})).toHaveCount(0);
  }
  await add('thu','100000','Thu E2E');await add('chi','20000','Chi E2E');
