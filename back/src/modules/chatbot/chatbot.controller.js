@@ -18,7 +18,19 @@ async function guiTinNhan(req, res) {
     if (cheDo === 'auto') {
       const topics = timChuDe(tinNhan);
       if (topics.length) {
-        const data = await layDuLieuSinhVien(req.user.id, topics);
+        const useAI = dungAI === true && dongYGuiAI === true && dungDuLieuCaNhan === true && cauHinhAI().sanSang;
+        const data = useAI ? await layDuLieuSinhVien(req.user.id) : await layDuLieuSinhVien(req.user.id, topics);
+        if (useAI) {
+          try {
+            const answer = await hoiGemini({ tinNhan: tinNhan.trim(), lichSu, duLieu: data });
+            return res.json({ ...answer, nguon: 'ai', coDuLieuCaNhan: true, capNhatLuc: data.capNhatLuc });
+          } catch (error) {
+            if (!error.code?.startsWith('CHATBOT_')) throw error;
+            // Known facts remain available if the provider is slow or quota is exhausted.
+            const selected = { ...data, hocTap: topics.includes('hocTap') ? data.hocTap : undefined, deadline: topics.includes('deadline') ? data.deadline : undefined, taiChinh: topics.includes('taiChinh') ? data.taiChinh : undefined, lichHoc: topics.includes('lichHoc') ? data.lichHoc : undefined };
+            return res.json({ nguon: 'du_lieu', traLoi: traLoiDuLieu(selected, tinNhan) + '\nAI tạm không phản hồi; đây là kết quả tra cứu trực tiếp.', capNhatLuc: data.capNhatLuc });
+          }
+        }
         return res.json({ nguon: 'du_lieu', traLoi: traLoiDuLieu(data, tinNhan), capNhatLuc: data.capNhatLuc });
       }
       const document = await answerDocumentQuestion(req.user.id, tinNhan.trim(), { dungAI: false, dongYGuiAI: false });
@@ -34,7 +46,7 @@ async function guiTinNhan(req, res) {
     if (cheDo === 'tai_lieu') return res.json(await answerDocumentQuestion(req.user.id, tinNhan.trim(), { dungAI, dongYGuiAI }));
     if (cheDo === 'du_lieu') {
       const topics = timChuDe(tinNhan);
-      if (!topics.length) return res.json({ nguon: 'du_lieu', traLoi: 'Mình tra cứu được GPA, deadline quá hạn và 7 ngày tới, thu/chi tháng này, lịch học hôm nay hoặc ngày mai. Để hỏi cách học hay lập kế hoạch, bạn chọn Hỏi AI.' });
+      if (!topics.length) return res.json({ nguon: 'du_lieu', traLoi: 'Mình tra cứu được GPA, deadline quá hạn và 7 ngày tới, thu/chi tháng này, lịch học hôm qua, hôm nay, ngày mai và tuần trước/này/sau. Để tư vấn hoặc lập kế hoạch, bật AI trong Tùy chọn trợ lý.' });
       const data = await layDuLieuSinhVien(req.user.id, topics);
       return res.json({ nguon: 'du_lieu', traLoi: traLoiDuLieu(data, tinNhan), capNhatLuc: data.capNhatLuc });
     }

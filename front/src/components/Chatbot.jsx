@@ -5,7 +5,7 @@ import { MessageCircle, X, Send, RotateCcw } from 'lucide-react';
 import api from '../services/api';
 import { chatbotHistory } from '../services/chatbotHistory';
 
-const GOI_Y = ['GPA hiện tại của mình?', 'Deadline sắp tới?', 'Tháng này chi bao nhiêu?', 'Hôm nay học gì?', 'Nhập thời khóa biểu từ ảnh ra sao?'];
+const GOI_Y = ['Hôm qua học gì?', 'Ngày mai học gì?', 'Deadline sắp tới?', 'Giúp mình lập kế hoạch học tuần này', 'Tháng này chi bao nhiêu?'];
 const LOI_CHAO = { vaiTro: 'bot', noiDung: 'Bạn cứ hỏi về học tập, deadline, thu chi hoặc lịch học. Mình sẽ tra cứu dữ liệu và tìm tài liệu phù hợp ngay trong cuộc trò chuyện này.' };
 
 // Text is escaped by React. Never render model output as HTML or execute links.
@@ -110,7 +110,7 @@ function Chatbot() {
             <Link to="/tai-lieu" onClick={() => setMoChat(false)} className="inline-flex min-h-11 items-center font-semibold text-ink-600 underline dark:text-ink-200">Quản lý tài liệu</Link>
             {trangThai?.aiSanSang ? <>
               <label className="mb-2 flex min-h-11 items-start gap-2"><input type="checkbox" checked={dongY} onChange={e => { setDongY(e.target.checked); }} className="mt-1 h-4 w-4 shrink-0"/><span>Cho phép AI hỗ trợ khi cần. Câu hỏi, hội thoại AI và đoạn tài liệu liên quan sẽ gửi đến Google; gói miễn phí có thể dùng nội dung để cải thiện sản phẩm.</span></label>
-              <label className="mb-2 flex min-h-11 items-center gap-2"><input type="checkbox" disabled={!dongY} checked={dungDuLieu} onChange={e => setDungDuLieu(e.target.checked)} className="h-4 w-4 shrink-0"/>Kèm tóm tắt dữ liệu cá nhân khi hỏi AI.</label>
+              <label className="mb-2 flex min-h-11 items-center gap-2"><input type="checkbox" disabled={!dongY} checked={dungDuLieu} onChange={e => setDungDuLieu(e.target.checked)} className="h-4 w-4 shrink-0"/>Dùng lịch học, deadline, GPA và thu/chi để tư vấn, lập kế hoạch cho tôi.</label>
             </> : <p className="pb-3 text-gray-500 dark:text-gray-300">Tư vấn AI chưa bật. Tra cứu dữ liệu và tài liệu vẫn dùng được.</p>}
           </details>
           <div ref={danhSachRef} role="log" aria-label="Cuộc trò chuyện với trợ lý" aria-live="polite" className="min-h-12 flex-1 overflow-y-auto overscroll-contain px-3 py-3 space-y-3">

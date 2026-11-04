@@ -60,3 +60,25 @@ test('unified chat remains useful when AI is off and does not leak questions ext
  const res=response();await guiTinNhan({user:{id:42},body:{tinNhan:'Tư vấn',cheDo:'auto',dongYGuiAI:true}},res);
  expect(res.json.mock.calls[0][0].traLoi).toContain('chưa được bật');expect(ai.hoiGemini).not.toHaveBeenCalled();
 });
+
+test('opted-in personal AI can interpret facts and follow-up questions using fresh context', async () => {
+  const res = response();
+  await guiTinNhan({ user: { id: 42 }, body: { tinNhan: 'Hôm qua học gì?', cheDo: 'auto', dungAI: true, dongYGuiAI: true, dungDuLieuCaNhan: true } }, res);
+  expect(service.layDuLieuSinhVien).toHaveBeenCalledWith(42);
+  expect(ai.hoiGemini).toHaveBeenCalledWith(expect.objectContaining({ tinNhan: 'Hôm qua học gì?', duLieu: { capNhatLuc: 'now' } }));
+  expect(res.json.mock.calls[0][0].nguon).toBe('ai');
+});
+
+test('facts stay local without personal-data consent even when AI is enabled', async () => {
+  await ask({ tinNhan: 'GPA?', cheDo: 'auto', dungAI: true, dongYGuiAI: true, dungDuLieuCaNhan: false });
+  expect(ai.hoiGemini).not.toHaveBeenCalled();
+  expect(service.layDuLieuSinhVien).toHaveBeenCalledWith(42, ['hocTap']);
+});
+
+test('quota failure falls back to real requested facts without retrying provider', async () => {
+  ai.hoiGemini.mockRejectedValueOnce(Object.assign(new Error('quota'), { code: 'CHATBOT_QUOTA' }));
+  const res = response();
+  await guiTinNhan({ user: { id: 42 }, body: { tinNhan: 'GPA?', cheDo: 'auto', dungAI: true, dongYGuiAI: true, dungDuLieuCaNhan: true } }, res);
+  expect(ai.hoiGemini).toHaveBeenCalledTimes(1);
+  expect(res.json.mock.calls[0][0]).toMatchObject({ nguon: 'du_lieu', traLoi: expect.stringContaining('tra cứu trực tiếp') });
+});

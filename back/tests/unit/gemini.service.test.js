@@ -19,6 +19,17 @@ test('AI is disabled unless explicitly enabled with non-placeholder configuratio
 test('model cannot inject a new host or path', () => {
   process.env.GEMINI_MODEL = '../../evil.example'; expect(cauHinhAI().sanSang).toBe(false);
 });
+
+test('planning request includes fresh schedule context, conversation and room for a concrete plan', async () => {
+  global.fetch.mockResolvedValue({ ok: true, json: async () => ({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: 'Kế hoạch đề xuất.' }] } }] }) });
+  const context = { capNhatLuc: '2026-11-04T07:00:00Z', lichHoc: { lich: [{ ngay: '2026-11-05', mon: 'Toán', batDau: '07:00', ketThuc: '09:00' }] } };
+  await hoiGemini({ tinNhan: 'Lập kế hoạch học tuần này', lichSu: [{ vaiTro: 'user', noiDung: 'Tôi rảnh buổi tối' }, { vaiTro: 'bot', noiDung: 'Bạn cần ôn môn nào?' }], duLieu: context });
+  const payload = JSON.parse(global.fetch.mock.calls[0][1].body);
+  expect(payload.contents).toHaveLength(3);
+  expect(payload.generationConfig.maxOutputTokens).toBe(1000);
+  expect(payload.systemInstruction.parts[0].text).toContain('tránh chồng giờ');
+  expect(payload.systemInstruction.parts[0].text).toContain(JSON.stringify(context));
+});
 test('uses one request, key in header, minimal thinking and filters thought output', async () => {
   global.fetch.mockResolvedValue({ ok: true, json: async () => ({ candidates: [{ finishReason: 'STOP', content: { parts: [{ thought: true, text: 'private thought' }, { text: 'Chia bài học thành các phần nhỏ.' }] } }] }) });
   const answer = await hoiGemini(question);

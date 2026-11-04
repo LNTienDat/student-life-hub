@@ -83,6 +83,35 @@ test('a data failure is propagated rather than returned as an empty account', as
   await expect(layDuLieuSinhVien(42, ['hocTap'], now)).rejects.toThrow('DB unavailable');
 });
 
+test.each(['Hôm qua học gì?', 'Tuần trước có lịch gì?', 'Tuần sau học những môn nào?', 'mai học môn dì', 'Ngày kia học gì?'])('understands schedule periods and a common typo: %s', question => {
+  expect(timChuDe(question)).toEqual(['lichHoc']);
+});
+
+test('yesterday across a week boundary includes date changes and does not claim attendance', async () => {
+  prisma.nguoiDung.findUnique.mockResolvedValueOnce({ hocKyHienTai: 'HK1' });
+  prisma.thoiKhoaBieu.findMany.mockResolvedValue([
+    { id: 1, tenMon: 'Chủ nhật', thu: 8, gioBatDau: '07:00', gioKetThuc: '09:00', hocKy: 'HK1' },
+    { id: 2, tenMon: 'Sai học kỳ', thu: 8, gioBatDau: '10:00', gioKetThuc: '11:00', hocKy: 'HK2' },
+  ]);
+  prisma.dieuChinhLich.findMany.mockResolvedValue([{ idBuoiHoc: 1, ngayGoc: '2026-11-01', loai: 'doi', ngayMoi: '2026-11-01', gioBatDau: '08:00', gioKetThuc: '10:00' }]);
+  const data = await layDuLieuSinhVien(42, ['lichHoc'], new Date('2026-11-01T18:00:00Z'));
+  const answer = traLoiDuLieu(data, 'Hôm qua học gì?');
+  expect(answer).toContain('Hôm qua: 1 buổi');
+  expect(answer).toContain('01/11/2026 · 08:00–10:00');
+  expect(answer).not.toContain('Sai học kỳ');
+  expect(answer).toContain('không xác nhận');
+});
+
+test('next week returns all days rather than silently answering today', async () => {
+  prisma.thoiKhoaBieu.findMany.mockResolvedValue([{ id: 1, tenMon: 'Thứ hai', thu: 2, gioBatDau: '07:00', gioKetThuc: '09:00', hocKy: '' }]);
+  const data = await layDuLieuSinhVien(42, ['lichHoc'], now);
+  const answer = traLoiDuLieu(data, 'Tuần sau học gì?');
+  expect(answer).toContain('Tuần sau: 1 buổi');
+  expect(answer).toContain('02/11/2026');
+  expect(answer).not.toContain('26/10/2026');
+  expect(timChuDe('Hôm qua chi bao nhiêu?')).toEqual([]);
+});
+
  test.each(['Mai học môn gì?', 'Mai có lịch không?', 'Ngày mai mình học môn nào?', 'Hôm nay có học không?'])('recognizes natural schedule question: %s', question => {
   expect(timChuDe(question)).toEqual(['lichHoc']);
  });

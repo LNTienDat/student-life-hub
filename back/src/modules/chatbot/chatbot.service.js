@@ -5,7 +5,7 @@ const { thongKeTaiChinhService, kiemTraNganSachService } = require('../finance/f
 const { vietnamParts, monthRange } = require('../../utils/date.util');
 const { CHATBOT } = require('../../constants');
 const { filterSemester, normalizeSemester } = require('../../utils/semester.util');
-const { dateKey, weekStart, loadWeek } = require('../thoikhoabieu/adjustments.service');
+const { dateKey, weekStart, plusDays, loadWeek } = require('../thoikhoabieu/adjustments.service');
 
 const CHU_DE = ['hocTap', 'deadline', 'taiChinh', 'lichHoc'];
 
@@ -14,15 +14,29 @@ function layThuTrongTuan(date) { return vietnamParts(date).weekday + 1; }
 function formatTien(value) { return Number(value).toLocaleString('vi-VN').replaceAll('.', ' ') + ' đ'; }
 function chuanHoa(text) { return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll('đ', 'd').toLowerCase(); }
 
+function khoangLich(text, now) {
+  const q = chuanHoa(text), today = dateKey(now);
+  for (const [pattern, offset, label] of [[/tuan truoc/, -7, 'Tuần trước'], [/tuan sau|tuan toi/, 7, 'Tuần sau'], [/tuan nay/, 0, 'Tuần này']]) {
+    if (pattern.test(q)) { const from = plusDays(weekStart(today), offset); return { from, to: plusDays(from, 6), label }; }
+  }
+  const offset = /hom qua|bua qua/.test(q) ? -1 : /ngay kia/.test(q) ? 2 : /\bmai\b/.test(q) ? 1 : 0;
+  const day = plusDays(today, offset);
+  return { from: day, to: day, label: offset === -1 ? 'Hôm qua' : offset === 1 ? 'Ngày mai' : offset === 2 ? 'Ngày kia' : 'Hôm nay' };
+}
+
 // Data mode only handles periods it actually queries.
 function timChuDe(text) {
   const q = chuanHoa(text);
-  if (/tu van|goi y|ke hoach|lam sao|nen |cach |huong dan|ra sao|the nao|\b(?:nhap|them|sua|xoa|quet)\b|muc tieu|tiet kiem|thang truoc|thang sau|nam ngoai|tuan truoc|hom qua|ngay kia|thang \d|thang mot|thang hai|thang ba/.test(q)) return [];
+  // A specific date must be interpreted by AI, never silently replaced with today.
+  if (/\b\d{1,2}[\/-]\d{1,2}(?:[\/-]\d{2,4})?\b/.test(q)) return [];
+  if (/tu van|goi y|ke hoach|lam sao|nen |cach |huong dan|ra sao|the nao|\b(?:nhap|them|sua|xoa|quet)\b|muc tieu|tiet kiem|thang truoc|thang sau|nam ngoai|thang \d|thang mot|thang hai|thang ba/.test(q)) return [];
+  const historical = /hom qua|bua qua|ngay kia|tuan truoc|tuan sau|tuan toi|tuan nay/.test(q);
+  if (historical) return /lich|hoc/.test(q) ? ['lichHoc'] : [];
   const topics = [];
   if (/\bgpa\b|diem|mon nguy co/.test(q)) topics.push('hocTap');
   if (/deadline|han chot|qua han|cong viec/.test(q)) topics.push('deadline');
   if (/thu chi|chi tieu|chi bao nhieu|tong chi|tong thu|thu nhap|so du|ngan sach|tai chinh/.test(q)) topics.push('taiChinh');
-  if (/lich hoc|thoi khoa bieu|hoc (?:mon )?(?:gi|nao)|(?:mai|hom nay) (?:co )?(?:hoc|lich)/.test(q)) topics.push('lichHoc');
+  if (/lich hoc|thoi khoa bieu|hoc (?:mon )?(?:gi|di|nao)|(?:mai|hom nay) .*?(?:hoc|lich)|(?:mai|hom nay) (?:hoc|lich)/.test(q)) topics.push('lichHoc');
   return topics;
 }
 
@@ -32,7 +46,7 @@ async function layDuLieuSinhVien(userId, topics = CHU_DE, now = new Date()) {
   const { from, to } = monthRange(vn.month, vn.year);
   const tomorrow = new Date(now.getTime() + 86400000);
   const nextWeek = new Date(now.getTime() + CHATBOT.CONTEXT_DEADLINE_DAYS * 86400000);
-  const result = { capNhatLuc: now.toISOString(), muiGio: 'Asia/Ho_Chi_Minh', phamVi: 'GPA/deadline: tất cả học kỳ; thu/chi: tháng hiện tại; lịch học: kỳ đang học, có điều chỉnh theo ngày.' };
+  const result = { capNhatLuc: now.toISOString(), muiGio: 'Asia/Ho_Chi_Minh', phamVi: 'GPA/deadline: tất cả học kỳ; thu/chi: tháng hiện tại; lịch học: tuần trước, tuần này và tuần sau của kỳ đang học, có điều chỉnh theo ngày. Lịch dự kiến, không phải điểm danh.' };
   const jobs = [];
   if (topics.includes('hocTap')) jobs.push((async () => {
     const courses = await prisma.monHoc.findMany({ where: { idNguoiDung: userId }, select: { ten: true, tinChi: true, diems: { select: { diem: true, trongSo: true } } } });
@@ -77,10 +91,11 @@ async function layDuLieuSinhVien(userId, topics = CHU_DE, now = new Date()) {
     const hocKy = normalizeSemester(profile?.hocKyHienTai);
     const base = filterSemester(rows, hocKy, true);
     const today = dateKey(now), next = dateKey(tomorrow);
-    const currentWeek = await loadWeek(prisma, userId, base, today);
-    const nextWeek = weekStart(next) === currentWeek.tuNgay ? currentWeek : await loadWeek(prisma, userId, base, next);
-    const clean = c => ({ mon: ngan(c.tenMon), batDau: c.gioBatDau, ketThuc: c.gioKetThuc, phong: ngan(c.phongHoc), hocKy: ngan(c.hocKy) });
-    result.lichHoc = { hocKy: ngan(hocKy), homNay: currentWeek.thoiKhoaBieu.filter(c => c.ngayHoc === today).map(clean), ngayMai: nextWeek.thoiKhoaBieu.filter(c => c.ngayHoc === next).map(clean) };
+    const start = weekStart(today);
+    const weeks = await Promise.all([-7, 0, 7].map(offset => loadWeek(prisma, userId, base, plusDays(start, offset))));
+    const clean = c => ({ ngay: c.ngayHoc, mon: ngan(c.tenMon), batDau: c.gioBatDau, ketThuc: c.gioKetThuc, phong: ngan(c.phongHoc), hocKy: ngan(c.hocKy) });
+    const all = weeks.flatMap(w => w.thoiKhoaBieu).map(clean);
+    result.lichHoc = { hocKy: ngan(hocKy), tuNgay: weeks[0].tuNgay, denNgay: weeks[2].denNgay, lich: all.slice(0, 150), biGioiHan: all.length > 150, homNay: all.filter(c => c.ngay === today), ngayMai: all.filter(c => c.ngay === next) };
   })());
   await Promise.all(jobs);
   return result;
@@ -108,10 +123,12 @@ function traLoiDuLieu(data, text) {
     if (/ngan sach/.test(chuanHoa(text))) parts.push(f.nganSach.length ? f.nganSach.map(b => '- ' + b.danhMuc + ': đã chi ' + formatTien(b.daChi) + '/' + formatTien(b.hanMuc) + (b.vuot ? ' — vượt ngân sách' : '')).join('\n') : 'Bạn chưa đặt ngân sách tháng này.');
   }
   if (data.lichHoc) {
-    const isTomorrow = /\bmai\b/.test(chuanHoa(text));
-    const title = isTomorrow ? 'Ngày mai' : 'Hôm nay';
-    const classes = isTomorrow ? data.lichHoc.ngayMai : data.lichHoc.homNay;
-    parts.push(classes.length ? '**' + title + ': ' + classes.length + ' buổi học**\n' + classes.map(c => '- ' + c.batDau + '–' + c.ketThuc + ': ' + c.mon + (c.phong ? ' · ' + c.phong : '') + (c.hocKy ? ' · ' + c.hocKy : '')).join('\n') : title + ' chưa có buổi học nào trong lịch đã nhập.');
+    const period = khoangLich(text, new Date(data.capNhatLuc));
+    const title = period.label;
+    const classes = (data.lichHoc.lich || []).filter(c => c.ngay >= period.from && c.ngay <= period.to);
+    parts.push(classes.length ? '**' + title + ': ' + classes.length + ' buổi học**\n' + classes.map(c => '- ' + c.ngay.split('-').reverse().join('/') + ' · ' + c.batDau + '–' + c.ketThuc + ': ' + c.mon + (c.phong ? ' · ' + c.phong : '') + (c.hocKy ? ' · ' + c.hocKy : '')).join('\n') : title + ' chưa có buổi học nào trong lịch đã nhập.');
+    if (data.lichHoc.biGioiHan) parts.push('Danh sách được giới hạn 150 buổi; mở Lịch học để xem đầy đủ.');
+    if (/hom qua|tuan truoc/.test(chuanHoa(text))) parts.push('Đây là lịch dự kiến theo dữ liệu hiện có, không xác nhận bạn đã tham gia buổi học.');
     parts.push((data.lichHoc.hocKy ? 'Học kỳ đang học: ' + data.lichHoc.hocKy + ', gồm lịch dùng chung.' : 'Chưa chọn học kỳ đang học; đang xem tất cả học kỳ.') + ' Đã tính các buổi nghỉ và đổi lịch theo ngày.');
   }
   return parts.join('\n');
