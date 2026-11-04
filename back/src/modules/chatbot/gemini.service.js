@@ -1,5 +1,6 @@
 const { CHATBOT } = require('../../constants');
 const { dateKey, plusDays, weekStart } = require('../thoikhoabieu/adjustments.service');
+const dns = require('node:dns');
 function loiAI(statusCode, code, message) { return Object.assign(new Error(message), { statusCode, code }); }
 function cauHinhAI() {
   const model = process.env.GEMINI_MODEL?.trim() || CHATBOT.DEFAULT_MODEL;
@@ -43,6 +44,8 @@ async function hoiGemini({ tinNhan, lichSu = [], duLieu, trichDoan }) {
     };
   }
   try {
+    // Prefer IPv4 on hosts without working IPv6 egress; TLS validation stays enabled.
+    dns.setDefaultResultOrder('ipv4first');
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + config.model + ':generateContent', {
       method: 'POST', signal: AbortSignal.timeout(CHATBOT.TIMEOUT_MS),
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': config.key },
@@ -64,7 +67,7 @@ async function hoiGemini({ tinNhan, lichSu = [], duLieu, trichDoan }) {
     if (!answer) throw loiAI(422, 'CHATBOT_NO_ANSWER', 'AI chưa trả về nội dung. Bạn hãy thử lại sau.');
     return { traLoi: answer, biRutGon: candidate.finishReason === 'MAX_TOKENS', model: config.model };
   } catch (error) {
-    if (error.code?.startsWith('CHATBOT_')) throw error;
+    if (typeof error.code === 'string' && error.code.startsWith('CHATBOT_')) throw error;
     if (['TimeoutError', 'AbortError'].includes(error.name)) throw loiAI(504, 'CHATBOT_TIMEOUT', 'AI phản hồi quá lâu. Bạn có thể thử câu hỏi ngắn hơn hoặc chọn Xem dữ liệu.');
     // Do not log provider responses, prompts, credentials or user data.
     throw loiAI(502, 'CHATBOT_PROVIDER', 'Chưa kết nối được dịch vụ AI. Hãy thử lại sau.');

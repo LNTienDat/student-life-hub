@@ -50,6 +50,11 @@ test('timeouts are bounded and distinguishable', async () => {
   global.fetch.mockRejectedValue(Object.assign(new Error('secret raw response'), { name: 'TimeoutError' }));
   await expect(hoiGemini(question)).rejects.toMatchObject({ statusCode: 504, code: 'CHATBOT_TIMEOUT' });
 });
+
+test('real DOMException timeout has a numeric code and must not become a TypeError', async () => {
+  global.fetch.mockRejectedValue(new DOMException('Timeout', 'TimeoutError'));
+  await expect(hoiGemini(question)).rejects.toMatchObject({ statusCode: 504, code: 'CHATBOT_TIMEOUT' });
+});
 test.each([{ promptFeedback: { blockReason: 'SAFETY' } }, { candidates: [{ finishReason: 'STOP', content: { parts: [] } }] }])('empty/blocked responses are errors, not successful AI replies', async data => {
   global.fetch.mockResolvedValue({ ok: true, json: async () => data });
   await expect(hoiGemini(question)).rejects.toMatchObject({ code: 'CHATBOT_NO_ANSWER' });

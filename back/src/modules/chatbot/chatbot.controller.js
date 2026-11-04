@@ -25,7 +25,7 @@ async function guiTinNhan(req, res) {
             const answer = await hoiGemini({ tinNhan: tinNhan.trim(), lichSu, duLieu: data });
             return res.json({ ...answer, nguon: 'ai', coDuLieuCaNhan: true, capNhatLuc: data.capNhatLuc });
           } catch (error) {
-            if (!error.code?.startsWith('CHATBOT_')) throw error;
+            if (typeof error.code !== 'string' || !error.code.startsWith('CHATBOT_')) throw error;
             // Known facts remain available if the provider is slow or quota is exhausted.
             const selected = { ...data, hocTap: topics.includes('hocTap') ? data.hocTap : undefined, deadline: topics.includes('deadline') ? data.deadline : undefined, taiChinh: topics.includes('taiChinh') ? data.taiChinh : undefined, lichHoc: topics.includes('lichHoc') ? data.lichHoc : undefined };
             return res.json({ nguon: 'du_lieu', traLoi: traLoiDuLieu(selected, tinNhan) + '\nAI tạm không phản hồi; đây là kết quả tra cứu trực tiếp.', capNhatLuc: data.capNhatLuc });
@@ -57,7 +57,7 @@ async function guiTinNhan(req, res) {
     return res.json({ ...answer, nguon: 'ai', coDuLieuCaNhan: dungDuLieuCaNhan, capNhatLuc: data?.capNhatLuc });
   } catch (error) {
     if (['auto', 'tai_lieu'].includes(cheDo) && error.statusCode) return res.status(error.statusCode).json({ code: error.code || 'CHATBOT_DOCUMENT', message: error.message });
-    if (error.code?.startsWith('CHATBOT_')) return res.status(error.statusCode).json({ code: error.code, message: error.message });
+    if (typeof error.code === 'string' && error.code.startsWith('CHATBOT_')) return res.status(error.statusCode).json({ code: error.code, message: error.message });
     return res.status(503).json({ code: 'CHATBOT_DATA', message: 'Chưa đọc được dữ liệu của bạn. Hãy thử lại sau; mình chưa gửi câu hỏi đến AI.' });
   }
 }
