@@ -228,7 +228,7 @@ function Deadline() {
         <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
           <div>
             <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Quản lý Deadline
+              Deadline
             </h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
               Bạn có {tongChuaHoanThanh} công việc cần hoàn thành
@@ -342,9 +342,9 @@ function Deadline() {
             onXoa={yeuCauXoa}
           />
         )}
-        {!dangTai && !loadError && <details className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+        {!dangTai && !loadError && <details className="rounded-xl border border-slate-200 bg-white px-3 py-1 dark:border-slate-700 dark:bg-slate-800">
           <summary className="min-h-11 cursor-pointer py-2 text-base font-semibold text-slate-600 dark:text-slate-300">Đã xóa ({daXoa.length})</summary>
-          <p className="mb-3 text-xs text-slate-500">Các việc bạn xóa hoặc được tự xóa sau 24 giờ đều được giữ ở đây. Khôi phục sẽ đưa về chưa hoàn thành.</p>
+          <p className="mb-3 text-xs text-slate-500">Có thể khôi phục việc đã xóa về chưa hoàn thành.</p>
           <div className="grid gap-2">{daXoa.map(item => <article key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
             <div className="min-w-0 flex-1"><h3 className="break-words text-sm font-medium dark:text-slate-100">{item.tieuDe}</h3><p className="text-xs text-slate-500">{formatDeadlineDate(item.hanChot)}</p></div>
             <button type="button" disabled={saving} onClick={() => khoiPhuc(item)} className="min-h-11 rounded-lg border px-3 text-sm text-ink-600 dark:border-slate-600 dark:text-ink-200">Khôi phục</button>

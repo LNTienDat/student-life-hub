@@ -1,3 +1,4 @@
+import SemesterPicker from '../components/SemesterPicker';
 import useSessionDraft from '../hooks/useSessionDraft';
 import TimetableAdjustmentModal from './thoikhoabieu/TimetableAdjustmentModal';
 import {monday,addDays} from './thoikhoabieu/weekUtils';
@@ -235,17 +236,19 @@ function ThoiKhoaBieu() {
     <>
       <div className="w-full min-w-0 space-y-6 pb-12">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
           <div>
             <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Thời khóa biểu
+              Lịch học
             </h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
               Bạn có {soMonHoc} buổi học trong tuần này
             </p>
           </div>
 
-          <div className="grid w-full grid-cols-2 items-stretch gap-2.5 md:flex md:w-auto md:flex-wrap">
+          <SemesterPicker className="order-2 md:order-3 md:col-span-2" />
+
+          <div className="order-3 md:order-2 grid w-full grid-cols-2 items-stretch gap-2.5 md:flex md:w-auto md:flex-wrap">
             <button type="button" onClick={yeuCauXoaLich}
               disabled={saving || dangTai || loadedSemester !== semester+':'+week || !!loadError || !baseList.length || baseList.length > 1000}
               className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-40 dark:border-rose-900/50 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-rose-950/30">

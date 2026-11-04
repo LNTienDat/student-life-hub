@@ -1,5 +1,4 @@
 import { useSemester } from '../hooks/useSemester';
-import SemesterPicker from './SemesterPicker';
 import InstallButton from './InstallButton';
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom';
@@ -73,7 +72,7 @@ function Layout({ children }) {
   const menu = [
     { path: '/dashboard', label: 'Hôm nay' },
     { path: '/mon-hoc', label: 'Học tập' },
-    { path: '/thoi-khoa-bieu', label: 'Thời khóa biểu' },
+    { path: '/thoi-khoa-bieu', label: 'Lịch học' },
     { path: '/deadline', label: 'Deadline' },
     { path: '/tai-chinh', label: 'Tài chính' },
     { path: '/ho-so', label: 'Hồ sơ' },
@@ -124,7 +123,6 @@ function Layout({ children }) {
         <Link to="/thoi-khoa-bieu" className="inline-flex min-h-11 items-center font-semibold text-ink-600 dark:text-ink-200">{imageDraft.busy ? 'Xem tiến trình' : 'Kiểm tra và lưu'}</Link>
       </div>}
       <div key={`${location.pathname}:${semester}`}>
-        {['/mon-hoc', '/thoi-khoa-bieu'].includes(location.pathname) && <SemesterPicker />}
         {children || <Outlet />}
       </div>
     </main>
@@ -132,7 +130,7 @@ function Layout({ children }) {
       {menu.map((item, index) => {
         const Icon = [Home, BookOpen, CalendarDays, Clock, Wallet, UserRound][index];
         const active = location.pathname === item.path;
-        return <Link key={item.path} to={item.path} aria-label={item.label} aria-current={active ? 'page' : undefined} onClick={() => { setChuongMo(false); }} className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-medium ${active ? 'bg-ink-50 text-ink-600 dark:bg-ink-900 dark:text-ink-200' : 'text-slate-600 dark:text-slate-300'}`}><Icon aria-hidden="true" className="h-5 w-5"/><span>{index === 2 ? 'Lịch học' : item.label}</span></Link>;
+        return <Link key={item.path} to={item.path} aria-label={item.label} aria-current={active ? 'page' : undefined} onClick={() => { setChuongMo(false); }} className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-medium ${active ? 'bg-ink-50 text-ink-600 dark:bg-ink-900 dark:text-ink-200' : 'text-slate-600 dark:text-slate-300'}`}><Icon aria-hidden="true" className="h-5 w-5"/><span>{item.label}</span></Link>;
       })}
     </nav>
     <Chatbot />

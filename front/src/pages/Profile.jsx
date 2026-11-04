@@ -128,31 +128,29 @@ function Profile() {
 
   return (
     <div className="w-full min-w-0 space-y-6">
-      <div className="mb-8">
+      <div className="mb-4">
         <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-          Hồ sơ cá nhân
+          Hồ sơ
         </h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Quản lý thông tin tài khoản và bảo mật của bạn
+          Thông tin tài khoản và bảo mật.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
-        {/* Cột 1: Thông tin cá nhân */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 relative overflow-hidden flex flex-col h-full justify-between">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-ink-600 dark:bg-ink-400" />
+        {/* Cột 1: Thông tin tài khoản */}
+        <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 relative overflow-hidden flex flex-col h-full justify-between">
 
           <div>
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-4">
               <div className="p-2.5 bg-ink-50 dark:bg-ink-500/20 text-ink-600 dark:text-ink-300 rounded-xl">
                 <User className="w-5 h-5" />
               </div>
               <div>
                 <h2 className="font-display font-semibold text-lg text-slate-800 dark:text-slate-200">
-                  Thông tin cá nhân
+                  Thông tin tài khoản
                 </h2>
-                <p className="text-xs text-slate-400">Tên hiển thị & Email đăng nhập</p>
               </div>
             </div>
 
@@ -273,19 +271,17 @@ function Profile() {
         </div>
 
         {/* Cột 2: Đổi mật khẩu */}
-        <form onSubmit={xuLyDoiMatKhau} className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 relative overflow-hidden flex flex-col h-full justify-between">
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500" />
+        <form onSubmit={xuLyDoiMatKhau} className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 relative overflow-hidden flex flex-col h-full justify-between">
 
           <div>
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-4">
               <div className="p-2.5 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-xl">
                 <Lock className="w-5 h-5" />
               </div>
               <div>
                 <h2 className="font-display font-semibold text-lg text-slate-800 dark:text-slate-200">
-                  Bảo mật & Mật khẩu
+                  Đổi mật khẩu
                 </h2>
-                <p className="text-xs text-slate-400">Thay đổi mật khẩu đăng nhập tài khoản</p>
               </div>
             </div>
 
@@ -332,14 +328,14 @@ function Profile() {
             </div>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-700/50">
+          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700/50">
             <button
               type="submit"
               disabled={dangTaiMK}
               className="w-full flex items-center justify-center gap-2 bg-slate-800 dark:bg-slate-700 text-white font-medium px-4 py-2.5 rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 disabled:opacity-70 transition-colors shadow-sm"
             >
               <KeyRound className="w-4 h-4" />
-              {dangTaiMK ? 'Đang cập nhật...' : 'Đổi mật khẩu mới'}
+              {dangTaiMK ? 'Đang cập nhật...' : 'Đổi mật khẩu'}
             </button>
           </div>
         </form>

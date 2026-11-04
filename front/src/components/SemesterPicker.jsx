@@ -1,6 +1,6 @@
 import SemesterDeleteModal from './SemesterDeleteModal';
 import ModalDialog from './ModalDialog';
-import { GraduationCap, Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { normalizeSemester } from '../utils/semester';
 import { useEffect, useState } from 'react';
@@ -11,7 +11,7 @@ import { academicService } from '../services/academicService';
 import { timetableService } from '../services/timetableService';
 import { useAuth } from '../context/AuthContext';
 
-export default function SemesterPicker() {
+export default function SemesterPicker({ className = '' }) {
   const [semester,setSemester]=useSemester();
   const {currentSemester,loading,saving,error,retry,saveCurrentSemester}=useCurrentSemester();
   const [semesters,setSemesters]=useState([]),[changing,setChanging]=useState(false),[savedDraft,setSavedDraft]=useState(''),[newDraft,setNewDraft]=useState(''),[message,setMessage]=useState(''),[deleting,setDeleting]=useState('');
@@ -36,12 +36,11 @@ export default function SemesterPicker() {
     try{if(await saveCurrentSemester(draft)){setChanging(false);hienToast('success','Đã áp dụng học kỳ '+normalizeSemester(draft)+'.');}}
     catch(failure){setMessage(failure.response?.data?.message||failure.message||'Chưa lưu được học kỳ.');}
   }
-  return <section aria-label="Thiết lập học kỳ" className="mb-6 w-full min-w-0 text-sm">
+  return <section aria-label="Thiết lập học kỳ" className={"w-full min-w-0 text-sm " + className}>
     <div className="flex min-w-0 items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800 ">
       <div className="flex min-w-0 items-center gap-3">
-        <span className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink-50 text-ink-600 dark:bg-ink-500/10 dark:text-ink-300"><GraduationCap className="h-5 w-5" aria-hidden="true"/></span>
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Học kỳ đang học</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Học kỳ</p>
           <p className="mt-1 break-words font-semibold text-slate-900 dark:text-white">{currentSemester||'Chưa chọn học kỳ'}</p>
         </div>
 
@@ -50,7 +49,7 @@ export default function SemesterPicker() {
     </div>
     {error&&<p role="alert" className="mt-2 text-rose-600">{error} <button type="button" onClick={retry} className="min-h-11 underline">Thử lại</button></p>}
     <ModalDialog wide open={changing} title={currentSemester?'Đổi học kỳ':'Chọn học kỳ đang học'} busy={saving} onClose={()=>{if(!saving)setChanging(false);}}>
-      <p className="mb-4 text-sm leading-relaxed text-slate-500 dark:text-slate-400">Chọn học kỳ đã lưu hoặc nhập học kỳ mới. Áp dụng cho Học tập và Thời khóa biểu.</p>
+      <p className="mb-4 text-sm leading-relaxed text-slate-500 dark:text-slate-400">Chọn học kỳ đã lưu hoặc nhập học kỳ mới. Áp dụng cho Học tập và Lịch học.</p>
       <form aria-label="Chọn học kỳ đang học" onSubmit={submit} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="min-w-0 rounded-xl border border-slate-200 p-4 dark:border-slate-700">

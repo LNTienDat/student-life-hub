@@ -33,6 +33,7 @@ function FinancePeriod({ period, onPeriodChange }) {
   const revision = useDataRevision();
   const { label: categoryLabel, categories } = useFinanceCategories();
   const [filters, setFilters] = useState({ timKiem: '', locLoai: '', locDanhMuc: '' });
+  const [allTime, setAllTime] = useState(false);
   const [page, setPage] = useState(1);
   const [list, setList] = useState({ rows: [], pages: 1, loading: true, error: '', key: '' });
   const [draft, setDraft] = useSessionDraft('finance-draft:'+period, null);
@@ -50,7 +51,7 @@ function FinancePeriod({ period, onPeriodChange }) {
   const saveLock = useRef(false), deleteLock = useRef(false), exportLock = useRef(false);
   const { hienToast } = useToast();
   const busy = saving || budgetSaving || confirm.isLoading;
-  const listKey = JSON.stringify([period, filters, page, revision, retry]);
+  const listKey = JSON.stringify([period, allTime, filters, page, revision, retry]);
   const listReady = list.key === listKey;
   const dirty = draft && JSON.stringify(draft) !== JSON.stringify(transactionDraft(original, period));
 
@@ -77,7 +78,7 @@ function FinancePeriod({ period, onPeriodChange }) {
     let active = true;
     const timer = setTimeout(async () => {
       try {
-        const response = await financeService.layDanhSachGiaoDich(transactionQuery({ ...filters, chiThangNay: true, thang, nam }, page));
+        const response = await financeService.layDanhSachGiaoDich(transactionQuery({ ...filters, chiThangNay: !allTime, thang, nam }, page));
         if (!active) return;
         const pages = response.data.soTrang || 1;
         if (page > pages) { setPage(pages); return; }
@@ -87,7 +88,7 @@ function FinancePeriod({ period, onPeriodChange }) {
       }
     }, 200);
     return () => { active = false; clearTimeout(timer); };
-  }, [filters, page, thang, nam, listKey]);
+  }, [filters, page, thang, nam, allTime, listKey]);
   const editingId = original?.id;
   useEffect(() => {
     if (!draft) return;
@@ -189,7 +190,7 @@ function FinancePeriod({ period, onPeriodChange }) {
   return <>
     <div className="w-full min-w-0 space-y-6 pb-12">
       <div className="flex flex-col md:flex-row md:justify-between gap-4">
-        <div><h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white">Quản lý tài chính</h1><p className="mt-1 text-slate-500 dark:text-slate-400">Tháng {label} · Thu trừ chi trong tháng</p></div>
+        <div><h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white">Tài chính</h1><p className="mt-1 text-slate-500 dark:text-slate-400">Tháng {label} · Thu trừ chi trong tháng</p></div>
         <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap">
           <button type="button" onClick={exportExcel} disabled={exporting || summaryLoading || !!summaryError || !summary?.thongKe || (!summary.thongKe.tongThu && !summary.thongKe.tongChi)} className="flex min-h-11 justify-center items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-40"><Download size={17} />{exporting ? 'Đang xuất…' : 'Xuất Excel'}</button>
           <button type="button" disabled={busy} onClick={()=>withDiscard(()=>{setDraft(null);setOriginal(null);setReceiptInfo(null);setReceiptOpen(true);},false)} className="inline-flex min-h-11 justify-center items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm text-ink-600 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-ink-300"><Camera size={17}/>Quét hóa đơn</button>
@@ -223,12 +224,17 @@ function FinancePeriod({ period, onPeriodChange }) {
         </div>
       </div>}
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 overflow-hidden">
-        <div className="px-4 pt-4 md:px-6"><h2 className="font-semibold text-slate-900 dark:text-white">Giao dịch tháng {label}</h2><p className="mt-1 text-xs text-slate-500">Bộ lọc bên dưới chỉ áp dụng cho danh sách giao dịch.</p></div>
+        <div className="space-y-2 px-4 pt-4 md:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-semibold text-slate-900 dark:text-white">{allTime?'Tất cả giao dịch':'Giao dịch tháng '+label}</h2>
+            <select aria-label="Thời gian tìm giao dịch" value={allTime?'all':'month'} disabled={busy} onChange={event=>{setAllTime(event.target.value==='all');setPage(1);}} className="min-h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm dark:border-slate-600 dark:bg-slate-900"><option value="month">Tháng đang xem</option><option value="all">Mọi thời gian</option></select>
+          </div>
+          <p className="text-xs text-slate-500">{allTime?'Tìm cả giao dịch các năm trước. Số liệu phía trên vẫn theo tháng '+label+'.':'Không nhớ ngày? Chọn Mọi thời gian để tìm lại.'}</p>
+        </div>
         <TransactionTable giaoDichs={listReady ? list.rows : []} dangTaiGD={!listReady || list.loading} {...filters}
           trangHienTai={page} soTrang={listReady ? list.pages : 1} error={listReady ? list.error : ''} onRetry={reload}
           onTimKiemChange={value => changeFilter('timKiem', value)} onLocLoaiChange={value => changeFilter('locLoai', value)}
           onLocDanhMucChange={value => changeFilter('locDanhMuc', value)} onChonTrang={setPage}
-          onYeuCauXoa={requestDelete} onEdit={openForm} disabled={busy} />
+          onResetFilters={()=>{setFilters({timKiem:'',locLoai:'',locDanhMuc:''});setPage(1);}} allTime={allTime} onSearchAllTime={()=>{setAllTime(true);setPage(1);}} onYeuCauXoa={requestDelete} onEdit={openForm} disabled={busy} />
       </div>
     </div>
     <ConfirmModal {...confirm} onClose={() => { if (!confirm.isLoading) setConfirm({ isOpen: false }); }} />

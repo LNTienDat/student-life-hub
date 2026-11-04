@@ -1,4 +1,4 @@
-import { Search, Filter, TrendingUp, TrendingDown, Trash2, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, X, Filter, TrendingUp, TrendingDown, Trash2, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useFinanceCategories } from '../../context/FinanceCategoryContext';
 import { dinhDangTien } from '../../utils/formatters';
 
@@ -19,6 +19,9 @@ function TransactionTable({
   disabled = false,
   error = '',
   onRetry,
+  onResetFilters,
+  allTime = false,
+  onSearchAllTime,
 }) {
   const { categories, label } = useFinanceCategories();
   const grouped=new Map();for(const item of categories.filter(item=>!locLoai||item.loai===locLoai)){const previous=grouped.get(item.ma);grouped.set(item.ma,previous?{...item,ten:[...new Set([previous.ten,item.ten])].join(' / '),daAn:previous.daAn&&item.daAn}:item);}const options=[...grouped.values()];
@@ -37,8 +40,9 @@ function TransactionTable({
               onChange={(e) => onTimKiemChange(e.target.value)}
               placeholder="Tìm kiếm giao dịch..."
               aria-label="Tìm kiếm giao dịch"
-              className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
+              className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl min-h-11 pl-10 pr-12 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30"
             />
+            {timKiem&&<button type="button" disabled={disabled} onClick={()=>onTimKiemChange('')} aria-label="Xóa từ khóa tìm kiếm" className="absolute right-0 top-0 inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-500"><X className="h-4 w-4"/></button>}
           </div>
           <div className="flex min-w-0 gap-4 w-full md:w-auto">
             <select
@@ -66,10 +70,11 @@ function TransactionTable({
             </select>
           </div>
         </div>
+        {(timKiem||locLoai||locDanhMuc)&&<button type="button" disabled={disabled} onClick={onResetFilters} className="mt-2 inline-flex min-h-11 items-center gap-1 text-sm font-medium text-ink-600 dark:text-ink-300"><X className="h-4 w-4"/>Xóa bộ lọc</button>}
       </div>
 
       {/* Danh sách */}
-      <div className="min-h-[300px]">
+      <div className="min-h-[160px]">
         {dangTaiGD ? (
           <div className="flex items-center justify-center h-40">
             <div className="w-6 h-6 border-2 border-slate-200 border-t-ink-500 rounded-full animate-spin"></div>
@@ -77,12 +82,13 @@ function TransactionTable({
         ) : error ? (
           <div role="alert" className="p-6 text-center text-rose-700 dark:text-rose-300"><p>{error}</p><button type="button" onClick={onRetry} className="mt-3 rounded-lg border px-4 py-2 font-medium">Thử lại</button></div>
         ) : giaoDichs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 text-center">
+          <div className="flex flex-col items-center justify-center px-4 py-8 text-center">
             <div className="w-12 h-12 bg-slate-50 dark:bg-slate-900/50 rounded-full flex items-center justify-center mb-3">
               <Filter className="w-6 h-6 text-slate-400" />
             </div>
-            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">{timKiem || locLoai || locDanhMuc ? 'Không tìm thấy giao dịch phù hợp' : 'Chưa có giao dịch trong tháng đã chọn'}</h3>
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">{timKiem || locLoai || locDanhMuc ? 'Không tìm thấy giao dịch phù hợp' : (allTime?'Chưa có giao dịch':'Chưa có giao dịch trong tháng đã chọn')}</h3>
             <p className="text-sm text-slate-500 mt-1">{timKiem || locLoai || locDanhMuc ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.' : 'Chọn “Thêm giao dịch” để ghi khoản thu hoặc chi đầu tiên.'}</p>
+            {!allTime&&<button type="button" onClick={onSearchAllTime} className="mt-3 min-h-11 rounded-xl border border-slate-200 px-4 text-sm font-medium text-ink-600 dark:border-slate-600 dark:text-ink-300">Tìm trong mọi thời gian</button>}
           </div>
         ) : (
           <div role="list" aria-label="Danh sách giao dịch" className="divide-y divide-slate-100 dark:divide-slate-700/50">
@@ -91,11 +97,11 @@ function TransactionTable({
                 key={gd.id}
                 role="listitem"
                 data-transaction-id={gd.id}
-                className="p-4 md:p-6 flex flex-wrap gap-3 justify-between items-center hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group"
+                className="p-4 md:p-6 grid grid-cols-[minmax(0,1fr)_auto] gap-3 items-start hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${
                       gd.loai === 'thu'
                         ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
                         : 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
@@ -103,8 +109,8 @@ function TransactionTable({
                   >
                     {gd.loai === 'thu' ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
                   </div>
-                  <div>
-                    <p className="font-semibold text-slate-900 dark:text-white">
+                  <div className="min-w-0">
+                    <p className="break-words font-semibold text-slate-900 dark:text-white">
                       {label(gd.danhMuc,gd.loai)}
                     </p>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5 flex flex-wrap items-center gap-2">

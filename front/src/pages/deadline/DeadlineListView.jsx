@@ -9,6 +9,15 @@ const actionStyle = 'inline-flex min-h-11 min-w-11 items-center justify-center r
 
 function DeadlineRow({ item, completed = false, onHoanThanh, onSua, onXoa, disabled, now, autoDelete }) {
   const countdownWarning = !completed && Boolean(getDeadlineAlert(item, now));
+  if (completed) return <article className="flex min-w-0 items-start gap-2 py-3">
+    <button type="button" disabled={disabled} onClick={()=>onHoanThanh(item.id,true)} aria-label={`Đánh dấu chưa hoàn thành: ${item.tieuDe}`} title="Hoàn tác" className={actionStyle+' shrink-0 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-slate-700'}><CheckCircle2 className="h-5 w-5"/></button>
+    <div className="min-w-0 flex-1 pt-2">
+      <h3 className="break-words text-sm font-semibold text-slate-500 line-through dark:text-slate-400">{item.tieuDe}</h3>
+      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{formatDeadlineDate(item.hanChot)}</p>
+      {autoDelete&&<p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{completionCountdown(item,now)}</p>}
+    </div>
+    <button type="button" disabled={disabled} onClick={()=>onXoa(item)} title="Xóa" aria-label={`Xóa deadline: ${item.tieuDe}`} className={actionStyle+' shrink-0 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-900/20'}><Trash2 className="h-4 w-4"/></button>
+  </article>;
   return <article className={`grid grid-cols-[2.75rem_minmax(0,1fr)] items-start gap-x-2 gap-y-1 rounded-xl border p-3 sm:flex sm:items-center sm:gap-3 ${completed
     ? 'border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50'
     : 'border-slate-200 bg-white shadow-sm dark:border-slate-700/60 dark:bg-slate-800'}`}>
@@ -52,9 +61,9 @@ export default function DeadlineListView({ dangDienHanh = [], daHoanThanh = [], 
       {dangDienHanh.length ? <div className="grid gap-2">{dangDienHanh.map(item => <DeadlineRow key={item.id} item={item} {...actions} />)}</div>
         : <p className="rounded-xl border border-slate-200 bg-white px-4 py-5 text-sm text-slate-500 dark:border-slate-700/60 dark:bg-slate-800">{emptyMessage}</p>}
     </section>
-    <section aria-label="Công việc đã hoàn thành"><details className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+    <section aria-label="Công việc đã hoàn thành"><details className="rounded-xl border border-slate-200 bg-white px-3 py-1 dark:border-slate-700 dark:bg-slate-800">
       <summary className="min-h-11 cursor-pointer py-2 text-base font-semibold text-slate-600 dark:text-slate-300">Đã hoàn thành ({daHoanThanh.length})</summary>
-      <div className="mt-2 grid gap-2">{daHoanThanh.map(item => <DeadlineRow key={item.id} item={item} completed {...actions} />)}
+      <div className="divide-y divide-slate-100 dark:divide-slate-700">{daHoanThanh.map(item => <DeadlineRow key={item.id} item={item} completed {...actions} />)}
         {!daHoanThanh.length && <p className="text-sm text-slate-500">Chưa có việc đã hoàn thành.</p>}
       </div>
     </details></section>

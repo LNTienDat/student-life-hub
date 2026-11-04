@@ -1,3 +1,4 @@
+import SemesterPicker from '../components/SemesterPicker';
 import useSessionDraft from '../hooks/useSessionDraft';
 import DataLoadError from '../components/DataLoadError';
 import useDataRevision from '../hooks/useDataRevision';
@@ -279,17 +280,19 @@ function MonHoc() {
     <>
       <div className="w-full min-w-0 space-y-6 pb-12">
         {/* Header & Tiện ích */}
-        <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
           <div>
             <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Học tập & Điểm số
+              Học tập
             </h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
               Quản lý tiến độ học tập và theo dõi GPA
             </p>
           </div>
 
-          <div className="grid grid-cols-2 items-stretch gap-2 md:flex md:flex-wrap md:items-center">
+          <SemesterPicker className="order-2 md:order-3 md:col-span-2" />
+
+          <div className="order-3 md:order-2 grid grid-cols-2 items-stretch gap-2 md:flex md:flex-wrap md:items-center">
             <div className="bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700/60 flex min-h-11 justify-center items-center gap-2">
               <Target className="w-5 h-5 text-emerald-500" />
               <div className="flex flex-col">
