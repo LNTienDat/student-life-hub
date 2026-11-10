@@ -84,11 +84,11 @@ function App() {
                     <Route path="/quen-mat-khau" element={<QuenMatKhau />} />
                     <Route path="/dat-lai-mat-khau" element={<DatLaiMatKhau />} />
                     <Route path="/chia-se-tkb/:token" element={<ChiaSeTKB />} />
-                    <Route path="/chon-ngau-nhien" element={<RandomPicker />} />
 
                     {/* Authenticated routes */}
                     <Route element={<AuthenticatedLayout />}>
                       <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/chon-ngau-nhien" element={<RandomPicker />} />
                       <Route path="/mon-hoc" element={<MonHoc />} />
                       <Route path="/deadline" element={<Deadline />} />
                       <Route path="/tai-chinh" element={<TaiChinh />} />
