@@ -114,18 +114,6 @@ async function suaHoSo(req, res) {
       }
     }
 
-    if (ten !== undefined && ten.length > AUTH.MAX_TEN_LENGTH) {
-      return res.status(400).json({ message: `Họ tên không được vượt quá ${AUTH.MAX_TEN_LENGTH} ký tự` });
-    }
-    if (truong !== undefined && truong.length > AUTH.MAX_TRUONG_LENGTH) {
-      return res.status(400).json({ message: `Tên trường không được vượt quá ${AUTH.MAX_TRUONG_LENGTH} ký tự` });
-    }
-    if (nganh !== undefined && nganh.length > AUTH.MAX_NGANH_LENGTH) {
-      return res.status(400).json({ message: `Tên ngành không được vượt quá ${AUTH.MAX_NGANH_LENGTH} ký tự` });
-    }
-    if (khoaHoc !== undefined && khoaHoc.length > AUTH.MAX_KHOA_HOC_LENGTH) {
-      return res.status(400).json({ message: `Khóa học không được vượt quá ${AUTH.MAX_KHOA_HOC_LENGTH} ký tự` });
-    }
     if (avatar !== undefined && !validAvatar(avatar)) {
       return res.status(400).json({ message: 'Ảnh đại diện không hợp lệ. Chọn ảnh có sẵn hoặc tải lại ảnh JPG, PNG, WebP.' });
     }

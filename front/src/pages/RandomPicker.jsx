@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Dices, RotateCcw, Sparkles, UsersRound, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft, Dices, RotateCcw, Sparkles, UsersRound, X } from 'lucide-react';
 import PickerCanvas from './PickerCanvas';
 import './RandomPicker.css';
 
@@ -52,7 +53,7 @@ export default function RandomPicker() {
       <section className="picker-scene" aria-labelledby="picker-title">
         <PickerCanvas students={students} phase={phase} winner={winner} />
         <header className="picker-header">
-          <div><p className="picker-kicker"><Sparkles size={15} /> Trò chơi gọi tên</p><h1 id="picker-title">Ai sẽ ăn phô mai?</h1><p>Chú mèo thả phô mai, một bạn chuột may mắn sẽ được gọi lên trả bài.</p></div>
+          <div><Link to="/dashboard" className="picker-kicker inline-flex items-center gap-1.5 mb-1 opacity-80 hover:opacity-100 transition-opacity"><ArrowLeft size={14} /> Quay về Trang chủ</Link><p className="picker-kicker"><Sparkles size={15} /> Trò chơi gọi tên</p><h1 id="picker-title">Ai sẽ ăn phô mai?</h1><p>Chú mèo thả phô mai, một bạn chuột may mắn sẽ được gọi lên trả bài.</p></div>
           <button className="student-editor-trigger" type="button" onClick={() => setShowEditor(true)}><UsersRound size={18} /> Danh sách ({students.length})</button>
         </header>
 
