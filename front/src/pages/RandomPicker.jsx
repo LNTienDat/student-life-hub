@@ -49,7 +49,7 @@ export default function RandomPicker() {
   }
 
   return (
-    <main className="picker-page">
+    <div className="picker-page">
       <section className="picker-scene" aria-labelledby="picker-title">
         <PickerCanvas students={students} phase={phase} winner={winner} />
         <header className="picker-header">
@@ -66,6 +66,6 @@ export default function RandomPicker() {
       </section>
 
       {showEditor && <div className="student-modal-backdrop" role="presentation" onMouseDown={() => setShowEditor(false)}><section className="student-modal" role="dialog" aria-modal="true" aria-labelledby="student-modal-title" onMouseDown={(event) => event.stopPropagation()}><button type="button" className="modal-close" aria-label="Đóng" onClick={() => setShowEditor(false)}><X size={20} /></button><p className="picker-kicker"><UsersRound size={15} /> Lớp của bạn</p><h2 id="student-modal-title">Danh sách chú chuột</h2><p>Nhập mỗi tên trên một dòng hoặc ngăn cách bằng dấu phẩy.</p><textarea value={studentInput} onChange={(event) => setStudentInput(event.target.value)} rows={8} autoFocus /><div className="modal-footer"><span>{students.length}/30 học sinh</span><button type="button" className="modal-save" onClick={() => setShowEditor(false)}>Xong</button></div></section></div>}
-    </main>
+    </div>
   );
 }
