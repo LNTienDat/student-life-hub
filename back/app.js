@@ -74,8 +74,30 @@ if (!deployment.serveFrontend) {
   app.get('/', (req, res) => res.send('Backend đang chạy ngon lành!'));
 }
 
-// Swagger UI - Tài liệu API tương tác
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+// Middleware xác thực bảo vệ Swagger UI khi có cấu hình biến môi trường
+function swaggerAuthMiddleware(req, res, next) {
+  const user = process.env.SWAGGER_USER;
+  const pass = process.env.SWAGGER_PASSWORD;
+  if (!user || !pass) return next();
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Basic ')) {
+    res.set('WWW-Authenticate', 'Basic realm="LifeHub API Documentation"');
+    return res.status(401).send('Yêu cầu xác thực tài khoản để xem API Documentation.');
+  }
+
+  const credentials = Buffer.from(authHeader.slice(6), 'base64').toString('utf8');
+  const [inputUser, inputPass] = credentials.split(':');
+  if (inputUser === user && inputPass === pass) {
+    return next();
+  }
+
+  res.set('WWW-Authenticate', 'Basic realm="LifeHub API Documentation"');
+  return res.status(401).send('Sai thông tin đăng nhập.');
+}
+
+// Swagger UI - Tài liệu API tương tác (hỗ trợ bảo mật qua SWAGGER_USER & SWAGGER_PASSWORD)
+app.use('/api-docs', swaggerAuthMiddleware, swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/hoc-ky', require('./src/modules/semester/semester.routes'));
