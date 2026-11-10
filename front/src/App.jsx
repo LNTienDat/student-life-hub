@@ -26,8 +26,8 @@ const TaiChinh = lazy(() => import('./pages/TaiChinh'));
 const ThoiKhoaBieu = lazy(() => import('./pages/ThoiKhoaBieu'));
 const TaiLieu = lazy(() => import('./pages/TaiLieu'));
 const Profile = lazy(() => import('./pages/Profile'));
-const NhomHocTap = lazy(() => import('./pages/NhomHocTap'));
-const ChiTietNhom = lazy(() => import('./pages/ChiTietNhom'));
+
+
 const ChiaSeTKB = lazy(() => import('./pages/ChiaSeTKB'));
 const RandomPicker = lazy(() => import('./pages/RandomPicker'));
 const NotFound = lazy(() => import('./pages/NotFound'));
@@ -94,8 +94,8 @@ function App() {
                       <Route path="/tai-chinh" element={<TaiChinh />} />
                       <Route path="/lich-hoc" element={<ThoiKhoaBieu />} />
                       <Route path="/thoi-khoa-bieu" element={<LegacyTimetableRedirect />} />
-                      <Route path="/nhom" element={<NhomHocTap />} />
-                      <Route path="/nhom/:id" element={<ChiTietNhom />} />
+
+
                       <Route path="/tai-lieu" element={<TaiLieu />} />
                       <Route path="/ho-so" element={<Profile />} />
                     </Route>
