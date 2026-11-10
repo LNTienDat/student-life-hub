@@ -83,7 +83,13 @@ async function testCronDeadline(req, res) {
     res.json({ message: 'Đã chạy thử job nhắc deadline cho tài khoản của bạn. Kiểm tra console/email.' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    if (error.code === 'EMAIL_CONFIG') {
+      return res.status(503).json({ message: 'Dịch vụ email chưa được cấu hình (cần RESEND_API_KEY hoặc thông tin SMTP).' });
+    }
+    if (error.code === 'EMAIL_SMTP_BLOCKED') {
+      return res.status(503).json({ message: 'Gói Render Free chặn cổng SMTP 587/465. Hãy đặt EMAIL_PROVIDER=resend hoặc EMAIL_PROVIDER=mock.' });
+    }
+    res.status(500).json({ message: 'Lỗi khi chạy gửi email: ' + (error.message || 'Lỗi server') });
   }
 }
 
@@ -94,7 +100,13 @@ async function testCronNganSach(req, res) {
     res.json({ message: 'Đã chạy thử job cảnh báo ngân sách cho tài khoản của bạn. Kiểm tra console/email.' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Lỗi server' });
+    if (error.code === 'EMAIL_CONFIG') {
+      return res.status(503).json({ message: 'Dịch vụ email chưa được cấu hình (cần RESEND_API_KEY hoặc thông tin SMTP).' });
+    }
+    if (error.code === 'EMAIL_SMTP_BLOCKED') {
+      return res.status(503).json({ message: 'Gói Render Free chặn cổng SMTP 587/465. Hãy đặt EMAIL_PROVIDER=resend hoặc EMAIL_PROVIDER=mock.' });
+    }
+    res.status(500).json({ message: 'Lỗi khi chạy gửi email: ' + (error.message || 'Lỗi server') });
   }
 }
 
