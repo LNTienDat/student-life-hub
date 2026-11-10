@@ -28,8 +28,22 @@ async function parsePdf(buffer) {
     });
   } finally { parsing--; }
 }
+const isBinaryText = (buf) => {
+  if (buf.length >= 2 && buf[0] === 0x4D && buf[1] === 0x5A) return true; // MZ (Windows EXE / DLL)
+  if (buf.length >= 4 && buf[0] === 0x7F && buf[1] === 0x45 && buf[2] === 0x4C && buf[3] === 0x46) return true; // ELF (Linux executable)
+  if (buf.length >= 4 && buf[0] === 0x50 && buf[1] === 0x4B && buf[2] === 0x03 && buf[3] === 0x04) return true; // PK (ZIP / DOCX / JAR)
+  if (buf.length >= 4 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) return true; // PNG
+  if (buf.length >= 3 && buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return true; // JPEG
+  if (buf.length >= 4 && buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x38) return true; // GIF
+  if (buf.includes(0x00)) return true; // Null bytes are characteristic of binary data, forbidden in plain text
+  return false;
+};
+
 async function extractInput(body) {
-  if (!body || typeof body.tieuDe !== 'string' || !body.tieuDe.trim() || body.tieuDe.trim().length > 160) throw httpError(400, 'Tên tài liệu cần từ 1 đến 160 ký tự.');
+  if (!body || typeof body.tieuDe !== 'string') throw httpError(400, 'Tên tài liệu cần từ 1 đến 160 ký tự.');
+  const tieuDe = body.tieuDe.replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim();
+  if (!tieuDe || tieuDe.length > 160) throw httpError(400, 'Tên tài liệu cần từ 1 đến 160 ký tự.');
+
   let pages, tenTep = 'Nội dung đã nhập';
   if (body.tep !== undefined) {
     const file = body.tep;
@@ -38,11 +52,13 @@ async function extractInput(body) {
       || (file.base64.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(file.base64))) throw httpError(400, 'Chọn PDF, TXT hoặc MD, tối đa 4 MB.');
     const buffer = Buffer.from(file.base64, 'base64');
     if (!buffer.length || buffer.length > LIMITS.fileBytes) throw httpError(400, 'Tệp trống hoặc vượt 4 MB.');
-    tenTep = file.ten.replace(/.*[\\/]/, '');
+    tenTep = file.ten.replace(/.*[\\/]/, '').replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim();
+    if (!tenTep || /^\.+$/.test(tenTep) || !/\.(pdf|txt|md)$/i.test(tenTep)) throw httpError(400, 'Tên tệp không hợp lệ.');
     if (/\.pdf$/i.test(tenTep)) {
       if (buffer.subarray(0, 5).toString() !== '%PDF-') throw httpError(400, 'Tệp không có định dạng PDF hợp lệ.');
       pages = await parsePdf(buffer);
     } else {
+      if (isBinaryText(buffer)) throw httpError(422, 'Tệp chứa dữ liệu nhị phân hoặc không phải là văn bản thuần túy (TXT/MD).');
       let text;
       try { text = new TextDecoder('utf-8', { fatal: true }).decode(buffer); }
       catch { throw httpError(422, 'TXT/MD cần dùng mã hóa UTF-8. Bạn có thể dán nội dung vào ô bên dưới.'); }
@@ -56,7 +72,7 @@ async function extractInput(body) {
   const count = pages.reduce((n, p) => n + p.text.length, 0);
   if (count < 40) throw httpError(422, 'Chưa đủ chữ để đọc. PDF dạng ảnh chưa được hỗ trợ; hãy dùng PDF có chữ hoặc dán nội dung ít nhất 40 ký tự.');
   if (count > LIMITS.documentChars) throw httpError(413, 'Tài liệu tối đa 200.000 ký tự.');
-  return { tieuDe: body.tieuDe.trim(), tenTep, soTrang: pages.length, soKyTu: count, bamNoiDung: contentHash(pages), cacDoan: chunkPages(pages) };
+  return { tieuDe, tenTep, soTrang: pages.length, soKyTu: count, bamNoiDung: contentHash(pages), cacDoan: chunkPages(pages) };
 }
 const metadata = { id: true, tieuDe: true, tenTep: true, soTrang: true, soKyTu: true, ngayTao: true };
 async function listDocuments(idNguoiDung) {
