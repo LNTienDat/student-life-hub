@@ -5,23 +5,26 @@
  */
 
 const { normalizeSemester } = require('../../utils/semester.util');
-const { tinhDiemMon } = require('../../utils/grade.util');
+const { tinhDiemMon, quyDoiHe4 } = require('../../utils/grade.util');
 const { ACADEMIC } = require('../../constants');
 
 /**
- * Tính điểm trung bình tích lũy GPA tổng thể từ danh sách môn học
+ * Tính điểm trung bình tích lũy GPA tổng thể từ danh sách môn học (cả hệ 10 và hệ 4)
  * @param {Array} monHocs - Danh sách môn học kèm mảng diems
- * @returns {{ gpa: string, chiTiet: Array }}
+ * @returns {{ gpa: string, gpaHe4: string, chiTiet: Array, hasGrades: boolean }}
  */
 function tinhGPAService(monHocs) {
   let tongDiemTinChi = 0;
+  let tongDiemHe4TinChi = 0;
   let tongTinChi = 0;
 
   const chiTiet = monHocs.map((mon) => {
     const { diemTrungBinh: diemMon, tongTrongSo } = tinhDiemMon(mon.diems);
+    const diemHe4 = quyDoiHe4(diemMon);
 
     if (tongTrongSo > 0) {
       tongDiemTinChi += diemMon * mon.tinChi;
+      tongDiemHe4TinChi += diemHe4 * mon.tinChi;
       tongTinChi += mon.tinChi;
     }
 
@@ -29,11 +32,13 @@ function tinhGPAService(monHocs) {
       ten: mon.ten,
       tinChi: mon.tinChi,
       diemMon: diemMon.toFixed(2),
+      diemHe4: diemHe4.toFixed(1),
     };
   });
 
   const gpa = tongTinChi > 0 ? (tongDiemTinChi / tongTinChi).toFixed(2) : '0';
-  return { gpa, chiTiet, hasGrades: tongTinChi > 0 };
+  const gpaHe4 = tongTinChi > 0 ? (tongDiemHe4TinChi / tongTinChi).toFixed(2) : '0';
+  return { gpa, gpaHe4, chiTiet, hasGrades: tongTinChi > 0 };
 }
 
 /**
@@ -70,15 +75,17 @@ function gpaTheoKyService(monHocs) {
     if (tongTrongSo === 0) return;
 
     if (!theoKy[mon.hocKy]) {
-      theoKy[mon.hocKy] = { tongDiemTinChi: 0, tongTinChi: 0 };
+      theoKy[mon.hocKy] = { tongDiemTinChi: 0, tongDiemHe4TinChi: 0, tongTinChi: 0 };
     }
     theoKy[mon.hocKy].tongDiemTinChi += diemMon * mon.tinChi;
+    theoKy[mon.hocKy].tongDiemHe4TinChi += quyDoiHe4(diemMon) * mon.tinChi;
     theoKy[mon.hocKy].tongTinChi += mon.tinChi;
   });
 
   return Object.entries(theoKy).map(([hocKy, data]) => ({
     hocKy,
     gpa: (data.tongDiemTinChi / data.tongTinChi).toFixed(2),
+    gpaHe4: (data.tongDiemHe4TinChi / data.tongTinChi).toFixed(2),
   }));
 }
 

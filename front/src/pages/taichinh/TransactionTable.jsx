@@ -13,6 +13,9 @@ function TransactionTable({
   locDanhMuc,
   trangHienTai,
   soTrang,
+  tongSo = 0,
+  soLuongMoiTrang = 10,
+  onPageSizeChange,
   onTimKiemChange,
   onLocLoaiChange,
   onLocDanhMucChange,
@@ -163,29 +166,50 @@ function TransactionTable({
         )}
       </div>
 
-      {/* Phân trang */}
-      {soTrang > 1 && (
-        <div className="p-4 md:p-6 border-t border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-900/30 flex justify-between items-center">
-          <span className="text-sm text-slate-500 dark:text-slate-400">
-            Trang <span className="font-semibold text-slate-900 dark:text-white">{trangHienTai}</span> / {soTrang}
-          </span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => onChonTrang(trangHienTai - 1)}
-              disabled={disabled || dangTaiGD || trangHienTai <= 1}
-              aria-label={tr("Trang trước")}
-              className="min-h-11 min-w-11 flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => onChonTrang(trangHienTai + 1)}
-              disabled={disabled || dangTaiGD || trangHienTai >= soTrang}
-              aria-label="Trang sau"
-              className="min-h-11 min-w-11 flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 transition-colors"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+      {/* Phân trang & số lượng */}
+      {(soTrang > 1 || tongSo > 0) && (
+        <div className="p-4 md:p-6 border-t border-slate-200 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-900/30 flex flex-wrap justify-between items-center gap-3">
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            {tongSo > 0 && <span className="mr-2">{tr("Tổng:")} <strong className="font-semibold text-slate-900 dark:text-white">{tongSo}</strong> {tr("giao dịch")} •</span>}
+            <span>{tr("Trang")} <span className="font-semibold text-slate-900 dark:text-white">{trangHienTai}</span> / {soTrang}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            {onPageSizeChange && (
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                <span>{tr("Hiển thị:")}</span>
+                <select
+                  value={soLuongMoiTrang}
+                  onChange={(e) => onPageSizeChange(Number(e.target.value))}
+                  disabled={disabled || dangTaiGD}
+                  aria-label={tr("Số giao dịch mỗi trang")}
+                  className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 focus:outline-none"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            )}
+            {soTrang > 1 && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onChonTrang(trangHienTai - 1)}
+                  disabled={disabled || dangTaiGD || trangHienTai <= 1}
+                  aria-label={tr("Trang trước")}
+                  className="min-h-11 min-w-11 flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => onChonTrang(trangHienTai + 1)}
+                  disabled={disabled || dangTaiGD || trangHienTai >= soTrang}
+                  aria-label="Trang sau"
+                  className="min-h-11 min-w-11 flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

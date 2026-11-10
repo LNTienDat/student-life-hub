@@ -26,6 +26,7 @@ README.md
 
 # Local backups are not deployment source.
 improvement-backups/
+tmp_video_review/
 
 # Generated local files
 *.log

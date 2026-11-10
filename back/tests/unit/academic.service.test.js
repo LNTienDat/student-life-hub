@@ -123,8 +123,8 @@ describe('Academic Service Unit Tests', () => {
 
       const res = gpaTheoKyService(mockMonHocs);
       expect(res).toEqual([
-        { hocKy: 'HK1_2025', gpa: '7.00' }, // (8*3 + 6*3) / 6 = 7.00
-        { hocKy: 'HK2_2025', gpa: '9.00' },
+        { hocKy: 'HK1_2025', gpa: '7.00', gpaHe4: '2.50' }, // (8*3 + 6*3) / 6 = 7.00; he4 = (3*3 + 2*3) / 6 = 2.50
+        { hocKy: 'HK2_2025', gpa: '9.00', gpaHe4: '4.00' },
       ]);
     });
   });

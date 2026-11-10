@@ -44,7 +44,8 @@ function FinancePeriod({ period, onPeriodChange }) {
   const searchMonth = searchPeriod?.thang, searchYear = searchPeriod?.nam;
   const searchLabel = searchPeriod ? searchMonth + '/' + searchYear : '';
   const [page, setPage] = useState(1);
-  const [list, setList] = useState({ rows: [], pages: 1, loading: true, error: '', key: '' });
+  const [pageSize, setPageSize] = useState(10);
+  const [list, setList] = useState({ rows: [], pages: 1, total: 0, loading: true, error: '', key: '' });
   const [draft, setDraft] = useSessionDraft('finance-draft:'+period, null);
   const [original, setOriginal] = useSessionDraft('finance-original:'+period, null);
   const [receiptOpen,setReceiptOpen] = useState(false);
@@ -87,17 +88,17 @@ function FinancePeriod({ period, onPeriodChange }) {
     let active = true;
     const timer = setTimeout(async () => {
       try {
-        const response = await financeService.layDanhSachGiaoDich(transactionQuery({ ...filters, chiThangNay: !allTime, thang: searchMonth, nam: searchYear }, page));
+        const response = await financeService.layDanhSachGiaoDich(transactionQuery({ ...filters, chiThangNay: !allTime, thang: searchMonth, nam: searchYear }, page, pageSize));
         if (!active) return;
         const pages = response.data.soTrang || 1;
         if (page > pages) { setPage(pages); return; }
-        setList({ rows: response.data.giaoDichs || [], pages, loading: false, error: '', key: listKey });
+        setList({ rows: response.data.giaoDichs || [], pages, total: response.data.tongSo || 0, loading: false, error: '', key: listKey });
       } catch (error) {
-        if (active) setList({ rows: [], pages: 1, loading: false, key: listKey, error: error.response?.data?.message || 'Chưa tải được giao dịch. Hãy thử lại.' });
+        if (active) setList({ rows: [], pages: 1, total: 0, loading: false, key: listKey, error: error.response?.data?.message || 'Chưa tải được giao dịch. Hãy thử lại.' });
       }
     }, 200);
     return () => { active = false; clearTimeout(timer); };
-  }, [filters, page, searchMonth, searchYear, allTime, listKey]);
+  }, [filters, page, pageSize, searchMonth, searchYear, allTime, listKey]);
   const editingId = original?.id;
   useEffect(() => {
     if (!draft) return;
@@ -243,7 +244,7 @@ function FinancePeriod({ period, onPeriodChange }) {
           <p className="text-xs text-slate-500">{searchScope==='month'?tr('Lọc theo tháng đang xem hoặc chọn mốc thời gian khác.'):tr('Bộ lọc chỉ áp dụng cho giao dịch. Tổng quan phía trên vẫn theo tháng ')+label+'.'}</p>
         </div>
         <TransactionTable giaoDichs={listReady ? list.rows : []} dangTaiGD={!listReady || list.loading} {...filters}
-          trangHienTai={page} soTrang={listReady ? list.pages : 1} error={listReady ? list.error : ''} onRetry={reload}
+          trangHienTai={page} soTrang={listReady ? list.pages : 1} tongSo={listReady ? list.total : 0} soLuongMoiTrang={pageSize} onPageSizeChange={size => { setPageSize(size); setPage(1); }} error={listReady ? list.error : ''} onRetry={reload}
           onTimKiemChange={value => changeFilter('timKiem', value)} onLocLoaiChange={value => changeFilter('locLoai', value)}
           onLocDanhMucChange={value => changeFilter('locDanhMuc', value)} onChonTrang={setPage}
           onResetFilters={()=>{setFilters({timKiem:'',locLoai:'',locDanhMuc:''});setPage(1);}} allTime={allTime} onSearchAllTime={()=>{setSearchScope('all');setPage(1);}} onYeuCauXoa={requestDelete} onEdit={openForm} disabled={busy} />

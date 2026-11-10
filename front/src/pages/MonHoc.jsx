@@ -25,6 +25,7 @@ function MonHoc() {
   const { currentSemester } = useCurrentSemester();
   const [danhSach, setDanhSach] = useState([]);
   const [gpa, setGpa] = useState(null);
+  const [gpaHe4, setGpaHe4] = useState(null);
   const [gpaTheoKy, setGpaTheoKy] = useState([]);
   const [dangTai, setDangTai] = useState(true);
   const externalRevision = useDataRevision({ externalOnly: true });
@@ -73,6 +74,7 @@ function MonHoc() {
       setLoadError('');
       setDanhSach(resMonHoc.data.monHocs || []);
       setGpa(resGpa.data.hasGrades === false ? null : resGpa.data.gpa);
+      setGpaHe4(resGpa.data.hasGrades === false ? null : resGpa.data.gpaHe4);
       setGpaTheoKy(resGpaKy.data.theoKy || []);
     }).catch((error) => {
       if (version === loadVersion.current) setLoadError(error.response?.data?.message || 'Chưa tải được dữ liệu. Kiểm tra kết nối và thử lại.');
@@ -297,7 +299,7 @@ function MonHoc() {
               <div className="flex flex-col">
                 <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">GPA {semester ? tr('học kỳ') : tr('tích lũy')}</span>
                 <span className="font-display font-bold text-slate-900 dark:text-white leading-none">
-                  {gpa !== null ? Number(gpa).toFixed(2) : '--'} / 10
+                  {gpa !== null ? `${Number(gpa).toFixed(2)} / 10${gpaHe4 != null ? ` (${Number(gpaHe4).toFixed(2)} / 4)` : ''}` : '--'}
                 </span>
               </div>
             </div>

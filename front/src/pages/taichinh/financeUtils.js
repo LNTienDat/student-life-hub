@@ -1,6 +1,6 @@
 import { validDong, moneyError } from '../../utils/money.js';
-export function transactionQuery(filters = {}, page = 1) {
-  const query = { trang: page, soLuong: 10 };
+export function transactionQuery(filters = {}, page = 1, pageSize = 10) {
+  const query = { trang: page, soLuong: Number(pageSize) || 10 };
   if (filters.timKiem?.trim()) query.q = filters.timKiem.trim();
   if (filters.locLoai) query.loai = filters.locLoai;
   if (filters.locDanhMuc) query.danhMuc = filters.locDanhMuc;

@@ -34,6 +34,20 @@ const itemVariants = {
   },
 };
 
+const DASHBOARD_TIMEOUT_MS = 8000;
+
+function withTimeout(promise, ms = DASHBOARD_TIMEOUT_MS) {
+  let timer;
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      const err = new Error('Quá thời gian tải dữ liệu');
+      err.code = 'TIMEOUT';
+      reject(err);
+    }, ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timer));
+}
+
 function Dashboard() {
   useLanguage();
   const { user } = useAuth();
@@ -52,13 +66,13 @@ function Dashboard() {
     let active = true;
     const update = (change) => setResult((previous) => change(previous?.key === queryKey ? previous : { key: queryKey, data: {}, errors: [], done: false }));
     const sources = [
-      ['gpa', () => academicService.tinhGPA(semester), (r) => r.data.hasGrades === false ? null : r.data.gpa],
+      ['gpa', () => academicService.tinhGPA(semester), (r) => r.data.hasGrades === false ? null : { gpa: r.data.gpa, gpaHe4: r.data.gpaHe4 }],
       ['deadlinesSapToi', () => deadlineService.layDeadlineSapToi(7, semester), (r) => r.data.deadlines || []],
       ['thongKeTaiChinh', () => financeService.layThongKe(), (r) => r.data],
     ];
     Promise.allSettled(sources.map(async ([key, request, select]) => {
       try {
-        const result = await request();
+        const result = await withTimeout(request());
         if (active) update((previous) => ({ ...previous, data: { ...previous.data, [key]: select(result) } }));
       } catch {
         if (active) update((previous) => ({ ...previous, errors: [...previous.errors, key] }));
@@ -87,7 +101,7 @@ function Dashboard() {
       </div>}
       {loading && Object.keys(data).length === 0 ? <PageSkeleton /> : <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-5">
         <section aria-label={tr("Tổng quan")}>
-        <DashboardKpiCards gpa={data.gpa} deadlinesSapToi={data.deadlinesSapToi} thongKeTaiChinh={data.thongKeTaiChinh} itemVariants={itemVariants} deadlineUnavailable={!data.deadlinesSapToi} semester={semester} /></section>
+        <DashboardKpiCards gpa={data.gpa?.gpa !== undefined ? data.gpa.gpa : data.gpa} gpaHe4={data.gpa?.gpaHe4} deadlinesSapToi={data.deadlinesSapToi} thongKeTaiChinh={data.thongKeTaiChinh} itemVariants={itemVariants} deadlineUnavailable={!data.deadlinesSapToi} semester={semester} /></section>
         <DashboardToday key={user?.id} userId={user?.id} semester={currentSemester} />
       </motion.div>}
 

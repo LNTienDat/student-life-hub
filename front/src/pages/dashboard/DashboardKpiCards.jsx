@@ -4,10 +4,15 @@ import { Link } from 'react-router-dom';
 import { GraduationCap, CalendarDays, Wallet } from 'lucide-react';
 import { dinhDangTien } from '../../utils/formatters';
 
-export default function DashboardKpiCards({ gpa, deadlinesSapToi = [], thongKeTaiChinh, deadlineUnavailable, semester }) {
+export default function DashboardKpiCards({ gpa, gpaHe4, deadlinesSapToi = [], thongKeTaiChinh, deadlineUnavailable, semester }) {
   useLanguage();
+  const gpaHint = gpa == null
+    ? 'Chưa có điểm'
+    : gpaHe4 != null
+      ? `Thang 4: ${Number(gpaHe4).toFixed(2)}`
+      : 'Tạm tính từ điểm đã nhập';
   const cards = [
-    { to: '/mon-hoc', title: `GPA ${semester ? 'học kỳ' : 'tích lũy'}`, value: gpa == null ? '—' : Number(gpa).toFixed(2), unit: '/ 10', hint: gpa == null ? 'Chưa có điểm' : 'Tạm tính từ điểm đã nhập', Icon: GraduationCap },
+    { to: '/mon-hoc', title: `GPA ${semester ? 'học kỳ' : 'tích lũy'}`, value: gpa == null ? '—' : Number(gpa).toFixed(2), unit: '/ 10', hint: gpaHint, Icon: GraduationCap },
     { to: '/deadline', title: 'Deadline trong 7 ngày', value: deadlineUnavailable ? '—' : deadlinesSapToi.length, unit: 'việc', hint: 'Chưa hoàn thành', Icon: CalendarDays },
     { to: '/tai-chinh', title: 'Số dư tháng này', value: thongKeTaiChinh ? dinhDangTien(thongKeTaiChinh.soDu) : '—', hint: 'Thu − chi', Icon: Wallet },
   ];

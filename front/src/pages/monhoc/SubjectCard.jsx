@@ -13,6 +13,14 @@ function tinhDiemMon(diems) {
   return tongTrongSo > 0 ? (tongDiem / tongTrongSo).toFixed(2) : null;
 }
 
+function quyDoiHe4(diem10) {
+  if (diem10 >= 8.5) return 4.0;
+  if (diem10 >= 7.0) return 3.0;
+  if (diem10 >= 5.5) return 2.0;
+  if (diem10 >= 4.0) return 1.0;
+  return 0;
+}
+
 function SubjectCard({
   mon,
   monThemDiemId,
@@ -66,7 +74,7 @@ function SubjectCard({
                 quaMon ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
               }`}
             >
-              <span className="font-display text-2xl font-bold leading-none">{diemMon}</span>
+              <span className="font-display text-2xl font-bold leading-none">{diemMon} <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">({quyDoiHe4(parseFloat(diemMon)).toFixed(1)}/4)</span></span>
               <span className="text-[11px] font-semibold mt-0.5">{totalWeight > 100 + 1e-8 ? tr('Trọng số vượt 100% · cần sửa') : complete ? (quaMon ? tr('Đạt · đã đủ điểm') : tr('Chưa đạt · đã đủ điểm')) : tr('Tạm tính · chưa đủ điểm')}</span>
             </div>
           ) : (

@@ -18,6 +18,10 @@ function SubjectGpaChart({ gpaTheoKy = [] }) {
           <Tooltip
             cursor={{ fill: 'transparent' }}
             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+            formatter={(value, name, item) => [
+              `${value} / 10${item?.payload?.gpaHe4 ? ` (${item.payload.gpaHe4} / 4)` : ''}`,
+              'GPA'
+            ]}
           />
           <Bar dataKey="gpa" fill="#3D3F72" radius={[6, 6, 0, 0]} />
         </BarChart>
