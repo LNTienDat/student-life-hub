@@ -24,6 +24,12 @@ test('timeout and invalid response do not leak key/provider text', async () => {
  global.fetch.mockResolvedValue({ok:true,json:async()=>({})});
  await expect(guiEmail({})).rejects.toMatchObject({code:'EMAIL_RESPONSE'});
 });
+test('mock provider simulates email delivery and returns mock id without network', async () => {
+  process.env.EMAIL_PROVIDER = 'mock';
+  const result = await guiEmail({ to: 'student@example.com', subject: 'Deadline', html: '<p>Test</p>' });
+  expect(result.messageId).toMatch(/^mock-/);
+  expect(global.fetch).not.toHaveBeenCalled();
+});
 test('missing key and blocked Render SMTP fail before network', async () => {
  delete process.env.RESEND_API_KEY; await expect(guiEmail({})).rejects.toMatchObject({code:'EMAIL_CONFIG'});
  process.env.EMAIL_PROVIDER='smtp'; process.env.EMAIL_HOST='smtp.example.com'; process.env.RENDER='true'; process.env.EMAIL_PORT='587';

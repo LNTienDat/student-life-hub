@@ -7,6 +7,10 @@ function emailError(code) {
 }
 async function guiEmail({ to, subject, html }) {
   const provider = (process.env.EMAIL_PROVIDER || 'smtp').toLowerCase();
+  if (provider === 'mock' || provider === 'log' || process.env.EMAIL_SIMULATE === 'true') {
+    console.log(`[Email Mock] To: ${Array.isArray(to) ? to.join(', ') : to} | Subject: ${subject}`);
+    return { messageId: `mock-${Date.now()}` };
+  }
   const from = process.env.EMAIL_FROM || process.env.EMAIL_USER;
   if (!from) throw emailError('EMAIL_CONFIG');
   if (provider === 'resend') {
