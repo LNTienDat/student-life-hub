@@ -1,5 +1,5 @@
 # Quy trình người dùng nghiệm thu LifeHub
-Cập nhật 30/10/2026. Ghi nhận theo phản hồi người dùng: phần C (email thật) đã hoàn tất kiểm thử. Phần D (online) đang chuẩn bị; điện thoại thật và AI thật chưa được ghi nhận đạt. Các thay đổi mới vẫn ở local, chưa triển khai online.
+Cập nhật 30/10/2026. Phần C đã được người dùng kiểm thử trên local. Đã triển khai online commit 3801331, backend/frontend cùng phiên bản và health tốt. Kiểm tra API cùng một số luồng giao diện online đã đạt; điện thoại thật, AI thật và email trên Render chưa nghiệm thu. Xem [kết quả và phạm vi](../reports/ONLINE_RELEASE_2026_10_30.md).
 
 ## Chuẩn bị
 - Mở Mo_LifeHub.cmd; vào http://127.0.0.1:5173 và Ctrl+F5.
@@ -42,6 +42,8 @@ Cần cấu hình nhà cung cấp HTTPS và địa chỉ gửi được phép tr
 5. Chỉ thấy thông báo đã gửi trên web chưa đủ để đánh dấu đạt.
 
 ## D. Online — sau khi cập nhật đầy đủ
+Trạng thái 30/10: đã sao lưu Neon, triển khai và đối chiếu phiên bản. Đã thử đăng nhập/đăng xuất/Quay lại, học kỳ, điểm, trùng lịch, thu chi, deadline và một bill mẫu 225.000đ trên online. U9 với hai bill cà phê/xăng vẫn cần thử lại; không cần bấm Deploy lần nữa.
+
 1. Sao lưu Neon và xác nhận phương án khôi phục.
 2. Kiểm tra nhánh/Auto Deploy, triển khai backend, migration và frontend cùng phiên bản.
 3. Chạy node scripts/check-online.mjs: health ok và commit frontend/backend trùng.

@@ -1,3 +1,5 @@
+import { t as tr } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import { useEffect, useRef, useState } from 'react';
 import api from '../services/api';
 import { useCurrentSemester } from '../context/SemesterContext';
@@ -5,6 +7,7 @@ import { useSemester } from '../hooks/useSemester';
 
 const headers = { subjects: ['ten', 'tinChi', 'hocKy'], timetable: ['tenMon', 'thu', 'gioBatDau', 'gioKetThuc', 'phongHoc', 'giangVien', 'hocKy'] };
 export default function ImportPanel({ kind, onImported }) {
+  useLanguage();
   const { currentSemester } = useCurrentSemester();
   const [semester] = useSemester();
   const [open, setOpen] = useState(false);
@@ -59,17 +62,17 @@ export default function ImportPanel({ kind, onImported }) {
   const invalid = preview?.rows.some((row) => row.errors.length);
   const count = preview?.rows.filter((row) => !row.errors.length && !row.skip).length || 0;
   return <section className="rounded-2xl border border-slate-200 bg-white p-4 text-sm">
-    <button type="button" disabled={committing} onClick={toggle} aria-expanded={open} className="font-semibold text-ink-600">{open ? 'Ẩn nhập tệp' : 'Nhập từ Excel / CSV'}</button>
+    <button type="button" disabled={committing} onClick={toggle} aria-expanded={open} className="font-semibold text-ink-600">{open ? tr('Ẩn nhập tệp') : tr('Nhập từ Excel / CSV')}</button>
     {open && <div className="mt-4 space-y-3">
-      <p className="text-slate-500">Tối đa 500 dòng, 1 MB. Dùng đúng cột trong mẫu; Excel chỉ có một trang tính. Các dòng đã tồn tại sẽ được bỏ qua.</p>
-      <div className="flex flex-wrap gap-3 items-center"><button type="button" onClick={template} className="rounded-lg border px-3 py-2">Tải mẫu CSV</button><label className="min-w-0">Chọn tệp<input ref={fileRef} type="file" accept=".csv,.xlsx" disabled={busy} onChange={read} className="block mt-1 max-w-full"/></label></div>
-      {busy && <p role="status">Đang xử lý…</p>}
-      {message && <p role="status" className="text-slate-700">{message}</p>}
+      <p className="text-slate-500">{tr("Tối đa 500 dòng, 1 MB. Dùng đúng cột trong mẫu; Excel chỉ có một trang tính. Các dòng đã tồn tại sẽ được bỏ qua.")}</p>
+      <div className="flex flex-wrap gap-3 items-center"><button type="button" onClick={template} className="rounded-lg border px-3 py-2">{tr("Tải mẫu CSV")}</button><label className="min-w-0">{tr("Chọn tệp")}<input ref={fileRef} type="file" accept=".csv,.xlsx" disabled={busy} onChange={read} className="block mt-1 max-w-full"/></label></div>
+      {busy && <p role="status">{tr("Đang xử lý…")}</p>}
+      {message && <p role="status" className="text-slate-700">{tr(message)}</p>}
       {preview && <>
-        <p>{preview.rows.length} dòng · {count} dòng mới · {preview.rows.filter((row) => row.skip).length} đã có · {preview.rows.filter((row) => row.errors.length).length} dòng lỗi</p>
-        <div className="max-h-80 overflow-auto rounded-xl border"><table className="w-full text-left text-xs"><thead className="bg-slate-50"><tr><th className="p-2">Dòng</th>{preview.columns.map((name) => <th key={name} className="p-2">{name}</th>)}<th className="p-2">Kiểm tra</th></tr></thead><tbody>{preview.rows.map((row) => <tr key={row.line} className="border-t"><td className="p-2">{row.line}</td>{preview.columns.map((name) => <td key={name} className="p-2 max-w-48 break-words">{String(row.data[name] ?? '')}</td>)}<td className={`p-2 min-w-40 ${row.errors.length ? 'text-rose-600' : 'text-slate-600'}`}>{row.errors.join(' ') || (row.skip ? 'Đã có · bỏ qua' : 'Hợp lệ')}</td></tr>)}</tbody></table></div>
-        {invalid && <p role="alert" className="text-rose-600">Sửa các dòng lỗi trong tệp rồi chọn lại. Chưa có dữ liệu nào được lưu.</p>}
-        <button type="button" disabled={busy || invalid || !count} onClick={commit} className="rounded-xl bg-ink-600 px-4 py-2 text-white disabled:opacity-50">Xác nhận nhập {count} dòng</button>
+        <p>{preview.rows.length}{tr(" dòng · ")}{count}{tr(" dòng mới · ")}{preview.rows.filter((row) => row.skip).length}{tr(" đã có · ")}{preview.rows.filter((row) => row.errors.length).length}{tr(" dòng lỗi")}</p>
+        <div className="max-h-80 overflow-auto rounded-xl border"><table className="w-full text-left text-xs"><thead className="bg-slate-50"><tr><th className="p-2">{tr("Dòng")}</th>{preview.columns.map((name) => <th key={name} className="p-2">{name}</th>)}<th className="p-2">{tr("Kiểm tra")}</th></tr></thead><tbody>{preview.rows.map((row) => <tr key={row.line} className="border-t"><td className="p-2">{row.line}</td>{preview.columns.map((name) => <td key={name} className="p-2 max-w-48 break-words">{String(row.data[name] ?? '')}</td>)}<td className={`p-2 min-w-40 ${row.errors.length ? 'text-rose-600' : 'text-slate-600'}`}>{row.errors.join(' ') || (row.skip ? tr('Đã có · bỏ qua') : tr('Hợp lệ'))}</td></tr>)}</tbody></table></div>
+        {invalid && <p role="alert" className="text-rose-600">{tr("Sửa các dòng lỗi trong tệp rồi chọn lại. Chưa có dữ liệu nào được lưu.")}</p>}
+        <button type="button" disabled={busy || invalid || !count} onClick={commit} className="rounded-xl bg-ink-600 px-4 py-2 text-white disabled:opacity-50">{tr("Xác nhận nhập ")}{count}{tr(" dòng")}</button>
       </>}
     </div>}
   </section>;

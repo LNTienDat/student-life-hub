@@ -1,7 +1,10 @@
+import { t as tr } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
 export default function Toast({ toast, onClose }) {
+  useLanguage();
   return (
     <AnimatePresence>
       {toast && (
@@ -27,11 +30,11 @@ export default function Toast({ toast, onClose }) {
               <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
             )}
 
-            <span className="min-w-0 flex-1 break-words [overflow-wrap:anywhere] leading-tight">{toast.message}</span>
+            <span className="min-w-0 flex-1 break-words [overflow-wrap:anywhere] leading-tight">{tr(toast.message)}</span>
 
             <button
               onClick={onClose}
-              aria-label="Đóng thông báo"
+              aria-label={tr("Đóng thông báo")}
               className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-current opacity-70 hover:opacity-100 transition-opacity"
             >
               <X className="w-3.5 h-3.5" />

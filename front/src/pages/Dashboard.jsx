@@ -1,3 +1,5 @@
+import { t as tr, getLocale } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useCurrentSemester } from '../context/SemesterContext';
@@ -33,6 +35,7 @@ const itemVariants = {
 };
 
 function Dashboard() {
+  useLanguage();
   const { user } = useAuth();
   const { currentSemester } = useCurrentSemester();
   const revision = useDataRevision();
@@ -68,22 +71,22 @@ function Dashboard() {
     <div className="w-full min-w-0 space-y-6">
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="min-w-0">
-          <h1 className="break-words font-display text-2xl font-bold tracking-tight text-slate-900">Xin chào, {user?.ten || 'bạn'}!</h1>
-          <p className="mt-2 text-sm text-slate-500">{new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          <h1 className="break-words font-display text-2xl font-bold tracking-tight text-slate-900">{tr("Xin chào, ")}{user?.ten || tr('bạn')}!</h1>
+          <p className="mt-2 text-sm text-slate-500">{new Date().toLocaleDateString(getLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
-        <div aria-label="Thêm nhanh" className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
-          {[['deadline', 'Thêm việc', Plus], ['class', 'Thêm lịch', CalendarPlus], ['expense', 'Ghi khoản chi', Wallet]].map(([kind, label, Icon]) => <button key={kind} type="button" onClick={() => setQuickEntry(quickEntry === kind ? null : kind)} aria-expanded={quickEntry === kind} aria-pressed={quickEntry === kind} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 py-2 text-sm font-semibold sm:px-3 ${quickEntry === kind ? 'bg-ink-600 text-white hover:bg-ink-700' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}><Icon aria-hidden="true" className="hidden h-4 w-4 sm:block" />{label}</button>)}
+        <div aria-label={tr("Thêm nhanh")} className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+          {[['deadline', 'Thêm việc', Plus], ['class', 'Thêm lịch', CalendarPlus], ['expense', 'Ghi khoản chi', Wallet]].map(([kind, label, Icon]) => <button key={kind} type="button" onClick={() => setQuickEntry(quickEntry === kind ? null : kind)} aria-expanded={quickEntry === kind} aria-pressed={quickEntry === kind} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 py-2 text-sm font-semibold sm:px-3 ${quickEntry === kind ? 'bg-ink-600 text-white hover:bg-ink-700' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}><Icon aria-hidden="true" className="hidden h-4 w-4 sm:block" />{tr(label)}</button>)}
         </div>
       </header>
 
       {quickEntry && <QuickEntry key={quickEntry} kind={quickEntry} onClose={() => setQuickEntry(null)} />}
 
       {errors.length > 0 && <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 flex flex-wrap justify-between gap-2">
-        <span>Một số số liệu chưa tải được. Các mục còn lại vẫn sử dụng được.</span>
-        <button onClick={() => setRetry((value) => value + 1)} className="font-semibold underline">Thử lại</button>
+        <span>{tr("Một số số liệu chưa tải được. Các mục còn lại vẫn sử dụng được.")}</span>
+        <button onClick={() => setRetry((value) => value + 1)} className="font-semibold underline">{tr("Thử lại")}</button>
       </div>}
       {loading && Object.keys(data).length === 0 ? <PageSkeleton /> : <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-5">
-        <section aria-label="Tổng quan">
+        <section aria-label={tr("Tổng quan")}>
         <DashboardKpiCards gpa={data.gpa} deadlinesSapToi={data.deadlinesSapToi} thongKeTaiChinh={data.thongKeTaiChinh} itemVariants={itemVariants} deadlineUnavailable={!data.deadlinesSapToi} semester={semester} /></section>
         <DashboardToday key={user?.id} userId={user?.id} semester={currentSemester} />
       </motion.div>}

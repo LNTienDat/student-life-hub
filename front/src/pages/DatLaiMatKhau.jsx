@@ -1,3 +1,5 @@
+import { t as tr } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import PasswordToggle from '../components/PasswordToggle';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
@@ -16,6 +18,7 @@ const bienTheField = {
 };
 
 function DatLaiMatKhau() {
+  useLanguage();
   const [hienMoi, setHienMoi] = useState(false);
   const [hienXacNhan, setHienXacNhan] = useState(false);
   const [searchParams] = useSearchParams();
@@ -77,9 +80,7 @@ function DatLaiMatKhau() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
             className="font-display text-3xl font-bold text-white leading-snug max-w-sm"
-          >
-            Đừng lo lắng, dữ liệu của bạn luôn được bảo vệ an toàn.
-          </motion.h1>
+          >{tr("Đừng lo lắng, dữ liệu của bạn luôn được bảo vệ an toàn.")}</motion.h1>
 
           <div className="relative h-64 mt-8 max-w-sm">
             <motion.div
@@ -90,9 +91,9 @@ function DatLaiMatKhau() {
             >
               <div className="flex items-center gap-2 mb-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-rose-500" />
-                <span className="text-[11px] font-medium text-rose-600 dark:text-rose-400">Bảo mật thông tin</span>
+                <span className="text-[11px] font-medium text-rose-600 dark:text-rose-400">{tr("Bảo mật thông tin")}</span>
               </div>
-              <p className="font-display text-[17px] font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">Dữ liệu an toàn</p>
+              <p className="font-display text-[17px] font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">{tr("Dữ liệu an toàn")}</p>
             </motion.div>
 
             <motion.div
@@ -103,9 +104,9 @@ function DatLaiMatKhau() {
             >
               <div className="flex items-center gap-2 mb-1.5">
                 <KeyRound className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">Phục hồi tài khoản</span>
+                <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">{tr("Phục hồi tài khoản")}</span>
               </div>
-              <p className="font-display text-[17px] font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">Link gửi qua Email</p>
+              <p className="font-display text-[17px] font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">{tr("Link gửi qua Email")}</p>
             </motion.div>
 
             <motion.div
@@ -116,9 +117,9 @@ function DatLaiMatKhau() {
             >
               <div className="flex items-center gap-2 mb-1.5">
                 <Cloud className="w-3.5 h-3.5 text-amber-500" />
-                <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">Lưu trữ đám mây</span>
+                <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">{tr("Lưu trữ đám mây")}</span>
               </div>
-              <p className="font-display text-[17px] font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">Không mất dữ liệu</p>
+              <p className="font-display text-[17px] font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">{tr("Không mất dữ liệu")}</p>
             </motion.div>
           </div>
         </div>
@@ -131,9 +132,9 @@ function DatLaiMatKhau() {
         <div className="w-full max-w-sm">
           <motion.div initial="an" animate="hien" custom={0} variants={bienTheField}>
             <p className="lg:hidden text-sm text-slate-400 mb-1">Student Life Hub</p>
-            <h1 className="font-display text-2xl font-bold text-slate-900 mb-1">Đặt lại mật khẩu</h1>
+            <h1 className="font-display text-2xl font-bold text-slate-900 mb-1">{tr("Đặt lại mật khẩu")}</h1>
             <p className="text-sm text-slate-600 mb-7">
-              {email ? `Thiết lập mật khẩu mới cho ${email}` : 'Nhập mật khẩu mới cho tài khoản.'}
+              {email ? tr("Thiết lập mật khẩu mới cho {0}", email) : tr('Nhập mật khẩu mới cho tài khoản.')}
             </p>
           </motion.div>
 
@@ -159,31 +160,31 @@ function DatLaiMatKhau() {
 
           <form onSubmit={xuLySubmit} className="space-y-4">
             <motion.div custom={1} initial="an" animate="hien" variants={bienTheField}>
-              <label htmlFor="reset-new-password" className="block text-sm font-medium text-slate-600 mb-1">Mật khẩu mới</label>
+              <label htmlFor="reset-new-password" className="block text-sm font-medium text-slate-600 mb-1">{tr("Mật khẩu mới")}</label>
               <div className="relative"><input
                 id="reset-new-password"
                 type={hienMoi ? 'text' : 'password'}
                 value={matKhauMoi}
                 onChange={(e) => setMatKhauMoi(e.target.value)}
-                placeholder="Tối thiểu 6 ký tự"
+                placeholder={tr("Tối thiểu 6 ký tự")}
                 minLength={6}
                 className="w-full border border-slate-300 rounded-lg pl-3 pr-12 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
                 autoComplete="new-password" required
-              /><PasswordToggle visible={hienMoi} onClick={() => setHienMoi(!hienMoi)} label="mật khẩu mới" /></div>
+              /><PasswordToggle visible={hienMoi} onClick={() => setHienMoi(!hienMoi)} label={tr("mật khẩu mới")} /></div>
             </motion.div>
 
             <motion.div custom={2} initial="an" animate="hien" variants={bienTheField}>
-              <label htmlFor="reset-confirm-password" className="block text-sm font-medium text-slate-600 mb-1">Xác nhận mật khẩu mới</label>
+              <label htmlFor="reset-confirm-password" className="block text-sm font-medium text-slate-600 mb-1">{tr("Xác nhận mật khẩu mới")}</label>
               <div className="relative"><input
                 id="reset-confirm-password"
                 type={hienXacNhan ? 'text' : 'password'}
                 value={xacNhan}
                 onChange={(e) => setXacNhan(e.target.value)}
-                placeholder="Nhập lại mật khẩu mới"
+                placeholder={tr("Nhập lại mật khẩu mới")}
                 minLength={6}
                 className="w-full border border-slate-300 rounded-lg pl-3 pr-12 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
                 autoComplete="new-password" required
-              /><PasswordToggle visible={hienXacNhan} onClick={() => setHienXacNhan(!hienXacNhan)} label="xác nhận mật khẩu mới" /></div>
+              /><PasswordToggle visible={hienXacNhan} onClick={() => setHienXacNhan(!hienXacNhan)} label={tr("xác nhận mật khẩu mới")} /></div>
             </motion.div>
 
             <motion.div custom={3} initial="an" animate="hien" variants={bienTheField}>
@@ -193,7 +194,7 @@ function DatLaiMatKhau() {
                 disabled={dangTai || Boolean(thongBao)}
                 className="w-full bg-ink-600 text-white font-medium py-2.5 rounded-lg hover:bg-ink-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors shadow-sm"
               >
-                {dangTai ? 'Đang cập nhật...' : 'Lưu mật khẩu mới'}
+                {dangTai ? tr('Đang cập nhật...') : tr('Lưu mật khẩu mới')}
               </motion.button>
             </motion.div>
           </form>
@@ -209,9 +210,7 @@ function DatLaiMatKhau() {
               to="/login"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-600 hover:text-ink-700 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" />
-              Quay lại đăng nhập
-            </Link>
+              <ArrowLeft className="w-4 h-4" />{tr("Quay lại đăng nhập")}</Link>
           </motion.div>
         </div>
       </div>

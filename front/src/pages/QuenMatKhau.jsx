@@ -1,3 +1,5 @@
+import { t as tr } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -15,6 +17,7 @@ const bienTheField = {
 };
 
 function QuenMatKhau() {
+  useLanguage();
   const [email, setEmail] = useState('');
   const [loi, setLoi] = useState('');
   const [thongBao, setThongBao] = useState('');
@@ -52,9 +55,7 @@ function QuenMatKhau() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
             className="font-display text-3xl font-bold text-white leading-snug max-w-sm"
-          >
-            Đừng lo lắng, dữ liệu của bạn luôn được bảo vệ an toàn.
-          </motion.h1>
+          >{tr("Đừng lo lắng, dữ liệu của bạn luôn được bảo vệ an toàn.")}</motion.h1>
 
           <div className="relative h-64 mt-8 max-w-sm">
             <motion.div
@@ -65,9 +66,9 @@ function QuenMatKhau() {
             >
               <div className="flex items-center gap-2 mb-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-rose-500" />
-                <span className="text-[11px] font-medium text-rose-600 dark:text-rose-400">Bảo mật thông tin</span>
+                <span className="text-[11px] font-medium text-rose-600 dark:text-rose-400">{tr("Bảo mật thông tin")}</span>
               </div>
-              <p className="font-display text-[17px] font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">Dữ liệu an toàn</p>
+              <p className="font-display text-[17px] font-bold text-rose-600 dark:text-rose-400 whitespace-nowrap">{tr("Dữ liệu an toàn")}</p>
             </motion.div>
 
             <motion.div
@@ -78,9 +79,9 @@ function QuenMatKhau() {
             >
               <div className="flex items-center gap-2 mb-1.5">
                 <KeyRound className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">Phục hồi tài khoản</span>
+                <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">{tr("Phục hồi tài khoản")}</span>
               </div>
-              <p className="font-display text-[17px] font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">Link gửi qua Email</p>
+              <p className="font-display text-[17px] font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">{tr("Link gửi qua Email")}</p>
             </motion.div>
 
             <motion.div
@@ -91,9 +92,9 @@ function QuenMatKhau() {
             >
               <div className="flex items-center gap-2 mb-1.5">
                 <Cloud className="w-3.5 h-3.5 text-amber-500" />
-                <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">Lưu trữ đám mây</span>
+                <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">{tr("Lưu trữ đám mây")}</span>
               </div>
-              <p className="font-display text-[17px] font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">Không mất dữ liệu</p>
+              <p className="font-display text-[17px] font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">{tr("Không mất dữ liệu")}</p>
             </motion.div>
           </div>
         </div>
@@ -106,8 +107,8 @@ function QuenMatKhau() {
         <div className="w-full max-w-sm">
           <motion.div initial="an" animate="hien" custom={0} variants={bienTheField}>
             <p className="lg:hidden text-sm text-slate-400 mb-1">Student Life Hub</p>
-            <h1 className="font-display text-2xl font-bold text-slate-900 mb-1">Quên mật khẩu</h1>
-            <p className="text-sm text-slate-600 mb-7">Nhập email đã đăng ký, chúng tôi sẽ gửi liên kết đặt lại mật khẩu cho bạn.</p>
+            <h1 className="font-display text-2xl font-bold text-slate-900 mb-1">{tr("Quên mật khẩu")}</h1>
+            <p className="text-sm text-slate-600 mb-7">{tr("Nhập email đã đăng ký, chúng tôi sẽ gửi liên kết đặt lại mật khẩu cho bạn.")}</p>
           </motion.div>
 
           {loi && (
@@ -132,7 +133,7 @@ function QuenMatKhau() {
 
           <form onSubmit={xuLySubmit} className="space-y-4">
             <motion.div custom={1} initial="an" animate="hien" variants={bienTheField}>
-              <label htmlFor="forgot-email" className="block text-sm font-medium text-slate-600 mb-1">Email của bạn</label>
+              <label htmlFor="forgot-email" className="block text-sm font-medium text-slate-600 mb-1">{tr("Email của bạn")}</label>
               <input
                 id="forgot-email"
                 type="email"
@@ -151,7 +152,7 @@ function QuenMatKhau() {
                 disabled={dangTai}
                 className="w-full bg-ink-600 text-white font-medium py-2.5 rounded-lg hover:bg-ink-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors shadow-sm"
               >
-                {dangTai ? 'Đang gửi liên kết...' : 'Gửi liên kết đặt lại'}
+                {dangTai ? tr('Đang gửi liên kết...') : tr('Gửi liên kết đặt lại')}
               </motion.button>
             </motion.div>
           </form>
@@ -167,9 +168,7 @@ function QuenMatKhau() {
               to="/login"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-600 hover:text-ink-700 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" />
-              Quay lại đăng nhập
-            </Link>
+              <ArrowLeft className="w-4 h-4" />{tr("Quay lại đăng nhập")}</Link>
           </motion.div>
         </div>
       </div>

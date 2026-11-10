@@ -1,4 +1,34 @@
 import {test,expect} from './fixtures.js';
+import {localDateInput,shiftFinancePeriod} from '../src/pages/taichinh/financeUtils.js';
+
+test('transaction time presets find previous-month and custom-year records independently of summary month',async({session:page,account})=>{
+ await page.setViewportSize({width:390,height:844});
+ const previous=shiftFinancePeriod(localDateInput().slice(0,7),-1);
+ await account.api('POST','/finance/giao-dich',{loai:'chi',danhMuc:'an_uong',soTien:42000,moTa:'Giao dịch tháng trước',ngayGiaoDich:previous+'-05'});
+ await account.api('POST','/finance/giao-dich',{loai:'thu',danhMuc:'khac',soTien:50000,moTa:'Lịch sử năm 2024',ngayGiaoDich:'2024-04-05'});
+ await page.goto('/tai-chinh');
+ const picker=page.getByRole('group',{name:'Chọn tháng giao dịch',exact:true}),rows=page.getByRole('list',{name:'Danh sách giao dịch'});
+ await picker.getByRole('button',{name:'Tháng trước',exact:true}).click();await expect(rows).toContainText('Giao dịch tháng trước');await expect(rows).not.toContainText('Lịch sử năm 2024');
+ await page.getByLabel('Tháng/năm tìm giao dịch',{exact:true}).fill('2024-04');
+ await expect(rows).toContainText('Lịch sử năm 2024');await expect(rows).not.toContainText('Giao dịch tháng trước');
+ await page.getByRole('button',{name:'Mọi thời gian',exact:true}).click();await expect(rows).toContainText('Giao dịch tháng trước');await expect(rows).toContainText('Lịch sử năm 2024');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);
+ await page.screenshot({path:'../docs/qa/finance-time-presets-20261104.png',fullPage:true});
+});
+
+test('compact priority filters clearly select one importance level',async({session:page,account})=>{
+ for(const [tieuDe,doUuTien] of [['Việc nhẹ','thap'],['Việc gấp','cao']])await account.api('POST','/deadline',{tieuDe,doUuTien,hanChot:'2026-12-04T23:59:59+07:00'});
+ for(const width of [390,1440]){
+  await page.setViewportSize({width,height:900});await page.goto('/deadline');
+  const group=page.getByRole('group',{name:'Mức quan trọng',exact:true});
+  await group.getByRole('button',{name:'Thấp',exact:true}).click();
+  await expect(group.getByRole('button',{name:'Thấp',exact:true})).toHaveAttribute('aria-pressed','true');
+  await expect(page.getByRole('button',{name:'Đánh dấu hoàn thành: Việc nhẹ',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Đánh dấu hoàn thành: Việc gấp',exact:true})).toHaveCount(0);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);
+  if(width===1440)await page.screenshot({path:'../docs/qa/deadline-filter-20261104.png',fullPage:true});
+ }
+});
 
 test('finds a transaction recorded in the wrong year, corrects its date, clears filters and deletes it',async({session:page,account})=>{
  await page.setViewportSize({width:390,height:844});
@@ -20,7 +50,7 @@ test('finds a transaction recorded in the wrong year, corrects its date, clears 
  await page.getByLabel('Ngày giao dịch',{exact:true}).fill('2026-11-04');
  await page.getByRole('button',{name:'Lưu thay đổi',exact:true}).click();
  await expect(page.getByLabel('Ngày giao dịch',{exact:true})).toHaveCount(0);
- await page.getByLabel('Thời gian tìm giao dịch',{exact:true}).selectOption('month');
+ await page.getByLabel('Tháng/năm tìm giao dịch',{exact:true}).fill('2026-11');
  await expect(rows).toContainText('4/11/2026');
  await rows.getByRole('button',{name:/Xóa giao dịch/}).click();
  await page.getByRole('alertdialog').getByRole('button',{name:'Xác nhận xóa',exact:true}).click();

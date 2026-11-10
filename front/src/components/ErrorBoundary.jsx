@@ -1,3 +1,4 @@
+import { t as tr } from '../i18n/language';
 import { Component } from 'react';
 
 class ErrorBoundary extends Component {
@@ -20,18 +21,14 @@ class ErrorBoundary extends Component {
         <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#15161F] p-6">
           <div className="text-center max-w-md">
             <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">⚠️</span>
+              <span className="text-3xl">{tr("⚠️")}</span>
             </div>
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Đã xảy ra lỗi</h2>
-            <p className="text-slate-500 dark:text-slate-400 mb-6">
-              Ứng dụng gặp sự cố không mong muốn. Vui lòng tải lại trang.
-            </p>
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">{tr("Đã xảy ra lỗi")}</h2>
+            <p className="text-slate-500 dark:text-slate-400 mb-6">{tr("Ứng dụng gặp sự cố không mong muốn. Vui lòng tải lại trang.")}</p>
             <button
               onClick={() => window.location.reload()}
               className="px-6 py-3 bg-ink-600 hover:bg-ink-700 text-white font-semibold rounded-xl shadow-lg transition-all hover:-translate-y-0.5"
-            >
-              Tải lại trang
-            </button>
+            >{tr("Tải lại trang")}</button>
           </div>
         </div>
       );

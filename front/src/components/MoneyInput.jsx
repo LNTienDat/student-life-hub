@@ -1,7 +1,10 @@
+import { t as tr } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import { useRef, useState } from 'react';
 import { formatMoneyInput, moneyDigits, moneyCaret } from '../utils/moneyInput';
 
 export default function MoneyInput({ value, onValueChange, name, ...props }) {
+  useLanguage();
   const [internal, setInternal] = useState('');
   const inputRef = useRef(null);
   const raw = String(value ?? internal);
@@ -30,7 +33,7 @@ export default function MoneyInput({ value, onValueChange, name, ...props }) {
     if (event.key === 'Delete' && input.value[start] === ' ') input.setSelectionRange(start, start + 2);
   }
   return <>
-    <input {...props} ref={inputRef} type="text" inputMode="numeric" autoComplete="off" pattern="[0-9 ]*[1-9][0-9 ]*" title="Nhập số tiền nguyên lớn hơn 0 đồng" value={formatted} onChange={change} onKeyDown={keyDown} />
+    <input {...props} ref={inputRef} type="text" inputMode="numeric" autoComplete="off" pattern="[0-9 ]*[1-9][0-9 ]*" title={tr("Nhập số tiền nguyên lớn hơn 0 đồng")} value={formatted} onChange={change} onKeyDown={keyDown} />
     {name && <input type="hidden" name={name} value={raw} disabled={props.disabled} />}
   </>;
 }

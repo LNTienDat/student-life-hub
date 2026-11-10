@@ -5,9 +5,32 @@ export function imageDay(text) {
   const found = /^(?:t|thu)([2-7])$/.exec(normalized);
   return found ? Number(found[1]) : null;
 }
+const clockToken = '(?:\\d{1,2}\\s*[:h.;]\\s*[0-5]\\d|[0-2]\\d[0-5]\\d)';
+const clockPair = new RegExp(`\\b(${clockToken})\\s*(?:[-–—−~]|đến|den)\\s*(${clockToken})\\b`, 'i');
+const spacedClockPair = new RegExp(`\\b(${clockToken})\\s+(${clockToken})\\b`, 'i');
+
+function readTime(text) {
+  const source = String(text);
+  // A slash can be a damaged colon after a dash. Leave dates and other slashes alone.
+  const normalized = source.replace(/([-–—−]\s*\d{1,2}\s*)\/(\s*[0-5]\d\b)/g, '$1:$2');
+  const explicit = clockPair.exec(normalized);
+  const match = explicit || spacedClockPair.exec(normalized);
+  if (!match || (!explicit && !/[:h.;]/i.test(match[1] + match[2]))) return null;
+  const range = [match[1], match[2]].map(token => {
+    const digits = token.replace(/\D/g, '').padStart(4, '0');
+    return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+  });
+  if (!range.every(time => time < '24:00')) return null;
+  const end = match.index + match[0].length;
+  return { range, start: match.index, end, prefix: source.slice(0, match.index), suffix: source.slice(end) };
+}
 export function timeRange(text) {
-  const times = [...String(text).replace(/([-–])\s*(\d{1,2})\s*\/\s*([0-5]\d)\b/g, '$1 $2:$3').matchAll(/\b(?:(\d{1,2})\s*[:h.]\s*([0-5]\d)|([0-2]\d)([0-5]\d))\b/g)].map(m => `${(m[1] || m[3]).padStart(2, '0')}:${m[2] || m[4]}`);
-  return times.length >= 2 && times[0] < '24:00' && times[1] < '24:00' ? times.slice(0, 2) : null;
+  return readTime(text)?.range || null;
+}
+export function wordsFromOcr(data) {
+  return (data.blocks || []).flatMap(block => (block.paragraphs || [])
+    .flatMap(paragraph => (paragraph.lines || []).flatMap(line => line.words || [])))
+    .filter(word => word.text?.trim() && word.bbox);
 }
 function wordLines(words) {
   const sorted = [...words].sort((a,b) => a.bbox.y0 - b.bbox.y0 || a.bbox.x0 - b.bbox.x0);
@@ -21,43 +44,134 @@ function wordLines(words) {
   }
   return lines.sort((a,b) => a.y-b.y).map(line => ({ ...line, coloredNote: line.words.some(word => word.coloredNote), text: line.words.sort((a,b) => a.bbox.x0-b.bbox.x0).map(w=>w.text).join(' ') }));
 }
-function metadata(text) { return /^(?:tiet|phong|lop(?:\s*:|\s+(?:dh|[0-9]))|gv|ths|ts[. ]|pgs|dh\d|ghi\s*chu|tam ngung|nghi hoc)/.test(fold(text).replace(/^[^a-z0-9]+/, '')) || /\b[il]\d[-–]\d{2}\b/i.test(text); }
+const cleanedLine = text => text.trim().replace(/^[^\p{L}\p{N}]+/u, '');
+const teacherLabel = /^(?:gv|th\s*\.?\s*s|ts|pgs(?:\s*\.?\s*ts)?)(?:[. :]+|$)/;
+const classLabel = /^(?:dh\d|lop(?:\s*:|\s+(?:dh|\d)))/;
+const noteLabel = /(?:^ghi\s*chu\b|\s+ghi\s*chu\s*[:.-]|(?:^|\s)(?:tam ngung|nghi hoc|huy buoi|tam nghi)\b)/;
+const suspendedLabel = /^(?:t[ao]m ngung|nghi hoc|huy buoi|tam nghi)\b/;
+const roomCode = /\b([il1][2-5]|[il]\d)\s*[-–—]+\s*(\d{2})\b/i;
+const roomText = text => text.replace(/\bph[oò]ng\s+m[aáàoó]y(?:\s+t[ií]nh)?\b/gi, match =>
+  /\bt[ií]nh\b/i.test(match) ? 'Phòng máy tính' : 'Phòng máy').replace(/\s+\|$/, '').slice(0, 50);
+
+function roomFromLine(text) {
+  const line = cleanedLine(text);
+  const code = roomCode.exec(line);
+  const label = /^phong(?:\s*[:.-]\s*|\s+(?=[a-z]{0,3}\d))/i.exec(fold(line));
+  if (code && (code.index === 0 || /^[\d\s]+$/.test(line.slice(0, code.index)) || label)) {
+    const hasRoomLabel = label || /\(\s*phong\b/.test(fold(line));
+    const building = code[1].replace(/^[il]|^1(?=\d$)/i, prefix => prefix === '1' && !hasRoomLabel ? prefix : 'I');
+    return roomText(`${building}-${code[2]}${line.slice(code.index + code[0].length)}`);
+  }
+  // A standalone room such as "A101" is safe after a clock line.
+  if (/^[A-Z]{1,3}\d{2,4}(?:\s*\([^)]*\))?$/.test(line) && !classLabel.test(fold(line))) return line.slice(0, 50);
+  if (label) return roomText(line.slice(label[0].length));
+  return '';
+}
+
+function metadata(text) {
+  const line = fold(cleanedLine(text));
+  return /^(?:tiet\s*\d|phong\s*:)/.test(line) || teacherLabel.test(line)
+    || classLabel.test(line) || Boolean(roomFromLine(text));
+}
+
+function stripTitleNote(text) {
+  const source = cleanedLine(text.normalize('NFC'));
+  const marker = fold(source).search(noteLabel);
+  return (marker < 0 ? source : source.slice(0, marker)).trim();
+}
+
+function plausibleUnlabeledTeacher(text) {
+  if (!text || metadata(text)) return '';
+  const name = cleanedLine(text);
+  const tokens = name.split(/\s+/);
+  return tokens.length >= 2 && tokens.length <= 6
+    && /^(?:nguyen|tran|le|pham|vo|vu|dang|ngo|bui|hoang|huynh|do|ho|duong|dinh|phan|trinh|ly|luu|mai|truong)$/.test(fold(tokens[0]))
+    && tokens.every(token => /^\p{Lu}\p{L}+$/u.test(token)) ? name.slice(0, 100) : '';
+}
+
+function clockBox(words, reading) {
+  if (!words?.length) return null;
+  let offset = 0;
+  const timeWords = words.filter(word => {
+    const start = offset;
+    offset += word.text.length + 1;
+    return offset - 1 > reading.start && start < reading.end;
+  });
+  const bounds = timeWords.length ? timeWords : words;
+  return {
+    x0: Math.min(...bounds.map(word => word.bbox.x0)),
+    x1: Math.max(...bounds.map(word => word.bbox.x1)),
+    y0: Math.min(...bounds.map(word => word.bbox.y0)),
+    y1: Math.max(...bounds.map(word => word.bbox.y1)),
+  };
+}
+
 function sessions(lines, day) {
-  const output = [];
+  const parsed = [];
   let previousTime = -1;
   for (let index = 0; index < lines.length; index++) {
-    const range = timeRange(lines[index].text);
-    if (!range) continue;
-    const before = lines.slice(Math.max(previousTime + 1, index - 4), index);
+    const reading = readTime(lines[index].text);
+    if (!reading || metadata(reading.prefix)) continue;
+    const first = Math.max(previousTime + 1, index - 6);
+    const before = lines.slice(first, index);
     const title = [];
-    const isNote = (line, position) => (line.coloredNote && position > 0 && !before[position - 1].coloredNote && !metadata(before[position - 1].text) && !timeRange(before[position - 1].text)) || /^(?:[^a-z]*)(?:ghi\s*chu|t[ao]m ngung|nghi hoc)/.test(fold(line.text));
-    const annotationBeforeTime = before.some(isNote);
-    for (let j=before.length-1; j>=0; j--) {
-      const text = before[j].text.trim();
-      const height=before[j].words?.reduce((sum,w)=>sum+w.bbox.y1-w.bbox.y0,0)/(before[j].words?.length || 1) || 12;
-      if(title.length && before[j+1] && before[j+1].y-before[j].y>Math.max(35,height*2.5))break;
-      if (isNote(before[j], j)) continue;
-      if (!text || metadata(text) || imageDay(text) || /\d{1,2}\s*(?:th|thang)\d/i.test(fold(text))) break;
-      title.unshift(text.replace(/^[^\p{L}\p{N}]+/u,''));
-      if (title.length >= 3) break;
+    let titleStart = index;
+    const inlineTitle = stripTitleNote(reading.prefix).replace(/[^\p{L}\p{N})]+$/u, '');
+    if (/\p{L}{2}/u.test(inlineTitle) && !imageDay(inlineTitle)) title.push(inlineTitle);
+    let annotationBeforeTime = stripTitleNote(reading.prefix) !== cleanedLine(reading.prefix);
+    let suspended = false;
+    for (let j = before.length - 1; j >= 0 && title.length < 3; j--) {
+      const line = before[j];
+      const text = cleanedLine(line.text);
+      const preceding = lines[first + j - 1];
+      const next = lines[first + j + 1];
+      const height = line.words?.length ? line.words.reduce((sum, word) => sum + word.bbox.y1 - word.bbox.y0, 0) / line.words.length : 12;
+      if (line.words?.length && next.y - line.y > Math.max(35, height * 2.5)) break;
+      if (!text || metadata(text) || imageDay(text) || /\d{1,2}\s*(?:th|thang)\s*\d/i.test(fold(text))) break;
+      if (preceding && classLabel.test(fold(cleanedLine(preceding.text))) && plausibleUnlabeledTeacher(text)) break;
+      if (suspendedLabel.test(fold(text))) {
+        suspended = true;
+        titleStart = first + j;
+        break;
+      }
+      const looksColoredNote = line.coloredNote && j > 0 && !before[j - 1].coloredNote
+        && !metadata(before[j - 1].text) && !timeRange(before[j - 1].text);
+      const fragment = stripTitleNote(text);
+      annotationBeforeTime ||= looksColoredNote || fragment !== text;
+      if (!looksColoredNote && fragment) title.unshift(fragment);
+      if (fragment || looksColoredNote || annotationBeforeTime) titleStart = first + j;
     }
-    let end=index+1;
-    while(end<lines.length && !timeRange(lines[end].text)) end++;
-    const after=lines.slice(index+1,Math.min(end,index+8));
-    const block=[...before,...after].map(l=>l.text).join(' ');
-    const suspended=/t[ao]m ngung|nghi hoc|huy buoi|tam nghi/.test(fold(block));
-    const room=after.find(l=>/phong/i.test(fold(l.text)) || /[il1]\d[-–]+\d{2}/i.test(l.text));
-    const teacher=after.find(l=>/(?:^|\s)(?:gv[. :]|ths[. ]|ts[. ]|pgs[. ])/.test(fold(l.text)) && !/bao hoc|nghi|tam ngung/.test(fold(l.text)));
-    const classCode=after.findIndex(l=>/dh\d/i.test(l.text));
-    const plainTeacher=classCode>=0?after[classCode+1]?.text.replace(/^[^\p{L}]+/u,''):'';
-    output.push({ id:`ocr-${day || 'unknown'}-${index}`, selected:!suspended, annotationBeforeTime, tenMon:title.join(' '), thu:day || '', gioBatDau:range[0], gioKetThuc:range[1], phongHoc:room ? room.text.replace(/^[^\p{L}\p{N}]+/u,'').slice(0,50) : '', giangVien:teacher ? teacher.text.replace(/^[^\p{L}]+/u,'').slice(0,100) : plainTeacher && !metadata(plainTeacher) && !timeRange(plainTeacher) ? plainTeacher.slice(0,100) : '', warning:suspended ? 'Ảnh có dấu hiệu tạm ngưng/nghỉ học. Đã bỏ chọn; kiểm tra trước khi thêm.' : !day ? 'Chưa xác định được thứ. Hãy chọn lại.' : '', source:lines[index].text, timeBox:lines[index].words?.length ? { x0:Math.min(...lines[index].words.map(w=>w.bbox.x0)), x1:Math.max(...lines[index].words.map(w=>w.bbox.x1)), y0:Math.min(...lines[index].words.map(w=>w.bbox.y0)), y1:Math.max(...lines[index].words.map(w=>w.bbox.y1)) } : null });
-    previousTime=index;
+    parsed.push({ index, titleStart, title: title.join(' '), annotationBeforeTime, suspended, reading });
+    previousTime = index;
   }
-  return output;
+  return parsed.map((entry, position) => {
+    const { index, title, reading, annotationBeforeTime } = entry;
+    const end = Math.min(parsed[position + 1]?.titleStart ?? lines.length, index + 8);
+    const after = [reading.suffix, ...lines.slice(index + 1, end).map(line => line.text)].map(cleanedLine).filter(Boolean);
+    const room = after.map(roomFromLine).find(Boolean) || '';
+    const labeledTeacher = after.find(text => teacherLabel.test(fold(text)) && !/bao hoc|nghi hoc|tam ngung/.test(fold(text)));
+    const classIndex = after.findIndex(text => classLabel.test(fold(text)));
+    const teacher = labeledTeacher?.slice(0, 100) || (classIndex >= 0 ? plausibleUnlabeledTeacher(after[classIndex + 1]) : '');
+    const suspended = entry.suspended || after.some(text => suspendedLabel.test(fold(text)));
+    return {
+      id: `ocr-${day || 'unknown'}-${index}`, selected: !suspended, annotationBeforeTime, tenMon: title, thu: day || '',
+      gioBatDau: reading.range[0], gioKetThuc: reading.range[1], phongHoc: room, giangVien: teacher,
+      warning: suspended ? 'Ảnh có dấu hiệu tạm ngưng/nghỉ học. Đã bỏ chọn; kiểm tra trước khi thêm.' : !day ? 'Chưa xác định được thứ. Hãy chọn lại.' : '',
+      source: lines[index].text, timeBox: clockBox(lines[index].words, reading),
+    };
+  });
 }
 export function getTimetableColumns(data) {
-  const words=(data.blocks || []).flatMap(block=>(block.paragraphs || []).flatMap(p=>(p.lines || []).flatMap(line=>line.words || []))).filter(w=>w.text?.trim() && w.bbox);
-  const headers=words.map(word=>({ day:imageDay(word.text), x:(word.bbox.x0+word.bbox.x1)/2, y:word.bbox.y1 })).filter(h=>h.day);
+  const words = wordsFromOcr(data);
+  const headers = wordLines(words).flatMap(line => line.words.flatMap((word, index, lineWords) => {
+    const next = lineWords[index + 1];
+    const direct = imageDay(word.text);
+    const nearby = next && next.bbox.x0 - word.bbox.x1 < (word.bbox.y1 - word.bbox.y0) * 1.5;
+    const day = direct || (nearby && imageDay(`${word.text} ${next.text}`));
+    if (!day) return [];
+    const end = direct ? word : next;
+    return [{ day, x: (word.bbox.x0 + end.bbox.x1) / 2, y: Math.max(word.bbox.y1, end.bbox.y1) }];
+  }));
   const firstHeader=headers.length ? Math.min(...headers.map(h=>h.y)) : 0;
   const topHeaders=headers.filter(h=>Math.abs(h.y-firstHeader)<50);
   const unique=[...new Map(topHeaders.map(h=>[h.day,h])).values()].sort((a,b)=>a.day-b.day);
@@ -98,11 +212,11 @@ export function getTimetableGridColumns({data,width,height}) {
   return Array.from({length:7},(_,i)=>({day:null,left:Math.max(0,start+i*step),right:Math.min(width,start+(i+1)*step),top:0}));
 }
 export function extractImageTimetable(data, fixedDay = null) {
-  const words=(data.blocks || []).flatMap(block=>(block.paragraphs || []).flatMap(p=>(p.lines || []).flatMap(line=>line.words || []))).filter(w=>w.text?.trim() && w.bbox);
-  if (fixedDay) return sessions(wordLines(words), fixedDay).slice(0,100);
+  const words = wordsFromOcr(data);
+  const lines = words.length ? wordLines(words) : (data.text || '').split(/\r?\n/).map((text, i) => ({ text, y: i }));
+  if (fixedDay) return sessions(lines, Number(fixedDay) || null).slice(0, 100);
   const columns=getTimetableColumns(data);
   if(columns.length) return columns.flatMap(column=>sessions(wordLines(words.filter(w=>w.bbox.y0>column.top && (w.bbox.x0+w.bbox.x1)/2>=column.left && (w.bbox.x0+w.bbox.x1)/2<column.right)),column.day)).slice(0,100);
-  const lines=words.length?wordLines(words):(data.text || '').split(/\r?\n/).map((text,i)=>({text,y:i}));
   let day=null;const sections=[];let current=[];
   for(const line of lines){const found=imageDay(line.text);if(found){sections.push(...sessions(current,day));current=[];day=found;}else current.push(line);}
   return [...sections,...sessions(current,day)].slice(0,100);

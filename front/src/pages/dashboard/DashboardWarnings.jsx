@@ -1,9 +1,12 @@
+import { t as tr } from '../../i18n/language';
+import useLanguage from '../../hooks/useLanguage';
 import { motion } from 'framer-motion';
 import { AlertTriangle, TrendingDown } from 'lucide-react';
 import { dinhDangTien } from '../../utils/formatters';
 import { TEN_DANH_MUC } from '../../constants';
 
 export default function DashboardWarnings({ monNguyCo = [], nganSachVuot = [], itemVariants }) {
+  useLanguage();
   if (monNguyCo.length === 0 && nganSachVuot.length === 0) return null;
 
   return (
@@ -17,9 +20,7 @@ export default function DashboardWarnings({ monNguyCo = [], nganSachVuot = [], i
             <div className="p-1.5 rounded-lg bg-rose-100 text-rose-700">
               <AlertTriangle className="w-4 h-4" />
             </div>
-            <p className="font-semibold text-rose-900 dark:text-rose-200 text-sm sm:text-base">
-              Cảnh báo học tập: {monNguyCo.length} môn có nguy cơ điểm thấp
-            </p>
+            <p className="font-semibold text-rose-900 dark:text-rose-200 text-sm sm:text-base">{tr("Cảnh báo học tập: ")}{monNguyCo.length}{tr(" môn có nguy cơ điểm thấp")}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {monNguyCo.map((mon) => (
@@ -44,9 +45,7 @@ export default function DashboardWarnings({ monNguyCo = [], nganSachVuot = [], i
             <div className="p-1.5 rounded-lg bg-amber-100 text-amber-700">
               <TrendingDown className="w-4 h-4" />
             </div>
-            <p className="font-semibold text-amber-900 dark:text-amber-200 text-sm sm:text-base">
-              Cảnh báo ngân sách: {nganSachVuot.length} danh mục đã chi tiêu vượt định mức
-            </p>
+            <p className="font-semibold text-amber-900 dark:text-amber-200 text-sm sm:text-base">{tr("Cảnh báo ngân sách: ")}{nganSachVuot.length}{tr(" danh mục đã chi tiêu vượt định mức")}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {nganSachVuot.map((ns, i) => (

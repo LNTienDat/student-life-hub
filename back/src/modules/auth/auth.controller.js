@@ -6,6 +6,7 @@ const prisma = require('../../prismaClient');
 const { serializable } = require('../../utils/transaction.util');
 const { guiEmailDatLaiMatKhau } = require('../../utils/email.util');
 const { AUTH } = require('../../constants');
+const { validAvatar } = require('../../utils/avatar.util');
 
 const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const normalizeEmail = value => typeof value === 'string' ? value.trim().toLowerCase() : '';
@@ -125,8 +126,8 @@ async function suaHoSo(req, res) {
     if (khoaHoc !== undefined && khoaHoc.length > AUTH.MAX_KHOA_HOC_LENGTH) {
       return res.status(400).json({ message: `Khóa học không được vượt quá ${AUTH.MAX_KHOA_HOC_LENGTH} ký tự` });
     }
-    if (avatar !== undefined && avatar.length > AUTH.MAX_AVATAR_LENGTH) {
-      return res.status(400).json({ message: 'Đường dẫn avatar quá dài' });
+    if (avatar !== undefined && !validAvatar(avatar)) {
+      return res.status(400).json({ message: 'Ảnh đại diện không hợp lệ. Chọn ảnh có sẵn hoặc tải lại ảnh JPG, PNG, WebP.' });
     }
 
     const nguoiDung = await serializable(prisma, async tx => {

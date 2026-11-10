@@ -1,7 +1,10 @@
+import { t as tr } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import { Link } from 'react-router-dom';
 import './NotFound.css';
 
 function NotFound() {
+  useLanguage();
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#e8e8e8] dark:bg-[#1a1a1a] transition-colors duration-200 overflow-hidden relative z-0">
       <div className="main_wrapper relative z-10">
@@ -77,9 +80,7 @@ function NotFound() {
           <Link
             to="/"
             className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-ink-600 hover:bg-ink-700 text-white font-semibold rounded-xl shadow-lg transition-all hover:-translate-y-0.5"
-          >
-            ← Quay về trang chủ
-          </Link>
+          >{tr("← Quay về trang chủ")}</Link>
         </div>
       </div>
     </div>

@@ -114,11 +114,28 @@ test('note labels are excluded without dropping wrapped course titles', () => {
   assert.equal(rows[0].tenMon, 'Môn có tiêu đề màu cam xuống dòng thứ hai');
 });
 
-test('OCR Lop trinh is a course title, not a class metadata line',()=>{
+test('a fixed-day OCR reading preserves the course even when only plain text is available',()=>{
  const r=extractImageTimetable({text:'Lộp trình Python - Thực hành\n13:00 - 17:15'},2);
- // Fixed-day extraction uses positioned OCR words.
  const words=[word('Lộp trình Python - Thực hành',100,100),word('13:00 - 17:15',100,125)];
  const parsed=extractImageTimetable(data(words),2);
  assert.equal(parsed[0].tenMon,'Lộp trình Python - Thực hành');
- assert.deepEqual(r,[]);
+ assert.equal(r[0].tenMon, parsed[0].tenMon);
+ assert.equal(r[0].thu, 2);
+ assert.equal(r[0].timeBox, null);
+});
+
+test('a cursor time, notes and two neighboring sessions keep distinct metadata', () => {
+  const rows = extractImageTimetable({ text: [
+    'Kỹ năng nghề nghiệp Ghi chú: Học phòng máy',
+    '13:51 13:00 - 17:15',
+    '9 I4-03',
+    'DH23TIN06',
+    'Võ Văn Phúc',
+    'Lập trình Python - Thực hành 18:00 - 20:15 Phòng: 13-01 (Phòng móy)',
+    'ThS. Đặng Mạnh Huy',
+  ].join('\n') }, 5);
+  assert.deepEqual(rows.map(row => [row.tenMon, row.gioBatDau, row.gioKetThuc, row.phongHoc, row.giangVien]), [
+    ['Kỹ năng nghề nghiệp', '13:00', '17:15', 'I4-03', 'Võ Văn Phúc'],
+    ['Lập trình Python - Thực hành', '18:00', '20:15', 'I3-01 (Phòng máy)', 'ThS. Đặng Mạnh Huy'],
+  ]);
 });

@@ -1,3 +1,5 @@
+import { t as tr } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import ModalDialog from '../components/ModalDialog';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
@@ -13,6 +15,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import { dinhDangNgay } from '../utils/formatters';
 
 function ChiTietNhom() {
+  useLanguage();
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -236,8 +239,7 @@ function ChiTietNhom() {
           to="/nhom"
           className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Quay lại danh sách nhóm
-        </Link>
+          <ArrowLeft className="w-4 h-4" />{tr(" Quay lại danh sách nhóm")}</Link>
 
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60 p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">
           <div>
@@ -247,27 +249,25 @@ function ChiTietNhom() {
               </h1>
               {laChuNhom && (
                 <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  Bạn là Trưởng nhóm
-                </span>
+                  <ShieldCheck className="w-3.5 h-3.5" />{tr("Bạn là Trưởng nhóm")}</span>
               )}
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
-              {nhom.moTa || 'Chưa có mô tả nhóm.'}
+              {nhom.moTa || tr('Chưa có mô tả nhóm.')}
             </p>
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
             {/* Hộp mã mời */}
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
-              <span className="text-xs text-slate-500">Mã mời:</span>
+              <span className="text-xs text-slate-500">{tr("Mã mời:")}</span>
               <span className="font-mono font-bold text-sm text-ink-600 dark:text-ink-400 tracking-wider">
                 {nhom.maCode}
               </span>
               <button
                 onClick={copyMaNhom}
                 className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-                title="Sao chép mã"
+                title={tr("Sao chép mã")}
               >
                 {maDaCopy ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
               </button>
@@ -278,15 +278,13 @@ function ChiTietNhom() {
                 onClick={xacNhanGiaiTanNhom}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 transition-colors"
               >
-                <Trash2 className="w-3.5 h-3.5" /> Giải tán nhóm
-              </button>
+                <Trash2 className="w-3.5 h-3.5" />{tr(" Giải tán nhóm")}</button>
             ) : (
               <button
                 onClick={xacNhanRoiNhom}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors"
               >
-                <LogOut className="w-3.5 h-3.5" /> Rời nhóm
-              </button>
+                <LogOut className="w-3.5 h-3.5" />{tr(" Rời nhóm")}</button>
             )}
           </div>
         </div>
@@ -299,35 +297,28 @@ function ChiTietNhom() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-ink-600 dark:text-ink-400" />
-                Deadline của nhóm ({nhom.deadlineNhoms?.length || 0})
+                <Calendar className="w-5 h-5 text-ink-600 dark:text-ink-400" />{tr("Deadline của nhóm (")}{nhom.deadlineNhoms?.length || 0})
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Theo dõi và đánh dấu tiến độ làm việc của từng bạn trong nhóm.
-              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{tr("Theo dõi và đánh dấu tiến độ làm việc của từng bạn trong nhóm.")}</p>
             </div>
 
             <button
               onClick={() => setHienModalDeadline(true)}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-ink-600 hover:bg-ink-700 text-white text-xs font-semibold shadow-sm transition-colors"
             >
-              <Plus className="w-3.5 h-3.5" /> Thêm deadline
-            </button>
+              <Plus className="w-3.5 h-3.5" />{tr(" Thêm deadline")}</button>
           </div>
 
           {nhom.deadlineNhoms?.length === 0 ? (
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60 p-10 text-center">
               <Clock className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Nhóm chưa có deadline nào</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4">
-                Thêm bài tập lớn, lịch nộp báo cáo hoặc các mốc quan trọng để cả nhóm cùng theo dõi.
-              </p>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{tr("Nhóm chưa có deadline nào")}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4">{tr("Thêm bài tập lớn, lịch nộp báo cáo hoặc các mốc quan trọng để cả nhóm cùng theo dõi.")}</p>
               <button
                 onClick={() => setHienModalDeadline(true)}
                 className="px-4 py-2 rounded-xl bg-ink-600 hover:bg-ink-700 text-white text-xs font-semibold inline-flex items-center gap-1.5"
               >
-                <Plus className="w-3.5 h-3.5" /> Tạo deadline đầu tiên
-              </button>
+                <Plus className="w-3.5 h-3.5" />{tr(" Tạo deadline đầu tiên")}</button>
             </div>
           ) : (
             <div className="space-y-4">
@@ -358,7 +349,7 @@ function ChiTietNhom() {
                               ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300'
                               : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                           }`}>
-                            {dl.doUuTien === 'cao' ? 'Ưu tiên cao' : 'Bình thường'}
+                            {dl.doUuTien === 'cao' ? tr('Ưu tiên cao') : tr('Bình thường')}
                           </span>
                         </div>
                         {dl.moTa && (
@@ -366,8 +357,7 @@ function ChiTietNhom() {
                             {dl.moTa}
                           </p>
                         )}
-                        <p className="text-xs text-slate-400 mt-1">
-                          Hạn chót: <span className="font-semibold text-slate-700 dark:text-slate-200">{dinhDangNgay(dl.hanChot, true)}</span> • Tạo bởi: {dl.nguoiTao?.ten}
+                        <p className="text-xs text-slate-400 mt-1">{tr("Hạn chót: ")}<span className="font-semibold text-slate-700 dark:text-slate-200">{dinhDangNgay(dl.hanChot, true)}</span>{tr(" • Tạo bởi: ")}{dl.nguoiTao?.ten}
                         </p>
                       </div>
 
@@ -375,7 +365,7 @@ function ChiTietNhom() {
                         <button
                           onClick={() => xacNhanXoaDeadline(dl.id, dl.tieuDe)}
                           className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                          title="Xóa deadline này"
+                          title={tr("Xóa deadline này")}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -385,9 +375,9 @@ function ChiTietNhom() {
                     {/* Hàng 2: Thanh tiến độ tổng quan của nhóm */}
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs">
-                        <span className="text-slate-500 font-medium">Tiến độ cả nhóm:</span>
+                        <span className="text-slate-500 font-medium">{tr("Tiến độ cả nhóm:")}</span>
                         <span className="font-bold text-ink-600 dark:text-ink-400">
-                          {soHoanThanh}/{tongThanhVien} bạn hoàn thành ({phanTramHoanThanh}%)
+                          {soHoanThanh}/{tongThanhVien}{tr(" bạn hoàn thành (")}{phanTramHoanThanh}%)
                         </span>
                       </div>
                       <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
@@ -401,9 +391,7 @@ function ChiTietNhom() {
                     {/* Hàng 3: Tiến độ của chính tôi (Quick toggle) */}
                     <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 flex-wrap">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                          Trạng thái của bạn:
-                        </span>
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{tr("Trạng thái của bạn:")}</span>
                         <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                           trangThaiCuaToi === 'hoan_thanh'
                             ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
@@ -411,7 +399,7 @@ function ChiTietNhom() {
                             ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
                             : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
                         }`}>
-                          {trangThaiCuaToi === 'hoan_thanh' ? 'Đã xong' : trangThaiCuaToi === 'dang_lam' ? 'Đang làm' : 'Chưa làm'}
+                          {trangThaiCuaToi === 'hoan_thanh' ? tr('Đã xong') : trangThaiCuaToi === 'dang_lam' ? tr('Đang làm') : tr('Chưa làm')}
                         </span>
                       </div>
 
@@ -426,7 +414,7 @@ function ChiTietNhom() {
                                 : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
                             }`}
                           >
-                            {tt === 'chua_lam' ? 'Chưa làm' : tt === 'dang_lam' ? 'Đang làm' : 'Đã xong'}
+                            {tt === 'chua_lam' ? tr('Chưa làm') : tt === 'dang_lam' ? tr('Đang làm') : tr('Đã xong')}
                           </button>
                         ))}
                       </div>
@@ -434,9 +422,7 @@ function ChiTietNhom() {
 
                     {/* Hàng 4: Chi tiết từng thành viên */}
                     <div className="pt-2 border-t border-slate-100 dark:border-slate-700/50">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-2">
-                        Tiến độ các thành viên:
-                      </span>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-2">{tr("Tiến độ các thành viên:")}</span>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {dl.tienDos.map((td) => (
                           <div
@@ -444,7 +430,7 @@ function ChiTietNhom() {
                             className="flex items-center justify-between p-2 rounded-lg bg-slate-50/50 dark:bg-slate-900/30 text-xs"
                           >
                             <span className="text-slate-700 dark:text-slate-200 font-medium truncate max-w-[140px]">
-                              {td.nguoiDung?.ten} {td.idNguoiDung === user?.id && '(Bạn)'}
+                              {td.nguoiDung?.ten} {td.idNguoiDung === user?.id && tr('(Bạn)')}
                             </span>
                             <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                               td.trangThai === 'hoan_thanh'
@@ -453,7 +439,7 @@ function ChiTietNhom() {
                                 ? 'text-amber-600 dark:text-amber-400'
                                 : 'text-slate-400'
                             }`}>
-                              {td.trangThai === 'hoan_thanh' ? '✔ Đã xong' : td.trangThai === 'dang_lam' ? '⏳ Đang làm' : '○ Chưa làm'}
+                              {td.trangThai === 'hoan_thanh' ? tr('✔ Đã xong') : td.trangThai === 'dang_lam' ? tr('⏳ Đang làm') : tr('○ Chưa làm')}
                             </span>
                           </div>
                         ))}
@@ -471,8 +457,7 @@ function ChiTietNhom() {
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700/60 p-5 shadow-sm">
             <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center justify-between mb-4">
               <span className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-ink-600 dark:text-ink-400" />
-                Thành viên ({nhom.thanhViens?.length || 0})
+                <Users className="w-4 h-4 text-ink-600 dark:text-ink-400" />{tr("Thành viên (")}{nhom.thanhViens?.length || 0})
               </span>
             </h2>
 
@@ -492,10 +477,10 @@ function ChiTietNhom() {
                       </div>
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
-                          {tv.nguoiDung?.ten} {laToi && <span className="text-ink-600 dark:text-ink-400 font-normal">(Bạn)</span>}
+                          {tv.nguoiDung?.ten} {laToi && <span className="text-ink-600 dark:text-ink-400 font-normal">{tr("(Bạn)")}</span>}
                         </p>
                         <p className="text-[11px] text-slate-400 truncate">
-                          {laChuNhomThanhVien ? 'Trưởng nhóm' : 'Thành viên'}
+                          {laChuNhomThanhVien ? tr('Trưởng nhóm') : tr('Thành viên')}
                         </p>
                       </div>
                     </div>
@@ -504,10 +489,8 @@ function ChiTietNhom() {
                       <button
                         onClick={() => xacNhanKick(tv.idNguoiDung, tv.nguoiDung?.ten)}
                         className="text-xs text-rose-500 hover:text-rose-700 p-1 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded"
-                        title="Xóa thành viên này"
-                      >
-                        Đuổi
-                      </button>
+                        title={tr("Xóa thành viên này")}
+                      >{tr("Đuổi")}</button>
                     )}
                   </div>
                 );
@@ -519,21 +502,18 @@ function ChiTietNhom() {
 
       {/* Modal Thêm Deadline Nhóm */}
       {hienModalDeadline && (
-        <ModalDialog open={hienModalDeadline} onClose={() => setHienModalDeadline(false)} title="Thêm deadline nhóm" busy={dangXuLyDeadline}>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              Deadline này sẽ hiển thị cho toàn bộ thành viên trong nhóm.
-            </p>
+        <ModalDialog open={hienModalDeadline} onClose={() => setHienModalDeadline(false)} title={tr("Thêm deadline nhóm")} busy={dangXuLyDeadline}>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">{tr("Deadline này sẽ hiển thị cho toàn bộ thành viên trong nhóm.")}</p>
 
             <form onSubmit={xuLyTaoDeadline} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                  Tiêu đề <span className="text-rose-500">*</span>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">{tr("Tiêu đề ")}<span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={tieuDeDeadline}
                   onChange={(e) => setTieuDeDeadline(e.target.value)}
-                  placeholder="VD: Nộp slide thuyết trình đề tài"
+                  placeholder={tr("VD: Nộp slide thuyết trình đề tài")}
                   maxLength={150}
                   required
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ink-500/30"
@@ -541,8 +521,7 @@ function ChiTietNhom() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                  Hạn chót <span className="text-rose-500">*</span>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">{tr("Hạn chót ")}<span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="datetime-local"
@@ -554,28 +533,24 @@ function ChiTietNhom() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                  Độ ưu tiên
-                </label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">{tr("Độ ưu tiên")}</label>
                 <select
                   value={doUuTienDeadline}
                   onChange={(e) => setDoUuTienDeadline(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ink-500/30"
                 >
-                  <option value="thap">Thấp</option>
-                  <option value="binh_thuong">Bình thường</option>
-                  <option value="cao">Ưu tiên cao</option>
+                  <option value="thap">{tr("Thấp")}</option>
+                  <option value="binh_thuong">{tr("Bình thường")}</option>
+                  <option value="cao">{tr("Ưu tiên cao")}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                  Mô tả / Ghi chú (tùy chọn)
-                </label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">{tr("Mô tả / Ghi chú (tùy chọn)")}</label>
                 <textarea
                   value={moTaDeadline}
                   onChange={(e) => setMoTaDeadline(e.target.value)}
-                  placeholder="VD: Cần tổng hợp trước 2 ngày để nộp cho nhóm trưởng..."
+                  placeholder={tr("VD: Cần tổng hợp trước 2 ngày để nộp cho nhóm trưởng...")}
                   rows={3}
                   maxLength={500}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ink-500/30 resize-none"
@@ -588,15 +563,13 @@ function ChiTietNhom() {
                   onClick={() => setHienModalDeadline(false)}
                   disabled={dangXuLyDeadline}
                   className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-                >
-                  Hủy
-                </button>
+                >{tr("Hủy")}</button>
                 <button
                   type="submit"
                   disabled={dangXuLyDeadline}
                   className="px-4 py-2 rounded-xl text-sm font-medium bg-ink-600 hover:bg-ink-700 text-white shadow-sm"
                 >
-                  {dangXuLyDeadline ? 'Đang thêm...' : 'Tạo deadline'}
+                  {dangXuLyDeadline ? tr('Đang thêm...') : tr('Tạo deadline')}
                 </button>
               </div>
             </form>

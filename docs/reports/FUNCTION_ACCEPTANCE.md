@@ -1,5 +1,11 @@
 # Kết quả kiểm thử chức năng — 21/10/2026
 
+> **Cập nhật online 30/10:** commit 3801331 đã Live, backend/frontend trùng phiên bản, Neon health tốt; CI GitHub đạt. Đã kiểm tra 8 nhóm API online và luồng giao diện/OCR mẫu. Email online, AI thật và điện thoại thật chưa đạt nghiệm thu. Xem [báo cáo mới](ONLINE_RELEASE_2026_10_30.md); các kết quả cũ bên dưới giữ làm lịch sử.
+
+> **Cập nhật tối ưu 24/10:** 203 bài tự động và 23 nhóm thao tác trình duyệt đạt trên mã local hiện tại. Xem [báo cáo và giới hạn](OPTIMIZATION_2026_10_24.md). Các kết quả 21/10 bên dưới là lịch sử.
+
+> Cập nhật 24/10: luồng Tài chính đã bổ sung sửa giao dịch trên giao diện và chọn kỳ. Xem [nghiệm thu mới](../guides/FINANCE_COMPLETE.md). Các kết quả 21/10 bên dưới là lịch sử.
+
 Phạm vi: mã local tại `D:\EDU\Do_An_2_SLH`, database thử riêng PostgreSQL 18. Không phải kết quả nghiệm thu toàn bộ bản Render hoặc Android thật. Email được thu giữ trong tiến trình thử; không gửi email thật hoặc gọi Gemini.
 
 ## Kết quả thực tế

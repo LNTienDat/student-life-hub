@@ -1,3 +1,5 @@
+import { t as tr } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import PasswordToggle from '../components/PasswordToggle';
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -17,6 +19,7 @@ const bienTheField = {
 };
 
 function Login() {
+  useLanguage();
   const [email, setEmail] = useState('');
   const [matKhau, setMatKhau] = useState('');
   const [hienMatKhau, setHienMatKhau] = useState(false);
@@ -58,9 +61,7 @@ function Login() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
             className="font-display text-3xl font-bold text-white leading-snug max-w-sm"
-          >
-            Deadline, điểm số và tiền bạc — gọn trong một trang sổ.
-          </motion.h1>
+          >{tr("Deadline, điểm số và tiền bạc — gọn trong một trang sổ.")}</motion.h1>
 
           {/* 3 lá ghi chú xếp tầng — hình minh họa gắn trực tiếp với 3 trụ cột của app.
               Khoảng lệch được tính để phần chữ không bao giờ bị thẻ trên đè lên. */}
@@ -73,9 +74,9 @@ function Login() {
             >
               <div className="flex items-center gap-2 mb-1.5">
                 <Wallet className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">Số dư tháng này</span>
+                <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">{tr("Số dư tháng này")}</span>
               </div>
-              <p className="font-display text-xl font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">850.000 đ</p>
+              <p className="font-display text-xl font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">{tr("850.000 đ")}</p>
             </motion.div>
 
             <motion.div
@@ -86,9 +87,9 @@ function Login() {
             >
               <div className="flex items-center gap-2 mb-1.5">
                 <CalendarDays className="w-3.5 h-3.5 text-rose-500" />
-                <span className="text-[11px] font-medium text-rose-600 dark:text-rose-400">Deadline gần nhất</span>
+                <span className="text-[11px] font-medium text-rose-600 dark:text-rose-400">{tr("Deadline gần nhất")}</span>
               </div>
-              <p className="text-sm font-semibold text-rose-600 dark:text-rose-400 whitespace-nowrap">Đồ án — còn 2 ngày</p>
+              <p className="text-sm font-semibold text-rose-600 dark:text-rose-400 whitespace-nowrap">{tr("Đồ án — còn 2 ngày")}</p>
             </motion.div>
 
             <motion.div
@@ -99,7 +100,7 @@ function Login() {
             >
               <div className="flex items-center gap-2 mb-1.5">
                 <GraduationCap className="w-3.5 h-3.5 text-amber-500" />
-                <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">GPA hiện tại</span>
+                <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">{tr("GPA hiện tại")}</span>
               </div>
               <p className="font-display text-xl font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">3.42 / 4.0</p>
             </motion.div>
@@ -114,8 +115,8 @@ function Login() {
         <div className="w-full max-w-sm">
           <motion.div initial="an" animate="hien" custom={0} variants={bienTheField}>
             <p className="lg:hidden text-sm text-slate-400 mb-1">Student Life Hub</p>
-            <h1 className="font-display text-2xl font-bold text-slate-900 mb-1">Chào bạn quay lại</h1>
-            <p className="text-sm text-slate-600 mb-7">Đăng nhập để tiếp tục theo dõi việc học.</p>
+            <h1 className="font-display text-2xl font-bold text-slate-900 mb-1">{tr("Chào bạn quay lại")}</h1>
+            <p className="text-sm text-slate-600 mb-7">{tr("Đăng nhập để tiếp tục theo dõi việc học.")}</p>
           </motion.div>
 
           {loi && (
@@ -143,10 +144,8 @@ function Login() {
 
             <motion.div custom={2} initial="an" animate="hien" variants={bienTheField}>
               <div className="flex items-baseline justify-between mb-1">
-                <label htmlFor="login-password" className="block text-sm font-medium text-slate-600">Mật khẩu</label>
-                <Link to="/quen-mat-khau" className="text-xs text-ink-600 hover:text-ink-700">
-                  Quên mật khẩu?
-                </Link>
+                <label htmlFor="login-password" className="block text-sm font-medium text-slate-600">{tr("Mật khẩu")}</label>
+                <Link to="/quen-mat-khau" className="text-xs text-ink-600 hover:text-ink-700">{tr("Quên mật khẩu?")}</Link>
               </div>
               <div className="relative">
                 <input
@@ -168,7 +167,7 @@ function Login() {
                 disabled={dangTai}
                 className="w-full bg-ink-600 text-white font-medium py-2.5 rounded-lg hover:bg-ink-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors shadow-sm"
               >
-                {dangTai ? 'Đang xử lý...' : 'Đăng nhập'}
+                {dangTai ? tr('Đang xử lý...') : tr('Đăng nhập')}
               </motion.button>
             </motion.div>
           </form>
@@ -179,11 +178,8 @@ function Login() {
             animate="hien"
             variants={bienTheField}
             className="text-center text-sm text-slate-600 mt-6"
-          >
-            Chưa có tài khoản?{' '}
-            <Link to="/register" className="text-ink-600 hover:text-ink-700 font-medium">
-              Đăng ký ngay
-            </Link>
+          >{tr("Chưa có tài khoản?")}{' '}
+            <Link to="/register" className="text-ink-600 hover:text-ink-700 font-medium">{tr("Đăng ký ngay")}</Link>
           </motion.p>
         </div>
       </div>

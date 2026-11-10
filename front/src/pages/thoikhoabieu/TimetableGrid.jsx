@@ -1,7 +1,10 @@
+import { t as tr } from '../../i18n/language';
+import useLanguage from '../../hooks/useLanguage';
 import { Calendar as CalendarIcon, Clock, MapPin, User, Edit2, Trash2, CalendarClock } from 'lucide-react';
 import { CAC_THU, mauChoMon } from './timetableUtils';
 
 function TimetableGrid({ buoiTheoThu = {}, onSua, onXoa, onDieuChinh, readOnly = false, disabled = false }) {
+  useLanguage();
   return (
     <>
       {/* Hàng tiêu đề các thứ (Desktop) */}
@@ -11,7 +14,7 @@ function TimetableGrid({ buoiTheoThu = {}, onSua, onXoa, onDieuChinh, readOnly =
             key={t.gia}
             className="text-center py-4 border-r last:border-r-0 border-slate-200 dark:border-slate-700/60"
           >
-            <span className="font-display font-semibold text-slate-700 dark:text-slate-300 text-sm">{t.ten}</span>
+            <span className="font-display font-semibold text-slate-700 dark:text-slate-300 text-sm">{tr(t.ten)}</span>
           </div>
         ))}
       </div>
@@ -29,7 +32,7 @@ function TimetableGrid({ buoiTheoThu = {}, onSua, onXoa, onDieuChinh, readOnly =
                 {buois.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-600 py-10 opacity-50">
                     <CalendarIcon className="w-6 h-6 mb-2" />
-                    <span className="text-xs font-medium">Trống</span>
+                    <span className="text-xs font-medium">{tr("Trống")}</span>
                   </div>
                 ) : (
                   buois.map((bh) => (
@@ -59,20 +62,20 @@ function TimetableGrid({ buoiTheoThu = {}, onSua, onXoa, onDieuChinh, readOnly =
                         )}
                       </div>
 
-                      {bh.daDieuChinh&&<p className="mt-2 text-xs font-semibold">Đã đổi riêng ngày {bh.ngayHoc}</p>}
+                      {bh.daDieuChinh&&<p className="mt-2 text-xs font-semibold">{tr("Đã đổi riêng ngày ")}{bh.ngayHoc}</p>}
                       {/* Actions hover */}
                       {!readOnly && <div className="mt-3 flex justify-end gap-1 border-t border-current/10 pt-2">
-                        {onDieuChinh&&<button type="button" disabled={disabled} onClick={()=>onDieuChinh(bh)} title="Nghỉ hoặc đổi riêng ngày này" aria-label={'Điều chỉnh ngày '+bh.tenMon} className="inline-flex min-h-9 min-w-9 items-center justify-center rounded bg-white/50 dark:bg-black/20"><CalendarClock className="h-4 w-4"/></button>}
+                        {onDieuChinh&&<button type="button" disabled={disabled} onClick={()=>onDieuChinh(bh)} title={tr("Nghỉ hoặc đổi riêng ngày này")} aria-label={tr('Điều chỉnh ngày ')+bh.tenMon} className="inline-flex min-h-9 min-w-9 items-center justify-center rounded bg-white/50 dark:bg-black/20"><CalendarClock className="h-4 w-4"/></button>}
                         <button type="button" disabled={disabled}
                           onClick={() => onSua?.(bh)}
-                          aria-label={`Sửa buổi học ${bh.tenMon}`}
+                          aria-label={tr("Sửa buổi học {0}", bh.tenMon)}
                           className="inline-flex min-h-9 min-w-9 items-center justify-center p-1 bg-white/50 hover:bg-white dark:bg-black/20 dark:hover:bg-black/40 rounded shadow-sm text-slate-700 dark:text-slate-200"
                         >
                           <Edit2 className="w-3 h-3" />
                         </button>
                         <button type="button" disabled={disabled}
                           onClick={() => onXoa?.(bh)}
-                          aria-label={`Xóa buổi học ${bh.tenMon}`}
+                          aria-label={tr("Xóa buổi học {0}", bh.tenMon)}
                           className="inline-flex min-h-9 min-w-9 items-center justify-center p-1 bg-white/50 hover:bg-white dark:bg-black/20 dark:hover:bg-black/40 rounded shadow-sm text-rose-600 dark:text-rose-400"
                         >
                           <Trash2 className="w-3 h-3" />

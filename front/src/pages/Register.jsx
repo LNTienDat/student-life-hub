@@ -1,3 +1,5 @@
+import { t as tr } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import PasswordToggle from '../components/PasswordToggle';
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -16,6 +18,7 @@ const bienTheField = {
 };
 
 function Register() {
+  useLanguage();
   const [hienXacNhan, setHienXacNhan] = useState(false);
   const [ten, setTen] = useState('');
   const [email, setEmail] = useState('');
@@ -64,9 +67,7 @@ function Register() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
             className="font-display text-3xl font-bold text-white leading-snug max-w-sm"
-          >
-            Bắt đầu hành trình kiểm soát cuộc sống sinh viên của bạn.
-          </motion.h1>
+          >{tr("Bắt đầu hành trình kiểm soát cuộc sống sinh viên của bạn.")}</motion.h1>
 
           <div className="relative h-64 mt-8 max-w-sm">
             <motion.div
@@ -77,9 +78,9 @@ function Register() {
             >
               <div className="flex items-center gap-2 text-slate-400 mb-1.5">
                 <Trophy className="w-3.5 h-3.5 text-amber-500" />
-                <span className="text-[11px] font-medium text-amber-600">Mục tiêu học tập</span>
+                <span className="text-[11px] font-medium text-amber-600">{tr("Mục tiêu học tập")}</span>
               </div>
-              <p className="font-display text-[17px] font-bold text-amber-600 whitespace-nowrap">Học bổng xuất sắc</p>
+              <p className="font-display text-[17px] font-bold text-amber-600 whitespace-nowrap">{tr("Học bổng xuất sắc")}</p>
             </motion.div>
 
             <motion.div
@@ -90,9 +91,9 @@ function Register() {
             >
               <div className="flex items-center gap-2 text-slate-400 mb-1.5">
                 <PiggyBank className="w-3.5 h-3.5 text-rose-500" />
-                <span className="text-[11px] font-medium text-rose-600">Mục tiêu tài chính</span>
+                <span className="text-[11px] font-medium text-rose-600">{tr("Mục tiêu tài chính")}</span>
               </div>
-              <p className="text-[15px] font-bold text-rose-600 whitespace-nowrap">Tiết kiệm 500k / tháng</p>
+              <p className="text-[15px] font-bold text-rose-600 whitespace-nowrap">{tr("Tiết kiệm 500k / tháng")}</p>
             </motion.div>
 
             <motion.div
@@ -103,9 +104,9 @@ function Register() {
             >
               <div className="flex items-center gap-2 text-slate-400 mb-1.5">
                 <Target className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-[11px] font-medium text-emerald-600">Kỷ luật bản thân</span>
+                <span className="text-[11px] font-medium text-emerald-600">{tr("Kỷ luật bản thân")}</span>
               </div>
-              <p className="font-display text-lg font-bold text-emerald-600 whitespace-nowrap">Không trễ Deadline</p>
+              <p className="font-display text-lg font-bold text-emerald-600 whitespace-nowrap">{tr("Không trễ Deadline")}</p>
             </motion.div>
           </div>
         </div>
@@ -118,8 +119,8 @@ function Register() {
         <div className="w-full max-w-sm">
           <motion.div initial="an" animate="hien" custom={0} variants={bienTheField}>
             <p className="lg:hidden text-sm text-slate-400 mb-1">Student Life Hub</p>
-            <h1 className="font-display text-2xl font-bold text-slate-900 mb-1">Tạo tài khoản</h1>
-            <p className="text-sm text-slate-600 mb-7">Đăng ký để đồng bộ toàn bộ việc học và chi tiêu.</p>
+            <h1 className="font-display text-2xl font-bold text-slate-900 mb-1">{tr("Tạo tài khoản")}</h1>
+            <p className="text-sm text-slate-600 mb-7">{tr("Đăng ký để đồng bộ toàn bộ việc học và chi tiêu.")}</p>
           </motion.div>
 
           {loi && (
@@ -134,13 +135,13 @@ function Register() {
 
           <form onSubmit={xuLySubmit} className="space-y-4">
             <motion.div custom={1} initial="an" animate="hien" variants={bienTheField}>
-              <label htmlFor="register-name" className="block text-sm font-medium text-slate-600 mb-1">Họ tên</label>
+              <label htmlFor="register-name" className="block text-sm font-medium text-slate-600 mb-1">{tr("Họ tên")}</label>
               <input
                 id="register-name"
                 type="text"
                 value={ten}
                 onChange={(e) => setTen(e.target.value)}
-                placeholder="Nguyễn Văn A"
+                placeholder={tr("Nguyễn Văn A")}
                 maxLength={30}
                 className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
                 required
@@ -161,14 +162,14 @@ function Register() {
             </motion.div>
 
             <motion.div custom={3} initial="an" animate="hien" variants={bienTheField}>
-              <label htmlFor="register-password" className="block text-sm font-medium text-slate-600 mb-1">Mật khẩu</label>
+              <label htmlFor="register-password" className="block text-sm font-medium text-slate-600 mb-1">{tr("Mật khẩu")}</label>
               <div className="relative">
                 <input
                   id="register-password"
                   type={hienMatKhau ? 'text' : 'password'}
                   value={matKhau}
                   onChange={(e) => setMatKhau(e.target.value)}
-                  placeholder="Tối thiểu 6 ký tự"
+                  placeholder={tr("Tối thiểu 6 ký tự")}
                   minLength={6}
                   className="w-full border border-slate-300 rounded-lg pl-3 pr-12 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
                   required
@@ -178,19 +179,19 @@ function Register() {
             </motion.div>
 
             <motion.div custom={4} initial="an" animate="hien" variants={bienTheField}>
-              <label htmlFor="register-confirm-password" className="block text-sm font-medium text-slate-600 mb-1">Xác nhận mật khẩu</label>
+              <label htmlFor="register-confirm-password" className="block text-sm font-medium text-slate-600 mb-1">{tr("Xác nhận mật khẩu")}</label>
               <div className="relative">
                 <input
                   id="register-confirm-password"
                   type={hienXacNhan ? 'text' : 'password'}
                   value={xacNhanMatKhau}
                   onChange={(e) => setXacNhanMatKhau(e.target.value)}
-                  placeholder="Nhập lại mật khẩu"
+                  placeholder={tr("Nhập lại mật khẩu")}
                   minLength={6}
                   className="w-full border border-slate-300 rounded-lg pl-3 pr-12 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/40 focus:border-ink-500 transition"
                   required
                 />
-              <PasswordToggle visible={hienXacNhan} onClick={() => setHienXacNhan(!hienXacNhan)} label="xác nhận mật khẩu" />
+              <PasswordToggle visible={hienXacNhan} onClick={() => setHienXacNhan(!hienXacNhan)} label={tr("xác nhận mật khẩu")} />
 </div>
             </motion.div>
 
@@ -201,7 +202,7 @@ function Register() {
                 disabled={dangTai}
                 className="w-full bg-ink-600 text-white font-medium py-2.5 rounded-lg hover:bg-ink-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors shadow-sm"
               >
-                {dangTai ? 'Đang tạo tài khoản...' : 'Đăng ký ngay'}
+                {dangTai ? tr('Đang tạo tài khoản...') : tr('Đăng ký ngay')}
               </motion.button>
             </motion.div>
           </form>
@@ -212,11 +213,8 @@ function Register() {
             animate="hien"
             variants={bienTheField}
             className="text-center text-sm text-slate-600 mt-6"
-          >
-            Đã có tài khoản?{' '}
-            <Link to="/login" className="text-ink-600 hover:text-ink-700 font-medium">
-              Đăng nhập
-            </Link>
+          >{tr("Đã có tài khoản?")}{' '}
+            <Link to="/login" className="text-ink-600 hover:text-ink-700 font-medium">{tr("Đăng nhập")}</Link>
           </motion.p>
         </div>
       </div>

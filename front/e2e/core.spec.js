@@ -15,7 +15,7 @@ test('register, sign in, reload, sign out and browser Back protect private pages
  await page.getByRole('button',{name:'Đăng nhập',exact:true}).click();
  await expect(page).toHaveURL(/\/dashboard$/);
  await page.reload();await expect(page.locator('main h1')).toContainText('Registration E2E');
- await page.getByRole('button',{name:'Đăng xuất khỏi tài khoản',exact:true}).click();
+ await page.goto('/ho-so'); await page.getByRole('button',{name:'Đăng xuất',exact:true}).click();
  await expect(page).toHaveURL(/\/login$/);
  await page.goBack();await expect(page).toHaveURL(/\/login$/);
  await expect(page.getByLabel('Mật khẩu',{exact:true})).toBeVisible();

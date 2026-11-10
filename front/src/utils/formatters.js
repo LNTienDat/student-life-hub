@@ -1,3 +1,4 @@
+import { getLocale } from '../i18n/language.js';
 /**
  * formatters.js
  * Tập trung toàn bộ hàm định dạng dữ liệu (tiền tệ, ngày tháng, thời gian)
@@ -10,7 +11,7 @@
  * @returns {string} Chuỗi định dạng ví dụ: "150.000 ₫"
  */
 export function dinhDangTien(so) {
-  return new Intl.NumberFormat('vi-VN', {
+  return new Intl.NumberFormat(getLocale(), {
     style: 'currency',
     currency: 'VND',
   }).format(so || 0);
@@ -28,7 +29,7 @@ export function dinhDangNgay(ngay, coGio = false) {
   if (isNaN(d.getTime())) return '';
 
   if (coGio) {
-    return d.toLocaleString('vi-VN', {
+    return d.toLocaleString(getLocale(), {
       timeZone: 'Asia/Ho_Chi_Minh',
       hour: '2-digit',
       minute: '2-digit',
@@ -38,7 +39,7 @@ export function dinhDangNgay(ngay, coGio = false) {
     });
   }
 
-  return d.toLocaleDateString('vi-VN', {
+  return d.toLocaleDateString(getLocale(), {
     timeZone: 'Asia/Ho_Chi_Minh',
     day: '2-digit',
     month: '2-digit',

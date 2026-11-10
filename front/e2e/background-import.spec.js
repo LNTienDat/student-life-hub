@@ -34,7 +34,7 @@ test('real timetable OCR continues across routes and retains the three editable 
  const names=await preview.getByLabel('Tên môn',{exact:true}).evaluateAll(nodes=>nodes.map(node=>node.value));
  expect(names.join(' ')).toMatch(/Python/);expect(names.join(' ')).toMatch(/Xử lý ảnh/);expect(names.join(' ')).toMatch(/UML/);
  await preview.getByLabel('Tên môn',{exact:true}).first().fill('Bản nháp đã sửa');
- await nav.locator('a[href="/tai-chinh"]').click();await nav.locator('a[href="/thoi-khoa-bieu"]').click();
+ await nav.locator('a[href="/tai-chinh"]').click();await nav.locator('a[href="/lich-hoc"]').click();
  await expect(page.getByLabel('Tên môn',{exact:true}).first()).toHaveValue('Bản nháp đã sửa');
  await page.screenshot({path:'../docs/qa/background-import-20261103.png',fullPage:true});
 });

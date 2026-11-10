@@ -19,7 +19,7 @@ test('mobile quick actions highlight only selected form and academic controls al
  const list=await page.getByRole('button',{name:'Xem dạng danh sách'}).boundingBox();const calendar=await page.getByRole('button',{name:'Xem dạng lịch'}).boundingBox();expect(Math.abs(list.width-calendar.width)).toBeLessThan(2);
  await page.screenshot({path:'../docs/qa/mobile-deadline-controls-20261030.png',fullPage:true});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
- await page.getByRole('navigation',{name:'Điều hướng dưới trên điện thoại'}).locator('a[href="/thoi-khoa-bieu"]').click();
+ await page.getByRole('navigation',{name:'Điều hướng dưới trên điện thoại'}).locator('a[href="/lich-hoc"]').click();
  const addClass=await page.getByRole('button',{name:'Thêm buổi học',exact:true}).first().boundingBox();
  const share=await page.getByRole('button',{name:'Chia sẻ TKB',exact:true}).boundingBox();
  const importImage=await page.getByRole('button',{name:'Nhập ảnh',exact:true}).boundingBox();

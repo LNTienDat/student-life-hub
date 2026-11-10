@@ -1,6 +1,8 @@
+import { t as tr } from './i18n/language';
+import useLanguage from './hooks/useLanguage';
 import { lazy, Suspense } from 'react';
 import { MotionConfig } from 'framer-motion';
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
@@ -27,23 +29,27 @@ const Profile = lazy(() => import('./pages/Profile'));
 const NhomHocTap = lazy(() => import('./pages/NhomHocTap'));
 const ChiTietNhom = lazy(() => import('./pages/ChiTietNhom'));
 const ChiaSeTKB = lazy(() => import('./pages/ChiaSeTKB'));
+const RandomPicker = lazy(() => import('./pages/RandomPicker'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 function PageLoader() {
+  useLanguage();
   return (
     <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3">
       <div className="w-9 h-9 border-3 border-ink-200 dark:border-ink-800 border-t-ink-600 dark:border-t-ink-400 rounded-full animate-spin" />
-      <span className="text-xs font-medium text-ink-500 dark:text-ink-400">Đang tải trang...</span>
+      <span className="text-xs font-medium text-ink-500 dark:text-ink-400">{tr("Đang tải trang...")}</span>
     </div>
   );
 }
 
 function SessionToastProvider({ children }) {
+  useLanguage();
   const { user } = useAuth();
   return <ToastProvider key={user?.id || 'guest'}>{children}</ToastProvider>;
 }
 
 function AuthenticatedLayout() {
+  useLanguage();
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" />;
   return (
@@ -53,7 +59,14 @@ function AuthenticatedLayout() {
   );
 }
 
+function LegacyTimetableRedirect() {
+  useLanguage();
+  const { search, hash } = useLocation();
+  return <Navigate to={{ pathname: '/lich-hoc', search, hash }} replace />;
+}
+
 function App() {
+  useLanguage();
   return (
     <ErrorBoundary>
       <MotionConfig reducedMotion="user">
@@ -71,6 +84,7 @@ function App() {
                     <Route path="/quen-mat-khau" element={<QuenMatKhau />} />
                     <Route path="/dat-lai-mat-khau" element={<DatLaiMatKhau />} />
                     <Route path="/chia-se-tkb/:token" element={<ChiaSeTKB />} />
+                    <Route path="/chon-ngau-nhien" element={<RandomPicker />} />
 
                     {/* Authenticated routes */}
                     <Route element={<AuthenticatedLayout />}>
@@ -78,7 +92,8 @@ function App() {
                       <Route path="/mon-hoc" element={<MonHoc />} />
                       <Route path="/deadline" element={<Deadline />} />
                       <Route path="/tai-chinh" element={<TaiChinh />} />
-                      <Route path="/thoi-khoa-bieu" element={<ThoiKhoaBieu />} />
+                      <Route path="/lich-hoc" element={<ThoiKhoaBieu />} />
+                      <Route path="/thoi-khoa-bieu" element={<LegacyTimetableRedirect />} />
                       <Route path="/nhom" element={<NhomHocTap />} />
                       <Route path="/nhom/:id" element={<ChiTietNhom />} />
                       <Route path="/tai-lieu" element={<TaiLieu />} />

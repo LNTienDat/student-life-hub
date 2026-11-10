@@ -1,3 +1,5 @@
+import { t as tr } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import { useEffect, useRef, useState } from 'react';
 import { Camera, ImagePlus, Plus, X } from 'lucide-react';
 import api from '../services/api';
@@ -9,6 +11,7 @@ import { imageRowsUpload, validateImageRows } from '../pages/thoikhoabieu/imageI
 
 const inputStyle='mt-1 min-h-11 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white';
 export default function TimetableImageImport({ semester: initialSemester = '', onImported, pickerOpen = false, onPickerClose = () => {} }) {
+  useLanguage();
   const draft=useTimetableImport();
   const { job, open, rows, text, image, busy, progress, message }=draft;
   const semester=draft.semester ?? initialSemester;
@@ -56,30 +59,30 @@ export default function TimetableImageImport({ semester: initialSemester = '', o
     finally{lock.current=false;setSaving(false);}
   }
   return <>
-    <ModalDialog open={pickerOpen} onClose={onPickerClose} title="Nhập lịch từ ảnh">
-      <p className="text-sm text-slate-500 dark:text-slate-300">Chọn ảnh rõ chữ. Kiểm tra trước khi lưu.</p>
+    <ModalDialog open={pickerOpen} onClose={onPickerClose} title={tr("Nhập lịch từ ảnh")}>
+      <p className="text-sm text-slate-500 dark:text-slate-300">{tr("Chọn ảnh rõ chữ. Kiểm tra trước khi lưu.")}</p>
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <button type="button" disabled={busy||saving} onClick={()=>fileRef.current?.click()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-ink-600 px-3 text-white disabled:opacity-50"><ImagePlus className="h-5 w-5"/>Chọn ảnh</button>
-        <button type="button" disabled={busy||saving} onClick={()=>cameraRef.current?.click()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 dark:border-slate-600 disabled:opacity-50"><Camera className="h-5 w-5"/>Chụp ảnh</button>
+        <button type="button" disabled={busy||saving} onClick={()=>fileRef.current?.click()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-ink-600 px-3 text-white disabled:opacity-50"><ImagePlus className="h-5 w-5"/>{tr("Chọn ảnh")}</button>
+        <button type="button" disabled={busy||saving} onClick={()=>cameraRef.current?.click()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 dark:border-slate-600 disabled:opacity-50"><Camera className="h-5 w-5"/>{tr("Chụp ảnh")}</button>
       </div>
     </ModalDialog>
-    <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={read} aria-label="Chọn ảnh thời khóa biểu" className="sr-only" disabled={busy||saving}/>
-    <input ref={cameraRef} type="file" accept="image/png,image/jpeg,image/webp" capture="environment" onChange={read} aria-label="Chụp ảnh thời khóa biểu" className="sr-only" disabled={busy||saving}/>
+    <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={read} aria-label={tr("Chọn ảnh thời khóa biểu")} className="sr-only" disabled={busy||saving}/>
+    <input ref={cameraRef} type="file" accept="image/png,image/jpeg,image/webp" capture="environment" onChange={read} aria-label={tr("Chụp ảnh thời khóa biểu")} className="sr-only" disabled={busy||saving}/>
     {open&&<section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-800">
-      <div className="flex items-center justify-between gap-3"><h2 className="font-semibold">Kiểm tra lịch từ ảnh</h2>{busy&&<button type="button" onClick={cancel} className="inline-flex min-h-11 items-center gap-2 px-3"><X className="h-4 w-4"/>Dừng đọc</button>}</div>
-      {busy&&<div role="status" className="space-y-2"><p>{progress?`Đang đọc ảnh · ${progress}%`:'Đang chuẩn bị nhận diện… Lần đầu có thể mất một lúc.'}</p><progress max="100" value={progress||undefined} className="w-full"/></div>}
-      {message&&<p role="status" className="rounded-xl bg-slate-50 p-3 text-slate-700 dark:bg-slate-900 dark:text-slate-200">{message}</p>}
-      {!existingReady&&<button type="button" disabled={saving} onClick={()=>setRetry(value=>value+1)} className="min-h-11 text-ink-600 underline">Kiểm tra lại lịch hiện có</button>}
-      {image&&<details><summary className="cursor-pointer py-2 text-ink-600">Xem ảnh gốc</summary><img src={image} alt="Ảnh thời khóa biểu đã chọn" className="mt-2 max-h-96 max-w-full rounded-xl object-contain"/></details>}
+      <div className="flex items-center justify-between gap-3"><h2 className="font-semibold">{tr("Kiểm tra lịch từ ảnh")}</h2>{busy&&<button type="button" onClick={cancel} className="inline-flex min-h-11 items-center gap-2 px-3"><X className="h-4 w-4"/>{tr("Dừng đọc")}</button>}</div>
+      {busy&&<div role="status" className="space-y-2"><p>{progress?tr("Đang đọc ảnh · {0}%", progress):tr('Đang chuẩn bị nhận diện… Lần đầu có thể mất một lúc.')}</p><progress max="100" value={progress||undefined} className="w-full"/></div>}
+      {message&&<p role="status" className="rounded-xl bg-slate-50 p-3 text-slate-700 dark:bg-slate-900 dark:text-slate-200">{tr(message)}</p>}
+      {!existingReady&&<button type="button" disabled={saving} onClick={()=>setRetry(value=>value+1)} className="min-h-11 text-ink-600 underline">{tr("Kiểm tra lại lịch hiện có")}</button>}
+      {image&&<details><summary className="cursor-pointer py-2 text-ink-600">{tr("Xem ảnh gốc")}</summary><img src={image} alt={tr("Ảnh thời khóa biểu đã chọn")} className="mt-2 max-h-96 max-w-full rounded-xl object-contain"/></details>}
       {!busy&&(image||rows.length>0)&&<>
-        <div className="rounded-xl bg-amber-50 p-3 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">Lịch lặp hằng tuần. Bỏ chọn buổi nghỉ trước khi lưu.</div>
-        <label className="block max-w-md font-medium">Học kỳ<input value={semester} onChange={event=>{setSemester(event.target.value);setMessage('');}} disabled={saving} placeholder="Ví dụ: HK1 2026–2027" maxLength={100} className={inputStyle}/></label>
+        <div className="rounded-xl bg-amber-50 p-3 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">{tr("Lịch lặp hằng tuần. Bỏ chọn buổi nghỉ trước khi lưu.")}</div>
+        <label className="block max-w-md font-medium">{tr("Học kỳ")}<input value={semester} onChange={event=>{setSemester(event.target.value);setMessage('');}} disabled={saving} placeholder={tr("Ví dụ: HK1 2026–2027")} maxLength={100} className={inputStyle}/></label>
         <TimetableImagePreview rows={rows} checks={checks} saving={saving} onUpdate={update} onRemove={id=>setRows(previous=>previous.filter(item=>item.id!==id))}/>
 
         {semesterError&&selected>0&&<p role="alert" className="text-rose-600 dark:text-rose-300">{semesterError}</p>}
-        <div className="flex flex-wrap items-center gap-3"><button type="button" disabled={saving||rows.length>=100} onClick={add} className="inline-flex min-h-11 items-center gap-2 rounded-xl border px-3"><Plus className="h-4 w-4"/>Thêm dòng</button><span className="text-slate-500">Đã chọn {selected} buổi · {count} buổi mới</span><button type="button" disabled={busy||saving||invalid||!count||!existingReady} onClick={save} className="min-h-11 rounded-xl bg-emerald-600 px-4 font-semibold text-white disabled:opacity-50">{saving?'Đang lưu…':`Lưu ${count} buổi học`}</button></div>
+        <div className="flex flex-wrap items-center gap-3"><button type="button" disabled={saving||rows.length>=100} onClick={add} className="inline-flex min-h-11 items-center gap-2 rounded-xl border px-3"><Plus className="h-4 w-4"/>{tr("Thêm dòng")}</button><span className="text-slate-500">{tr("Đã chọn ")}{selected}{tr(" buổi · ")}{count}{tr(" buổi mới")}</span><button type="button" disabled={busy||saving||invalid||!count||!existingReady} onClick={save} className="min-h-11 rounded-xl bg-emerald-600 px-4 font-semibold text-white disabled:opacity-50">{saving?tr('Đang lưu…'):tr("Lưu {0} buổi học", count)}</button></div>
       </>}
-      {text&&<details><summary className="cursor-pointer py-2 text-ink-600">Xem chữ nhận diện</summary><pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-xs dark:bg-slate-900">{text}</pre></details>}
+      {text&&<details><summary className="cursor-pointer py-2 text-ink-600">{tr("Xem chữ nhận diện")}</summary><pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-xs dark:bg-slate-900">{text}</pre></details>}
     </section>}
   </>;
 }

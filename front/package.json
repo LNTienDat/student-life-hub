@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node --test tests/completion.test.js tests/today.test.js tests/deadline.test.js tests/dataEvents.test.js tests/finance.test.js tests/receipt.test.js tests/session.test.js tests/backendConnection.test.js tests/timetableImage.test.js tests/chatbot.test.js tests/ocrDeadline.test.js tests/receiptRecovery.test.js tests/timetableImportJob.test.js",
+    "test": "node --test tests/completion.test.js tests/today.test.js tests/deadline.test.js tests/dataEvents.test.js tests/finance.test.js tests/receipt.test.js tests/session.test.js tests/backendConnection.test.js tests/timetableImage.test.js tests/chatbot.test.js tests/ocrDeadline.test.js tests/receiptRecovery.test.js tests/timetableImportJob.test.js tests/language.test.js",
     "test:pwa": "npm run build && node --test tests/pwa.test.js tests/build.test.js",
     "test:e2e": "playwright test"
   },

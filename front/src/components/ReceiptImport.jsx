@@ -1,8 +1,11 @@
+import { t as tr } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import { useEffect, useRef, useState } from 'react';
 import { Camera, ImagePlus } from 'lucide-react';
 import ModalDialog from './ModalDialog';
 import { recognizeReceipt } from '../services/receiptImage';
 export default function ReceiptImport({open,onClose,onRecognized}) {
+  useLanguage();
   const input=useRef(null),camera=useRef(null),controller=useRef(null),version=useRef(0);
   const [busy,setBusy]=useState(false),[progress,setProgress]=useState(0),[message,setMessage]=useState('');
   useEffect(()=>()=>{version.current++;controller.current?.abort();},[]);
@@ -19,16 +22,16 @@ export default function ReceiptImport({open,onClose,onRecognized}) {
     }catch(error){if(run===version.current)setMessage(abort.signal.aborted?'Đã dừng đọc hóa đơn.':error.message||'Chưa đọc được hóa đơn.');}
     finally{clearTimeout(timer);if(run===version.current)setBusy(false);}
   }
-  return <ModalDialog open={open} onClose={close} title="Quét hóa đơn" closeLabel={busy?'Dừng quét và đóng':'Đóng'}>
-    <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">Đọc ảnh trên thiết bị. Kiểm tra trước khi lưu.</p>
+  return <ModalDialog open={open} onClose={close} title={tr("Quét hóa đơn")} closeLabel={busy?tr('Dừng quét và đóng'):tr('Đóng')}>
+    <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">{tr("Đọc ảnh trên thiết bị. Kiểm tra trước khi lưu.")}</p>
     <div className="mt-4 grid grid-cols-2 gap-3">
-      <button type="button" disabled={busy} onClick={()=>input.current?.click()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-ink-600 px-4 text-white disabled:opacity-50"><ImagePlus className="h-4 w-4"/>Chọn ảnh</button>
-      <button type="button" disabled={busy} onClick={()=>camera.current?.click()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 dark:border-slate-600 dark:text-white disabled:opacity-50"><Camera className="h-4 w-4"/>Chụp ảnh</button>
+      <button type="button" disabled={busy} onClick={()=>input.current?.click()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-ink-600 px-4 text-white disabled:opacity-50"><ImagePlus className="h-4 w-4"/>{tr("Chọn ảnh")}</button>
+      <button type="button" disabled={busy} onClick={()=>camera.current?.click()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 dark:border-slate-600 dark:text-white disabled:opacity-50"><Camera className="h-4 w-4"/>{tr("Chụp ảnh")}</button>
     </div>
-    <input ref={input} type="file" aria-label="Chọn ảnh hóa đơn" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={read} disabled={busy}/>
-    <input ref={camera} type="file" aria-label="Chụp hóa đơn" accept="image/png,image/jpeg,image/webp" capture="environment" className="sr-only" onChange={read} disabled={busy}/>
-    {busy&&<p role="status" className="mt-4 text-sm text-slate-500">Đang đọc hóa đơn… {progress}%</p>}
-    {message&&<p role="alert" className="mt-4 text-sm text-rose-600">{message}</p>}
+    <input ref={input} type="file" aria-label={tr("Chọn ảnh hóa đơn")} accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={read} disabled={busy}/>
+    <input ref={camera} type="file" aria-label={tr("Chụp hóa đơn")} accept="image/png,image/jpeg,image/webp" capture="environment" className="sr-only" onChange={read} disabled={busy}/>
+    {busy&&<p role="status" className="mt-4 text-sm text-slate-500">{tr("Đang đọc hóa đơn… ")}{progress}%</p>}
+    {message&&<p role="alert" className="mt-4 text-sm text-rose-600">{tr(message)}</p>}
 
   </ModalDialog>;
 }

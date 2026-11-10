@@ -1,3 +1,5 @@
+import { t as tr } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,6 +18,7 @@ export default function ConfirmModal({
   type = 'danger', // 'danger' | 'warning' | 'info'
   isLoading = false
 }) {
+  useLanguage();
   const cancelBtnRef = useRef(null);
   const dialogRef = useRef(null);
   const stateRef = useRef({ isLoading, onClose });
@@ -124,8 +127,8 @@ export default function ConfirmModal({
               onClick={onClose}
               disabled={isLoading}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors disabled:opacity-50"
-              title="Đóng"
-              aria-label="Đóng"
+              title={tr("Đóng")}
+              aria-label={tr("Đóng")}
             >
               <X className="w-4 h-4" />
             </button>
@@ -152,11 +155,11 @@ export default function ConfirmModal({
 
               <div className="min-w-0 flex-1 pr-6 break-words">
                 <h3 id={titleId} className="text-lg font-bold text-slate-900 dark:text-white leading-snug">
-                  {title}
+                  {tr(title)}
                 </h3>
                 {subTitle && (
                   <p className="text-xs font-semibold text-ink-600 dark:text-ink-400 mt-0.5">
-                    {subTitle}
+                    {tr(subTitle)}
                   </p>
                 )}
               </div>
@@ -194,7 +197,7 @@ export default function ConfirmModal({
 
             {/* Nội dung thông báo giải thích */}
             <p id={descriptionId} className="mt-3 break-words text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-              {message}
+              {tr(message)}
             </p>
 
             {/* Các nút hành động */}
@@ -206,7 +209,7 @@ export default function ConfirmModal({
                 disabled={isLoading}
                 className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/60 font-medium text-sm transition-colors disabled:opacity-50"
               >
-                {cancelText}
+                {tr(cancelText)}
               </button>
               <button
                 type="button"
@@ -221,7 +224,7 @@ export default function ConfirmModal({
                 }`}
               >
                 {type === 'danger' && <Trash2 className="w-4 h-4" />}
-                {confirmText}
+                {tr(confirmText)}
               </button>
             </div>
           </motion.div>

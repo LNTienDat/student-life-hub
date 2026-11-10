@@ -1,3 +1,5 @@
+import { t as tr, getLocale } from '../../i18n/language';
+import useLanguage from '../../hooks/useLanguage';
 import { deadlineHasTime } from './deadlineDate';
 import { useMemo } from 'react';
 import {
@@ -24,6 +26,7 @@ function DeadlineCalendarView({
   disabled = false,
   priorityLabel,
 }) {
+  useLanguage();
   const lichDuocMemo = useMemo(() => taoLich(thangXemLich), [thangXemLich]);
   const homNay = new Date();
 
@@ -38,17 +41,16 @@ function DeadlineCalendarView({
         <div className="flex justify-between items-center p-4 md:p-6 border-b border-slate-200 dark:border-slate-700/60">
           <button
             onClick={() => onDoiThang(-1)}
-            aria-label="Xem tháng trước"
+            aria-label={tr("Xem tháng trước")}
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
           >
             <ChevronLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
           </button>
-          <h2 className="font-display text-lg font-bold text-slate-800 dark:text-slate-200">
-            Tháng {thangXemLich.getMonth() + 1} - {thangXemLich.getFullYear()}
+          <h2 className="font-display text-lg font-bold text-slate-800 dark:text-slate-200">{tr("Tháng ")}{thangXemLich.getMonth() + 1} - {thangXemLich.getFullYear()}
           </h2>
           <button
             onClick={() => onDoiThang(1)}
-            aria-label="Xem tháng sau"
+            aria-label={tr("Xem tháng sau")}
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
           >
             <ChevronRight className="w-5 h-5 text-slate-600 dark:text-slate-400" />
@@ -109,8 +111,7 @@ function DeadlineCalendarView({
                   ))}
                   {ds.length > 3 && (
                     <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium px-1">
-                      +{ds.length - 3} công việc
-                    </div>
+                      +{ds.length - 3}{tr(" công việc")}</div>
                   )}
                 </div>
               </button>
@@ -123,13 +124,12 @@ function DeadlineCalendarView({
       {ngayDuocChon && (
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 p-6">
           <h3 className="font-display font-semibold text-lg text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5 text-ink-500" />
-            Công việc ngày {ngayDuocChon.toLocaleDateString('vi-VN')}
+            <CalendarIcon className="w-5 h-5 text-ink-500" />{tr("Công việc ngày ")}{ngayDuocChon.toLocaleDateString(getLocale())}
           </h3>
           {deadlinesNgayDuocChon.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-slate-400">
               <CheckCircle2 className="w-12 h-12 mb-2 text-slate-200 dark:text-slate-700" />
-              <p>{priorityLabel ? `Không có công việc mức ${priorityLabel} trong ngày này.` : 'Trống! Bạn có thể thư giãn vào ngày này.'}</p>
+              <p>{priorityLabel ? tr("Không có công việc mức {0} trong ngày này.", priorityLabel) : tr('Trống! Bạn có thể thư giãn vào ngày này.')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -141,7 +141,7 @@ function DeadlineCalendarView({
                   <button disabled={disabled}
                     onClick={() => onHoanThanh(d.id, d.trangThai === 'hoan_thanh')}
                     className="mt-0.5 flex-shrink-0"
-                    aria-label={d.trangThai === 'hoan_thanh' ? 'Đánh dấu chưa hoàn thành' : 'Đánh dấu hoàn thành'}
+                    aria-label={d.trangThai === 'hoan_thanh' ? tr('Đánh dấu chưa hoàn thành') : tr('Đánh dấu hoàn thành')}
                   >
                     {d.trangThai === 'hoan_thanh' ? (
                       <CheckCircle2 className="w-6 h-6 text-emerald-500" />
@@ -165,14 +165,14 @@ function DeadlineCalendarView({
                           d.doUuTien
                         )}`}
                       >
-                        {textUuTien(d.doUuTien)}
+                        {tr(textUuTien(d.doUuTien))}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-4 mt-2">
                       <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
-                        {deadlineHasTime(d.hanChot) ? new Date(d.hanChot).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'Cả ngày'}
+                        {deadlineHasTime(d.hanChot) ? new Date(d.hanChot).toLocaleTimeString(getLocale(), { hour: '2-digit', minute: '2-digit' }) : tr('Cả ngày')}
                       </span>
                     </div>
                   </div>
@@ -180,15 +180,15 @@ function DeadlineCalendarView({
                     <button disabled={disabled}
                       onClick={() => onSua(d)}
                       className="p-1.5 text-slate-400 hover:text-ink-600 dark:hover:text-ink-300 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600"
-                      title="Sửa" aria-label={`Sửa deadline: ${d.tieuDe}`}
+                      title={tr("Sửa")} aria-label={tr("Sửa deadline: {0}", d.tieuDe)}
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button disabled={disabled}
                       onClick={() => onXoa(d)}
                       className="p-1.5 text-slate-400 hover:text-rose-500 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600"
-                      title="Xóa"
-                      aria-label={`Xóa deadline: ${d.tieuDe}`}
+                      title={tr("Xóa")}
+                      aria-label={tr("Xóa deadline: {0}", d.tieuDe)}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

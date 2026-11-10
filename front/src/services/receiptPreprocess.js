@@ -43,3 +43,16 @@ export function prepareReceiptImage(bitmap) {
   ctx.putImageData(image,0,0);sample.width=sample.height=1;
   return canvas;
 }
+
+// Keep the source scale for small, sharp receipts. Enlarging a grid can merge its lines with digits.
+export function prepareReceiptReference(bitmap) {
+  const scale = Math.min(1, 1600 / bitmap.width, 3600 / bitmap.height);
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const context = canvas.getContext('2d');
+  context.fillStyle = '#fff';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  return canvas;
+}

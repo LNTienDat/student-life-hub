@@ -17,6 +17,6 @@
   "shortcuts": [
     { "name": "Hôm nay của bạn", "url": "/dashboard" },
     { "name": "Deadline", "url": "/deadline" },
-    { "name": "Thời khóa biểu", "url": "/thoi-khoa-bieu" }
+    { "name": "Lịch học", "url": "/lich-hoc" }
   ]
 }

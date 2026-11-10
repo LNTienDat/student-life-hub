@@ -2,10 +2,14 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import api from '../services/api';
 import useDataRevision from '../hooks/useDataRevision';
 import { TEN_DANH_MUC } from '../constants';
+import { categoryDisplayName } from '../utils/categoryDisplayName';
+import { t } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 
 const CategoryContext = createContext(null);
 const defaults = ['an_uong','di_lai','khac'].map(ma=>({ma,ten:TEN_DANH_MUC[ma],loai:'chi',macDinh:true,coTheXoa:true,daAn:false})).concat({ma:'khac',ten:'Khác',loai:'thu',macDinh:true,coTheXoa:true,daAn:false});
 export function FinanceCategoryProvider({children}) {
+  useLanguage();
   const [categories,setCategories]=useState(defaults);
   const [error,setError]=useState('');
   const [loaded,setLoaded]=useState(false);
@@ -33,7 +37,7 @@ export function FinanceCategoryProvider({children}) {
   const addCategory=(loai,ten)=>changeCategory(()=>api.post('/finance/danh-muc',{loai,ten}));
   const renameCategory=(ma,ten,loai)=>changeCategory(()=>api.put('/finance/danh-muc/'+encodeURIComponent(ma),{ten,loai}));
   const removeCategory=(ma,loai)=>changeCategory(()=>api.delete('/finance/danh-muc/'+encodeURIComponent(ma),{params:{loai}}));
-  const label=(code,loai='chi')=>categories.find(item=>item.ma===code&&item.loai===loai)?.ten || TEN_DANH_MUC[code] || code;
+  const label=(code,loai='chi')=>{const item=categories.find(item=>item.ma===code&&item.loai===loai);return item ? categoryDisplayName(item) : t(TEN_DANH_MUC[code]) || code;};
   return <CategoryContext.Provider value={{categories,loaded,label,error,retry:()=>setRetry(value=>value+1),addCategory,removeCategory,renameCategory}}>{children}</CategoryContext.Provider>;
 }
 export function useFinanceCategories(){return useContext(CategoryContext);}

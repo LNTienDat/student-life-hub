@@ -1,3 +1,5 @@
+import { t as tr } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import useSessionDraft from '../hooks/useSessionDraft';
 import DataLoadError from '../components/DataLoadError';
 import useDataRevision from '../hooks/useDataRevision';
@@ -17,6 +19,7 @@ import triggerConfetti from '../utils/confetti';
 import { PageSkeleton } from '../components/Skeleton';
 
 function Deadline() {
+  useLanguage();
   const [danhSach, setDanhSach] = useState([]);
   const [daXoa, setDaXoa] = useState([]);
   const [tuDongXoa, setTuDongXoa] = useState(false);
@@ -230,16 +233,14 @@ function Deadline() {
             <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
               Deadline
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">
-              Bạn có {tongChuaHoanThanh} công việc cần hoàn thành
-            </p>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">{tr("Bạn có ")}{tongChuaHoanThanh}{tr(" công việc cần hoàn thành")}</p>
           </div>
 
           <div className="grid grid-cols-1 gap-2 md:flex md:flex-wrap md:items-center">
           <div className="grid grid-cols-2 items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
             <button
               onClick={() => setCheDoXem('list')}
-              aria-label="Xem dạng danh sách"
+              aria-label={tr("Xem dạng danh sách")}
               aria-pressed={cheDoXem === 'list'}
               className={`flex min-h-11 justify-center items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 cheDoXem === 'list'
@@ -247,11 +248,10 @@ function Deadline() {
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               }`}
             >
-              <List className="w-4 h-4" /> Danh sách
-            </button>
+              <List className="w-4 h-4" />{tr(" Danh sách")}</button>
             <button
               onClick={() => setCheDoXem('calendar')}
-              aria-label="Xem dạng lịch"
+              aria-label={tr("Xem dạng lịch")}
               aria-pressed={cheDoXem === 'calendar'}
               className={`flex min-h-11 justify-center items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 cheDoXem === 'calendar'
@@ -259,8 +259,7 @@ function Deadline() {
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               }`}
             >
-              <CalendarIcon className="w-4 h-4" /> Lịch
-            </button>
+              <CalendarIcon className="w-4 h-4" />{tr(" Lịch")}</button>
           </div>
           <button type="button" aria-expanded={hienFormThem}
             onClick={moFormThem}
@@ -271,7 +270,7 @@ function Deadline() {
             }`}
           >
             {hienFormThem ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-            {hienFormThem ? 'Hủy' : 'Thêm deadline'}
+            {hienFormThem ? tr('Hủy') : tr('Thêm deadline')}
           </button>
           </div>
         </div>
@@ -291,28 +290,26 @@ function Deadline() {
           onCancel={moFormThem}
         />
 
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800">
-          <label htmlFor="deadline-priority-filter" className="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-            Mức quan trọng
-            <select aria-label="Mức quan trọng" id="deadline-priority-filter" value={mucQuanTrongLoc} onChange={event => setMucQuanTrongLoc(event.target.value)}
-              className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white">
-              <option value="all">Tất cả mức</option>
-              {DEADLINE_PRIORITIES.map(level => <option key={level.value} value={level.value}>{level.label}</option>)}
-            </select>
-          </label>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{tr("Mức quan trọng")}</span>
+          <div role="group" aria-label={tr("Mức quan trọng")} className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+            {[{value:'all',label:'Tất cả'},...DEADLINE_PRIORITIES].map(level=>{
+              const active=mucQuanTrongLoc===level.value;
+              const selected={all:'border-ink-600 bg-ink-600 text-white',cao:'border-rose-400 bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-200',binh_thuong:'border-amber-400 bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-200',thap:'border-emerald-400 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200'};
+              return <button key={level.value} type="button" aria-pressed={active} onClick={()=>setMucQuanTrongLoc(level.value)} className={'min-h-11 rounded-xl border px-4 text-sm font-medium transition-colors '+(active?(selected[level.value]||selected.all):'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300')}>{tr(level.label)}</button>;
+            })}
+          </div>
         </div>
 
         {!dangTai && !loadError && <div className="space-y-1 text-sm">
           <label className="inline-flex min-h-11 cursor-pointer items-center gap-3 text-slate-700 dark:text-slate-200">
-            <input type="checkbox" checked={tuDongXoa} onChange={luuTuyChon} disabled={saving} className="h-5 w-5 accent-ink-600" />
-            Tự xóa việc đã hoàn thành sau 24 giờ
-          </label>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Tính từ lúc hoàn thành. Bật sẽ áp dụng cả việc cũ đã quá 24 giờ. Có thể xem lại và khôi phục ở Đã xóa; tắt sẽ dừng tự xóa các việc còn lại.</p>
+            <input type="checkbox" checked={tuDongXoa} onChange={luuTuyChon} disabled={saving} className="h-5 w-5 accent-ink-600" />{tr("Tự xóa việc đã hoàn thành sau 24 giờ")}</label>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{tr("Tính từ lúc hoàn thành. Bật sẽ áp dụng cả việc cũ đã quá 24 giờ. Có thể xem lại và khôi phục ở Đã xóa; tắt sẽ dừng tự xóa các việc còn lại.")}</p>
         </div>}
 
         {!dangTai&&!loadError&&cheDoXem==='calendar'&&mucQuanTrongLoc!=='all'&&danhSachLoc.length===0&&<div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800">
-          <span>Không có deadline ở mức {tenMucLoc}.</span>
-          <button type="button" onClick={()=>setMucQuanTrongLoc('all')} className="min-h-11 font-medium text-ink-600 dark:text-ink-300">Xem tất cả mức</button>
+          <span>{tr("Không có deadline ở mức ")}{tr(tenMucLoc)}.</span>
+          <button type="button" onClick={()=>setMucQuanTrongLoc('all')} className="min-h-11 font-medium text-ink-600 dark:text-ink-300">{tr("Xem tất cả mức")}</button>
         </div>}
 
         {loadError ? <DataLoadError message={loadError} onRetry={taiDuLieu} /> : dangTai ? (
@@ -322,7 +319,7 @@ function Deadline() {
             disabled={saving}
             thangXemLich={thangXemLich}
             ngayDuocChon={ngayDuocChon}
-            priorityLabel={tenMucLoc}
+            priorityLabel={tr(tenMucLoc)}
             danhSach={danhSachLoc}
             onChonNgay={setNgayDuocChon}
             onDoiThang={doiThang}
@@ -334,7 +331,7 @@ function Deadline() {
           <DeadlineListView
             autoDelete={tuDongXoa}
             disabled={saving}
-            emptyMessage={mucQuanTrongLoc === 'all' ? undefined : `Không có công việc chưa hoàn thành ở mức ${tenMucLoc}.`}
+            emptyMessage={mucQuanTrongLoc === 'all' ? undefined : tr('Không có công việc chưa hoàn thành ở mức {0}.', tr(tenMucLoc))}
             dangDienHanh={dangDienHanh}
             daHoanThanh={daHoanThanh}
             onHoanThanh={xuLyHoanThanh}
@@ -343,13 +340,13 @@ function Deadline() {
           />
         )}
         {!dangTai && !loadError && <details className="rounded-xl border border-slate-200 bg-white px-3 py-1 dark:border-slate-700 dark:bg-slate-800">
-          <summary className="min-h-11 cursor-pointer py-2 text-base font-semibold text-slate-600 dark:text-slate-300">Đã xóa ({daXoa.length})</summary>
-          <p className="mb-3 text-xs text-slate-500">Có thể khôi phục việc đã xóa về chưa hoàn thành.</p>
+          <summary className="min-h-11 cursor-pointer py-2 text-base font-semibold text-slate-600 dark:text-slate-300">{tr("Đã xóa (")}{daXoa.length})</summary>
+          <p className="mb-3 text-xs text-slate-500">{tr("Có thể khôi phục việc đã xóa về chưa hoàn thành.")}</p>
           <div className="grid gap-2">{daXoa.map(item => <article key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-800">
             <div className="min-w-0 flex-1"><h3 className="break-words text-sm font-medium dark:text-slate-100">{item.tieuDe}</h3><p className="text-xs text-slate-500">{formatDeadlineDate(item.hanChot)}</p></div>
-            <button type="button" disabled={saving} onClick={() => khoiPhuc(item)} className="min-h-11 rounded-lg border px-3 text-sm text-ink-600 dark:border-slate-600 dark:text-ink-200">Khôi phục</button>
-            <button type="button" disabled={saving} onClick={() => yeuCauXoa(item)} className="min-h-11 rounded-lg px-3 text-sm text-rose-600 dark:text-rose-300">Xóa vĩnh viễn</button>
-          </article>)}{!daXoa.length && <p className="text-sm text-slate-500">Chưa có việc đã xóa.</p>}</div>
+            <button type="button" disabled={saving} onClick={() => khoiPhuc(item)} className="min-h-11 rounded-lg border px-3 text-sm text-ink-600 dark:border-slate-600 dark:text-ink-200">{tr("Khôi phục")}</button>
+            <button type="button" disabled={saving} onClick={() => yeuCauXoa(item)} className="min-h-11 rounded-lg px-3 text-sm text-rose-600 dark:text-rose-300">{tr("Xóa vĩnh viễn")}</button>
+          </article>)}{!daXoa.length && <p className="text-sm text-slate-500">{tr("Chưa có việc đã xóa.")}</p>}</div>
         </details>}
       </div>
 

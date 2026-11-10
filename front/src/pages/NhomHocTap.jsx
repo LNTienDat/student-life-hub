@@ -1,3 +1,5 @@
+import { t as tr } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import ModalDialog from '../components/ModalDialog';
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
@@ -7,6 +9,7 @@ import { useToast } from '../context/ToastContext';
 import { PageSkeleton } from '../components/Skeleton';
 
 function NhomHocTap() {
+  useLanguage();
   const [danhSachNhom, setDanhSachNhom] = useState([]);
   const [dangTai, setDangTai] = useState(true);
   const submitLock = useRef(false);
@@ -116,12 +119,8 @@ function NhomHocTap() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold font-display text-slate-900 dark:text-white flex items-center gap-2.5">
-            <Users className="w-7 h-7 text-ink-600 dark:text-ink-400" />
-            Nhóm học tập
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Cùng bạn bè chia sẻ deadline môn học, theo dõi tiến độ bài tập lớn và học tập hiệu quả hơn.
-          </p>
+            <Users className="w-7 h-7 text-ink-600 dark:text-ink-400" />{tr("Nhóm học tập")}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{tr("Cùng bạn bè chia sẻ deadline môn học, theo dõi tiến độ bài tập lớn và học tập hiệu quả hơn.")}</p>
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
@@ -129,16 +128,12 @@ function NhomHocTap() {
             onClick={() => setHienModalThamGia(true)}
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-medium transition-colors"
           >
-            <UserPlus className="w-4 h-4 text-slate-500" />
-            Tham gia bằng mã
-          </button>
+            <UserPlus className="w-4 h-4 text-slate-500" />{tr("Tham gia bằng mã")}</button>
           <button
             onClick={() => setHienModalTao(true)}
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-ink-600 hover:bg-ink-700 text-white text-sm font-medium shadow-sm transition-colors"
           >
-            <Plus className="w-4 h-4" />
-            Tạo nhóm mới
-          </button>
+            <Plus className="w-4 h-4" />{tr("Tạo nhóm mới")}</button>
         </div>
       </div>
 
@@ -148,23 +143,17 @@ function NhomHocTap() {
           <div className="w-16 h-16 rounded-full bg-ink-50 dark:bg-ink-950/50 flex items-center justify-center mx-auto mb-4">
             <Users className="w-8 h-8 text-ink-500" />
           </div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Chưa tham gia nhóm nào</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6">
-            Tạo nhóm học tập cho lớp hoặc nhập mã code từ bạn bè để bắt đầu cùng theo dõi bài tập chung.
-          </p>
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">{tr("Chưa tham gia nhóm nào")}</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-6">{tr("Tạo nhóm học tập cho lớp hoặc nhập mã code từ bạn bè để bắt đầu cùng theo dõi bài tập chung.")}</p>
           <div className="flex justify-center gap-3">
             <button
               onClick={() => setHienModalThamGia(true)}
               className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50"
-            >
-              Nhập mã nhóm
-            </button>
+            >{tr("Nhập mã nhóm")}</button>
             <button
               onClick={() => setHienModalTao(true)}
               className="px-4 py-2 rounded-xl bg-ink-600 text-white text-sm font-medium hover:bg-ink-700"
-            >
-              Tạo nhóm ngay
-            </button>
+            >{tr("Tạo nhóm ngay")}</button>
           </div>
         </div>
       ) : (
@@ -182,25 +171,23 @@ function NhomHocTap() {
                   </h3>
                   {nhom.vaiTroCuaBan === 'chu_nhom' && (
                     <span className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 flex-shrink-0">
-                      <ShieldCheck className="w-3 h-3" />
-                      Trưởng nhóm
-                    </span>
+                      <ShieldCheck className="w-3 h-3" />{tr("Trưởng nhóm")}</span>
                   )}
                 </div>
 
                 <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 min-h-[32px] mb-4">
-                  {nhom.moTa || 'Không có mô tả cho nhóm này.'}
+                  {nhom.moTa || tr('Không có mô tả cho nhóm này.')}
                 </p>
 
                 {/* Mã mời */}
                 <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 mb-4 text-xs">
-                  <span className="text-slate-500 dark:text-slate-400">Mã mời:</span>
+                  <span className="text-slate-500 dark:text-slate-400">{tr("Mã mời:")}</span>
                   <div className="flex items-center gap-1.5 font-mono font-bold text-ink-600 dark:text-ink-400">
                     <span>{nhom.maCode}</span>
                     <button
                       type="button"
                       onClick={(e) => copyMaCode(nhom.maCode, e)}
-                      title="Sao chép mã"
+                      title={tr("Sao chép mã")}
                       className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                     >
                       {maCopy === nhom.maCode ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -212,8 +199,8 @@ function NhomHocTap() {
               {/* Footer card: số thành viên & deadline */}
               <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-700/60 text-xs text-slate-500 dark:text-slate-400">
                 <div className="flex items-center gap-3">
-                  <span>👥 {nhom._count?.thanhViens || 0} thành viên</span>
-                  <span>📌 {nhom._count?.deadlineNhoms || 0} deadline</span>
+                  <span>{tr("👥 ")}{nhom._count?.thanhViens || 0}{tr(" thành viên")}</span>
+                  <span>{tr("📌 ")}{nhom._count?.deadlineNhoms || 0} deadline</span>
                 </div>
                 <span className="text-ink-600 dark:text-ink-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5 font-medium">
                   Xem <ArrowRight className="w-3.5 h-3.5" />
@@ -226,21 +213,18 @@ function NhomHocTap() {
 
       {/* Modal Tạo nhóm mới */}
       {hienModalTao && (
-        <ModalDialog open={hienModalTao} onClose={() => setHienModalTao(false)} title="Tạo nhóm học tập" busy={dangXuLy}>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              Nhóm sẽ có mã mời riêng để bạn gửi cho các thành viên trong nhóm.
-            </p>
+        <ModalDialog open={hienModalTao} onClose={() => setHienModalTao(false)} title={tr("Tạo nhóm học tập")} busy={dangXuLy}>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">{tr("Nhóm sẽ có mã mời riêng để bạn gửi cho các thành viên trong nhóm.")}</p>
 
             <form onSubmit={xuLyTaoNhom} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                  Tên nhóm <span className="text-rose-500">*</span>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">{tr("Tên nhóm ")}<span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={tenNhom}
                   onChange={(e) => setTenNhom(e.target.value)}
-                  placeholder="VD: Nhóm Đồ Án Cơ Sở Dữ Liệu - K18"
+                  placeholder={tr("VD: Nhóm Đồ Án Cơ Sở Dữ Liệu - K18")}
                   maxLength={100}
                   required
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ink-500/30"
@@ -248,13 +232,11 @@ function NhomHocTap() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                  Mô tả (tùy chọn)
-                </label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">{tr("Mô tả (tùy chọn)")}</label>
                 <textarea
                   value={moTa}
                   onChange={(e) => setMoTa(e.target.value)}
-                  placeholder="VD: Lịch nộp báo cáo và bài tập nhóm môn CSDL thầy Hùng..."
+                  placeholder={tr("VD: Lịch nộp báo cáo và bài tập nhóm môn CSDL thầy Hùng...")}
                   rows={3}
                   maxLength={500}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ink-500/30 resize-none"
@@ -267,15 +249,13 @@ function NhomHocTap() {
                   onClick={() => setHienModalTao(false)}
                   disabled={dangXuLy}
                   className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-                >
-                  Hủy
-                </button>
+                >{tr("Hủy")}</button>
                 <button
                   type="submit"
                   disabled={dangXuLy}
                   className="px-4 py-2 rounded-xl text-sm font-medium bg-ink-600 hover:bg-ink-700 text-white shadow-sm"
                 >
-                  {dangXuLy ? 'Đang tạo...' : 'Tạo nhóm'}
+                  {dangXuLy ? tr('Đang tạo...') : tr('Tạo nhóm')}
                 </button>
               </div>
             </form>
@@ -284,16 +264,12 @@ function NhomHocTap() {
 
       {/* Modal Tham gia nhóm bằng mã code */}
       {hienModalThamGia && (
-        <ModalDialog open={hienModalThamGia} onClose={() => setHienModalThamGia(false)} title="Tham gia nhóm học tập" busy={dangXuLy}>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              Nhập mã mời gồm 6 ký tự được cung cấp bởi trưởng nhóm của bạn.
-            </p>
+        <ModalDialog open={hienModalThamGia} onClose={() => setHienModalThamGia(false)} title={tr("Tham gia nhóm học tập")} busy={dangXuLy}>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">{tr("Nhập mã mời gồm 6 ký tự được cung cấp bởi trưởng nhóm của bạn.")}</p>
 
             <form onSubmit={xuLyThamGia} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                  Mã mời nhóm
-                </label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">{tr("Mã mời nhóm")}</label>
                 <input
                   type="text"
                   value={maCodeThamGia}
@@ -311,15 +287,13 @@ function NhomHocTap() {
                   onClick={() => setHienModalThamGia(false)}
                   disabled={dangXuLy}
                   className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-                >
-                  Hủy
-                </button>
+                >{tr("Hủy")}</button>
                 <button
                   type="submit"
                   disabled={dangXuLy}
                   className="px-4 py-2 rounded-xl text-sm font-medium bg-ink-600 hover:bg-ink-700 text-white shadow-sm"
                 >
-                  {dangXuLy ? 'Đang kiểm tra...' : 'Tham gia'}
+                  {dangXuLy ? tr('Đang kiểm tra...') : 'Tham gia'}
                 </button>
               </div>
             </form>

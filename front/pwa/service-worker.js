@@ -1,7 +1,7 @@
 const CACHE_PREFIX = 'lifehub-public-';
 const CACHE_NAME = CACHE_PREFIX + '__BUILD_VERSION__';
 const PUBLIC_FILES = ['/offline.html', '/offline.js', '/icons/app-192.png', '/icons/app-512.png', '/icons/app-maskable-512.png', '/icons/apple-touch-icon.png'];
-const APP_ROUTES = new Set(['/', '/dashboard', '/deadline', '/mon-hoc', '/tai-chinh', '/thoi-khoa-bieu', '/ho-so', '/login', '/register', '/quen-mat-khau', '/dat-lai-mat-khau']);
+const APP_ROUTES = new Set(['/', '/dashboard', '/deadline', '/mon-hoc', '/tai-chinh', '/lich-hoc', '/thoi-khoa-bieu', '/ho-so', '/login', '/register', '/quen-mat-khau', '/dat-lai-mat-khau']);
 
 self.addEventListener('install', (event) => {
   // Only public assets; never store API responses, personal data or HTML from authenticated routes.

@@ -1,3 +1,5 @@
+import { t as tr } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import SemesterPicker from '../components/SemesterPicker';
 import useSessionDraft from '../hooks/useSessionDraft';
 import DataLoadError from '../components/DataLoadError';
@@ -18,6 +20,7 @@ import SubjectCard from './monhoc/SubjectCard';
 import { PageSkeleton } from '../components/Skeleton';
 
 function MonHoc() {
+  useLanguage();
   const [semester] = useSemester();
   const { currentSemester } = useCurrentSemester();
   const [danhSach, setDanhSach] = useState([]);
@@ -282,12 +285,8 @@ function MonHoc() {
         {/* Header & Tiện ích */}
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
           <div>
-            <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Học tập
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">
-              Quản lý tiến độ học tập và theo dõi GPA
-            </p>
+            <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{tr("Học tập")}</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">{tr("Quản lý tiến độ học tập và theo dõi GPA")}</p>
           </div>
 
           <SemesterPicker className="order-2 md:order-3 md:col-span-2" />
@@ -296,7 +295,7 @@ function MonHoc() {
             <div className="bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700/60 flex min-h-11 justify-center items-center gap-2">
               <Target className="w-5 h-5 text-emerald-500" />
               <div className="flex flex-col">
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">GPA {semester ? 'học kỳ' : 'tích lũy'}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">GPA {semester ? tr('học kỳ') : tr('tích lũy')}</span>
                 <span className="font-display font-bold text-slate-900 dark:text-white leading-none">
                   {gpa !== null ? Number(gpa).toFixed(2) : '--'} / 10
                 </span>
@@ -306,11 +305,11 @@ function MonHoc() {
               onClick={xuLyXuatBangDiem}
               disabled={dangXuatPDF || danhSach.length === 0}
               className="flex min-h-11 justify-center items-center gap-2 px-3.5 py-2.5 rounded-xl font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 text-sm"
-              title="Xuất bảng điểm PDF"
-              aria-label="Xuất bảng điểm ra file PDF"
+              title={tr("Xuất bảng điểm PDF")}
+              aria-label={tr("Xuất bảng điểm ra file PDF")}
             >
               <Download className="w-4 h-4" />
-              <span className="inline">{dangXuatPDF ? 'Đang xuất...' : 'Xuất PDF'}</span>
+              <span className="inline">{dangXuatPDF ? tr('Đang xuất...') : tr('Xuất PDF')}</span>
             </button>
             <button
               onClick={moFormThem}
@@ -321,7 +320,7 @@ function MonHoc() {
               }`}
             >
               {hienFormThem ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-              {hienFormThem ? 'Hủy' : 'Thêm môn học'}
+              {hienFormThem ? tr('Hủy') : tr('Thêm môn học')}
             </button>
           </div>
         </div>
@@ -352,18 +351,13 @@ function MonHoc() {
             <div className="w-16 h-16 bg-slate-50 dark:bg-slate-900/50 rounded-full flex items-center justify-center mb-4">
               <BookOpen className="w-8 h-8 text-slate-400" />
             </div>
-            <h3 className="text-lg font-display font-semibold text-slate-800 dark:text-slate-200">
-              Chưa có môn học nào
-            </h3>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
-              Hãy thêm môn học đầu tiên để bắt đầu theo dõi tiến độ và điểm số của bạn.
-            </p>
+            <h3 className="text-lg font-display font-semibold text-slate-800 dark:text-slate-200">{tr("Chưa có môn học nào")}</h3>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-sm">{tr("Hãy thêm môn học đầu tiên để bắt đầu theo dõi tiến độ và điểm số của bạn.")}</p>
             <button
               onClick={moFormThem}
               className="mt-6 flex items-center gap-2 bg-ink-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-ink-700 transition-colors"
             >
-              <Plus className="w-4 h-4" /> Thêm môn học
-            </button>
+              <Plus className="w-4 h-4" />{tr(" Thêm môn học")}</button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

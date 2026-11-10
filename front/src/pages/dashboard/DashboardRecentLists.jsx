@@ -1,3 +1,5 @@
+import { t as tr } from '../../i18n/language';
+import useLanguage from '../../hooks/useLanguage';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronRight, CheckCircle2, Clock, Inbox } from 'lucide-react';
@@ -5,6 +7,7 @@ import { dinhDangTien, dinhDangNgay } from '../../utils/formatters';
 import { TEN_DANH_MUC } from '../../constants';
 
 export default function DashboardRecentLists({ deadlinesSapToi = [], thongKeTaiChinh, itemVariants }) {
+  useLanguage();
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Deadline sắp tới */}
@@ -16,13 +19,12 @@ export default function DashboardRecentLists({ deadlinesSapToi = [], thongKeTaiC
           <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-4">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-amber-500" />
-              <h2 className="font-semibold text-slate-800 text-base">Deadline cần nộp</h2>
+              <h2 className="font-semibold text-slate-800 text-base">{tr("Deadline cần nộp")}</h2>
             </div>
             <Link
               to="/deadline"
               className="text-xs font-semibold text-ink-600 hover:text-ink-700 flex items-center transition-colors group"
-            >
-              Xem lịch <ChevronRight className="w-3.5 h-3.5 ml-0.5 group-hover:translate-x-0.5 transition-transform" />
+            >{tr("Xem lịch ")}<ChevronRight className="w-3.5 h-3.5 ml-0.5 group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>
 
@@ -31,16 +33,12 @@ export default function DashboardRecentLists({ deadlinesSapToi = [], thongKeTaiC
               <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 mb-3">
                 <CheckCircle2 className="w-6 h-6 text-emerald-500" />
               </div>
-              <p className="text-sm font-semibold text-slate-700">Tuyệt vời! Không có deadline gấp</p>
-              <p className="text-xs text-slate-400 mt-1 max-w-xs">
-                Bạn đã hoàn thành các công việc hoặc chưa có bài tập mới nào trong 7 ngày tới.
-              </p>
+              <p className="text-sm font-semibold text-slate-700">{tr("Tuyệt vời! Không có deadline gấp")}</p>
+              <p className="text-xs text-slate-400 mt-1 max-w-xs">{tr("Bạn đã hoàn thành các công việc hoặc chưa có bài tập mới nào trong 7 ngày tới.")}</p>
               <Link
                 to="/deadline"
                 className="mt-4 text-xs font-medium text-ink-600 bg-ink-50 px-3 py-1.5 rounded-lg hover:bg-ink-100 transition-colors"
-              >
-                + Tạo deadline mới
-              </Link>
+              >{tr("+ Tạo deadline mới")}</Link>
             </div>
           ) : (
             <div className="space-y-2.5">
@@ -74,13 +72,12 @@ export default function DashboardRecentLists({ deadlinesSapToi = [], thongKeTaiC
           <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-4">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-emerald-500" />
-              <h2 className="font-semibold text-slate-800 text-base">Chi tiêu tháng này</h2>
+              <h2 className="font-semibold text-slate-800 text-base">{tr("Chi tiêu tháng này")}</h2>
             </div>
             <Link
               to="/tai-chinh"
               className="text-xs font-semibold text-ink-600 hover:text-ink-700 flex items-center transition-colors group"
-            >
-              Sổ chi tiêu <ChevronRight className="w-3.5 h-3.5 ml-0.5 group-hover:translate-x-0.5 transition-transform" />
+            >{tr("Sổ chi tiêu ")}<ChevronRight className="w-3.5 h-3.5 ml-0.5 group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>
 
@@ -89,16 +86,12 @@ export default function DashboardRecentLists({ deadlinesSapToi = [], thongKeTaiC
               <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 mb-3">
                 <Inbox className="w-6 h-6" />
               </div>
-              <p className="text-sm font-semibold text-slate-700">Chưa có chi tiêu nào</p>
-              <p className="text-xs text-slate-400 mt-1 max-w-xs">
-                Bắt đầu ghi lại các khoản chi tiêu hàng ngày để kiểm soát tài chính tốt hơn.
-              </p>
+              <p className="text-sm font-semibold text-slate-700">{tr("Chưa có chi tiêu nào")}</p>
+              <p className="text-xs text-slate-400 mt-1 max-w-xs">{tr("Bắt đầu ghi lại các khoản chi tiêu hàng ngày để kiểm soát tài chính tốt hơn.")}</p>
               <Link
                 to="/tai-chinh"
                 className="mt-4 text-xs font-medium text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors"
-              >
-                + Ghi khoản chi
-              </Link>
+              >{tr("+ Ghi khoản chi")}</Link>
             </div>
           ) : (
             <div className="space-y-2.5">

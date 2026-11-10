@@ -1,12 +1,18 @@
+import { t as tr } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import PasswordToggle from '../components/PasswordToggle';
-import CloseButton from '../components/CloseButton';
+import ModalDialog from '../components/ModalDialog';
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { User, Lock, Save, KeyRound, CheckCircle2, AlertCircle, Mail, ShieldCheck } from 'lucide-react';
+import { User, Lock, Save, KeyRound, CheckCircle2, AlertCircle, Mail, LogOut } from 'lucide-react';
+import ProfileIdentity from './profile/ProfileIdentity';
 
 function Profile() {
-  const { dangNhap, user } = useAuth();
+  useLanguage();
+  const { dangNhap, dangXuat, user, capNhatUser } = useAuth();
+  const navigate = useNavigate();
   const saveLock = useRef(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState('');
@@ -42,13 +48,14 @@ function Profile() {
         const u = res.data?.user || {};
         setTen(u.ten || '');
         setEmail(u.email || '');
+        if (u.id) capNhatUser(u);
       } catch (error) {
         if (active) setProfileError(error.response?.data?.message || 'Chưa tải được hồ sơ');
       } finally { if (active) setProfileLoading(false); }
     }
     tai();
     return () => { active = false; };
-  }, [retry]);
+  }, [retry, capNhatUser]);
 
   async function xuLySuaHoSo(e) {
     e.preventDefault();
@@ -69,12 +76,20 @@ function Profile() {
     }
   }
 
+  function datTrangThaiDoiEmail(open) {
+    setHienFormEmail(open);
+    setEmailMoi('');
+    setMatKhauXacNhan('');
+    setHienMKXacNhan(false);
+    setThongBaoEmail(null);
+  }
+
   async function xuLyDoiEmail(e) {
     e.preventDefault();
     setThongBaoEmail(null);
 
-    if (!emailMoi || !matKhauXacNhan) {
-      setThongBaoEmail({ loai: 'error', text: 'Vui lòng điền email mới và mật khẩu xác nhận.' });
+    if (!emailMoi.trim() || !matKhauXacNhan) {
+      setThongBaoEmail('Vui lòng điền email mới và mật khẩu xác nhận.');
       return;
     }
 
@@ -86,15 +101,12 @@ function Profile() {
       const token = localStorage.getItem('token');
       dangNhap(res.data.user, token);
       setEmail(res.data?.user?.email);
-      setEmailMoi('');
-      setMatKhauXacNhan('');
-      setThongBaoEmail({ loai: 'success', text: 'Đổi email tài khoản thành công!' });
-      setTimeout(() => {
-        setHienFormEmail(false);
-        setThongBaoEmail(null);
-      }, 2000);
+      datTrangThaiDoiEmail(false);
+      setThongBao({ loai: 'success', text: 'Đổi email tài khoản thành công!' });
     } catch (error) {
-      setThongBaoEmail({ loai: 'error', text: error.response?.data?.message || 'Đổi email thất bại' });
+      setMatKhauXacNhan('');
+      setHienMKXacNhan(false);
+      setThongBaoEmail(error.response?.data?.message || 'Đổi email thất bại');
     } finally {
       saveLock.current = false;
       setDangTaiEmail(false);
@@ -123,20 +135,17 @@ function Profile() {
     }
   }
 
-  if (profileLoading) return <p role="status" className="p-6">Đang tải hồ sơ…</p>;
-  if (profileError) return <div role="alert" className="p-6"><p>{profileError}</p><button type="button" className="mt-3 font-semibold text-ink-600" onClick={() => { setProfileError(''); setProfileLoading(true); setRetry(n => n + 1); }}>Thử tải lại</button></div>;
+  if (profileLoading) return <p role="status" className="p-6">{tr("Đang tải hồ sơ…")}</p>;
+  if (profileError) return <div role="alert" className="p-6"><p>{tr(profileError)}</p><button type="button" className="mt-3 font-semibold text-ink-600" onClick={() => { setProfileError(''); setProfileLoading(true); setRetry(n => n + 1); }}>{tr("Thử tải lại")}</button></div>;
 
   return (
     <div className="w-full min-w-0 space-y-6">
-      <div className="mb-4">
-        <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-          Hồ sơ
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Thông tin tài khoản và bảo mật.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{tr("Hồ sơ")}</h1>
+        <button type="button" onClick={() => { dangXuat(); navigate('/login', { replace: true }); }} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-rose-200 px-3 text-sm font-semibold text-rose-700 hover:bg-rose-50 dark:border-rose-400/30 dark:text-rose-300 dark:hover:bg-rose-500/10"><LogOut aria-hidden="true" className="h-4 w-4" />{tr('Đăng xuất')}</button>
       </div>
 
+      <ProfileIdentity />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
 
         {/* Cột 1: Thông tin tài khoản */}
@@ -148,125 +157,62 @@ function Profile() {
                 <User className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="font-display font-semibold text-lg text-slate-800 dark:text-slate-200">
-                  Thông tin tài khoản
-                </h2>
+                <h2 className="font-display font-semibold text-lg text-slate-800 dark:text-slate-200">{tr("Thông tin tài khoản")}</h2>
               </div>
             </div>
 
             {thongBao && (
-              <div className={`flex items-center gap-2 px-4 py-3 rounded-xl mb-6 text-sm font-medium ${thongBao.loai === 'success' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400'}`}>
+              <div role={thongBao.loai === 'success' ? 'status' : 'alert'} className={`mb-4 flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium ${thongBao.loai === 'success' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400'}`}>
                 {thongBao.loai === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                {thongBao.text}
+                {tr(thongBao.text)}
               </div>
             )}
 
             <form onSubmit={xuLySuaHoSo} className="space-y-4">
               <div>
-                <label htmlFor="profile-name" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Họ tên</label>
+                <label htmlFor="profile-name" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">{tr("Họ tên")}</label>
                 <input
                   id="profile-name"
                   value={ten}
                   onChange={(e) => setTen(e.target.value)}
                   maxLength={100}
-                  placeholder="Nhập họ và tên..."
+                  placeholder={tr("Nhập họ và tên...")}
                   className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 dark:focus:ring-ink-500/30 transition-shadow"
                   required
                 />
               </div>
 
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-baseline">
+                  <label htmlFor="profile-email" className="block text-sm font-medium text-slate-600 dark:text-slate-400">{tr("Email tài khoản")}</label>
+                  <button
+                    type="button"
+                    onClick={() => datTrangThaiDoiEmail(true)}
+                    disabled={dangTai}
+                    aria-haspopup="dialog"
+                    className="text-sm font-semibold text-ink-600 hover:underline disabled:opacity-50 dark:text-ink-300"
+                  >
+                    {tr('Đổi email')}
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <input
+                    id="profile-email"
+                    value={email}
+                    disabled
+                    className="w-full bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 font-medium rounded-xl pl-10 pr-4 py-2.5 text-sm cursor-not-allowed select-none"
+                  />
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                </div>
+              </div>
               <div className="pt-1">
-                <button
-                  type="submit"
-                  disabled={dangTai}
-                  className="w-full flex items-center justify-center gap-2 bg-ink-600 dark:bg-ink-500 text-white font-medium px-4 py-2.5 rounded-xl hover:bg-ink-700 dark:hover:bg-ink-400 disabled:opacity-70 transition-colors shadow-sm"
-                >
-                  <Save className="w-4 h-4" />
-                  {dangTai ? 'Đang lưu...' : 'Lưu họ tên'}
+                <button type="submit" disabled={dangTai} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-ink-600 px-4 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-ink-700 disabled:opacity-70 dark:bg-ink-500 dark:hover:bg-ink-400">
+                  <Save aria-hidden="true" className="h-4 w-4" />
+                  {dangTai ? tr('Đang lưu...') : tr('Lưu')}
                 </button>
               </div>
             </form>
-
-            {/* Mục Email tài khoản */}
-            <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-700/50 space-y-2">
-              <div className="flex justify-between items-baseline">
-                <label htmlFor="profile-email" className="block text-sm font-medium text-slate-600 dark:text-slate-400">Email tài khoản</label>
-                <button
-                  type="button"
-                  onClick={() => { setHienFormEmail(!hienFormEmail); setThongBaoEmail(null); }}
-                  className="text-xs font-semibold text-ink-600 dark:text-ink-300 hover:text-ink-700 dark:hover:text-ink-200 transition-colors"
-                >
-                  {hienFormEmail ? 'Hủy đổi email' : 'Đổi email'}
-                </button>
-              </div>
-
-              <div className="relative">
-                <input
-                  id="profile-email"
-                  value={email}
-                  disabled
-                  className="w-full bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 font-medium rounded-xl pl-10 pr-4 py-2.5 text-sm cursor-not-allowed select-none"
-                />
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-              </div>
-
-              {/* Form đổi email kèm xác nhận mật khẩu */}
-              {hienFormEmail && (
-                <form onSubmit={xuLyDoiEmail} className="mt-3 p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-700/80 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 pb-1 border-b border-slate-200 dark:border-slate-700/50">
-                    <ShieldCheck className="w-4 h-4 text-ink-600 dark:text-ink-300" />
-                    <span>Xác thực bảo mật để đổi Email</span>
-                  </div>
-
-                  {thongBaoEmail && (
-                    <div className={`p-2.5 rounded-lg text-xs font-medium flex items-center gap-2 ${thongBaoEmail.loai === 'success' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400'}`}>
-                      {thongBaoEmail.loai === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
-                      <span>{thongBaoEmail.text}</span>
-                    </div>
-                  )}
-
-                  <div>
-                    <label htmlFor="profile-new-email" className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Email mới</label>
-                    <input
-                      id="profile-new-email"
-                      type="email"
-                      value={emailMoi}
-                      onChange={(e) => setEmailMoi(e.target.value)}
-                      placeholder="vidu@student.edu.vn"
-                      className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ink-500/30 dark:focus:ring-ink-500/30"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="profile-confirm-password" className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Mật khẩu hiện tại</label>
-                    <div className="relative">
-                      <input
-                        id="profile-confirm-password"
-                        type={hienMKXacNhan ? 'text' : 'password'}
-                        value={matKhauXacNhan}
-                        onChange={(e) => setMatKhauXacNhan(e.target.value)}
-                        placeholder="Nhập mật khẩu để bảo vệ tài khoản"
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg pl-3 pr-8 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-ink-500/30 dark:focus:ring-ink-500/30"
-                        required
-                      />
-                      <PasswordToggle visible={hienMKXacNhan} onClick={() => setHienMKXacNhan(!hienMKXacNhan)} />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 pt-1">
-                    <button
-                      type="submit"
-                      disabled={dangTaiEmail}
-                      className="flex-1 bg-ink-600 dark:bg-ink-500 text-white text-xs font-medium py-2 rounded-lg hover:bg-ink-700 dark:hover:bg-ink-400 disabled:opacity-50 transition-colors shadow-sm"
-                    >
-                      {dangTaiEmail ? 'Đang xác thực...' : 'Xác nhận đổi email'}
-                    </button>
-                    <CloseButton onClick={()=>setHienFormEmail(false)} disabled={dangTaiEmail} label="Đóng đổi email"/>
-                  </div>
-                </form>
-              )}
-            </div>
           </div>
         </div>
 
@@ -279,29 +225,27 @@ function Profile() {
                 <Lock className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="font-display font-semibold text-lg text-slate-800 dark:text-slate-200">
-                  Đổi mật khẩu
-                </h2>
+                <h2 className="font-display font-semibold text-lg text-slate-800 dark:text-slate-200">{tr("Đổi mật khẩu")}</h2>
               </div>
             </div>
 
             {thongBaoMK && (
               <div className={`flex items-center gap-2 px-4 py-3 rounded-xl mb-6 text-sm font-medium ${thongBaoMK.loai === 'success' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400'}`}>
                 {thongBaoMK.loai === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                {thongBaoMK.text}
+                {tr(thongBaoMK.text)}
               </div>
             )}
 
             <div className="space-y-4">
               <div>
-                <label htmlFor="profile-current-password" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Mật khẩu hiện tại</label>
+                <label htmlFor="profile-current-password" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">{tr("Mật khẩu hiện tại")}</label>
                 <div className="relative">
                   <input
                     id="profile-current-password"
                     type={hienMKCu ? 'text' : 'password'}
                     value={matKhauCu}
                     onChange={(e) => setMatKhauCu(e.target.value)}
-                    placeholder="Nhập mật khẩu đang dùng"
+                    placeholder={tr("Nhập mật khẩu đang dùng")}
                     className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl pl-4 pr-12 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 transition-shadow"
                     required
                   />
@@ -310,14 +254,14 @@ function Profile() {
               </div>
 
               <div>
-                <label htmlFor="profile-new-password" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">Mật khẩu mới</label>
+                <label htmlFor="profile-new-password" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">{tr("Mật khẩu mới")}</label>
                 <div className="relative">
                   <input
                     id="profile-new-password"
                     type={hienMKMoi ? 'text' : 'password'}
                     value={matKhauMoi}
                     onChange={(e) => setMatKhauMoi(e.target.value)}
-                    placeholder="Tối thiểu 6 ký tự"
+                    placeholder={tr("Tối thiểu 6 ký tự")}
                     minLength={6}
                     className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl pl-4 pr-12 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/30 transition-shadow"
                     required
@@ -328,19 +272,38 @@ function Profile() {
             </div>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700/50">
+          <div className="mt-5">
             <button
               type="submit"
               disabled={dangTaiMK}
-              className="w-full flex items-center justify-center gap-2 bg-slate-800 dark:bg-slate-700 text-white font-medium px-4 py-2.5 rounded-xl hover:bg-slate-900 dark:hover:bg-slate-600 disabled:opacity-70 transition-colors shadow-sm"
+              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-slate-800 px-4 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-slate-900 disabled:opacity-70 dark:bg-slate-700 dark:hover:bg-slate-600"
             >
               <KeyRound className="w-4 h-4" />
-              {dangTaiMK ? 'Đang cập nhật...' : 'Đổi mật khẩu'}
+              {dangTaiMK ? tr('Đang cập nhật...') : tr('Đổi mật khẩu')}
             </button>
           </div>
         </form>
 
       </div>
+      <ModalDialog open={hienFormEmail} onClose={() => datTrangThaiDoiEmail(false)} busy={dangTaiEmail} title="Đổi email">
+        <form onSubmit={xuLyDoiEmail} autoComplete="off" className="space-y-4">
+          {thongBaoEmail && <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">{tr(thongBaoEmail)}</p>}
+          <div>
+            <label htmlFor="profile-new-email" className="mb-1.5 block text-sm font-medium">{tr('Email mới')}</label>
+            <input id="profile-new-email" type="email" autoComplete="off" value={emailMoi} onChange={(e) => setEmailMoi(e.target.value)} disabled={dangTaiEmail} required className="min-h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm dark:border-slate-600 dark:bg-slate-900/50" />
+          </div>
+          <div>
+            <label htmlFor="profile-confirm-password" className="mb-1.5 block text-sm font-medium">{tr('Mật khẩu hiện tại')}</label>
+            <div className="relative">
+              <input id="profile-confirm-password" type={hienMKXacNhan ? 'text' : 'password'} autoComplete="new-password" value={matKhauXacNhan} onChange={(e) => setMatKhauXacNhan(e.target.value)} disabled={dangTaiEmail} required className="min-h-11 w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-4 pr-12 text-sm dark:border-slate-600 dark:bg-slate-900/50" />
+              <PasswordToggle visible={hienMKXacNhan} onClick={() => setHienMKXacNhan(visible => !visible)} disabled={dangTaiEmail} />
+            </div>
+          </div>
+          <button type="submit" disabled={dangTaiEmail || !emailMoi.trim() || !matKhauXacNhan} className="min-h-11 w-full rounded-xl bg-ink-600 px-4 text-sm font-semibold text-white hover:bg-ink-700 disabled:opacity-50 dark:bg-ink-500 dark:hover:bg-ink-400">
+            {dangTaiEmail ? tr('Đang xác thực...') : tr('Xác nhận đổi email')}
+          </button>
+        </form>
+      </ModalDialog>
     </div>
   );
 }

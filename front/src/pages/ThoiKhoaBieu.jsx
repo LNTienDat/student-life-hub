@@ -1,3 +1,5 @@
+import { t as tr } from '../i18n/language';
+import useLanguage from '../hooks/useLanguage';
 import SemesterPicker from '../components/SemesterPicker';
 import useSessionDraft from '../hooks/useSessionDraft';
 import TimetableAdjustmentModal from './thoikhoabieu/TimetableAdjustmentModal';
@@ -21,6 +23,7 @@ import TimetableShareModal from './thoikhoabieu/TimetableShareModal';
 import { PageSkeleton } from '../components/Skeleton';
 
 function ThoiKhoaBieu() {
+  useLanguage();
   const [semester] = useSemester();
   const [imagePickerOpen,setImagePickerOpen] = useState(false);
   const [week,setWeek]=useState(()=>monday());
@@ -238,12 +241,8 @@ function ThoiKhoaBieu() {
         {/* Header */}
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
           <div>
-            <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Lịch học
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">
-              Bạn có {soMonHoc} buổi học trong tuần này
-            </p>
+            <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{tr("Lịch học")}</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">{tr("Bạn có ")}{soMonHoc}{tr(" buổi học trong tuần này")}</p>
           </div>
 
           <SemesterPicker className="order-2 md:order-3 md:col-span-2" />
@@ -252,16 +251,13 @@ function ThoiKhoaBieu() {
             <button type="button" onClick={yeuCauXoaLich}
               disabled={saving || dangTai || loadedSemester !== semester+':'+week || !!loadError || !baseList.length || baseList.length > 1000}
               className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-40 dark:border-rose-900/50 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-rose-950/30">
-              <Trash2 className="h-4 w-4" aria-hidden="true" />Xóa lịch hiện tại
-            </button>
+              <Trash2 className="h-4 w-4" aria-hidden="true" />{tr("Xóa lịch hiện tại")}</button>
             <button
               onClick={() => setHienModalShare(true)}
               className="flex min-h-11 items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium text-sm transition-colors shadow-sm"
             >
-              <Share2 className="w-4 h-4 text-ink-600 dark:text-ink-400" />
-              Chia sẻ TKB
-            </button>
-            <button type="button" onClick={()=>setImagePickerOpen(true)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium dark:border-slate-700 dark:bg-slate-800"><ImagePlus className="h-4 w-4"/>Nhập ảnh</button>
+              <Share2 className="w-4 h-4 text-ink-600 dark:text-ink-400" />{tr("Chia sẻ TKB")}</button>
+            <button type="button" onClick={()=>setImagePickerOpen(true)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium dark:border-slate-700 dark:bg-slate-800"><ImagePlus className="h-4 w-4"/>{tr("Nhập ảnh")}</button>
             <button
               onClick={moFormThem}
               aria-expanded={hienForm}
@@ -272,22 +268,22 @@ function ThoiKhoaBieu() {
               }`}
             >
               {hienForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-              {hienForm ? 'Hủy' : 'Thêm buổi học'}
+              {hienForm ? tr('Hủy') : tr('Thêm buổi học')}
             </button>
           </div>
         </div>
 
         <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem_2.75rem] items-center gap-2 sm:flex">
-          <button type="button" disabled={saving} aria-label="Tuần trước" title="Tuần trước" onClick={() => setWeek(addDays(week, -7))} className="inline-flex h-11 w-11 items-center justify-center rounded-xl border dark:border-slate-600"><ChevronLeft aria-hidden="true" className="h-5 w-5" /></button>
-          <label title="Chọn tuần bắt đầu" className="inline-flex min-h-11 min-w-0 items-center gap-2 rounded-xl border bg-white px-2 text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          <button type="button" disabled={saving} aria-label={tr("Tuần trước")} title={tr("Tuần trước")} onClick={() => setWeek(addDays(week, -7))} className="inline-flex h-11 w-11 items-center justify-center rounded-xl border dark:border-slate-600"><ChevronLeft aria-hidden="true" className="h-5 w-5" /></button>
+          <label title={tr("Chọn tuần bắt đầu")} className="inline-flex min-h-11 min-w-0 items-center gap-2 rounded-xl border bg-white px-2 text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">
             <CalendarRange aria-hidden="true" className="hidden h-5 w-5 shrink-0 sm:block" />
-            <input type="date" min="1000-01-01" max="9999-12-24" aria-label="Tuần bắt đầu" value={week} onChange={e => { if (e.target.value) setWeek(monday(e.target.value)); }} className="min-h-11 w-full min-w-0 bg-transparent text-sm sm:w-auto" />
+            <input type="date" min="1000-01-01" max="9999-12-24" aria-label={tr("Tuần bắt đầu")} value={week} onChange={e => { if (e.target.value) setWeek(monday(e.target.value)); }} className="min-h-11 w-full min-w-0 bg-transparent text-sm sm:w-auto" />
           </label>
-          <button type="button" disabled={saving} aria-label="Tuần sau" title="Tuần sau" onClick={() => setWeek(addDays(week, 7))} className="inline-flex h-11 w-11 items-center justify-center rounded-xl border dark:border-slate-600"><ChevronRight aria-hidden="true" className="h-5 w-5" /></button>
-          <button type="button" disabled={saving} aria-label="Về tuần hiện tại" title="Về tuần hiện tại" onClick={() => setWeek(monday())} className="inline-flex h-11 w-11 items-center justify-center rounded-xl border text-ink-600 hover:bg-ink-50 dark:border-slate-600 dark:text-ink-200 dark:hover:bg-slate-700"><CalendarCheck aria-hidden="true" className="h-5 w-5" /></button>
+          <button type="button" disabled={saving} aria-label={tr("Tuần sau")} title={tr("Tuần sau")} onClick={() => setWeek(addDays(week, 7))} className="inline-flex h-11 w-11 items-center justify-center rounded-xl border dark:border-slate-600"><ChevronRight aria-hidden="true" className="h-5 w-5" /></button>
+          <button type="button" disabled={saving} aria-label={tr("Về tuần hiện tại")} title={tr("Về tuần hiện tại")} onClick={() => setWeek(monday())} className="inline-flex h-11 w-11 items-center justify-center rounded-xl border text-ink-600 hover:bg-ink-50 dark:border-slate-600 dark:text-ink-200 dark:hover:bg-slate-700"><CalendarCheck aria-hidden="true" className="h-5 w-5" /></button>
         </div>
-        {!!adjustments.length&&<details className="rounded-xl border border-slate-200 p-3 text-sm dark:border-slate-700"><summary className="min-h-11 cursor-pointer py-2 font-medium">Điều chỉnh trong tuần ({adjustments.length})</summary>{adjustments.map(item=><div key={item.id} className="flex flex-wrap items-center justify-between gap-2 border-t py-2 dark:border-slate-700"><span className="min-w-0 break-words">{item.tenMon} · {item.ngayGoc} · {item.loai==='nghi'?'Nghỉ':('Đổi sang '+item.ngayMoi+' '+item.gioBatDau+'–'+item.gioKetThuc)}</span><button type="button" disabled={saving} onClick={async()=>{if(saveLock.current)return;saveLock.current=true;setSaving(true);try{await timetableService.xoaDieuChinh(item.id);setRefreshVersion(n=>n+1);hienToast('success','Đã hoàn tác điều chỉnh.');}catch(e){hienToast('error',e.response?.data?.message||'Chưa hoàn tác được.');}finally{saveLock.current=false;setSaving(false);}}} className="min-h-11 shrink-0 px-3 text-ink-600">Hoàn tác điều chỉnh</button></div>)}</details>}
-        {semester && danhSach.some((item) => !item.hocKy) && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">Lịch cũ chưa xếp học kỳ vẫn được hiển thị. Sửa buổi học để gắn vào học kỳ phù hợp.</p>}
+        {!!adjustments.length&&<details className="rounded-xl border border-slate-200 p-3 text-sm dark:border-slate-700"><summary className="min-h-11 cursor-pointer py-2 font-medium">{tr("Điều chỉnh trong tuần (")}{adjustments.length})</summary>{adjustments.map(item=><div key={item.id} className="flex flex-wrap items-center justify-between gap-2 border-t py-2 dark:border-slate-700"><span className="min-w-0 break-words">{item.tenMon}{tr(" · ")}{item.ngayGoc}{tr(" · ")}{item.loai==='nghi'?tr('Nghỉ'):(tr('Đổi sang ')+item.ngayMoi+' '+item.gioBatDau+'–'+item.gioKetThuc)}</span><button type="button" disabled={saving} onClick={async()=>{if(saveLock.current)return;saveLock.current=true;setSaving(true);try{await timetableService.xoaDieuChinh(item.id);setRefreshVersion(n=>n+1);hienToast('success','Đã hoàn tác điều chỉnh.');}catch(e){hienToast('error',e.response?.data?.message||'Chưa hoàn tác được.');}finally{saveLock.current=false;setSaving(false);}}} className="min-h-11 shrink-0 px-3 text-ink-600">{tr("Hoàn tác điều chỉnh")}</button></div>)}</details>}
+        {semester && danhSach.some((item) => !item.hocKy) && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">{tr("Lịch cũ chưa xếp học kỳ vẫn được hiển thị. Sửa buổi học để gắn vào học kỳ phù hợp.")}</p>}
         <TimetableImageImport key={(semester || currentSemester) + ':' + importVersion} semester={semester || currentSemester} onImported={taiDuLieu} pickerOpen={imagePickerOpen} onPickerClose={()=>setImagePickerOpen(false)} />
         {/* Form thêm mới */}
         <TimetableForm
@@ -320,17 +316,16 @@ function ThoiKhoaBieu() {
               <CalendarDays className="w-8 h-8 text-slate-400" />
             </div>
             <h3 className="text-lg font-display font-semibold text-slate-800 dark:text-slate-200">
-              {baseList.length?'Tuần này không có buổi học':'Lịch học trống'}
+              {baseList.length?tr('Tuần này không có buổi học'):tr('Lịch học trống')}
             </h3>
             <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
-              {baseList.length?'Các buổi trong tuần đã được điều chỉnh. Bạn có thể xem tuần khác hoặc hoàn tác điều chỉnh.':'Thêm lịch lặp hoặc nhập thời khóa biểu từ ảnh để bắt đầu.'}
+              {baseList.length?tr('Các buổi trong tuần đã được điều chỉnh. Bạn có thể xem tuần khác hoặc hoàn tác điều chỉnh.'):tr('Thêm lịch lặp hoặc nhập thời khóa biểu từ ảnh để bắt đầu.')}
             </p>
             <button
               onClick={moFormThem}
               className="mt-6 flex items-center gap-2 bg-ink-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-ink-700 transition-colors"
             >
-              <Plus className="w-4 h-4" /> Thêm buổi học
-            </button>
+              <Plus className="w-4 h-4" />{tr(" Thêm buổi học")}</button>
           </div>
         ) : (
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 overflow-hidden">

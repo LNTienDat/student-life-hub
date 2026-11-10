@@ -1,3 +1,5 @@
+import { t as tr } from '../../i18n/language';
+import useLanguage from '../../hooks/useLanguage';
 function SubjectForm({
   hienFormThem,
   dangSuaId,
@@ -10,6 +12,7 @@ function SubjectForm({
   onSubmit,
   saving = false,
 }) {
+  useLanguage();
   if (!hienFormThem) return null;
 
   return (
@@ -19,23 +22,19 @@ function SubjectForm({
     >
       <div className="absolute left-0 top-0 bottom-0 w-1 bg-ink-600 dark:bg-ink-400" />
       <div className="flex-1 w-full pl-2">
-        <label htmlFor="subject-name" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-          Tên môn học
-        </label>
+        <label htmlFor="subject-name" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">{tr("Tên môn học")}</label>
         <input
           id="subject-name"
           type="text"
           value={tenMon}
           onChange={(e) => onTenMonChange(e.target.value)}
-          placeholder="VD: Toán cao cấp"
+          placeholder={tr("VD: Toán cao cấp")}
           className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink-500/30 transition-shadow"
           required
         />
       </div>
       <div className="w-full md:w-28">
-        <label htmlFor="subject-credits" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-          Tín chỉ
-        </label>
+        <label htmlFor="subject-credits" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">{tr("Tín chỉ")}</label>
         <input
           id="subject-credits"
           type="number"
@@ -48,9 +47,7 @@ function SubjectForm({
         />
       </div>
       <div className="w-full md:w-48">
-        <label htmlFor="subject-semester" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">
-          Học kỳ
-        </label>
+        <label htmlFor="subject-semester" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">{tr("Học kỳ")}</label>
         <input
           id="subject-semester"
           type="text"
@@ -67,7 +64,7 @@ function SubjectForm({
           aria-busy={saving}
         className="w-full md:w-auto bg-emerald-600 text-white font-medium px-6 py-2.5 rounded-xl hover:bg-emerald-700 transition-colors"
       >
-        {dangSuaId ? 'Cập nhật' : 'Lưu môn học'}
+        {dangSuaId ? tr('Cập nhật') : tr('Lưu môn học')}
       </button>
     </form>
   );
