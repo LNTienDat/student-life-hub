@@ -29,7 +29,7 @@ try {
         $readLocalDatabase = "const fs=require('fs'),path=require('path'),root=process.argv[1],d=require(path.join(root,'back/node_modules/dotenv')).parse(fs.readFileSync(path.join(root,'back/.env')));const u=new URL(d.DATABASE_URL);if(!['localhost','127.0.0.1'].includes(u.hostname)||(u.port&&u.port!=='5432')||u.pathname!=='/student_life_hub')throw Error('Expected local project database');u.hostname='127.0.0.1';process.stdout.write(u.toString());"
         $env:DATABASE_URL = & $nodePath -e $readLocalDatabase $taskRoot
         if ($LASTEXITCODE -ne 0 -or -not $env:DATABASE_URL) { throw 'Khong xac nhan duoc CSDL local; chua khoi dong backend.' }
-        $env:NODE_ENV='development'; $env:PORT='5000'; $env:CHATBOT_AI_ENABLED='false'; $env:ENABLE_CRON_JOBS='false'; $env:SERVE_FRONTEND='false'
+        $env:NODE_ENV='development'; $env:PORT='5000'; $env:CHATBOT_AI_ENABLED='true'; $env:ENABLE_CRON_JOBS='false'; $env:SERVE_FRONTEND='false'
         $env:FRONTEND_URL=$url; $env:ADDITIONAL_FRONTEND_URLS='http://localhost:5173'
         $process = Start-Process -FilePath $nodePath -ArgumentList 'app.js' -WorkingDirectory (Join-Path $taskRoot 'back') -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $runtimeDir 'backend.out.log') -RedirectStandardError (Join-Path $runtimeDir 'backend.err.log')
         $backendPid=$process.Id
@@ -47,7 +47,7 @@ try {
         Start-Sleep -Milliseconds 500
     }
     if (-not $ready) { throw "LifeHub chua san sang. Xem nhat ky trong $runtimeDir." }
-    @{url=$url; backendPid=$backendPid; frontendPid=$frontendPid; started=(Get-Date).ToString('o'); aiEnabled=$false; cronEnabled=$false} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtimeDir 'status.json') -Encoding UTF8
+    @{url=$url; backendPid=$backendPid; frontendPid=$frontendPid; started=(Get-Date).ToString('o'); aiEnabled=$true; cronEnabled=$false} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtimeDir 'status.json') -Encoding UTF8
     Write-Output "LifeHub da san sang: $url"
     Write-Output 'Ban local chi chay khi may tinh dang bat. Sau khi khoi dong lai may, mo file Mo_LifeHub.cmd.'
     if ($OpenBrowser) { Start-Process $url }
