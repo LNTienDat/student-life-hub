@@ -90,24 +90,22 @@ function Dashboard() {
         </div>
         <div aria-label={tr("Thêm nhanh")} className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
           {[
-            ['deadline', 'Thêm việc', Plus, 'hover:border-violet-300 hover:text-violet-600 dark:hover:border-violet-700 dark:hover:text-violet-300', 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'],
-            ['class', 'Thêm lịch', CalendarPlus, 'hover:border-sky-300 hover:text-sky-600 dark:hover:border-sky-700 dark:hover:text-sky-300', 'bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-md shadow-sky-500/25'],
-            ['expense', 'Ghi khoản chi', Wallet, 'hover:border-emerald-300 hover:text-emerald-600 dark:hover:border-emerald-700 dark:hover:text-emerald-300', 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25'],
-          ].map(([kind, label, Icon, hoverClass, activeClass]) => (
+            ['deadline', 'Thêm việc', Plus, 'border-violet-300 bg-violet-50/70 text-violet-700 hover:bg-violet-100 dark:border-violet-700/60 dark:bg-violet-950/50 dark:text-violet-300 dark:hover:bg-violet-900/60 shadow-sm', 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/30'],
+            ['class', 'Thêm lịch', CalendarPlus, 'border-sky-300 bg-sky-50/70 text-sky-700 hover:bg-sky-100 dark:border-sky-700/60 dark:bg-sky-950/50 dark:text-sky-300 dark:hover:bg-sky-900/60 shadow-sm', 'bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-md shadow-sky-500/30'],
+            ['expense', 'Ghi khoản chi', Wallet, 'border-emerald-300 bg-emerald-50/70 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700/60 dark:bg-emerald-950/50 dark:text-emerald-300 dark:hover:bg-emerald-900/60 shadow-sm', 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/30'],
+          ].map(([kind, label, Icon, baseClass, activeClass]) => (
             <button
               key={kind}
               type="button"
               onClick={() => setQuickEntry(quickEntry === kind ? null : kind)}
               aria-expanded={quickEntry === kind}
               aria-pressed={quickEntry === kind}
-              className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 py-2 text-sm font-semibold transition-all duration-200 sm:px-3.5 ${
-                quickEntry === kind
-                  ? activeClass
-                  : `border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 ${hoverClass}`
+              className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-all duration-200 active:scale-95 ${
+                quickEntry === kind ? activeClass : baseClass
               }`}
             >
-              <Icon aria-hidden="true" className="hidden h-4 w-4 sm:block" />
-              {tr(label)}
+              <Icon aria-hidden="true" className="h-4 w-4" />
+              <span>{tr(label)}</span>
             </button>
           ))}
         </div>

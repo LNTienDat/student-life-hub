@@ -1,12 +1,12 @@
 import { NavLink } from 'react-router-dom';
 
 const ACTIVE_THEMES = {
-  '/dashboard': 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300 shadow-sm font-semibold',
-  '/mon-hoc': 'bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-300 shadow-sm font-semibold',
-  '/lich-hoc': 'bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-300 shadow-sm font-semibold',
-  '/deadline': 'bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-300 shadow-sm font-semibold',
-  '/tai-chinh': 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-300 shadow-sm font-semibold',
-  '/ho-so': 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300 shadow-sm font-semibold',
+  '/dashboard': 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-500/30 font-semibold',
+  '/mon-hoc': 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md shadow-blue-500/30 font-semibold',
+  '/lich-hoc': 'bg-gradient-to-r from-sky-600 to-cyan-500 text-white shadow-md shadow-sky-500/30 font-semibold',
+  '/deadline': 'bg-gradient-to-r from-violet-600 to-purple-500 text-white shadow-md shadow-violet-500/30 font-semibold',
+  '/tai-chinh': 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-md shadow-emerald-500/30 font-semibold',
+  '/ho-so': 'bg-gradient-to-r from-rose-600 to-pink-500 text-white shadow-md shadow-rose-500/30 font-semibold',
 };
 
 export default function GlowingNav({ menu }) {
