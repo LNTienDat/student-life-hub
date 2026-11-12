@@ -241,7 +241,12 @@ function ThoiKhoaBieu() {
         {/* Header */}
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
           <div>
-            <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{tr("Lịch học")}</h1>
+            <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-950/80 dark:text-sky-300">
+                <CalendarDays className="w-5 h-5" />
+              </span>
+              <span>{tr("Lịch học")}</span>
+            </h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1">{tr("Bạn có ")}{soMonHoc}{tr(" buổi học trong tuần này")}</p>
           </div>
 
@@ -264,7 +269,7 @@ function ThoiKhoaBieu() {
               className={`flex min-h-11 items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 hienForm
                   ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                  : 'bg-ink-600 dark:bg-ink-500 text-white hover:bg-ink-700 dark:hover:bg-ink-400 shadow-sm shadow-ink-500/20'
+                  : 'bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 text-white shadow-md shadow-sky-500/25 hover:shadow-lg hover:shadow-sky-500/30 active:scale-[0.98]'
               }`}
             >
               {hienForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}

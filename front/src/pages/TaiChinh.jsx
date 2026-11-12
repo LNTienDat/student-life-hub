@@ -200,11 +200,19 @@ function FinancePeriod({ period, onPeriodChange }) {
   return <>
     <div className="w-full min-w-0 space-y-6 pb-12">
       <div className="flex flex-col md:flex-row md:justify-between gap-4">
-        <div><h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white">{tr("Tài chính")}</h1><p className="mt-1 text-slate-500 dark:text-slate-400">{tr("Tháng ")}{label}{tr(" · Thu trừ chi trong tháng")}</p></div>
+        <div>
+          <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950/80 dark:text-emerald-300">
+              <Wallet className="w-5 h-5" />
+            </span>
+            <span>{tr("Tài chính")}</span>
+          </h1>
+          <p className="mt-1 text-slate-500 dark:text-slate-400">{tr("Tháng ")}{label}{tr(" · Thu trừ chi trong tháng")}</p>
+        </div>
         <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap">
-          <button type="button" onClick={exportExcel} disabled={exporting || summaryLoading || !!summaryError || !summary?.thongKe || (!summary.thongKe.tongThu && !summary.thongKe.tongChi)} className="flex min-h-11 justify-center items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-40"><Download size={17} />{exporting ? tr('Đang xuất…') : tr('Xuất Excel')}</button>
-          <button type="button" disabled={busy} onClick={()=>withDiscard(()=>{setDraft(null);setOriginal(null);setReceiptInfo(null);setReceiptOpen(true);},false)} className="inline-flex min-h-11 justify-center items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm text-ink-600 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-ink-300"><Camera size={17}/>{tr("Quét hóa đơn")}</button>
-          <button type="button" disabled={busy} onClick={e => openForm(null, e.currentTarget)} className="col-span-2 md:col-auto flex min-h-11 justify-center items-center gap-2 rounded-xl bg-ink-600 px-4 text-sm font-medium text-white disabled:opacity-40"><Plus size={17} />{tr("Thêm giao dịch")}</button>
+          <button type="button" onClick={exportExcel} disabled={exporting || summaryLoading || !!summaryError || !summary?.thongKe || (!summary.thongKe.tongThu && !summary.thongKe.tongChi)} className="flex min-h-11 justify-center items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"><Download size={17} />{exporting ? tr('Đang xuất…') : tr('Xuất Excel')}</button>
+          <button type="button" disabled={busy} onClick={()=>withDiscard(()=>{setDraft(null);setOriginal(null);setReceiptInfo(null);setReceiptOpen(true);},false)} className="inline-flex min-h-11 justify-center items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/50 px-4 text-sm text-emerald-700 hover:bg-emerald-100/60 disabled:opacity-50 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300 transition-colors"><Camera size={17}/>{tr("Quét hóa đơn")}</button>
+          <button type="button" disabled={busy} onClick={e => openForm(null, e.currentTarget)} className="col-span-2 md:col-auto flex min-h-11 justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 text-sm font-medium text-white shadow-md shadow-emerald-500/25 hover:shadow-lg hover:shadow-emerald-500/30 disabled:opacity-40 active:scale-[0.98] transition-all"><Plus size={17} />{tr("Thêm giao dịch")}</button>
         </div>
       </div>
       <ReceiptImport open={receiptOpen} onClose={()=>setReceiptOpen(false)} onRecognized={(result,file)=>{setOriginal(null);setDraft({loai:'chi',danhMuc:result.danhMuc,soTien:result.soTien,anhHoaDonHash:result.anhHoaDonHash,moTa:result.moTa,ngayGiaoDich:result.ngayGiaoDich});setFormError('');setReceiptInfo({imageURL:URL.createObjectURL(file),text:result.text,warnings:result.warnings});}}/>

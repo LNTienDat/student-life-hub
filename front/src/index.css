@@ -42,33 +42,33 @@
    "ink". Dùng giá trị màu trực tiếp để tránh circular @apply.
    ============================================================ */
 .dark body {
-  background-color: #121826; /* paper-dark */
-  color: #e5eaf4;
+  background-color: #0F172A; /* dark slate canvas */
+  color: #F1F5F9;
 }
 
 .dark .bg-white,
 .dark .bg-paper {
-  background-color: #1c2436; /* ink-800, dùng làm surface tối */
+  background-color: #1E293B; /* slate-800 surface */
 }
 
 .dark .bg-slate-50,
 .dark .bg-slate-100 {
-  background-color: #121826; /* paper-dark */
+  background-color: #0F172A;
 }
 
 .dark .text-slate-900,
 .dark .text-slate-800,
 .dark .text-slate-700 {
-  color: #e5eaf4;
+  color: #F1F5F9;
 }
 
 .dark .text-slate-600,
 .dark .text-slate-500 {
-  color: #b1bed1;
+  color: #94A3B8;
 }
 
 .dark .text-slate-400 {
-  color: #b1bed1;
+  color: #94A3B8;
 }
 
 .dark .border,
@@ -78,26 +78,26 @@
 .dark .border-slate-200,
 .dark .divide-y > * + *,
 .dark .divide-x > * + * {
-  border-color: #344057;
+  border-color: #334155;
 }
 
 .dark input,
 .dark select,
 .dark textarea {
-  background-color: #1c2436;
-  color: #e5eaf4;
-  border-color: #344057;
+  background-color: #1E293B;
+  color: #F1F5F9;
+  border-color: #334155;
 }
 
-/* Ink — màu chủ đạo, sáng hơn 1 bậc trong dark mode để đủ tương phản trên nền tối */
+/* Ink — màu chủ đạo hiện đại (Modern Indigo) */
 .dark .bg-ink-600 {
-  background-color: #3D3F72; /* ink-500 */
+  background-color: #6366F1; /* indigo-500 */
 }
 .dark .bg-ink-600:hover {
-  background-color: #5F68A0; /* ink-400 */
+  background-color: #818CF8; /* indigo-400 */
 }
 .dark .text-ink-600 {
-  color: #8E98CB; /* ink-300 */
+  color: #A5B4FC; /* indigo-300 */
 }
 
 /* Trạng thái màu ngữ nghĩa (nhấn ấm, tích cực, cảnh báo) */
@@ -156,9 +156,9 @@
 }
 
 /* Keep secondary surfaces and chart labels legible in dark mode. */
-.dark .bg-ink-50 { background-color: #282B4B; }
-.dark .recharts-default-tooltip { background-color: #1c2436 !important; color: #e5eaf4; border: 1px solid #454968 !important; }
-.dark .recharts-text { fill: #b1bed1; }
+.dark .bg-ink-50 { background-color: rgba(99, 102, 241, 0.15); }
+.dark .recharts-default-tooltip { background-color: #1E293B !important; color: #F1F5F9; border: 1px solid #475569 !important; }
+.dark .recharts-text { fill: #94A3B8; }
 
 @layer components {
   .shell-icon {
@@ -168,13 +168,13 @@
 
 /* Keep small labels readable in both themes. */
 .app-shell .text-slate-400 { color: #64748b; }
-.dark .app-shell .text-slate-400 { color: #b1bed1; }
-.dark .app-shell .bg-slate-800 { background-color: #1c2436; }
-.dark .app-shell .bg-slate-900 { background-color: #121826; }
+.dark .app-shell .text-slate-400 { color: #94A3B8; }
+.dark .app-shell .bg-slate-800 { background-color: #1E293B; }
+.dark .app-shell .bg-slate-900 { background-color: #0F172A; }
 .dark .text-ink-500,
 .dark .text-ink-600,
 .dark .text-ink-700,
-.dark .dark\:text-ink-400 { color: #b5bdf5; }
+.dark .dark\:text-ink-400 { color: #C7D2FE; }
 .dark .text-emerald-600,
 .dark .text-emerald-700 { color: #6ee7b7; }
 .dark .bg-emerald-50 { background-color: #193b35; }
@@ -182,7 +182,7 @@
 .dark .bg-rose-100 { background-color: #492b38; }
 .dark .text-amber-900 { color: #fcd887; }
 .dark .text-rose-900 { color: #fda4af; }
-.dark .shell-icon:hover { background-color: #293348; }
+.dark .shell-icon:hover { background-color: #334155; }
 .app-shell :is(h1, h2, h3, p) { overflow-wrap: anywhere; }
 .app-shell :is(form, [role="alertdialog"]) { scroll-margin-top: 5.5rem; }
 button, a, input, select, textarea, summary { -webkit-tap-highlight-color: transparent; }

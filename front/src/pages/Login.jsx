@@ -48,7 +48,7 @@ function Login() {
   return (
     <div className="min-h-screen flex bg-paper">
       {/* Panel thương hiệu — ẩn trên mobile, họa tiết dòng kẻ sổ tay + 3 lá ghi chú xếp chồng */}
-      <div className="hidden lg:flex lg:w-[46%] relative bg-ink-600 overflow-hidden flex-col justify-between p-8">
+      <div className="hidden lg:flex lg:w-[46%] relative bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 overflow-hidden flex-col justify-between p-8 shadow-2xl">
         <NotebookLines className="absolute inset-0 w-full h-full opacity-60" />
 
         <div className="relative z-10">
@@ -165,7 +165,7 @@ function Login() {
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={dangTai}
-                className="w-full bg-ink-600 text-white font-medium py-2.5 rounded-lg hover:bg-ink-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors shadow-sm"
+                className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium py-2.5 rounded-xl disabled:bg-slate-300 disabled:cursor-not-allowed transition-all shadow-md shadow-indigo-500/25 active:scale-[0.98]"
               >
                 {dangTai ? tr('Đang xử lý...') : tr('Đăng nhập')}
               </motion.button>
