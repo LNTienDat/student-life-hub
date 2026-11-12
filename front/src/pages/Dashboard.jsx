@@ -89,7 +89,27 @@ function Dashboard() {
           <p className="mt-2 text-sm text-slate-500">{new Date().toLocaleDateString(getLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
         <div aria-label={tr("Thêm nhanh")} className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
-          {[['deadline', 'Thêm việc', Plus], ['class', 'Thêm lịch', CalendarPlus], ['expense', 'Ghi khoản chi', Wallet]].map(([kind, label, Icon]) => <button key={kind} type="button" onClick={() => setQuickEntry(quickEntry === kind ? null : kind)} aria-expanded={quickEntry === kind} aria-pressed={quickEntry === kind} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 py-2 text-sm font-semibold sm:px-3 ${quickEntry === kind ? 'bg-ink-600 text-white hover:bg-ink-700' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}><Icon aria-hidden="true" className="hidden h-4 w-4 sm:block" />{tr(label)}</button>)}
+          {[
+            ['deadline', 'Thêm việc', Plus, 'hover:border-violet-300 hover:text-violet-600 dark:hover:border-violet-700 dark:hover:text-violet-300', 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25'],
+            ['class', 'Thêm lịch', CalendarPlus, 'hover:border-sky-300 hover:text-sky-600 dark:hover:border-sky-700 dark:hover:text-sky-300', 'bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-md shadow-sky-500/25'],
+            ['expense', 'Ghi khoản chi', Wallet, 'hover:border-emerald-300 hover:text-emerald-600 dark:hover:border-emerald-700 dark:hover:text-emerald-300', 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25'],
+          ].map(([kind, label, Icon, hoverClass, activeClass]) => (
+            <button
+              key={kind}
+              type="button"
+              onClick={() => setQuickEntry(quickEntry === kind ? null : kind)}
+              aria-expanded={quickEntry === kind}
+              aria-pressed={quickEntry === kind}
+              className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 py-2 text-sm font-semibold transition-all duration-200 sm:px-3.5 ${
+                quickEntry === kind
+                  ? activeClass
+                  : `border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 ${hoverClass}`
+              }`}
+            >
+              <Icon aria-hidden="true" className="hidden h-4 w-4 sm:block" />
+              {tr(label)}
+            </button>
+          ))}
         </div>
       </header>
 

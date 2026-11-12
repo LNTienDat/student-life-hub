@@ -230,8 +230,11 @@ function Deadline() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
           <div>
-            <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Deadline
+            <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-950/80 dark:text-violet-300">
+                <Clock className="w-5 h-5" />
+              </span>
+              <span>Deadline</span>
             </h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1">{tr("Bạn có ")}{tongChuaHoanThanh}{tr(" công việc cần hoàn thành")}</p>
           </div>
@@ -244,7 +247,7 @@ function Deadline() {
               aria-pressed={cheDoXem === 'list'}
               className={`flex min-h-11 justify-center items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 cheDoXem === 'list'
-                  ? 'bg-white dark:bg-slate-700 text-ink-600 dark:text-ink-200 shadow-sm'
+                  ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-sm font-semibold'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               }`}
             >
@@ -255,7 +258,7 @@ function Deadline() {
               aria-pressed={cheDoXem === 'calendar'}
               className={`flex min-h-11 justify-center items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 cheDoXem === 'calendar'
-                  ? 'bg-white dark:bg-slate-700 text-ink-600 dark:text-ink-200 shadow-sm'
+                  ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-sm font-semibold'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               }`}
             >
@@ -266,7 +269,7 @@ function Deadline() {
             className={`flex min-h-11 justify-center items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
               hienFormThem
                 ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                : 'bg-ink-600 dark:bg-ink-500 text-white hover:bg-ink-700 dark:hover:bg-ink-400 shadow-sm shadow-ink-500/20'
+                : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-500/25 hover:shadow-lg hover:shadow-violet-500/30 active:scale-[0.98]'
             }`}
           >
             {hienFormThem ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -295,15 +298,15 @@ function Deadline() {
           <div role="group" aria-label={tr("Mức quan trọng")} className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             {[{value:'all',label:'Tất cả'},...DEADLINE_PRIORITIES].map(level=>{
               const active=mucQuanTrongLoc===level.value;
-              const selected={all:'border-ink-600 bg-ink-600 text-white',cao:'border-rose-400 bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-200',binh_thuong:'border-amber-400 bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-200',thap:'border-emerald-400 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200'};
-              return <button key={level.value} type="button" aria-pressed={active} onClick={()=>setMucQuanTrongLoc(level.value)} className={'min-h-11 rounded-xl border px-4 text-sm font-medium transition-colors '+(active?(selected[level.value]||selected.all):'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300')}>{tr(level.label)}</button>;
+              const selected={all:'border-violet-600 bg-violet-600 text-white shadow-sm font-semibold',cao:'border-rose-400 bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-200 font-semibold',binh_thuong:'border-amber-400 bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-200 font-semibold',thap:'border-emerald-400 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200 font-semibold'};
+              return <button key={level.value} type="button" aria-pressed={active} onClick={()=>setMucQuanTrongLoc(level.value)} className={'min-h-11 rounded-xl border px-4 text-sm font-medium transition-all '+(active?(selected[level.value]||selected.all):'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300')}>{tr(level.label)}</button>;
             })}
           </div>
         </div>
 
         {!dangTai && !loadError && <div className="space-y-1 text-sm">
           <label className="inline-flex min-h-11 cursor-pointer items-center gap-3 text-slate-700 dark:text-slate-200">
-            <input type="checkbox" checked={tuDongXoa} onChange={luuTuyChon} disabled={saving} className="h-5 w-5 accent-ink-600" />{tr("Tự xóa việc đã hoàn thành sau 24 giờ")}</label>
+            <input type="checkbox" checked={tuDongXoa} onChange={luuTuyChon} disabled={saving} className="h-5 w-5 accent-violet-600 rounded" />{tr("Tự xóa việc đã hoàn thành sau 24 giờ")}</label>
           <p className="text-xs text-slate-500 dark:text-slate-400">{tr("Tính từ lúc hoàn thành. Bật sẽ áp dụng cả việc cũ đã quá 24 giờ. Có thể xem lại và khôi phục ở Đã xóa; tắt sẽ dừng tự xóa các việc còn lại.")}</p>
         </div>}
 

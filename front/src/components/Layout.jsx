@@ -88,9 +88,9 @@ function Layout({ children }) {
     <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[90] focus:rounded-lg focus:bg-ink-600 focus:px-4 focus:py-3 focus:text-white">{tr("Chuyển đến nội dung chính")}</a>
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white dark:bg-slate-800">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
-        <Link to="/dashboard" aria-label={tr("LifeHub — trang Hôm nay")} className="flex shrink-0 items-center gap-2" onClick={() => { setChuongMo(false); }}>
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ink-600 text-white"><BookOpen aria-hidden="true" className="h-5 w-5" /></span>
-          <span className="hidden text-lg font-bold tracking-tight text-slate-900 min-[360px]:inline">LifeHub</span>
+        <Link to="/dashboard" aria-label={tr("LifeHub — trang Hôm nay")} className="flex shrink-0 items-center gap-2.5" onClick={() => { setChuongMo(false); }}>
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-sky-400 text-white shadow-md shadow-indigo-500/25"><BookOpen aria-hidden="true" className="h-5 w-5" /></span>
+          <span className="hidden text-lg font-bold tracking-tight text-slate-900 dark:text-white min-[360px]:inline bg-gradient-to-r from-indigo-600 via-indigo-700 to-slate-900 dark:from-indigo-400 dark:via-indigo-300 dark:to-white bg-clip-text text-transparent">LifeHub</span>
         </Link>
         <nav aria-label={tr("Điều hướng chính")} className="hidden min-w-0 lg:block"><GlowingNav menu={menu} /></nav>
         <div className="flex shrink-0 items-center gap-1">
@@ -128,11 +128,20 @@ function Layout({ children }) {
         {children || <Outlet />}
       </div>
     </main>
-    <nav aria-label={tr("Điều hướng dưới trên điện thoại")} className="fixed inset-x-2 bottom-2 z-40 grid grid-cols-6 gap-0.5 rounded-2xl border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-800 lg:hidden" style={{ paddingBottom: 'max(4px, env(safe-area-inset-bottom))' }}>
+    <nav aria-label={tr("Điều hướng dưới trên điện thoại")} className="fixed inset-x-2 bottom-2 z-40 grid grid-cols-6 gap-0.5 rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-md p-1 shadow-xl dark:border-slate-700 dark:bg-slate-800/95 lg:hidden" style={{ paddingBottom: 'max(4px, env(safe-area-inset-bottom))' }}>
       {menu.map((item, index) => {
         const Icon = [Home, BookOpen, CalendarDays, Clock, Wallet, UserRound][index];
         const active = location.pathname === item.path;
-        return <Link key={item.path} to={item.path} aria-label={item.label} aria-current={active ? 'page' : undefined} onClick={() => { setChuongMo(false); }} className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-medium ${active ? 'bg-ink-50 text-ink-600 dark:bg-ink-900 dark:text-ink-200' : 'text-slate-600 dark:text-slate-300'}`}><Icon aria-hidden="true" className="h-5 w-5"/><span>{item.label}</span></Link>;
+        const mobileThemes = [
+          'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/70 dark:text-indigo-300',
+          'bg-blue-50 text-blue-600 dark:bg-blue-950/70 dark:text-blue-300',
+          'bg-sky-50 text-sky-600 dark:bg-sky-950/70 dark:text-sky-300',
+          'bg-violet-50 text-violet-600 dark:bg-violet-950/70 dark:text-violet-300',
+          'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/70 dark:text-emerald-300',
+          'bg-rose-50 text-rose-600 dark:bg-rose-950/70 dark:text-rose-300',
+        ];
+        const activeClass = mobileThemes[index] || 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-200';
+        return <Link key={item.path} to={item.path} aria-label={item.label} aria-current={active ? 'page' : undefined} onClick={() => { setChuongMo(false); }} className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-medium transition-all ${active ? `${activeClass} font-semibold scale-105` : 'text-slate-600 dark:text-slate-300'}`}><Icon aria-hidden="true" className="h-5 w-5"/><span>{item.label}</span></Link>;
       })}
     </nav>
     <Chatbot userId={user?.id} />
