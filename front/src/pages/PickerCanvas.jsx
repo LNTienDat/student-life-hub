@@ -25,9 +25,15 @@ function drawMouse(ctx, x, y, scale, running, selected, time, name) {
 
 export default function PickerCanvas({ students, phase, winner }) {
   const canvasRef = useRef(null);
-  const studentsRef = useRef(students); studentsRef.current = students;
-  const phaseRef = useRef(phase); phaseRef.current = phase;
-  const winnerRef = useRef(winner); winnerRef.current = winner;
+  const studentsRef = useRef(students);
+  const phaseRef = useRef(phase);
+  const winnerRef = useRef(winner);
+
+  useEffect(() => {
+    studentsRef.current = students;
+    phaseRef.current = phase;
+    winnerRef.current = winner;
+  });
 
   useEffect(() => {
     const canvas = canvasRef.current;

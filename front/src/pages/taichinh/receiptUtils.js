@@ -68,7 +68,7 @@ function sumReceiptItems(lines) {
     const total = parseDong(totalToken[0]);
     if (!unit || !total || Number(quantityToken[0]) * unit !== total) return null;
     const suffix = line.slice(totalToken.index + totalToken[0].length);
-    if (/[^\s|()\[\]:;!.,\-đ₫]/i.test(suffix.replace(/VN[DĐ]/gi, ''))) return null;
+    if (/[^\s|()[\]:;!.,\-đ₫]/i.test(suffix.replace(/VN[DĐ]/gi, ''))) return null;
     amounts.push(total);
   }
   const sum=amounts.reduce((a,b)=>a+b,0);

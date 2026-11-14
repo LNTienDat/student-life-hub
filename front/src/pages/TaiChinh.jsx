@@ -9,7 +9,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import ReceiptImport from '../components/ReceiptImport';
 import { useToast } from '../context/ToastContext';
 import { useFinanceCategories } from '../context/FinanceCategoryContext';
-import { Plus, Download, Camera } from 'lucide-react';
+import { Plus, Download, Camera, Wallet } from 'lucide-react';
 import FinanceKpiCards from './taichinh/FinanceKpiCards';
 import BudgetSection from './taichinh/BudgetSection';
 import FinanceTrendChart from './taichinh/FinanceTrendChart';
