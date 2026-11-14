@@ -9,7 +9,7 @@ import { clearCache } from '../services/apiCache';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
 import { formatDeadlineDate, deadlineToISO, deadlineInputValue, defaultDeadlineDate } from './deadline/deadlineDate';
-import { Calendar as CalendarIcon, List, Plus, X } from 'lucide-react';
+import { Calendar as CalendarIcon, List, Plus, X, Clock } from 'lucide-react';
 
 import DeadlineForm from './deadline/DeadlineForm';
 import { DEADLINE_PRIORITIES, selectDeadlines } from './deadline/deadlineUtils';

@@ -10,9 +10,6 @@ import { deadlineService } from '../../services/deadlineService';
 import { formatDeadlineDate } from '../deadline/deadlineDate';
 import { getTodayClasses, getUrgentDeadlines, getDeadlineAlert, localDayKey } from './todayUtils';
 
-const cardStyle = 'flex min-w-0 flex-col rounded-2xl border border-slate-200 bg-white p-4 sm:p-5';
-const linkStyle = 'inline-flex min-h-11 items-center gap-1 text-sm font-medium text-ink-600 hover:underline';
-
 function LoadingOrError({ result, loading, children }) {
   useLanguage();
   if (loading) return <p role="status" className="py-3 text-sm text-slate-500">{tr("Đang tải…")}</p>;
