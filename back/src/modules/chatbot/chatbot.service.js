@@ -29,11 +29,13 @@ function timChuDe(text) {
   const q = chuanHoa(text);
   // A specific date must be interpreted by AI, never silently replaced with today.
   if (/\b\d{1,2}[\/-]\d{1,2}(?:[\/-]\d{2,4})?\b/.test(q)) return [];
+  // Bypass data mode for queries regarding admissions, universities, or external advice:
+  if (/diem chuan|diem trung tuyen|diem xet tuyen|diem san|tuyen sinh|dai hoc|cao dang|truong |thi tot nghiep|on thi|nganh hoc|khoi thi/.test(q)) return [];
   if (/tu van|goi y|ke hoach|lam sao|nen |cach |huong dan|ra sao|the nao|\b(?:nhap|them|sua|xoa|quet)\b|muc tieu|tiet kiem|thang truoc|thang sau|nam ngoai|thang \d|thang mot|thang hai|thang ba/.test(q)) return [];
   const historical = /hom qua|bua qua|ngay kia|tuan truoc|tuan sau|tuan toi|tuan nay/.test(q);
   if (historical) return /lich|hoc/.test(q) ? ['lichHoc'] : [];
   const topics = [];
-  if (/\bgpa\b|diem|mon nguy co/.test(q)) topics.push('hocTap');
+  if (/\bgpa\b|mon nguy co|\bdiem (?:mon|hoc|tich luy|trung binh|cua toi|tong ket)\b|\bbang diem\b|\bdiem so\b/.test(q) || (/diem/.test(q) && !/chuan|san|tuyen|thi/.test(q))) topics.push('hocTap');
   if (/deadline|han chot|qua han|cong viec/.test(q)) topics.push('deadline');
   if (/thu chi|chi tieu|chi bao nhieu|tong chi|tong thu|thu nhap|so du|ngan sach|tai chinh/.test(q)) topics.push('taiChinh');
   if (/lich hoc|thoi khoa bieu|hoc (?:mon )?(?:gi|di|nao)|(?:mai|hom nay) .*?(?:hoc|lich)|(?:mai|hom nay) (?:hoc|lich)/.test(q)) topics.push('lichHoc');
