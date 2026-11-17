@@ -86,3 +86,12 @@ test('incomplete item tables, mismatched quantity and tax or discount need user 
  const conflicting=extractReceipt(header+'Bò 1 40.000 40.000');
  assert.equal(mergeReceiptReadings(r,[conflicting]).soTien,'');
 });
+
+test('2-digit receipt dates and discounted standalone Thanh toan totals are parsed accurately', () => {
+  const shortDate = extractReceipt('QUAN CAFE\nNgày: 17/11/26\nTổng cộng 45.000');
+  assert.equal(shortDate.ngayGiaoDich, '2026-11-17');
+  assert.equal(shortDate.soTien, '45000');
+  const discounted = extractReceipt('WINMART\nNgày 17/11/2026\nTổng cộng 100.000\nGiảm giá 20.000\nThanh toán: 80.000');
+  assert.equal(discounted.soTien, '80000');
+  assert.equal(discounted.danhMuc, 'an_uong');
+});

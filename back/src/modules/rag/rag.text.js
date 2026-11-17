@@ -1,5 +1,6 @@
 const { createHash } = require('crypto');
 const LIMITS = { fileBytes: 4 * 1024 * 1024, documentChars: 200000, totalChars: 600000, documents: 20, pages: 100, chunkChars: 1200, overlap: 160 };
+const VECTOR_DIM = 64;
 const stop = new Set('la va cua cho voi cac nhung mot nay do duoc trong khi thi de toi minh ban co khong nhu nao gi bao nhieu hay ve xin theo tu tai da se can phai duoc em oi nhe dum'.split(' '));
 function normalize(text) { return text.normalize('NFKD').replace(/\p{M}/gu, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase(); }
 // Canonical phrases preserve query coverage without adding unrelated synonym tokens.
@@ -9,10 +10,65 @@ const aliases = [
   [/\b(?:han nop|han chot|deadline)\b/g, 'deadline'],
   [/\b(?:hoa don|bill)\b/g, 'hoadon'],
 ];
+const CONCEPTS = [
+  /\b(?:diem chuan|diem trung tuyen|diem xet tuyen|diem san|tuyen sinh|xet tuyen|chi tieu|nguyen vong|to hop|khoi thi)\b/g,
+  /\b(?:gpa|diem trung binh|diem tich luy|bang diem|diem thanh phan|trong so|thang diem)\b/g,
+  /\b(?:tin chi|hoc phan|mon hoc|chuyen nganh|dai cuong|tu chon|bat buoc|de cuong)\b/g,
+  /\b(?:canh bao hoc vu|mon nguy co|no mon|rot mon|hoc lai|thi lai|buoc thoi hoc|dinh chi)\b/g,
+  /\b(?:hoc bong|tro cap|khen thuong|khuyen khich|mien giam|ho tro tai chinh)\b/g,
+  /\b(?:hoc phi|le phi|dong tien hoc|cong no|hoan phi)\b/g,
+  /\b(?:tot nghiep|ra truong|chuan dau ra|chung chi|khoa luan|do an tot nghiep|xet tot nghiep)\b/g,
+  /\b(?:bao luu|tam ngung|tam nghi|rut mon|huy hoc phan|chuyen truong)\b/g,
+  /\b(?:tkb|thoi khoa bieu|lich hoc|buoi hoc|tiet hoc|phong hoc|giang vien|nghi hoc|doi lich|lich thi)\b/g,
+  /\b(?:deadline|han chot|han nop|qua han|cong viec|bai tap|nhiem vu|do uu tien)\b/g,
+  /\b(?:thu chi|chi tieu|thu nhap|so du|giao dich|so tien|tai chinh)\b/g,
+  /\b(?:ngan sach|han muc|vuot ngan sach|canh bao chi tieu|tiet kiem)\b/g,
+  /\b(?:hoadon|hoa don|bill|bien lai|phieu thu|quet hoa don)\b/g,
+  /\b(?:thu vien|muon sach|tra sach|gia han sach|giao trinh)\b/g,
+  /\b(?:tai khoan|dang nhap|dang xuat|mat khau|xac thuc|bao mat|nhieu tab)\b/g,
+  /\b(?:pwa|ung dung web|ket noi mang|xuat excel|xuat pdf|chia se)\b/g,
+];
+function fnv1a(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function conceptIds(text) {
+  const norm = normalize(String(text || ''));
+  const found = new Set();
+  CONCEPTS.forEach((pattern, idx) => { if (new RegExp(pattern.source).test(norm)) found.add(idx); });
+  return found;
+}
 function terms(text) {
   let value = normalize(text).replace(/\b(?:ra sao|cho (?:em|minh|toi) hoi|(?:em|minh) (?:muon )?hoi)\b/g, ' ');
   for (const [pattern, canonical] of aliases) value = value.replace(pattern, canonical);
   return value.match(/[a-z0-9]+/g)?.filter(t => (t.length > 1 || /^\d$/.test(t)) && !stop.has(t)) || [];
+}
+function embedText(text) {
+  const vec = new Array(VECTOR_DIM).fill(0);
+  const norm = normalize(String(text || ''));
+  CONCEPTS.forEach((pattern, idx) => {
+    const matches = norm.match(pattern);
+    if (matches) vec[idx] += 2.5 * Math.min(3, matches.length);
+  });
+  const toks = terms(text);
+  for (let i = 0; i < toks.length; i++) {
+    const h1 = fnv1a(toks[i]);
+    vec[16 + (h1 % 48)] += (h1 & 0x10000) ? 1 : -1;
+    if (i + 1 < toks.length) {
+      const h2 = fnv1a(toks[i] + '_' + toks[i + 1]);
+      vec[16 + (h2 % 48)] += ((h2 & 0x10000) ? 1 : -1) * 1.25;
+    }
+  }
+  const mag = Math.hypot(...vec);
+  return mag > 0 ? vec.map(v => Number((v / mag).toFixed(6))) : vec;
+}
+function cosineSimilarity(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return 0;
+  let dot = 0, ma = 0, mb = 0;
+  for (let i = 0; i < a.length; i++) { dot += a[i] * b[i]; ma += a[i] * a[i]; mb += b[i] * b[i]; }
+  const denom = Math.sqrt(ma * mb);
+  return denom > 0 ? dot / denom : 0;
 }
 function clean(text) { return text.normalize('NFC').replace(/\r\n?/g, '\n').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim(); }
 function chunkPages(pages) {
@@ -40,11 +96,15 @@ function contentHash(pages) { return createHash('sha256').update(pages.map(p => 
 function retrieve(documents, question, limit = 4) {
   const query = [...new Set(terms(question))].slice(0, 50);
   if (!query.length) return [];
+  const qVec = embedText(question);
+  const qConcepts = conceptIds(question);
   const chunks = documents.flatMap(doc => doc.cacDoan.map(chunk => {
     const tokens = terms(chunk.noiDung);
     const frequencies = new Map();
     tokens.forEach(token => frequencies.set(token, (frequencies.get(token) || 0) + 1));
-    return { doc, chunk, frequencies, length: tokens.length || 1, titleTerms: new Set(terms(doc.tieuDe)) };
+    const fullText = doc.tieuDe + ' ' + chunk.noiDung;
+    const vector = Array.isArray(chunk.vector) && chunk.vector.length === VECTOR_DIM ? chunk.vector : embedText(fullText);
+    return { doc, chunk, frequencies, length: tokens.length || 1, titleTerms: new Set(terms(doc.tieuDe)), vector, concepts: conceptIds(fullText) };
   }));
   if (!chunks.length) return [];
   const average = chunks.reduce((sum, chunk) => sum + chunk.length, 0) / chunks.length;
@@ -59,8 +119,14 @@ function retrieve(documents, question, limit = 4) {
       score += idf * tf * 2.2 / (tf + 1.2 * (0.25 + 0.75 * c.length / average));
       if (c.titleTerms.has(term)) score += idf * 0.5;
     }
-    return { ...c, score, coverage: matches / query.length, matches };
-  }).filter(c => c.matches >= (query.length >= 6 ? 3 : Math.min(2, query.length)) && c.coverage >= (query.length >= 6 ? 0.5 : 0.65) && c.score > 0)
+    const semantic = Math.max(0, cosineSimilarity(qVec, c.vector));
+    const conceptMatches = [...qConcepts].filter(id => c.concepts.has(id)).length;
+    if (matches > 0 || conceptMatches > 0) score += semantic * 1.8 + conceptMatches * 0.9;
+    const coverage = matches / query.length;
+    const lexicalPass = matches >= (query.length >= 6 ? 3 : Math.min(2, query.length)) && coverage >= (query.length >= 6 ? 0.5 : 0.65);
+    const hybridPass = conceptMatches >= 1 && semantic >= 0.35 && ((matches >= 1 && (matches + conceptMatches * 2) / query.length >= 0.5) || (semantic >= 0.5 && conceptMatches * 2 >= query.length));
+    return { ...c, score, coverage, matches, semantic, lexicalPass, hybridPass };
+  }).filter(c => (c.lexicalPass || c.hybridPass) && c.score > 0)
     .sort((a, b) => b.score - a.score || String(a.doc.id).localeCompare(String(b.doc.id)) || a.chunk.thuTu - b.chunk.thuTu);
   const selected = [];
   const counts = new Map();
@@ -99,4 +165,4 @@ function verifiedAnswer(raw, sources) {
   }
   return { duThongTin: true, traLoi: lines.join('\n\n'), thamKhao: sources.filter(s => used.has(s.ma)) };
 }
-module.exports = { LIMITS, terms, clean, chunkPages, contentHash, retrieve, verifiedAnswer };
+module.exports = { LIMITS, VECTOR_DIM, terms, embedText, cosineSimilarity, clean, chunkPages, contentHash, retrieve, verifiedAnswer };
