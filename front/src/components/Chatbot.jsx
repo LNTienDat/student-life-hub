@@ -68,7 +68,7 @@ function Chatbot({ userId }) {
     if (consentKey === null) return;
     function dongBoDongY(event) {
       if (event.storageArea !== localStorage || (event.key !== consentKey && event.key !== null)) return;
-      setQuyenAI(event.newValue);
+      setQuyenAI(event.newValue === null ? 'with-data' : event.newValue === 'off' ? null : event.newValue);
     }
     window.addEventListener('storage', dongBoDongY);
     return () => window.removeEventListener('storage', dongBoDongY);

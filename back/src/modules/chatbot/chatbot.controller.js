@@ -35,8 +35,12 @@ async function guiTinNhan(req, res) {
       }
       const document = await answerDocumentQuestion(req.user.id, tinNhan.trim(), { dungAI: false, dongYGuiAI: false });
       if (document.thamKhao?.length) {
-        if (dungAI === true && dongYGuiAI === true && cauHinhAI().sanSang) return res.json(await answerDocumentQuestion(req.user.id, tinNhan.trim(), { dungAI: true, dongYGuiAI: true }));
-        return res.json(document);
+        if (dungAI === true && dongYGuiAI === true && cauHinhAI().sanSang) {
+          const ragAnswer = await answerDocumentQuestion(req.user.id, tinNhan.trim(), { dungAI: true, dongYGuiAI: true });
+          if (ragAnswer.ketQua === 'tra_loi') return res.json(ragAnswer);
+        } else {
+          return res.json(document);
+        }
       }
       if (!cauHinhAI().sanSang || dongYGuiAI !== true) return res.json({ nguon: 'tai_lieu', traLoi: document.traLoi + (cauHinhAI().sanSang ? ' Nếu muốn nhận gợi ý từ AI, bạn có thể bật trong Tùy chọn trợ lý.' : ' Hiện tư vấn AI chưa được bật; tra cứu dữ liệu và tài liệu vẫn dùng được.'), thamKhao: [] });
       const data = dungDuLieuCaNhan ? await layDuLieuSinhVien(req.user.id) : null;

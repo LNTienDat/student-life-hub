@@ -1,6 +1,6 @@
 const { createHash } = require('crypto');
 const LIMITS = { fileBytes: 4 * 1024 * 1024, documentChars: 200000, totalChars: 600000, documents: 20, pages: 100, chunkChars: 1200, overlap: 160 };
-const stop = new Set('la va cua cho voi cac nhung mot nay do duoc trong khi thi de toi minh ban co khong nhu nao gi bao nhieu hay ve xin theo tu tai da se can phai duoc'.split(' '));
+const stop = new Set('la va cua cho voi cac nhung mot nay do duoc trong khi thi de toi minh ban co khong nhu nao gi bao nhieu hay ve xin theo tu tai da se can phai duoc em oi nhe dum'.split(' '));
 function normalize(text) { return text.normalize('NFKD').replace(/\p{M}/gu, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase(); }
 // Canonical phrases preserve query coverage without adding unrelated synonym tokens.
 const aliases = [
@@ -10,7 +10,7 @@ const aliases = [
   [/\b(?:hoa don|bill)\b/g, 'hoadon'],
 ];
 function terms(text) {
-  let value = normalize(text).replace(/\bra sao\b/g, ' ');
+  let value = normalize(text).replace(/\b(?:ra sao|cho (?:em|minh|toi) hoi|(?:em|minh) (?:muon )?hoi)\b/g, ' ');
   for (const [pattern, canonical] of aliases) value = value.replace(pattern, canonical);
   return value.match(/[a-z0-9]+/g)?.filter(t => (t.length > 1 || /^\d$/.test(t)) && !stop.has(t)) || [];
 }
@@ -60,7 +60,7 @@ function retrieve(documents, question, limit = 4) {
       if (c.titleTerms.has(term)) score += idf * 0.5;
     }
     return { ...c, score, coverage: matches / query.length, matches };
-  }).filter(c => c.matches >= Math.min(2, query.length) && c.coverage >= 0.65 && c.score > 0)
+  }).filter(c => c.matches >= (query.length >= 6 ? 3 : Math.min(2, query.length)) && c.coverage >= (query.length >= 6 ? 0.5 : 0.65) && c.score > 0)
     .sort((a, b) => b.score - a.score || String(a.doc.id).localeCompare(String(b.doc.id)) || a.chunk.thuTu - b.chunk.thuTu);
   const selected = [];
   const counts = new Map();
@@ -90,7 +90,8 @@ function verifiedAnswer(raw, sources) {
     // Reject invented numeric facts and links even when a source id is valid.
     const numbers = part.noiDung.match(/\d+(?:[.,:/-]\d+)*/g) || [];
     const evidenceNumbers = new Set(evidence.match(/\d+(?:[.,:/-]\d+)*/g) || []);
-    if (numbers.some(number => !evidenceNumbers.has(number))) return null;
+    const hasNumber = n => evidenceNumbers.has(n) || evidenceNumbers.has(n.replaceAll(',', '.')) || evidenceNumbers.has(n.replaceAll('.', ','));
+    if (numbers.some(number => !hasNumber(number))) return null;
     const links = part.noiDung.match(/https?:\/\/[^\s<>"\]]+/g) || [];
     if (links.some(link => !evidence.includes(link))) return null;
     part.nguon.forEach(id => used.add(id));

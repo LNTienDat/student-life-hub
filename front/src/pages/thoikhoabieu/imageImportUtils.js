@@ -1,7 +1,9 @@
 const fold = text => String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
 export function imageDay(text) {
   const normalized = fold(text).replace(/[.\s]/g, '');
-  if (/^(cn|chunhat)$/.test(normalized)) return 8;
+  if (/^(cn|chunhat|sun|sunday)$/.test(normalized)) return 8;
+  const en = { mon: 2, monday: 2, tue: 3, tues: 3, tuesday: 3, wed: 4, wednesday: 4, thur: 5, thurs: 5, thursday: 5, fri: 6, friday: 6, sat: 7, saturday: 7 }[normalized];
+  if (en) return en;
   const found = /^(?:t|thu)([2-7])$/.exec(normalized);
   return found ? Number(found[1]) : null;
 }
