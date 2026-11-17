@@ -7,6 +7,8 @@ const phrases = [
   'xác suất', 'thống kê', 'đại số', 'tuyến tính', 'kinh tế', 'tiếng Anh',
   'đồ án', 'chuyên ngành', 'hệ thống', 'thông tin', 'ứng dụng', 'phân tích',
   'thiết kế', 'kiến trúc', 'lý thuyết', 'kiểm thử', 'an toàn thông tin',
+  'triết học', 'pháp luật', 'giải tích', 'vật lý', 'hóa học',
+  'quản trị', 'tài chính', 'ngân hàng', 'vi xử lý', 'học máy',
 ];
 const fold = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase();
 const courseKey = text => fold(text).replace(/\s*[‐‑‒–—−-]\s*/g, '-').replace(/\s+/g, ' ').trim();

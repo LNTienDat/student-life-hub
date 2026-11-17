@@ -82,10 +82,14 @@ function receiptDate(lines) {
     const rank = /\b(?:ngay\s+(?:giao dich|in|lap|thanh toan)|transaction date|invoice date|issued)\b/.test(folded) ? 2
       : /\b(?:ngay|date)\b/.test(folded) ? 1 : 0;
     const dateLine = folded.replace(/\b(\d{1,2})\s*(?:thg|thang|tho|th9)\.?\s*(\d{1,2})\s*[,/-]?\s*(\d{4})\b/g, '$1/$2/$3');
-    for (const match of dateLine.matchAll(/(?<!\d)(\d{4})\s*[-/]\s*(\d{1,2})\s*[-/]\s*(\d{1,2})(?!\d)|(?<!\d)(\d{1,2})\s*[/.-]\s*(\d{1,2})\s*[/.-]\s*(\d{4})(?!\d)/g)) {
-      const year = match[1] || match[6];
+    for (const match of dateLine.matchAll(/(?<!\d)(\d{4})\s*[-/]\s*(\d{1,2})\s*[-/]\s*(\d{1,2})(?!\d)|(?<!\d)(\d{1,2})\s*[/.-]\s*(\d{1,2})\s*[/.-]\s*(\d{4}|\d{2})(?!\d)/g)) {
+      let year = match[1] || match[6];
       const month = match[2] || match[5];
       const day = match[3] || match[4];
+      if (year.length === 2) {
+        if (!rank || !/[/-]/.test(match[0]) || Number(year) < 15 || Number(year) > 35) continue;
+        year = `20${year}`;
+      }
       if (!rank && !/[/-]/.test(match[0])) continue;
       const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
       if (date.getUTCFullYear() !== Number(year) || date.getUTCMonth() + 1 !== Number(month) || date.getUTCDate() !== Number(day)) continue;
@@ -98,9 +102,9 @@ function receiptDate(lines) {
 }
 
 function totalLabelRank(line) {
-  if (/\b(?:khach (?:dua|tra)|tien (?:thua|tra lai|khach)|cash|change|tam tinh|subtotal|giam gia|chiet khau)\b/.test(line)) return 0;
-  if (/\b(?:tong thanh toan|(?:can|phai) (?:thanh toan|tra)|grand total|total due|amount due)\b/.test(line)) return 4;
-  if (/\btong\s*[:：]|^tong\s*(?:\d|$|vnd\b)|\btong (?:cong|(?:thanh )?tien)\b|\bt[.\s]*cong\b|^total\b/.test(line)) return 3;
+  if (/\b(?:khach (?:dua|tra)|tien (?:thua|tra lai|khach)|cash|change|tam tinh|subtotal|giam gia|chiet khau|hinh thuc|phuong thuc|han thanh toan)\b/.test(line)) return 0;
+  if (/\b(?:tong thanh toan|(?:can|phai) (?:thanh toan|tra)|thuc thu|grand total|total due|amount due)\b|^thanh toan(?:\s*[:：]|\s+(?:vnd\b|\d))/.test(line)) return 4;
+  if (/\btong\s*[:：]|^tong\s*(?:\d|$|vnd\b)|\btong (?:cong|(?:thanh |so )?tien|hoa don)\b|\bcong tien hang\b|\bt[.\s]*cong\b|^total\b/.test(line)) return 3;
   if (/^thanh tien\b/.test(line)) return 2;
   return /^tien mat\b/.test(line) ? 1 : 0;
 }
@@ -142,8 +146,8 @@ export function extractReceipt(value, groupedRows = []) {
   const date = receiptDate([...lines, ...groupedRows].map(line => line.replaceAll('⁄', '/').replaceAll('／', '/')));
   const ngayGiaoDich = date.date;
   const normalized=fold(text);
-  const danhMuc=/\b(?:taxi|xe buyt|xe bus|xang|gui xe|grab|be car|van chuyen)\b/.test(normalized)?'di_lai':/\b(?:com|pho|bun|banh|cafe|coffee|ca phe|nha hang|quan an|tra sua|food|restaurant|res|coca|sprite|soda)\b/.test(normalized)?'an_uong':'khac';
-  const merchantLabel = /\b(?:coffee|cafe|ca phe|nha hang|restaurant|res|quan an|xang dau)\b/;
+  const danhMuc=/\b(?:taxi|xe buyt|xe bus|xang|gui xe|grab|be car|be bike|xanh sm|van chuyen|ve xe)\b/.test(normalized)?'di_lai':/\b(?:com|pho|bun|mi|hu tieu|banh|cafe|coffee|ca phe|nha hang|quan an|tra sua|tra chanh|food|restaurant|res|coca|sprite|soda|pepsi|highlands|phuc long|katinat|lotteria|kfc|jollibee|circle k|gs25|winmart|familymart|bach hoa xanh)\b/.test(normalized)?'an_uong':'khac';
+  const merchantLabel = /\b(?:coffee|cafe|ca phe|nha hang|restaurant|res|quan an|xang dau|tra sua|highlands|phuc long|katinat|circle k|gs25|winmart|lotteria|kfc|jollibee)\b/;
   const cleanMerchant = line => !/[@\d]{5,}|@|^[\s|]*\b(?:hoa don|phieu|bill|receipt|invoice|ngay|date|mst|ma so|tel|dt|dia chi|duong|gio|ban|thu ngan|so hd)\b/i.test(fold(line));
   const merchant = lines.find(line => merchantLabel.test(fold(line)) && cleanMerchant(line))
     || lines.slice(0, 4).find(line => /[\p{L}]{3}/u.test(line) && cleanMerchant(line));
