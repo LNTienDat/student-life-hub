@@ -32,24 +32,27 @@ async function recognizeReceiptInternal(file,{signal,onProgress=()=>{}}={}) {
     const read = async (target, mode, start, span) => {
       progressStart = start;
       progressSpan = span;
-      await active(Promise.race([worker.setParameters({tessedit_pageseg_mode:mode,preserve_interword_spaces:'1',thresholding_method:'2'}),fatal]));
+      await active(Promise.race([worker.setParameters({tessedit_pageseg_mode:mode,preserve_interword_spaces:'1',thresholding_method:'0'}),fatal]));
       const { data } = await active(Promise.race([worker.recognize(target, {}, {text:true,blocks:true}),fatal]));
       return extractReceipt(data.text, groupReceiptWords(data.blocks));
     };
-    const primary = await read(canvas, PSM.SINGLE_COLUMN, 0, 60);
+    const primary = await read(canvas, PSM.SPARSE_TEXT, 0, 55);
     let receipt = primary;
     if (!primary.hasFinalTotal || !primary.ngayGiaoDich) {
       receipt = await refineReceipt(primary, async () => {
+        const alternatives = [await read(canvas, PSM.SINGLE_BLOCK, 55, 15)];
+        const preCheck = mergeReceiptReadings(primary, alternatives);
+        if ((preCheck.hasFinalTotal || preCheck.computedFromItems) && preCheck.ngayGiaoDich) return alternatives;
         reference = prepareReceiptReference(bitmap);
-        const alternatives = [await read(reference, PSM.SPARSE_TEXT, 60, 20)];
+        alternatives.push(await read(reference, PSM.SPARSE_TEXT, 70, 12));
         const combined = mergeReceiptReadings(primary, alternatives);
         if ((combined.hasFinalTotal || combined.computedFromItems) && combined.ngayGiaoDich) return alternatives;
         try {
           await active(Promise.race([worker.reinitialize(['eng'], 1),fatal]));
-          alternatives.push(await read(canvas, PSM.SPARSE_TEXT, 80, 10));
+          alternatives.push(await read(canvas, PSM.SPARSE_TEXT, 82, 9));
           const comparison = mergeReceiptReadings(primary, alternatives);
           if ((!comparison.hasFinalTotal && !comparison.computedFromItems) || !comparison.ngayGiaoDich) {
-            alternatives.push(await read(canvas, PSM.SINGLE_BLOCK, 90, 9));
+            alternatives.push(await read(canvas, PSM.SINGLE_BLOCK, 91, 8));
           }
         } catch (error) {
           signal?.throwIfAborted();

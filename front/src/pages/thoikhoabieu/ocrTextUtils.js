@@ -9,6 +9,7 @@ const phrases = [
   'thiết kế', 'kiến trúc', 'lý thuyết', 'kiểm thử', 'an toàn thông tin',
   'triết học', 'pháp luật', 'giải tích', 'vật lý', 'hóa học',
   'quản trị', 'tài chính', 'ngân hàng', 'vi xử lý', 'học máy',
+  'chuyển đổi số', 'kỹ năng mềm', 'quản trị dự án',
 ];
 const fold = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase();
 const courseKey = text => fold(text).replace(/\s*[‐‑‒–—−-]\s*/g, '-').replace(/\s+/g, ' ').trim();
@@ -56,7 +57,9 @@ export function restoreCourseText(value, knownSubjects = []) {
       i += replacement.size - 1;
     }
   }
-  return (result + source.slice(cursor)).replace(/\bva\b/g, 'và');
+  return (result + source.slice(cursor))
+    .replace(/\bva\b/g, 'và')
+    .replace(/(?<!\p{L})v[ờo](?=\s+(?:viết|phát|ứng|thiết|phân|trình|quản|thực|kiểm|xử))/giu, 'và');
 }
 export function confirmedTimeRange(ranges) {
   const votes = new Map();

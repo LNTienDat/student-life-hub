@@ -80,14 +80,14 @@ function receiptDate(lines) {
     const folded = fold(line);
     if (/\b(?:han su dung|hsd|expiry|expiration|ngay het han|han thanh toan|due date|ngay san xuat|nsx)\b/.test(folded)) continue;
     const rank = /\b(?:ngay\s+(?:giao dich|in|lap|thanh toan)|transaction date|invoice date|issued)\b/.test(folded) ? 2
-      : /\b(?:ngay|date)\b/.test(folded) ? 1 : 0;
+      : /\b(?:ngay|date|gio vao|gio ra|in luc|thoi gian|time)\b/.test(folded) ? 1 : 0;
     const dateLine = folded.replace(/\b(\d{1,2})\s*(?:thg|thang|tho|th9)\.?\s*(\d{1,2})\s*[,/-]?\s*(\d{4})\b/g, '$1/$2/$3');
     for (const match of dateLine.matchAll(/(?<!\d)(\d{4})\s*[-/]\s*(\d{1,2})\s*[-/]\s*(\d{1,2})(?!\d)|(?<!\d)(\d{1,2})\s*[/.-]\s*(\d{1,2})\s*[/.-]\s*(\d{4}|\d{2})(?!\d)/g)) {
       let year = match[1] || match[6];
       const month = match[2] || match[5];
       const day = match[3] || match[4];
       if (year.length === 2) {
-        if (!rank || !/[/-]/.test(match[0]) || Number(year) < 15 || Number(year) > 35) continue;
+        if (!rank || !/[./-]/.test(match[0]) || Number(year) < 15 || Number(year) > 35) continue;
         year = `20${year}`;
       }
       if (!rank && !/[/-]/.test(match[0])) continue;
@@ -138,7 +138,8 @@ export function extractReceipt(value, groupedRows = []) {
   const maximum=Math.max(0,...candidates.map(item=>item.score));
   const totals=[...new Set(candidates.filter(item=>item.score===maximum).map(item=>item.amount))];
   const moneyLines=lines.filter(line=>!/so the|\bluong\b|\bqty\b|\bquantity\b/.test(fold(line)));
-  const foreign=moneyLines.some(line=>/\b(?:usd|eur|gbp|jpy|cny|thb)\b|[$€£¥]\s*\d|\d[\d., ]*\s*[$€£¥]/i.test(line));
+  const explicitForeign=moneyLines.some(line=>/\b(?:usd|eur|gbp|jpy|cny|thb)\b/i.test(line));
+  const foreign=explicitForeign||moneyLines.some(line=>!/\bvn[dđ]\b|[₫]|\d\s*đ\b/i.test(line)&&/(?:[$€£¥]\s*\d|\d[\d., ]*\s*[$€£¥])/.test(line));
   const rowSum = !foreign && !candidates.length ? sumReceiptItems(groupedRows) : null;
   const textSum = !foreign && !candidates.length ? sumReceiptItems(lines) : null;
   const itemSum = rowSum && textSum && rowSum !== textSum ? null : rowSum || textSum;
@@ -146,9 +147,9 @@ export function extractReceipt(value, groupedRows = []) {
   const date = receiptDate([...lines, ...groupedRows].map(line => line.replaceAll('⁄', '/').replaceAll('／', '/')));
   const ngayGiaoDich = date.date;
   const normalized=fold(text);
-  const danhMuc=/\b(?:taxi|xe buyt|xe bus|xang|gui xe|grab|be car|be bike|xanh sm|van chuyen|ve xe)\b/.test(normalized)?'di_lai':/\b(?:com|pho|bun|mi|hu tieu|banh|cafe|coffee|ca phe|nha hang|quan an|tra sua|tra chanh|food|restaurant|res|coca|sprite|soda|pepsi|highlands|phuc long|katinat|lotteria|kfc|jollibee|circle k|gs25|winmart|familymart|bach hoa xanh)\b/.test(normalized)?'an_uong':'khac';
-  const merchantLabel = /\b(?:coffee|cafe|ca phe|nha hang|restaurant|res|quan an|xang dau|tra sua|highlands|phuc long|katinat|circle k|gs25|winmart|lotteria|kfc|jollibee)\b/;
-  const cleanMerchant = line => !/[@\d]{5,}|@|^[\s|]*\b(?:hoa don|phieu|bill|receipt|invoice|ngay|date|mst|ma so|tel|dt|dia chi|duong|gio|ban|thu ngan|so hd)\b/i.test(fold(line));
+  const danhMuc=/\b(?:taxi|xe buyt|xe bus|xang|gui xe|grab|be car|be bike|xanh sm|van chuyen|ve xe)\b/.test(normalized)?'di_lai':/\b(?:com|pho|bun|mi|hu tieu|banh|cafe|coffe|coffee|ca phe|nha hang|quan an|tra sua|tra chanh|tra gung|nuoc cam|nuoc chanh|ruou|heineken|bia|food|restaurant|res|coca|sprite|soda|pepsi|highlands|phuc long|katinat|lotteria|kfc|jollibee|circle k|gs25|winmart|familymart|bach hoa xanh)\b/.test(normalized)?'an_uong':'khac';
+  const merchantLabel = /\b(?:coffe|coffee|cafe|ca phe|nha hang|restaurant|res|quan an|xang dau|tra sua|highlands|phuc long|katinat|circle k|gs25|winmart|lotteria|kfc|jollibee)\b/;
+  const cleanMerchant = line => !/[@\d]{5,}|@|[;=~_]|^[\s|]*\b(?:hoa don|phieu|bill|receipt|invoice|ngay|date|mst|ma so|tel|dt|dia chi|duong|gio|ban|thu ngan|so hd)\b/i.test(fold(line));
   const merchant = lines.find(line => merchantLabel.test(fold(line)) && cleanMerchant(line))
     || lines.slice(0, 4).find(line => /[\p{L}]{3}/u.test(line) && cleanMerchant(line));
   const warnings=[];
@@ -159,7 +160,7 @@ export function extractReceipt(value, groupedRows = []) {
     loai: 'chi', danhMuc, soTien, ngayGiaoDich, moTa: merchant?.slice(0, 200) || 'Hóa đơn', warnings, text,
     hasFinalTotal: maximum >= 3 && Boolean(soTien), totalRank: maximum, totalAmbiguous: maximum >= 3 && totals.length > 1,
     computedFromItems: Boolean(itemSum), itemRowsVerified: Boolean(itemSum && rowSum),
-    dateRank: date.rank, dateAmbiguous: date.ambiguous, foreign,
+    dateRank: date.rank, dateAmbiguous: date.ambiguous, foreign, explicitForeign,
   };
 }
 
@@ -177,7 +178,9 @@ export function mergeReceiptReadings(primary, alternatives) {
    && (computed.length >= 2 || computed.some(item => item.itemRowsVerified));
  const agreedTotal = totals.length && totals.every(amount => amount === totals[0]) && !bestTotals.some(item => item.totalAmbiguous)
    && (bestTotals.includes(primary) || totals.length >= 2 || (agreedSum && sum === totals[0]));
- result.foreign = readings.some(item => item.foreign);
+ const anyExplicitForeign = readings.some(item => item.explicitForeign);
+ const foreignCount = readings.filter(item => item.foreign).length;
+ result.foreign = anyExplicitForeign || (agreedTotal && totals.length >= 2 && foreignCount === 1 ? false : foreignCount > 0);
  result.hasFinalTotal = !result.foreign && Boolean(agreedTotal);
  result.computedFromItems = !result.foreign && !finalReadings.length && Boolean(agreedSum);
  const weakAmounts = [...new Set(readings.filter(item => !item.computedFromItems && !item.hasFinalTotal && item.soTien).map(item => item.soTien))];
