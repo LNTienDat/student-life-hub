@@ -145,4 +145,14 @@ test('supports English weekday headers and general university course spelling re
   assert.equal(imageDay('Thursday'), 5);
   assert.equal(imageDay('Sunday'), 8);
   assert.equal(restoreCourseText('Triết hoc va Pháp luột'), 'Triết học và Pháp luật');
+  assert.equal(restoreCourseText('Chuyển đội số'), 'Chuyển đổi số');
+  assert.equal(restoreCourseText('Phương pháp nghiên cứu vờ viết báo cáo khoa học'), 'Phương pháp nghiên cứu và viết báo cáo khoa học');
+});
+
+test('extracts building I7 classroom with hoc duong label and digital transformation title intact', () => {
+  const rows = extractImageTimetable({
+    text: 'Chuyển đổi số\n13:00 - 17:15\nTiết 7-11\n9 17-03 (học đường)\nDH23TIN06\nThS. Trương Thanh Thảo',
+  }, 3);
+  assert.equal(rows[0].phongHoc, 'I7-03 (học đường)');
+  assert.equal(rows[0].giangVien, 'ThS. Trương Thanh Thảo');
 });

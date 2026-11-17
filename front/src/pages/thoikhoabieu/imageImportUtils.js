@@ -51,16 +51,19 @@ const teacherLabel = /^(?:gv|th\s*\.?\s*s|ts|pgs(?:\s*\.?\s*ts)?)(?:[. :]+|$)/;
 const classLabel = /^(?:dh\d|lop(?:\s*:|\s+(?:dh|\d)))/;
 const noteLabel = /(?:^ghi\s*chu\b|\s+ghi\s*chu\s*[:.-]|(?:^|\s)(?:tam ngung|nghi hoc|huy buoi|tam nghi)\b)/;
 const suspendedLabel = /^(?:t[ao]m ngung|nghi hoc|huy buoi|tam nghi)\b/;
-const roomCode = /\b([il1][2-5]|[il]\d)\s*[-–—]+\s*(\d{2})\b/i;
-const roomText = text => text.replace(/\bph[oò]ng\s+m[aáàoó]y(?:\s+t[ií]nh)?\b/gi, match =>
-  /\bt[ií]nh\b/i.test(match) ? 'Phòng máy tính' : 'Phòng máy').replace(/\s+\|$/, '').slice(0, 50);
+const roomCode = /\b([il1][1-9]|[il]\d)\s*[-–—]+\s*(\d{2})\b/i;
+const roomText = text => text
+  .replace(/\bph[oò]ng\s+m[aáàoó]y(?:\s+t[ií]nh)?\b/gi, match => /\bt[ií]nh\b/i.test(match) ? 'Phòng máy tính' : 'Phòng máy')
+  .replace(/\bh[oọòỏ]c\s+d[uưươởờ]ng\b/gi, 'học đường')
+  .replace(/\s+\|$/, '')
+  .slice(0, 50);
 
 function roomFromLine(text) {
   const line = cleanedLine(text);
   const code = roomCode.exec(line);
   const label = /^phong(?:\s*[:.-]\s*|\s+(?=[a-z]{0,3}\d))/i.exec(fold(line));
   if (code && (code.index === 0 || /^[\d\s]+$/.test(line.slice(0, code.index)) || label)) {
-    const hasRoomLabel = label || /\(\s*phong\b/.test(fold(line));
+    const hasRoomLabel = label || /\(\s*(?:phong|hoc\s*duong|giang\s*duong|thuc\s*hanh|ly\s*thuyet)\b/.test(fold(line));
     const building = code[1].replace(/^[il]|^1(?=\d$)/i, prefix => prefix === '1' && !hasRoomLabel ? prefix : 'I');
     return roomText(`${building}-${code[2]}${line.slice(code.index + code[0].length)}`);
   }

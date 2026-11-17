@@ -95,3 +95,14 @@ test('2-digit receipt dates and discounted standalone Thanh toan totals are pars
   assert.equal(discounted.soTien, '80000');
   assert.equal(discounted.danhMuc, 'an_uong');
 });
+
+test('dotted check-in dates and single noisy currency artifacts do not block multi-pass VND receipt totals', () => {
+  const cleanSg = extractReceipt('SG COFFE\nGiờ vào: 11/02.16 20:31 Giờ ra: 11.02.16 22:33\nTổng cộng: 3.976.000\nThanh toán: 3.976.000');
+  assert.equal(cleanSg.ngayGiaoDich, '2016-02-11');
+  assert.equal(cleanSg.soTien, '3976000');
+  assert.equal(cleanSg.danhMuc, 'an_uong');
+  const noisy = extractReceipt('SC; CCDLEEL\nTổng cộng: 3.976.000\nThanh toán: 3.976.000\nL Lm ..Ị $3...');
+  const merged = mergeReceiptReadings(cleanSg, [cleanSg, noisy]);
+  assert.equal(merged.soTien, '3976000');
+  assert.equal(merged.ngayGiaoDich, '2016-02-11');
+});

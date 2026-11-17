@@ -38,9 +38,9 @@ function TimetableMobile({ buoiTheoThu = {}, onSua, onXoa, onDieuChinh, readOnly
                       </div>
                     )}
                     {bh.giangVien && (
-                      <div className="flex items-center gap-1.5 sm:col-span-2 truncate">
-                        <User className="w-4 h-4 flex-shrink-0" />
-                        <span className="truncate">{bh.giangVien}</span>
+                      <div className="flex min-w-0 items-start gap-1.5 sm:col-span-2">
+                        <User className="mt-0.5 w-4 h-4 shrink-0" />
+                        <span className="min-w-0 break-words [overflow-wrap:anywhere]">{bh.giangVien}</span>
                       </div>
                     )}
                   </div>
