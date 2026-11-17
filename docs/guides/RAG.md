@@ -18,7 +18,7 @@ Hướng dẫn LifeHub đi kèm do dự án tự viết, không phải quy đị
 - **Tìm và đọc tài liệu** (mặc định): trả trích đoạn nguyên văn, tên tài liệu, trang/phần. Không dùng LLM, không gọi API AI, không phải câu trả lời AI sinh ra.
 - **Nhờ AI giải thích kèm nguồn**: phần RAG đã tích hợp trong mã. Chỉ bật được khi backend được cấu hình AI và người dùng đồng ý gửi câu hỏi cùng đoạn liên quan. Mô hình diễn giải, máy chủ kiểm tra mã nguồn rồi giao diện hiển thị câu trả lời và nguồn.
 
-Đây là RAG dùng truy xuất từ khóa BM25, không phải tìm kiếm vector/embedding. Một hệ thống RAG không bắt buộc dùng vector; tuy nhiên tìm từ khóa có thể bỏ sót câu diễn đạt bằng từ đồng nghĩa. Không đủ kết quả thì báo thiếu căn cứ. Tìm được đoạn cùng chủ đề chưa bảo đảm có đáp án.
+Hệ thống sử dụng **Hybrid RAG** kết hợp truy xuất từ khóa **BM25** và **64-dim Semantic Vector Embedding (Cosine Similarity)** trên các cụm khái niệm học vụ, giúp vẫn tìm trúng tài liệu khi người dùng diễn đạt bằng từ đồng nghĩa. Không đủ kết quả thì báo thiếu căn cứ. Tìm được đoạn cùng chủ đề chưa bảo đảm có đáp án.
 
 ## Luồng xử lý
 
@@ -78,3 +78,8 @@ CSDL local từng có cấu trúc nhóm học nhưng thiếu bản ghi migration
 
 ## Update 28/10/2026
 Vietnamese phrase aliases now normalize TKB, deadline, GPA and receipt terms before BM25 ranking. Original excerpts remain unchanged. Numeric facts and links must occur in cited excerpts; unsupported or malformed output falls back to excerpts. This conservative check may reject a valid numerical reformatting. It does not prove every natural-language claim is correct. Real model quality and scanned PDF OCR remain unverified/unsupported.
+
+## Update Hybrid RAG (BM25 + Semantic Vector + Neuro-Symbolic Verification)
+- `rag.text.js` bổ sung `embedText()` (vector 64 chiều chuẩn hóa L2 gồm 16 chiều khái niệm học vụ + 48 chiều băm n-gram ký hiệu FNV-1a) và `cosineSimilarity()`.
+- `retrieve()` chấm điểm kết hợp **BM25 + Semantic Vector Cosine Similarity**, giúp tìm trúng tài liệu ngay cả khi người dùng dùng từ đồng nghĩa (ví dụ *"trợ cấp khen thưởng"* ↔ *"học bổng khuyến khích"*).
+- `verifiedAnswer()` hỗ trợ quy đổi dấu thập phân `.` ↔ `,` khi đối chiếu số liệu dẫn nguồn từ tài liệu gốc, giữ vững cơ chế kiểm chứng chống ảo giác.

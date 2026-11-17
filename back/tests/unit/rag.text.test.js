@@ -1,4 +1,4 @@
-const { terms, chunkPages, retrieve, verifiedAnswer } = require('../../src/modules/rag/rag.text');
+const { terms, embedText, cosineSimilarity, VECTOR_DIM, chunkPages, retrieve, verifiedAnswer } = require('../../src/modules/rag/rag.text');
 const guide = require('../../src/modules/rag/lifehub-guide');
 test('Vietnamese accents and repeated query terms normalize consistently', () => {
  expect(terms('Điểm ĐIỂM diem')).toEqual(['diem','diem','diem']);
@@ -31,4 +31,28 @@ test.each([
  {noiDung:'Thông tin [s99]',nguon:['S1']},
 ])('unbacked facts and disguised source labels are rejected',part=>{
  expect(verifiedAnswer(JSON.stringify({duThongTin:true,cauTraLoi:[part]}),[{ma:'S1',noiDung:'Mượn 3 cuốn trong 14 ngày.'}])).toBeNull();
+});
+
+test('embedText produces L2-normalized semantic vectors with higher cosine similarity for synonymous academic queries', () => {
+  const v1 = embedText('điểm chuẩn xét tuyển đại học');
+  const v2 = embedText('điểm trúng tuyển đầu vào');
+  const v3 = embedText('chi tiêu ăn uống cà phê');
+  expect(v1).toHaveLength(VECTOR_DIM);
+  expect(cosineSimilarity(v1, v2)).toBeGreaterThan(0.5);
+  expect(cosineSimilarity(v1, v2)).toBeGreaterThan(cosineSimilarity(v1, v3));
+});
+
+test('hybrid semantic retrieval finds synonymous scholarship rules and verifiedAnswer accepts comma/dot decimals', () => {
+  const policyDoc = {
+    id: 77, tieuDe: 'Quy chế học bổng', tenTep: 'hocbong.txt',
+    cacDoan: chunkPages([{ page: 1, text: 'Sinh viên đạt loại giỏi được xét cấp học bổng khuyến khích học tập.' }]),
+  };
+  const hits = retrieve([policyDoc], 'Điều kiện nhận trợ cấp khen thưởng học tập?');
+  expect(hits).toHaveLength(1);
+  expect(hits[0].idTaiLieu).toBe(77);
+  const verified = verifiedAnswer(
+    JSON.stringify({ duThongTin: true, cauTraLoi: [{ noiDung: 'Điểm trúng tuyển là 28,73', nguon: ['S1'] }] }),
+    [{ ma: 'S1', noiDung: 'Điểm chuẩn: 28.73' }],
+  );
+  expect(verified?.duThongTin).toBe(true);
 });

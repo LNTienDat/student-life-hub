@@ -139,3 +139,10 @@ test('a cursor time, notes and two neighboring sessions keep distinct metadata',
     ['Lập trình Python - Thực hành', '18:00', '20:15', 'I3-01 (Phòng máy)', 'ThS. Đặng Mạnh Huy'],
   ]);
 });
+
+test('supports English weekday headers and general university course spelling restoration', () => {
+  assert.equal(imageDay('Mon'), 2);
+  assert.equal(imageDay('Thursday'), 5);
+  assert.equal(imageDay('Sunday'), 8);
+  assert.equal(restoreCourseText('Triết hoc va Pháp luột'), 'Triết học và Pháp luật');
+});
