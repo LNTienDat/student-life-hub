@@ -44,8 +44,11 @@ async function recognizeReceiptInternal(file,{signal,onProgress=()=>{}}={}) {
         const preCheck = mergeReceiptReadings(primary, alternatives);
         if ((preCheck.hasFinalTotal || preCheck.computedFromItems) && preCheck.ngayGiaoDich) return alternatives;
         reference = prepareReceiptReference(bitmap);
-        alternatives.push(await read(reference, PSM.SPARSE_TEXT, 70, 12));
-        const combined = mergeReceiptReadings(primary, alternatives);
+        alternatives.push(await read(reference, PSM.SPARSE_TEXT, 70, 6));
+        let combined = mergeReceiptReadings(primary, alternatives);
+        if ((combined.hasFinalTotal || combined.computedFromItems) && combined.ngayGiaoDich) return alternatives;
+        alternatives.push(await read(reference, PSM.SINGLE_BLOCK, 76, 6));
+        combined = mergeReceiptReadings(primary, alternatives);
         if ((combined.hasFinalTotal || combined.computedFromItems) && combined.ngayGiaoDich) return alternatives;
         try {
           await active(Promise.race([worker.reinitialize(['eng'], 1),fatal]));

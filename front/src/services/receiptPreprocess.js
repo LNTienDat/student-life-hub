@@ -1,10 +1,60 @@
+function isShadowPaper(data, offset) {
+  const r = data[offset], g = data[offset + 1], b = data[offset + 2];
+  const min = Math.min(r, g, b), max = Math.max(r, g, b);
+  return min > 70 && max - min < 55 && (r + g + b) / 3 > 90;
+}
+
+// Extend detected bright paper upward and downward through shadowed paper rows.
+function extendVerticalPaper(data, width, height, box) {
+  const { left, right } = box;
+  const span = right - left;
+  if (span <= 0) return box;
+  const step = Math.max(1, Math.floor(span / 40));
+  const rowCoverage = (y) => {
+    let hits = 0, total = 0;
+    const rowOffset = y * width * 4;
+    for (let x = left; x < right; x += step) {
+      total++;
+      if (isShadowPaper(data, rowOffset + x * 4)) hits++;
+    }
+    return total > 0 && hits >= total * 0.5 ? hits / total : 0;
+  };
+  const maxGap = Math.max(2, Math.floor(height * 0.015));
+  let top = box.top, bottom = box.bottom, addedArea = 0;
+  for (let y = top - 1, gap = 0, pending = 0; y >= 0 && gap <= maxGap; y--) {
+    const cov = rowCoverage(y);
+    if (cov > 0) {
+      top = y;
+      addedArea += pending + cov * span;
+      gap = 0;
+      pending = 0;
+    } else {
+      gap++;
+      pending += 0.35 * span;
+    }
+  }
+  for (let y = bottom, gap = 0, pending = 0; y < height && gap <= maxGap; y++) {
+    const cov = rowCoverage(y);
+    if (cov > 0) {
+      bottom = y + 1;
+      addedArea += pending + cov * span;
+      gap = 0;
+      pending = 0;
+    } else {
+      gap++;
+      pending += 0.35 * span;
+    }
+  }
+  return { left, right, top, bottom, area: box.area + addedArea };
+}
+
 // Find a large, connected light paper region; fall back to the full image when uncertain.
 export function findReceiptPaper({data,width,height}) {
   const full={left:0,top:0,right:width,bottom:height};
   const mask=new Uint8Array(width*height),queue=new Uint32Array(width*height);
   for(let i=0;i<mask.length;i++){
     const n=i*4,r=data[n],g=data[n+1],b=data[n+2];
-    if(Math.min(r,g,b)>120&&Math.max(r,g,b)-Math.min(r,g,b)<60&&(r+g+b)/3>150)mask[i]=1;
+    if(Math.min(r,g,b)>110&&Math.max(r,g,b)-Math.min(r,g,b)<60&&(r+g+b)/3>135)mask[i]=1;
   }
   let best=null;
   for(let start=0;start<mask.length;start++){
@@ -19,9 +69,11 @@ export function findReceiptPaper({data,width,height}) {
     }
     if(!best||tail>best.area)best={left,right:right+1,top,bottom:bottom+1,area:tail};
   }
-  if(!best||best.area<width*height*0.18||(best.right-best.left)<width*0.25||(best.bottom-best.top)<height*0.3||best.area<(best.right-best.left)*(best.bottom-best.top)*0.55)return full;
-  const pad=Math.ceil(Math.max(width,height)*0.015);
-  return {left:Math.max(0,best.left-pad),right:Math.min(width,best.right+pad),top:Math.max(0,best.top-pad),bottom:Math.min(height,best.bottom+pad)};
+  if(!best||best.area<width*height*0.08||(best.right-best.left)<width*0.25)return full;
+  const extended = extendVerticalPaper(data, width, height, best);
+  if(extended.area<width*height*0.18||(extended.bottom-extended.top)<height*0.3||extended.area<(extended.right-extended.left)*(extended.bottom-extended.top)*0.55)return full;
+  const pad=Math.ceil(Math.max(width,height)*0.035);
+  return {left:Math.max(0,extended.left-pad),right:Math.min(width,extended.right+pad),top:Math.max(0,extended.top-pad),bottom:Math.min(height,extended.bottom+pad)};
 }
 function normalizeIllumination(grays, width, height) {
   const cell = Math.max(32, Math.floor(Math.min(width, height) / 12));

@@ -39,8 +39,19 @@ export function groupReceiptWords(blocks) {
     }).join(''));
 }
 
+function normalizeMoneyNoise(value) {
+  return String(value)
+    // Repair O/Q/o inside digit-led grouped amounts (54,00O, 54-O00) or 4+ char integers (5O00).
+    .replace(/(?<![\p{L}\d])\d[\dOQo]*(?:[.,-][\dOQo]{3})+(?![\p{L}\d])|(?<![\p{L}\d])\d[\dOQo]{3,}(?![\p{L}\d])/gu, (token) => {
+      const digits = (token.match(/\d/g) || []).length;
+      return digits >= 2 || /[.,-]/.test(token) ? token.replace(/[OQo]/g, '0') : token;
+    })
+    // Turn internal hyphenated thousand separators (54-000, 1-620-000) into dots while preserving leading minus signs.
+    .replace(/(?<![\d-])([1-9]\d{0,2}(?:[.,-]\d{3})+)(?![\d-])/g, (group) => group.replaceAll('-', '.'));
+}
+
 export function parseDong(value) {
-  let text=String(value).trim().replace(/(?:vn[dđ]|đ|₫)/gi,'').trim();
+  let text = normalizeMoneyNoise(String(value).trim().replace(/(?:vn[dđ]|đ|₫)/gi, '').trim());
   text = text.replace(/([.,])\s+(?=\d{3}\b)/g, '$1');
   if(!/^\d[\d.,\s]*$/.test(text))return null;
   if(/(?:\d[.,]\d{3}|\d{4,})[.,]00$/.test(text))text=text.slice(0,-3);
@@ -111,8 +122,8 @@ function receiptDate(lines) {
 
 function totalLabelRank(line) {
   if (/\b(?:khach (?:dua|tra)|tien (?:thua|tra lai|khach)|cash|change|tam tinh|subtotal|giam gia|chiet khau|hinh thuc|phuong thuc|han thanh toan)\b/.test(line)) return 0;
-  if (/\b(?:tong thanh toan|(?:can|phai) (?:thanh toan|tra)|thuc thu|grand total|total due|amount due)\b|^thanh toan(?:\s*[:：]|\s+(?:vnd\b|\d))/.test(line)) return 4;
-  if (/\btong\s*[:：]|^tong\s*(?:\d|$|vnd\b)|\btong (?:cong|(?:thanh |so )?tien|hoa don)\b|\bcong tien hang\b|\bt[.\s]*cong\b|^total\b/.test(line)) return 3;
+  if (/\b(?:t[o06]n[gq]\s+(?:thanh\s*t[o0]an|t\.\s*toan)|(?:can|phai)\s+(?:thanh\s*t[o0]an|tra)|thuc thu|grand total|total due|amount due)\b|^thanh\s*toan(?:\s*[:：]|\s+(?:vnd\b|\d))|\bt\.\s*toan(?:\s*[:：]|\s+(?:vnd\b|\d))/.test(line)) return 4;
+  if (/\bt[o06]n[gq]\s*[:：]|^t[o06]n[gq]\s*(?:\d|$|vnd\b)|\bt[o06]n[gq]\s+(?:c[o06]n[gq]|(?:thanh\s+|so\s+)?tien|hoa don)\b|\bcong tien hang\b|\bt[.\s]*c[o06]n[gq]\b|^total\b/.test(line)) return 3;
   if (/^thanh tien\b/.test(line)) return 2;
   return /^tien mat\b/.test(line) ? 1 : 0;
 }
@@ -126,14 +137,15 @@ function receiptTotals(lines) {
     const score = totalLabelRank(normalized);
     if (!score || (score === 2 && hasAdjustments) || (score === 1 && hasChange)) continue;
     let source = lines[index];
-    if (/\bt[.\s]*cong\b/.test(normalized)) {
-      source = source.replace(/(\bt[.\s]*c[oôộ]ng\s*[:：]?\s+)\d{1,3}\s+(?:\|\s*)?(?=\d{1,3}[.,]\s*\d{3}\b)/iu, '$1');
+    if (/\bt[.\s]*c[o06]n[gq]\b/.test(normalized)) {
+      source = source.replace(/(\bt[.\s]*c[oôộ06]n[gq]\s*[:：]?\s+)\d{1,3}\s+(?:\|\s*)?(?=\d{1,3}[.,-]\s*[\dOQo]{3}\b)/iu, '$1');
     }
-    const standaloneAmount = line => Boolean(line && /^\s*(?:VN[DĐ]\s*)?[\d.,\s]+(?:\s*(?:VN[DĐ]|đ|₫))?\s*$/i.test(line));
+    const standaloneAmount = line => Boolean(line && /^\s*(?:VN[DĐ]\s*)?[\d.,\s]+(?:\s*(?:VN[DĐ]|đ|₫))?\s*$/i.test(normalizeMoneyNoise(line)));
     const next = lines[index + 1], prev = index > 0 && !totalLabelRank(normalizedLines[index - 1]) ? lines[index - 1] : '';
-    if (!/\d/.test(source) && standaloneAmount(next)) source += ` ${next}`;
-    else if (!/\d/.test(source) && standaloneAmount(prev)) source += ` ${prev}`;
-    if(/[-−]\s*\d|\d\s*[kKmM]\b/.test(source))continue;
+    if (!/\d/.test(source) && standaloneAmount(next)) source += ` ${normalizeMoneyNoise(next)}`;
+    else if (!/\d/.test(source) && standaloneAmount(prev)) source += ` ${normalizeMoneyNoise(prev)}`;
+    source = normalizeMoneyNoise(source);
+    if (/(?:^|[\s:：])[-−]\s*\d|\d\s*[kKmM]\b/.test(source)) continue;
     const numericSource = source.replace(/VN[DĐ]|[đ₫]/gi, ' ').replaceAll('：', ':');
     const amounts = amountTokens(numericSource).map(token => parseDong(token[0])).filter(amount => amount !== null);
     if (amounts.length === 1) candidates.push({ score, amount: amounts[0] });
@@ -186,8 +198,12 @@ export function mergeReceiptReadings(primary, alternatives) {
  const sum = computed[0]?.soTien;
  const agreedSum = sum && computed.every(item => item.soTien === sum)
    && (computed.length >= 2 || computed.some(item => item.itemRowsVerified));
+ const singleFinal = totals.length === 1 && !bestTotals.some(item => item.totalAmbiguous)
+   && (!primary.soTien || primary.soTien === totals[0])
+   && !computed.some(item => item.soTien !== totals[0])
+   && !readings.some(item => item.hasFinalTotal && item.soTien && item.soTien !== totals[0]);
  const agreedTotal = totals.length && totals.every(amount => amount === totals[0]) && !bestTotals.some(item => item.totalAmbiguous)
-   && (bestTotals.includes(primary) || totals.length >= 2 || (agreedSum && sum === totals[0]));
+   && (bestTotals.includes(primary) || totals.length >= 2 || (agreedSum && sum === totals[0]) || singleFinal);
  const anyExplicitForeign = readings.some(item => item.explicitForeign);
  const foreignCount = readings.filter(item => item.foreign).length;
  result.foreign = anyExplicitForeign || (agreedTotal && totals.length >= 2 && foreignCount === 1 ? false : foreignCount > 0);
