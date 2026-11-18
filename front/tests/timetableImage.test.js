@@ -178,4 +178,14 @@ test('repairs O/l/I digits and comma clock separators, and recognizes general bu
   }, 4);
   assert.equal(h1Rows.length, 1);
   assert.equal(h1Rows[0].phongHoc, 'H1.201');
+
+  const labRows = extractImageTimetable({
+    text: 'Thị giác máy tính\n07:00 - 11:15\nLab-01 (Phòng máy)',
+  }, 6);
+  assert.equal(labRows[0].phongHoc, 'Lab-01 (Phòng máy)');
+
+  const prefixedRoom = extractImageTimetable({
+    text: 'Kỹ thuật phần mềm\n07:00 - 09:30\nP.A101',
+  }, 2);
+  assert.equal(prefixedRoom[0].phongHoc, 'A101');
 });

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseDong, extractReceipt, mergeReceiptReadings, groupReceiptWords } from '../src/pages/taichinh/receiptUtils.js';
-import { findReceiptPaper } from '../src/services/receiptPreprocess.js';
+import { findReceiptPaper, sauvolaThreshold } from '../src/services/receiptPreprocess.js';
 test('printed Vietnamese amount formats preserve exact integer dong; fractions and malformed separators stay unresolved',()=>{
   for(const value of ['20.000','20,000','20 000','20000','20.000,00','20,000.00','20000.00'])assert.equal(parseDong(value),20000);
   for(const value of ['20.00','20,50','-20000','20.00.000','NaN','0'])assert.equal(parseDong(value),null);
@@ -171,4 +171,50 @@ test('findReceiptPaper extends cropping downward through shadowed receipt bottom
   fillBox(tinySpot, 0, width, 0, height, 35, 40, 65);
   fillBox(tinySpot, 70, 100, 70, 100, 215, 215, 215);
   assert.deepEqual(findReceiptPaper({ data: tinySpot, width, height }), { left: 0, top: 0, right: width, bottom: height });
+
+  // Dim indoor receipt (~105 grayscale) should still crop the paper instead of including textured background.
+  const dim = new Uint8ClampedArray(width * height * 4);
+  fillBox(dim, 0, width, 0, height, 30, 35, 50);
+  fillBox(dim, 35, 165, 15, 185, 102, 100, 98);
+  const dimCrop = findReceiptPaper({ data: dim, width, height });
+  assert.ok(dimCrop.left <= 35 && dimCrop.right >= 165 && dimCrop.top <= 15 && dimCrop.bottom >= 185);
+});
+
+test('sauvolaThreshold separates dark text across both bright and shadowed paper halves', () => {
+  const width = 60, height = 40;
+  const grays = new Uint8Array(width * height);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      // Top half bright paper (220), bottom half shadowed paper (115).
+      grays[y * width + x] = y < 20 ? 220 : 115;
+    }
+  }
+  // Ink stroke in bright top half (145) and shadowed bottom half (55).
+  grays[10 * width + 30] = 145;
+  grays[30 * width + 30] = 55;
+  const bin = sauvolaThreshold(grays, width, height, { radius: 8, k: 0.18 });
+  assert.equal(bin[10 * width + 30], 0);
+  assert.equal(bin[10 * width + 10], 255);
+  assert.equal(bin[30 * width + 30], 0);
+  assert.equal(bin[30 * width + 10], 255);
+});
+
+test('handles noisy $, item counts on total line, O->0 dates, spaced dots, e-wallets, and clean merchant selection', () => {
+  const sgNoisy = extractReceipt('SC; CCDLEEL\nPHIẾU THANH TOÁN\nBàn $0: 10\nCa phe Sua $G 86.000\nGiờ vào: 11.02.2O16\nTổng cộng (12 món): 3 . 976.000');
+  assert.equal(sgNoisy.foreign, false);
+  assert.equal(sgNoisy.soTien, '3976000');
+  assert.equal(sgNoisy.ngayGiaoDich, '2016-02-11');
+
+  const sgClean = extractReceipt('SG COFFE\nGiờ vào: 11.02.2O16\nTổng cộng: 3.976.000');
+  const merged = mergeReceiptReadings(sgNoisy, [sgClean]);
+  assert.equal(merged.moTa, 'SG COFFE');
+  assert.equal(merged.soTien, '3976000');
+
+  assert.equal(extractReceipt('Chuyển tiền MoMo\nNgày 18/O2/2019\nSố tiền giao dịch: 54,000 đ').soTien, '54000');
+  assert.equal(extractReceipt('18.02.2026\nCộng: 54,000').ngayGiaoDich, '2026-02-18');
+  assert.equal(extractReceipt('Cộng: 54,000').soTien, '54000');
+
+  // Real USD decimals or foreign currency codes must still stay blocked.
+  assert.equal(extractReceipt('TOTAL $20.00\nNgày 18/02/2026').soTien, '');
+  assert.equal(extractReceipt('Tổng cộng: 100 USD').soTien, '');
 });

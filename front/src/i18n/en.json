@@ -962,5 +962,7 @@
   "Quay lại Đăng nhập": "Back to Login",
   "1. Dữ liệu cá nhân & Quyền riêng tư": "1. Personal Data & Privacy",
   "2. Cơ chế xử lý Ảnh (OCR) & Trợ lý AI": "2. Image Processing (OCR) & AI Assistant",
-  "3. Điều khoản sử dụng & Chia sẻ lịch": "3. Terms of Use & Schedule Sharing"
+  "3. Điều khoản sử dụng & Chia sẻ lịch": "3. Terms of Use & Schedule Sharing",
+  "Tự động dùng AI Vision nếu quét trên máy chưa đọc đủ (gửi ảnh đã nén đến Google Gemini)": "Automatically use AI Vision if on-device scan is incomplete (sends compressed image to Google Gemini)",
+  "Đang nâng cấp kết quả bằng AI Vision…": "Refining receipt with AI Vision…"
 }
