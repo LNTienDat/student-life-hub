@@ -15,14 +15,22 @@ export function groupReceiptWords(blocks) {
     .sort((a, b) => a.bbox.y0 + a.bbox.y1 - b.bbox.y0 - b.bbox.y1);
   const rows = [];
   for (const word of words) {
-    const { y0, y1 } = word.bbox;
-    let row = rows.at(-1);
-    const overlap = row ? Math.min(y1, row.y1) - Math.max(y0, row.y0) : 0;
-    if (!row || overlap < Math.min(y1 - y0, row.y1 - row.y0) * 0.5) {
-      row = { y0, y1, words: [] };
-      rows.push(row);
+    const { x0, x1, y0, y1 } = word.bbox;
+    const cy = (y0 + y1) / 2, h = y1 - y0;
+    const row = rows.findLast(candidate => {
+      const rowCy = (candidate.y0 + candidate.y1) / 2, rowH = candidate.y1 - candidate.y0;
+      const overlapY = Math.min(y1, candidate.y1) - Math.max(y0, candidate.y0);
+      const sameBand = overlapY >= Math.min(h, rowH) * 0.45 || Math.abs(cy - rowCy) <= Math.max(h, rowH) * 0.8;
+      const clashX = candidate.words.some(w => Math.min(x1, w.bbox.x1) - Math.max(x0, w.bbox.x0) > Math.min(x1 - x0, w.bbox.x1 - w.bbox.x0) * 0.5);
+      return sameBand && !clashX;
+    });
+    if (!row) {
+      rows.push({ y0, y1, words: [word] });
+    } else {
+      row.words.push(word);
+      row.y0 = Math.min(row.y0, y0);
+      row.y1 = Math.max(row.y1, y1);
     }
-    row.words.push(word);
   }
   return rows.map(row => row.words.sort((a, b) => a.bbox.x0 - b.bbox.x0)
     .map((word, index, line) => {
@@ -121,8 +129,10 @@ function receiptTotals(lines) {
     if (/\bt[.\s]*cong\b/.test(normalized)) {
       source = source.replace(/(\bt[.\s]*c[oôộ]ng\s*[:：]?\s+)\d{1,3}\s+(?:\|\s*)?(?=\d{1,3}[.,]\s*\d{3}\b)/iu, '$1');
     }
-    const next = lines[index + 1];
-    if (!/\d/.test(source) && next && /^\s*(?:VN[DĐ]\s*)?[\d.,\s]+(?:\s*(?:VN[DĐ]|đ|₫))?\s*$/i.test(next)) source += ` ${next}`;
+    const standaloneAmount = line => Boolean(line && /^\s*(?:VN[DĐ]\s*)?[\d.,\s]+(?:\s*(?:VN[DĐ]|đ|₫))?\s*$/i.test(line));
+    const next = lines[index + 1], prev = index > 0 && !totalLabelRank(normalizedLines[index - 1]) ? lines[index - 1] : '';
+    if (!/\d/.test(source) && standaloneAmount(next)) source += ` ${next}`;
+    else if (!/\d/.test(source) && standaloneAmount(prev)) source += ` ${prev}`;
     if(/[-−]\s*\d|\d\s*[kKmM]\b/.test(source))continue;
     const numericSource = source.replace(/VN[DĐ]|[đ₫]/gi, ' ').replaceAll('：', ':');
     const amounts = amountTokens(numericSource).map(token => parseDong(token[0])).filter(amount => amount !== null);
