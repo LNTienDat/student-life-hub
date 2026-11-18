@@ -110,7 +110,7 @@ function receiptDate(lines) {
     const folded = fold(repairDateNoise(rawLine));
     if (/\b(?:han su dung|hsd|expiry|expiration|ngay het han|han thanh toan|due date|ngay san xuat|nsx)\b/.test(folded)) continue;
     const rank = /\b(?:ng[ao0]y\s+(?:giao dich|gd|in|lap|thanh toan|tao)|transaction date|invoice date|issued)\b/.test(folded) ? 2
-      : /\b(?:ng[ao0]y|date|g[il1][o0]\s*(?:vao|ra)|[il1]n\s*luc|tao\s*luc|thoi gian|time|check[- ]?(?:in|out))\b/.test(folded) ? 1 : 0;
+      : /\b(?:ng[ao0]y|date|g[il1][o0]\s*(?:vao|ra)|[il1]n\s*luc|tao\s*luc|thoi gian|time|check[- ]?(?:in|out))\b|(?:^|[\s|])(?:vao|ra)\s*[:：]/.test(folded) ? 1 : 0;
     const dateLine = folded.replace(/\b(\d{1,2})\s*(?:thg|thang|tho|th9)\.?\s*(\d{1,2})\s*[,/-]?\s*(\d{4})\b/g, '$1/$2/$3');
     const dateRegex = rank >= 1
       ? /(?<!\d)(\d{4})\s*[-/]\s*(\d{1,2})\s*[-/]\s*(\d{1,2})(?!\d)|(?<!\d)(\d{1,2})\s*[/.,-]\s*(\d{1,2})\s*[/.,-]\s*(\d{4}|\d{2})(?!\d)/g

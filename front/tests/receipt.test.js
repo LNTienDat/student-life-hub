@@ -213,6 +213,9 @@ test('handles noisy $, item counts on total line, O->0 dates, spaced dots, e-wal
   assert.equal(extractReceipt('Chuyển tiền MoMo\nNgày 18/O2/2019\nSố tiền giao dịch: 54,000 đ').soTien, '54000');
   assert.equal(extractReceipt('18.02.2026\nCộng: 54,000').ngayGiaoDich, '2026-02-18');
   assert.equal(extractReceipt('Cộng: 54,000').soTien, '54000');
+  const checkIn = extractReceipt('PHIẾU THANH TOÁN\nVào: 05/01/19 9:16:26 PM\nRa: 05/01/19 9:56:45 PM\nTổng cộng: 1,246,000');
+  assert.equal(checkIn.ngayGiaoDich, '2019-01-05');
+  assert.equal(checkIn.soTien, '1246000');
 
   // Real USD decimals or foreign currency codes must still stay blocked.
   assert.equal(extractReceipt('TOTAL $20.00\nNgày 18/02/2026').soTien, '');

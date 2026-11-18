@@ -4,100 +4,161 @@ import { useEffect, useRef, useState } from 'react';
 import { Camera, ImagePlus, Plus, Sparkles, X } from 'lucide-react';
 import api from '../services/api';
 import timetableService from '../services/timetableService';
-import { scanTimetableWithAI } from '../services/visionOcr';
+import { fetchVisionOcrStatus, scanTimetableWithAI } from '../services/visionOcr';
 import ModalDialog from './ModalDialog';
 import TimetableImagePreview from './TimetableImagePreview';
 import { useTimetableImport } from '../context/TimetableImportContext';
 import { imageRowsUpload, validateImageRows } from '../pages/thoikhoabieu/imageImportUtils';
 
-const inputStyle='mt-1 min-h-11 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white';
+const inputStyle = 'mt-1 min-h-11 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white';
 export default function TimetableImageImport({ semester: initialSemester = '', onImported, pickerOpen = false, onPickerClose = () => {} }) {
   useLanguage();
-  const draft=useTimetableImport();
-  const { job, open, rows, text, image, file, busy, progress, message }=draft;
-  const semester=draft.semester ?? initialSemester;
-  const setOpen=value=>job.set('open',value);
-  const setSemester=value=>job.set('semester',value);
-  const setRows=value=>job.set('rows',value);
-  const setText=value=>job.set('text',value);
-  const setMessage=value=>job.set('message',value);
-  const [saving,setSaving]=useState(false);
-  const [existing,setExisting]=useState([]);
-  const [existingReady,setExistingReady]=useState(false);
-  const [retry,setRetry]=useState(0);
-  const fileRef=useRef(null);
-  const cameraRef=useRef(null);
-  const lock=useRef(false);
-  useEffect(()=>{
-    if(!open)return;
-    let active=true;
-    timetableService.layThoiKhoaBieu().then(({data})=>{if(active){setExisting(data.thoiKhoaBieu || []);setExistingReady(true);}}).catch(()=>{if(active)job.set('message','Chưa tải được lịch hiện có. Bấm kiểm tra lại để tiếp tục.');});
-    return ()=>{active=false;};
-  },[open,retry,job]);
-  function cancel(){job.cancel();}
-  function read(event){
-    const file=event.target.files?.[0];event.target.value='';if(!file)return;
+  const draft = useTimetableImport();
+  const { job, open, rows, text, image, file, busy, progress, message } = draft;
+  const semester = draft.semester ?? initialSemester;
+  const setOpen = (value) => job.set('open', value);
+  const setSemester = (value) => job.set('semester', value);
+  const setRows = (value) => job.set('rows', value);
+  const setText = (value) => job.set('text', value);
+  const setMessage = (value) => job.set('message', value);
+  const [saving, setSaving] = useState(false);
+  const [existing, setExisting] = useState([]);
+  const [existingReady, setExistingReady] = useState(false);
+  const [retry, setRetry] = useState(0);
+  const [aiAvailable, setAiAvailable] = useState(false);
+  const fileRef = useRef(null);
+  const cameraRef = useRef(null);
+  const modeRef = useRef('local');
+  const lock = useRef(false);
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+    let active = true;
+    fetchVisionOcrStatus().then((status) => {
+      if (active) setAiAvailable(Boolean(status?.aiSanSang));
+    }).catch(() => {
+      if (active) setAiAvailable(false);
+    });
+    return () => { active = false; };
+  }, [pickerOpen]);
+
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    timetableService.layThoiKhoaBieu().then(({ data }) => { if (active) { setExisting(data.thoiKhoaBieu || []); setExistingReady(true); } }).catch(() => { if (active) job.set('message', 'Chưa tải được lịch hiện có. Bấm kiểm tra lại để tiếp tục.'); });
+    return () => { active = false; };
+  }, [open, retry, job]);
+
+  function cancel() { job.cancel(); }
+  function triggerPick(pickerRef, mode) {
+    modeRef.current = mode;
+    pickerRef.current?.click();
+  }
+  function read(event) {
+    const chosen = event.target.files?.[0];
+    event.target.value = '';
+    if (!chosen) return;
     setOpen(true);
     onPickerClose();
-    job.read(file,semester,existing.map(item=>item.tenMon));
+    if (modeRef.current === 'vision') {
+      job.startWithAI(chosen, semester, scanTimetableWithAI);
+    } else {
+      job.read(chosen, semester, existing.map((item) => item.tenMon));
+    }
   }
-  function update(id,key,value){setRows(previous=>previous.map(row=>row.id===id?{...row,[key]:value}:row));setMessage('');}
-  function add(){setRows(previous=>[...previous,{id:crypto.randomUUID(),selected:true,tenMon:'',thu:'',gioBatDau:'',gioKetThuc:'',phongHoc:'',giangVien:'',warning:''}]);}
-  const checks=validateImageRows(rows,semester,existing);
-  const selected=rows.filter(row=>row.selected).length;
-  const count=rows.filter((row,index)=>row.selected&&!checks[index].duplicate).length;
-  const semesterError=!semester.trim()?'Nhập học kỳ trước khi lưu lịch.':semester.trim().length>100?'Học kỳ tối đa 100 ký tự.':'';
-  const invalid=!!semesterError||checks.some(check=>check.errors.length);
-  async function save(){
-    if(lock.current||busy||invalid||!count||!existingReady)return;
-    lock.current=true;setSaving(true);setMessage('');
-    try{
-      const {data}=await api.post('/imports/commit',imageRowsUpload(rows,semester));
-      setRows([]);setText('');setMessage(`Đã lưu ${data.count} buổi; bỏ qua ${data.skipped} buổi đã có.`);
-      onImported?.();
-      try { const current=await timetableService.layThoiKhoaBieu();setExisting(current.data.thoiKhoaBieu || []); } catch { setExistingReady(false); }
-    }catch(error){setMessage(error.response?.data?.message || 'Chưa xác nhận được kết quả lưu. Kiểm tra lịch trước khi thử lại.');}
-    finally{lock.current=false;setSaving(false);}
-  }
-  return <>
-    <ModalDialog open={pickerOpen} onClose={onPickerClose} title={tr("Nhập lịch từ ảnh")}>
-      <p className="text-sm text-slate-500 dark:text-slate-300">{tr("Chọn ảnh rõ chữ. Kiểm tra trước khi lưu.")}</p>
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <button type="button" disabled={busy||saving} onClick={()=>fileRef.current?.click()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-ink-600 px-3 text-white disabled:opacity-50"><ImagePlus className="h-5 w-5"/>{tr("Chọn ảnh")}</button>
-        <button type="button" disabled={busy||saving} onClick={()=>cameraRef.current?.click()} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 dark:border-slate-600 disabled:opacity-50"><Camera className="h-5 w-5"/>{tr("Chụp ảnh")}</button>
-      </div>
-    </ModalDialog>
-    <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={read} aria-label={tr("Chọn ảnh thời khóa biểu")} className="sr-only" disabled={busy||saving}/>
-    <input ref={cameraRef} type="file" accept="image/png,image/jpeg,image/webp" capture="environment" onChange={read} aria-label={tr("Chụp ảnh thời khóa biểu")} className="sr-only" disabled={busy||saving}/>
-    {open&&<section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-800">
-      <div className="flex items-center justify-between gap-3"><h2 className="font-semibold">{tr("Kiểm tra lịch từ ảnh")}</h2>{busy&&<button type="button" onClick={cancel} className="inline-flex min-h-11 items-center gap-2 px-3"><X className="h-4 w-4"/>{tr("Dừng đọc")}</button>}</div>
-      {busy&&<div role="status" className="space-y-2"><p>{progress?tr("Đang đọc ảnh · {0}%", progress):tr('Đang chuẩn bị nhận diện… Lần đầu có thể mất một lúc.')}</p><progress max="100" value={progress||undefined} className="w-full"/></div>}
-      {message&&<p role="status" className="rounded-xl bg-slate-50 p-3 text-slate-700 dark:bg-slate-900 dark:text-slate-200">{tr(message)}</p>}
-      {!existingReady&&<button type="button" disabled={saving} onClick={()=>setRetry(value=>value+1)} className="min-h-11 text-ink-600 underline">{tr("Kiểm tra lại lịch hiện có")}</button>}
-      {image&&<details><summary className="cursor-pointer py-2 text-ink-600">{tr("Xem ảnh gốc")}</summary><img src={image} alt={tr("Ảnh thời khóa biểu đã chọn")} className="mt-2 max-h-96 max-w-full rounded-xl object-contain"/></details>}
-      {!busy&&(image||rows.length>0)&&<>
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-amber-50 p-3 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-          <span>{tr("Lịch lặp hằng tuần. Bỏ chọn buổi nghỉ trước khi lưu.")}</span>
-          {file && (
-            <button
-              type="button"
-              disabled={saving || busy}
-              onClick={() => job.readWithAI(scanTimetableWithAI)}
-              title={tr("Gửi ảnh đã nén đến Google Gemini AI để đọc chính xác hơn khi nhận diện trên máy bị sót.")}
-              className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-300 dark:hover:bg-slate-700"
-            >
-              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-              {tr("Quét lại bằng AI Vision")}
-            </button>
-          )}
-        </div>
-        <label className="block max-w-md font-medium">{tr("Học kỳ")}<input value={semester} onChange={event=>{setSemester(event.target.value);setMessage('');}} disabled={saving} placeholder={tr("Ví dụ: HK1 2026–2027")} maxLength={100} className={inputStyle}/></label>
-        <TimetableImagePreview rows={rows} checks={checks} saving={saving} onUpdate={update} onRemove={id=>setRows(previous=>previous.filter(item=>item.id!==id))}/>
+  function update(id, key, value) { setRows((previous) => previous.map((row) => (row.id === id ? { ...row, [key]: value } : row))); setMessage(''); }
+  function add() { setRows((previous) => [...previous, { id: crypto.randomUUID(), selected: true, tenMon: '', thu: '', gioBatDau: '', gioKetThuc: '', phongHoc: '', giangVien: '', warning: '' }]); }
+  const checks = validateImageRows(rows, semester, existing);
+  const selected = rows.filter((row) => row.selected).length;
+  const count = rows.filter((row, index) => row.selected && !checks[index].duplicate).length;
+  const semesterError = !semester.trim() ? 'Nhập học kỳ trước khi lưu lịch.' : semester.trim().length > 100 ? 'Học kỳ tối đa 100 ký tự.' : '';
+  const invalid = !!semesterError || checks.some((check) => check.errors.length);
 
-        {semesterError&&selected>0&&<p role="alert" className="text-rose-600 dark:text-rose-300">{semesterError}</p>}
-        <div className="flex flex-wrap items-center gap-3"><button type="button" disabled={saving||rows.length>=100} onClick={add} className="inline-flex min-h-11 items-center gap-2 rounded-xl border px-3"><Plus className="h-4 w-4"/>{tr("Thêm dòng")}</button><span className="text-slate-500">{tr("Đã chọn ")}{selected}{tr(" buổi · ")}{count}{tr(" buổi mới")}</span><button type="button" disabled={busy||saving||invalid||!count||!existingReady} onClick={save} className="min-h-11 rounded-xl bg-emerald-600 px-4 font-semibold text-white disabled:opacity-50">{saving?tr('Đang lưu…'):tr("Lưu {0} buổi học", count)}</button></div>
-      </>}
-      {text&&<details><summary className="cursor-pointer py-2 text-ink-600">{tr("Xem chữ nhận diện")}</summary><pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-xs dark:bg-slate-900">{text}</pre></details>}
-    </section>}
-  </>;
+  async function save() {
+    if (lock.current || busy || invalid || !count || !existingReady) return;
+    lock.current = true;
+    setSaving(true);
+    setMessage('');
+    try {
+      const { data } = await api.post('/imports/commit', imageRowsUpload(rows, semester));
+      setRows([]);
+      setText('');
+      setMessage(`Đã lưu ${data.count} buổi; bỏ qua ${data.skipped} buổi đã có.`);
+      onImported?.();
+      try { const current = await timetableService.layThoiKhoaBieu(); setExisting(current.data.thoiKhoaBieu || []); } catch { setExistingReady(false); }
+    } catch (error) { setMessage(error.response?.data?.message || 'Chưa xác nhận được kết quả lưu. Kiểm tra lịch trước khi thử lại.'); }
+    finally { lock.current = false; setSaving(false); }
+  }
+
+  return (
+    <>
+      <ModalDialog open={pickerOpen} onClose={onPickerClose} title={tr("Nhập lịch từ ảnh")}>
+        <p className="text-sm text-slate-500 dark:text-slate-300">{tr("Chọn ảnh rõ chữ. Kiểm tra trước khi lưu.")}</p>
+
+        {aiAvailable && (
+          <div className="mt-4 space-y-2 rounded-xl border border-indigo-200 bg-indigo-50/70 p-3 dark:border-indigo-800/70 dark:bg-indigo-950/30">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-800 dark:text-indigo-200">
+              <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span>{tr("Quét nhanh bằng AI Vision ngay từ đầu")}</span>
+            </div>
+            <p className="text-xs text-indigo-900/80 dark:text-indigo-200/80">
+              {tr("Tự tách cột Thứ, giờ học, phòng và giảng viên chính xác hơn cho ảnh phức tạp (gửi ảnh đến Google Gemini).")}
+            </p>
+            <div className="grid grid-cols-2 gap-2.5">
+              <button type="button" disabled={busy || saving} onClick={() => triggerPick(fileRef, 'vision')} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-3 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">
+                <ImagePlus className="h-4 w-4" />{tr("Chọn ảnh · AI")}
+              </button>
+              <button type="button" disabled={busy || saving} onClick={() => triggerPick(cameraRef, 'vision')} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-indigo-300 bg-white px-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-200">
+                <Camera className="h-4 w-4" />{tr("Chụp ảnh · AI")}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-4">
+          {aiAvailable && <p className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">{tr("Hoặc quét miễn phí trên thiết bị (không gửi ảnh ra ngoài):")}</p>}
+          <div className="grid grid-cols-2 gap-3">
+            <button type="button" disabled={busy || saving} onClick={() => triggerPick(fileRef, 'local')} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-ink-600 px-3 text-white disabled:opacity-50"><ImagePlus className="h-5 w-5" />{tr("Chọn ảnh")}</button>
+            <button type="button" disabled={busy || saving} onClick={() => triggerPick(cameraRef, 'local')} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 dark:border-slate-600 disabled:opacity-50"><Camera className="h-5 w-5" />{tr("Chụp ảnh")}</button>
+          </div>
+        </div>
+      </ModalDialog>
+      <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={read} aria-label={tr("Chọn ảnh thời khóa biểu")} className="sr-only" disabled={busy || saving} />
+      <input ref={cameraRef} type="file" accept="image/png,image/jpeg,image/webp" capture="environment" onChange={read} aria-label={tr("Chụp ảnh thời khóa biểu")} className="sr-only" disabled={busy || saving} />
+      {open && (
+        <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-800">
+          <div className="flex items-center justify-between gap-3"><h2 className="font-semibold">{tr("Kiểm tra lịch từ ảnh")}</h2>{busy && <button type="button" onClick={cancel} className="inline-flex min-h-11 items-center gap-2 px-3"><X className="h-4 w-4" />{tr("Dừng đọc")}</button>}</div>
+          {busy && <div role="status" className="space-y-2"><p>{progress ? tr("Đang đọc ảnh · {0}%", progress) : tr('Đang chuẩn bị nhận diện… Lần đầu có thể mất một lúc.')}</p><progress max="100" value={progress || undefined} className="w-full" /></div>}
+          {message && <p role="status" className="rounded-xl bg-slate-50 p-3 text-slate-700 dark:bg-slate-900 dark:text-slate-200">{tr(message)}</p>}
+          {!existingReady && <button type="button" disabled={saving} onClick={() => setRetry((value) => value + 1)} className="min-h-11 text-ink-600 underline">{tr("Kiểm tra lại lịch hiện có")}</button>}
+          {image && <details><summary className="cursor-pointer py-2 text-ink-600">{tr("Xem ảnh gốc")}</summary><img src={image} alt={tr("Ảnh thời khóa biểu đã chọn")} className="mt-2 max-h-96 max-w-full rounded-xl object-contain" /></details>}
+          {!busy && (image || rows.length > 0) && (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-amber-50 p-3 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                <span>{tr("Lịch lặp hằng tuần. Bỏ chọn buổi nghỉ trước khi lưu.")}</span>
+                {file && (
+                  <button
+                    type="button"
+                    disabled={saving || busy}
+                    onClick={() => job.readWithAI(scanTimetableWithAI)}
+                    title={tr("Gửi ảnh đã nén đến Google Gemini AI để đọc chính xác hơn khi nhận diện trên máy bị sót.")}
+                    className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-300 dark:hover:bg-slate-700"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                    {tr("Quét lại bằng AI Vision")}
+                  </button>
+                )}
+              </div>
+              <label className="block max-w-md font-medium">{tr("Học kỳ")}<input value={semester} onChange={(event) => { setSemester(event.target.value); setMessage(''); }} disabled={saving} placeholder={tr("Ví dụ: HK1 2026–2027")} maxLength={100} className={inputStyle} /></label>
+              <TimetableImagePreview rows={rows} checks={checks} saving={saving} onUpdate={update} onRemove={(id) => setRows((previous) => previous.filter((item) => item.id !== id))} />
+
+              {semesterError && selected > 0 && <p role="alert" className="text-rose-600 dark:text-rose-300">{semesterError}</p>}
+              <div className="flex flex-wrap items-center gap-3"><button type="button" disabled={saving || rows.length >= 100} onClick={add} className="inline-flex min-h-11 items-center gap-2 rounded-xl border px-3"><Plus className="h-4 w-4" />{tr("Thêm dòng")}</button><span className="text-slate-500">{tr("Đã chọn ")}{selected}{tr(" buổi · ")}{count}{tr(" buổi mới")}</span><button type="button" disabled={busy || saving || invalid || !count || !existingReady} onClick={save} className="min-h-11 rounded-xl bg-emerald-600 px-4 font-semibold text-white disabled:opacity-50">{saving ? tr('Đang lưu…') : tr("Lưu {0} buổi học", count)}</button></div>
+            </>
+          )}
+          {text && <details><summary className="cursor-pointer py-2 text-ink-600">{tr("Xem chữ nhận diện")}</summary><pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-xs dark:bg-slate-900">{text}</pre></details>}
+        </section>
+      )}
+    </>
+  );
 }
