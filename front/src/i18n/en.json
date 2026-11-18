@@ -964,5 +964,12 @@
   "2. Cơ chế xử lý Ảnh (OCR) & Trợ lý AI": "2. Image Processing (OCR) & AI Assistant",
   "3. Điều khoản sử dụng & Chia sẻ lịch": "3. Terms of Use & Schedule Sharing",
   "Tự động dùng AI Vision nếu quét trên máy chưa đọc đủ (gửi ảnh đã nén đến Google Gemini)": "Automatically use AI Vision if on-device scan is incomplete (sends compressed image to Google Gemini)",
-  "Đang nâng cấp kết quả bằng AI Vision…": "Refining receipt with AI Vision…"
+  "Đang nâng cấp kết quả bằng AI Vision…": "Refining receipt with AI Vision…",
+  "Quét nhanh bằng AI Vision ngay từ đầu": "Scan immediately with AI Vision",
+  "Đọc chính xác ngay cả ảnh nghiêng, bị che hoặc thiếu sáng (nén và gửi ảnh đến Google Gemini).": "Reads accurately even on tilted, obscured, or dimly lit photos (compresses and sends image to Google Gemini).",
+  "Tự tách cột Thứ, giờ học, phòng và giảng viên chính xác hơn cho ảnh phức tạp (gửi ảnh đến Google Gemini).": "Accurately separates weekdays, times, rooms, and lecturers on complex layouts (sends image to Google Gemini).",
+  "Chọn ảnh · AI": "Choose · AI",
+  "Chụp ảnh · AI": "Camera · AI",
+  "Hoặc quét miễn phí trên thiết bị (không gửi ảnh ra ngoài):": "Or scan free on your device (keeps photos private):",
+  "Đang đọc bằng AI Vision…": "Reading with AI Vision…"
 }

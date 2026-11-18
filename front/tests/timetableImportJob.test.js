@@ -44,3 +44,19 @@ test('readWithAI uses the kept file and replaces rows cleanly when AI Vision suc
  job.dispose();
  assert.equal(job.snapshot().file,null);
 });
+
+test('startWithAI skips local Tesseract and cleans up image URL on dispose',async()=>{
+ let localCalled=0;
+ const job=createTimetableImportJob(async()=>{localCalled++;return {rows:[],text:''};},urls());
+ const fakeFile={name:'direct-ai.png'};
+ await job.startWithAI(fakeFile,'HK2',async(file)=>({
+  rows:[{tenMon:'Lập trình Python',thu:2,gioBatDau:'13:00',gioKetThuc:'17:15',phongHoc:'I3-01',giangVien:'ThS. Đặng Mạnh Huy'}],
+  text:'AI Vision',
+ }));
+ assert.equal(localCalled,0);
+ assert.equal(job.snapshot().open,true);
+ assert.equal(job.snapshot().semester,'HK2');
+ assert.equal(job.snapshot().rows.length,1);
+ job.dispose();
+ assert.equal(job.snapshot().image,'');
+});

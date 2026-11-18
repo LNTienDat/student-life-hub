@@ -23,6 +23,26 @@ export function createTimetableImportJob(recognize, urls = URL) {
         if (current === version) update({ message: error.message || 'Không đọc được ảnh. Hãy thử lại.' });
       } finally { if (current === version) update({ busy: false }); }
     },
+    async startWithAI(file, semester, recognizeAI) {
+      controller?.abort(); const current = ++version; controller = new AbortController();
+      if (state.image) urls.revokeObjectURL(state.image);
+      update({ open: true, semester, rows: [], text: '', image: urls.createObjectURL(file), file, busy: true, progress: 50, message: 'Đang gửi ảnh đến AI Vision để đọc thời khóa biểu…' });
+      try {
+        const result = await recognizeAI(file, { signal: controller.signal });
+        if (current !== version) return;
+        update({
+          rows: result.rows,
+          text: result.text || '',
+          progress: 100,
+          message: result.rows.length ? `AI Vision đã nhận ${result.rows.length} buổi. Kiểm tra lại trước khi lưu.` : 'AI Vision chưa tìm thấy buổi học rõ ràng trong ảnh này.',
+        });
+      } catch (error) {
+        if (current === version) {
+          const fallbackMsg = error?.response?.data?.message || error?.message || 'Chưa quét được bằng AI Vision. Hãy thử lại hoặc quét trên thiết bị.';
+          update({ message: fallbackMsg });
+        }
+      } finally { if (current === version) update({ busy: false }); }
+    },
     async readWithAI(recognizeAI) {
       if (!state.file || state.busy) return;
       controller?.abort(); const current = ++version; controller = new AbortController();
