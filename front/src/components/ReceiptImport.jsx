@@ -132,11 +132,11 @@ export default function ReceiptImport({ open, onClose, onRecognized }) {
             {tr("Đọc chính xác ngay cả ảnh nghiêng, bị che hoặc thiếu sáng (nén và gửi ảnh đến Google Gemini).")}
           </p>
           <div className="grid grid-cols-2 gap-2.5">
-            <button type="button" disabled={busy} onClick={() => triggerPick(input, 'vision')} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-3 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">
-              <ImagePlus className="h-4 w-4" />{tr("Chọn ảnh · AI")}
+            <button type="button" disabled={busy} onClick={() => triggerPick(input, 'vision')} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 whitespace-nowrap">
+              <ImagePlus className="h-4 w-4 shrink-0" />{tr("Chọn ảnh · AI")}
             </button>
-            <button type="button" disabled={busy} onClick={() => triggerPick(camera, 'vision')} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-indigo-300 bg-white px-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-200">
-              <Camera className="h-4 w-4" />{tr("Chụp ảnh · AI")}
+            <button type="button" disabled={busy} onClick={() => triggerPick(camera, 'vision')} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-indigo-300 bg-white px-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-200 whitespace-nowrap">
+              <Camera className="h-4 w-4 shrink-0" />{tr("Chụp ảnh · AI")}
             </button>
           </div>
         </div>
@@ -144,9 +144,9 @@ export default function ReceiptImport({ open, onClose, onRecognized }) {
 
       <div className="mt-4">
         {aiAvailable && <p className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">{tr("Hoặc quét miễn phí trên thiết bị (không gửi ảnh ra ngoài):")}</p>}
-        <div className="grid grid-cols-2 gap-3">
-          <button type="button" disabled={busy} onClick={() => triggerPick(input, 'local')} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-ink-600 px-4 text-white disabled:opacity-50"><ImagePlus className="h-4 w-4" />{tr("Chọn ảnh")}</button>
-          <button type="button" disabled={busy} onClick={() => triggerPick(camera, 'local')} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 dark:border-slate-600 dark:text-white disabled:opacity-50"><Camera className="h-4 w-4" />{tr("Chụp ảnh")}</button>
+        <div className="grid grid-cols-2 gap-2.5">
+          <button type="button" disabled={busy} onClick={() => triggerPick(input, 'local')} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-ink-600 px-3 text-sm font-medium text-white disabled:opacity-50 whitespace-nowrap"><ImagePlus className="h-4 w-4 shrink-0" />{tr("Chọn ảnh")}</button>
+          <button type="button" disabled={busy} onClick={() => triggerPick(camera, 'local')} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-medium dark:border-slate-600 dark:text-white disabled:opacity-50 whitespace-nowrap"><Camera className="h-4 w-4 shrink-0" />{tr("Chụp ảnh")}</button>
         </div>
       </div>
 

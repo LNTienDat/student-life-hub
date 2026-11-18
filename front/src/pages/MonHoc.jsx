@@ -293,35 +293,35 @@ function MonHoc() {
 
           <SemesterPicker className="order-2 md:order-3 md:col-span-2" />
 
-          <div className="order-3 md:order-2 grid grid-cols-2 items-stretch gap-2 md:flex md:flex-wrap md:items-center">
-            <div className="bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700/60 flex min-h-11 justify-center items-center gap-2">
-              <Target className="w-5 h-5 text-emerald-500" />
-              <div className="flex flex-col">
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">GPA {semester ? tr('học kỳ') : tr('tích lũy')}</span>
-                <span className="font-display font-bold text-slate-900 dark:text-white leading-none">
-                  {gpa !== null ? `${Number(gpa).toFixed(2)} / 10${gpaHe4 != null ? ` (${Number(gpaHe4).toFixed(2)} / 4)` : ''}` : '--'}
+          <div className="order-3 md:order-2 grid grid-cols-2 items-stretch gap-2.5 md:flex md:flex-wrap md:items-center">
+            <div className="bg-white dark:bg-slate-800 px-3.5 py-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700/60 flex min-h-11 justify-center items-center gap-2">
+              <Target className="w-5 h-5 shrink-0 text-emerald-500" />
+              <div className="flex flex-col min-w-0">
+                <span className="text-[11px] leading-tight text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">GPA {semester ? tr('học kỳ') : tr('tích lũy')}</span>
+                <span className="font-display font-bold text-sm text-slate-900 dark:text-white leading-tight whitespace-nowrap">
+                  {gpa !== null ? `${Number(gpa).toFixed(2)} / 10${gpaHe4 != null ? ` (${Number(gpaHe4).toFixed(2)})` : ''}` : '--'}
                 </span>
               </div>
             </div>
             <button
               onClick={xuLyXuatBangDiem}
               disabled={dangXuatPDF || danhSach.length === 0}
-              className="flex min-h-11 justify-center items-center gap-2 px-3.5 py-2.5 rounded-xl font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 text-sm"
+              className="flex min-h-11 justify-center items-center gap-2 px-3.5 py-2.5 rounded-xl font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 text-sm whitespace-nowrap"
               title={tr("Xuất bảng điểm PDF")}
               aria-label={tr("Xuất bảng điểm ra file PDF")}
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4 shrink-0" />
               <span className="inline">{dangXuatPDF ? tr('Đang xuất...') : tr('Xuất PDF')}</span>
             </button>
             <button
               onClick={moFormThem}
-              className={`col-span-2 flex min-h-11 justify-center items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${
+              className={`col-span-2 md:col-auto flex min-h-11 justify-center items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
                 hienFormThem
                   ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/30 active:scale-[0.98]'
               }`}
             >
-              {hienFormThem ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+              {hienFormThem ? <X className="w-4 h-4 shrink-0" /> : <Plus className="w-4 h-4 shrink-0" />}
               {hienFormThem ? tr('Hủy') : tr('Thêm môn học')}
             </button>
           </div>

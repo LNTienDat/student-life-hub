@@ -105,11 +105,11 @@ export default function TimetableImageImport({ semester: initialSemester = '', o
               {tr("Tự tách cột Thứ, giờ học, phòng và giảng viên chính xác hơn cho ảnh phức tạp (gửi ảnh đến Google Gemini).")}
             </p>
             <div className="grid grid-cols-2 gap-2.5">
-              <button type="button" disabled={busy || saving} onClick={() => triggerPick(fileRef, 'vision')} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-3 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50">
-                <ImagePlus className="h-4 w-4" />{tr("Chọn ảnh · AI")}
+              <button type="button" disabled={busy || saving} onClick={() => triggerPick(fileRef, 'vision')} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 whitespace-nowrap">
+                <ImagePlus className="h-4 w-4 shrink-0" />{tr("Chọn ảnh · AI")}
               </button>
-              <button type="button" disabled={busy || saving} onClick={() => triggerPick(cameraRef, 'vision')} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-indigo-300 bg-white px-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-200">
-                <Camera className="h-4 w-4" />{tr("Chụp ảnh · AI")}
+              <button type="button" disabled={busy || saving} onClick={() => triggerPick(cameraRef, 'vision')} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-indigo-300 bg-white px-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-200 whitespace-nowrap">
+                <Camera className="h-4 w-4 shrink-0" />{tr("Chụp ảnh · AI")}
               </button>
             </div>
           </div>
@@ -117,9 +117,9 @@ export default function TimetableImageImport({ semester: initialSemester = '', o
 
         <div className="mt-4">
           {aiAvailable && <p className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">{tr("Hoặc quét miễn phí trên thiết bị (không gửi ảnh ra ngoài):")}</p>}
-          <div className="grid grid-cols-2 gap-3">
-            <button type="button" disabled={busy || saving} onClick={() => triggerPick(fileRef, 'local')} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-ink-600 px-3 text-white disabled:opacity-50"><ImagePlus className="h-5 w-5" />{tr("Chọn ảnh")}</button>
-            <button type="button" disabled={busy || saving} onClick={() => triggerPick(cameraRef, 'local')} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 dark:border-slate-600 disabled:opacity-50"><Camera className="h-5 w-5" />{tr("Chụp ảnh")}</button>
+          <div className="grid grid-cols-2 gap-2.5">
+            <button type="button" disabled={busy || saving} onClick={() => triggerPick(fileRef, 'local')} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-ink-600 px-3 text-sm font-medium text-white disabled:opacity-50 whitespace-nowrap"><ImagePlus className="h-4 w-4 shrink-0" />{tr("Chọn ảnh")}</button>
+            <button type="button" disabled={busy || saving} onClick={() => triggerPick(cameraRef, 'local')} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-medium dark:border-slate-600 disabled:opacity-50 whitespace-nowrap"><Camera className="h-4 w-4 shrink-0" />{tr("Chụp ảnh")}</button>
           </div>
         </div>
       </ModalDialog>
@@ -134,7 +134,7 @@ export default function TimetableImageImport({ semester: initialSemester = '', o
           {image && <details><summary className="cursor-pointer py-2 text-ink-600">{tr("Xem ảnh gốc")}</summary><img src={image} alt={tr("Ảnh thời khóa biểu đã chọn")} className="mt-2 max-h-96 max-w-full rounded-xl object-contain" /></details>}
           {!busy && (image || rows.length > 0) && (
             <>
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-amber-50 p-3 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between rounded-xl bg-amber-50 p-3 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
                 <span>{tr("Lịch lặp hằng tuần. Bỏ chọn buổi nghỉ trước khi lưu.")}</span>
                 {file && (
                   <button
@@ -142,9 +142,9 @@ export default function TimetableImageImport({ semester: initialSemester = '', o
                     disabled={saving || busy}
                     onClick={() => job.readWithAI(scanTimetableWithAI)}
                     title={tr("Gửi ảnh đã nén đến Google Gemini AI để đọc chính xác hơn khi nhận diện trên máy bị sót.")}
-                    className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-300 dark:hover:bg-slate-700"
+                    className="inline-flex min-h-10 w-full sm:w-auto shrink-0 items-center justify-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-300 dark:hover:bg-slate-700 whitespace-nowrap"
                   >
-                    <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                    <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                     {tr("Quét lại bằng AI Vision")}
                   </button>
                 )}
@@ -153,7 +153,7 @@ export default function TimetableImageImport({ semester: initialSemester = '', o
               <TimetableImagePreview rows={rows} checks={checks} saving={saving} onUpdate={update} onRemove={(id) => setRows((previous) => previous.filter((item) => item.id !== id))} />
 
               {semesterError && selected > 0 && <p role="alert" className="text-rose-600 dark:text-rose-300">{semesterError}</p>}
-              <div className="flex flex-wrap items-center gap-3"><button type="button" disabled={saving || rows.length >= 100} onClick={add} className="inline-flex min-h-11 items-center gap-2 rounded-xl border px-3"><Plus className="h-4 w-4" />{tr("Thêm dòng")}</button><span className="text-slate-500">{tr("Đã chọn ")}{selected}{tr(" buổi · ")}{count}{tr(" buổi mới")}</span><button type="button" disabled={busy || saving || invalid || !count || !existingReady} onClick={save} className="min-h-11 rounded-xl bg-emerald-600 px-4 font-semibold text-white disabled:opacity-50">{saving ? tr('Đang lưu…') : tr("Lưu {0} buổi học", count)}</button></div>
+              <div className="flex flex-wrap items-center gap-3"><button type="button" disabled={saving || rows.length >= 100} onClick={add} className="inline-flex min-h-11 items-center gap-2 rounded-xl border px-3.5 whitespace-nowrap"><Plus className="h-4 w-4 shrink-0" />{tr("Thêm dòng")}</button><span className="text-slate-500">{tr("Đã chọn ")}{selected}{tr(" buổi · ")}{count}{tr(" buổi mới")}</span><button type="button" disabled={busy || saving || invalid || !count || !existingReady} onClick={save} className="min-h-11 w-full sm:w-auto sm:ml-auto rounded-xl bg-emerald-600 px-5 font-semibold text-white disabled:opacity-50 whitespace-nowrap">{saving ? tr('Đang lưu…') : tr("Lưu {0} buổi học", count)}</button></div>
             </>
           )}
           {text && <details><summary className="cursor-pointer py-2 text-ink-600">{tr("Xem chữ nhận diện")}</summary><pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded-xl bg-slate-50 p-3 text-xs dark:bg-slate-900">{text}</pre></details>}
