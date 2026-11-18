@@ -37,6 +37,10 @@ function Layout({ children }) {
   const bellRef = useRef(null);
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  useEffect(() => {
     let active = true;
     async function refresh() {
       try {

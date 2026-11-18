@@ -141,7 +141,12 @@ function Profile() {
   return (
     <div className="w-full min-w-0 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{tr("Hồ sơ")}</h1>
+        <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-950/80 dark:text-rose-300">
+            <User className="w-5 h-5" />
+          </span>
+          <span>{tr("Hồ sơ")}</span>
+        </h1>
         <button type="button" onClick={() => { dangXuat(); navigate('/login', { replace: true }); }} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-rose-200 px-3 text-sm font-semibold text-rose-700 hover:bg-rose-50 dark:border-rose-400/30 dark:text-rose-300 dark:hover:bg-rose-500/10"><LogOut aria-hidden="true" className="h-4 w-4" />{tr('Đăng xuất')}</button>
       </div>
 

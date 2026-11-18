@@ -6,7 +6,7 @@ const { cauHinhAI, hoiGemini } = require('./gemini.service');
 function trangThaiChatbot(req, res) {
   const { sanSang, model } = cauHinhAI();
   res.set('Cache-Control', 'no-store');
-  return res.json({ aiSanSang: sanSang, model, duLieuSanSang: true });
+  return res.json({ aiSanSang: sanSang, model, duLieuSanSang: true, ragSanSang: true, coCheRag: 'hybrid-bm25-vector-64d-verified' });
 }
 async function guiTinNhan(req, res) {
   res.set('Cache-Control', 'no-store');

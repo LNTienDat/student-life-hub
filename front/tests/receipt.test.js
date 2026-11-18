@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseDong, extractReceipt, mergeReceiptReadings } from '../src/pages/taichinh/receiptUtils.js';
+import { parseDong, extractReceipt, mergeReceiptReadings, groupReceiptWords } from '../src/pages/taichinh/receiptUtils.js';
 test('printed Vietnamese amount formats preserve exact integer dong; fractions and malformed separators stay unresolved',()=>{
   for(const value of ['20.000','20,000','20 000','20000','20.000,00','20,000.00','20000.00'])assert.equal(parseDong(value),20000);
   for(const value of ['20.00','20,50','-20000','20.00.000','NaN','0'])assert.equal(parseDong(value),null);
@@ -105,4 +105,17 @@ test('dotted check-in dates and single noisy currency artifacts do not block mul
   const merged = mergeReceiptReadings(cleanSg, [cleanSg, noisy]);
   assert.equal(merged.soTien, '3976000');
   assert.equal(merged.ngayGiaoDich, '2016-02-11');
+});
+
+test('groupReceiptWords keeps slightly tilted left label and right-aligned amount on the same row', () => {
+  const rows = groupReceiptWords([{
+    paragraphs: [{
+      lines: [
+        { words: [{ text: 'Tổng:', bbox: { x0: 20, x1: 75, y0: 200, y1: 214 } }] },
+        { words: [{ text: '54,000', bbox: { x0: 240, x1: 310, y0: 192, y1: 206 } }] },
+      ],
+    }],
+  }]);
+  assert.equal(rows.length, 1);
+  assert.equal(extractReceipt('CÀ PHÊ HOÀNG PHÚC\nNgày: 18/02/2019', rows).soTien, '54000');
 });

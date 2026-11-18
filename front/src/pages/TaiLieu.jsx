@@ -83,7 +83,13 @@ export default function TaiLieu() {
     <div className="w-full min-w-0 space-y-6">
       <Link to="/dashboard" className="inline-flex min-h-11 items-center gap-2 text-sm text-slate-600"><ArrowLeft size={16} />{tr("Về Hôm nay")}</Link>
       <header className="flex flex-wrap items-start justify-between gap-4">
-        <div><h1 className="text-2xl font-bold text-slate-900">{tr("Kho tài liệu")}</h1><p className="mt-2 max-w-xl text-sm text-slate-500">{tr("Thêm tài liệu để trợ lý tìm nội dung và dẫn nguồn. Tài liệu bạn nhập chỉ thuộc tài khoản của bạn.")}</p></div>
+        <div>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{tr("Kho tài liệu")}</h1>
+            <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-600 dark:bg-indigo-950/70 dark:text-indigo-300">Hybrid RAG · BM25 + Vector 64D</span>
+          </div>
+          <p className="mt-2 max-w-xl text-sm text-slate-500 dark:text-slate-400">{tr("Thêm tài liệu để trợ lý tìm nội dung và dẫn nguồn. Tài liệu bạn nhập chỉ thuộc tài khoản của bạn.")}</p>
+        </div>
         <button type="button" disabled={busy} onClick={() => setShowForm(v => !v)} aria-expanded={showForm} className={BUTTON + ' bg-ink-600 text-white'}><Plus size={18} />{showForm ? tr('Thu gọn') : tr('Thêm tài liệu')}</button>
       </header>
       {showForm && <form onSubmit={submit} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700">

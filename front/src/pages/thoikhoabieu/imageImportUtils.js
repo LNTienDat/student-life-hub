@@ -85,6 +85,14 @@ function stripTitleNote(text) {
   return (marker < 0 ? source : source.slice(0, marker)).trim();
 }
 
+function cleanTeacherName(text) {
+  return String(text || '')
+    .replace(/\bMgnh\b/g, 'Mạnh')
+    .replace(/\bTh[ơờởỡợ]nh\b/g, 'Thanh')
+    .replace(/\bM[ơờởỡợ]nh\b/g, 'Mạnh')
+    .replace(/\bKh[ơờởỡợ]nh\b/g, 'Khánh');
+}
+
 function plausibleUnlabeledTeacher(text) {
   if (!text || metadata(text)) return '';
   const name = cleanedLine(text);
@@ -156,7 +164,7 @@ function sessions(lines, day) {
     const room = after.map(roomFromLine).find(Boolean) || '';
     const labeledTeacher = after.find(text => teacherLabel.test(fold(text)) && !/bao hoc|nghi hoc|tam ngung/.test(fold(text)));
     const classIndex = after.findIndex(text => classLabel.test(fold(text)));
-    const teacher = labeledTeacher?.slice(0, 100) || (classIndex >= 0 ? plausibleUnlabeledTeacher(after[classIndex + 1]) : '');
+    const teacher = cleanTeacherName(labeledTeacher?.slice(0, 100) || (classIndex >= 0 ? plausibleUnlabeledTeacher(after[classIndex + 1]) : ''));
     const suspended = entry.suspended || after.some(text => suspendedLabel.test(fold(text)));
     return {
       id: `ocr-${day || 'unknown'}-${index}`, selected: !suspended, annotationBeforeTime, tenMon: title, thu: day || '',

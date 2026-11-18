@@ -151,8 +151,12 @@ test('supports English weekday headers and general university course spelling re
 
 test('extracts building I7 classroom with hoc duong label and digital transformation title intact', () => {
   const rows = extractImageTimetable({
-    text: 'Chuyển đổi số\n13:00 - 17:15\nTiết 7-11\n9 17-03 (học đường)\nDH23TIN06\nThS. Trương Thanh Thảo',
+    text: 'Chuyển đổi số\n13:00 - 17:15\nTiết 7-11\n9 17-03 (học đường)\nDH23TIN06\nThS. Trương Thơnh Thảo',
   }, 3);
   assert.equal(rows[0].phongHoc, 'I7-03 (học đường)');
   assert.equal(rows[0].giangVien, 'ThS. Trương Thanh Thảo');
+  const pythonRows = extractImageTimetable({
+    text: 'Lập trình Python\n13:00 - 17:15\nThS. Đặng Mgnh Huy',
+  }, 2);
+  assert.equal(pythonRows[0].giangVien, 'ThS. Đặng Mạnh Huy');
 });
