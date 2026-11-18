@@ -216,6 +216,9 @@ function Register() {
           >{tr("Đã có tài khoản?")}{' '}
             <Link to="/login" className="text-ink-600 hover:text-ink-700 font-medium">{tr("Đăng nhập")}</Link>
           </motion.p>
+          <p className="mt-4 text-center text-xs text-slate-500">
+            <Link to="/chinh-sach" className="hover:underline">{tr("Chính sách bảo mật & Điều khoản sử dụng")}</Link>
+          </p>
         </div>
       </div>
     </div>

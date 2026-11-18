@@ -28,3 +28,19 @@ test('new image and explicit stop cannot be overwritten by an older OCR task',as
  job.cancel();finishes[1]({rows:[{tenMon:'New'}],text:'new'});await second;
  assert.deepEqual(job.snapshot().rows,[]);assert.equal(job.snapshot().busy,false);job.dispose();
 });
+
+test('readWithAI uses the kept file and replaces rows cleanly when AI Vision succeeds',async()=>{
+ const job=createTimetableImportJob(async()=>({rows:[],text:'empty'}),urls());
+ const fakeFile={name:'tkb.png'};
+ await job.read(fakeFile,'HK1');
+ assert.equal(job.snapshot().file,fakeFile);
+ await job.readWithAI(async(file)=>{
+  assert.equal(file,fakeFile);
+  return {rows:[{tenMon:'Chuyển đổi số',thu:3,gioBatDau:'13:00',gioKetThuc:'17:15',phongHoc:'I7-03 (học đường)',giangVien:'ThS. Trương Thanh Thảo'}],text:'AI Vision'};
+ });
+ assert.equal(job.snapshot().rows.length,1);
+ assert.equal(job.snapshot().rows[0].phongHoc,'I7-03 (học đường)');
+ assert.equal(job.snapshot().busy,false);
+ job.dispose();
+ assert.equal(job.snapshot().file,null);
+});

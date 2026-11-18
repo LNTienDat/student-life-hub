@@ -13,8 +13,9 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import timetableService from '../services/timetableService';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
-import { Plus, X, CalendarDays, CalendarRange, CalendarCheck, ChevronLeft, ChevronRight, Share2, Trash2, ImagePlus } from 'lucide-react';
+import { Plus, X, CalendarDays, CalendarRange, CalendarCheck, ChevronLeft, ChevronRight, Share2, Trash2, ImagePlus, CalendarPlus } from 'lucide-react';
 import { CAC_THU, gioSangPhut } from './thoikhoabieu/timetableUtils';
+import { timetableToIcs, downloadIcs } from '../utils/icsExport';
 
 import TimetableForm from './thoikhoabieu/TimetableForm';
 import TimetableGrid from './thoikhoabieu/TimetableGrid';
@@ -262,6 +263,16 @@ function ThoiKhoaBieu() {
               className="flex min-h-11 items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium text-sm transition-colors shadow-sm"
             >
               <Share2 className="w-4 h-4 text-ink-600 dark:text-ink-400" />{tr("Chia sẻ TKB")}</button>
+            <button
+              type="button"
+              disabled={dangTai || !baseList.length}
+              onClick={() => {
+                downloadIcs('lich-hoc-lifehub.ics', timetableToIcs(baseList, { weekStartDate: week, semester: semester || currentSemester }));
+                hienToast('success', 'Đã xuất lịch (.ics)! Hãy nhập vào Google Calendar hoặc Lịch trên điện thoại.');
+              }}
+              className="flex min-h-11 items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 font-medium text-sm transition-colors shadow-sm"
+            >
+              <CalendarPlus className="w-4 h-4 text-sky-600 dark:text-sky-400" aria-hidden="true" />{tr("Xuất .ics")}</button>
             <button type="button" onClick={()=>setImagePickerOpen(true)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium dark:border-slate-700 dark:bg-slate-800"><ImagePlus className="h-4 w-4"/>{tr("Nhập ảnh")}</button>
             <button
               onClick={moFormThem}

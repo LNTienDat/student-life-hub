@@ -3,10 +3,10 @@ import useLanguage from '../hooks/useLanguage';
 import PasswordToggle from '../components/PasswordToggle';
 import ModalDialog from '../components/ModalDialog';
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { User, Lock, Save, KeyRound, CheckCircle2, AlertCircle, Mail, LogOut } from 'lucide-react';
+import { User, Lock, Save, KeyRound, CheckCircle2, AlertCircle, Mail, LogOut, MessageSquarePlus, ShieldCheck, Send } from 'lucide-react';
 import ProfileIdentity from './profile/ProfileIdentity';
 
 function Profile() {
@@ -38,6 +38,38 @@ function Profile() {
 
   const [dangTai, setDangTai] = useState(false);
   const [dangTaiMK, setDangTaiMK] = useState(false);
+
+  // Góp ý & Báo lỗi
+  const [loaiGopY, setLoaiGopY] = useState('gop_y');
+  const [tieuDeGopY, setTieuDeGopY] = useState('');
+  const [noiDungGopY, setNoiDungGopY] = useState('');
+  const [dangGuiGopY, setDangGuiGopY] = useState(false);
+  const [thongBaoGopY, setThongBaoGopY] = useState(null);
+
+  async function xuLyGuiGopY(e) {
+    e.preventDefault();
+    setThongBaoGopY(null);
+    if (tieuDeGopY.trim().length < 3 || noiDungGopY.trim().length < 10) {
+      setThongBaoGopY({ loai: 'error', text: 'Tiêu đề cần ít nhất 3 ký tự và nội dung ít nhất 10 ký tự.' });
+      return;
+    }
+    setDangGuiGopY(true);
+    try {
+      const res = await api.post('/feedback', {
+        loai: loaiGopY,
+        tieuDe: tieuDeGopY.trim(),
+        noiDung: noiDungGopY.trim(),
+        trang: '/ho-so',
+      });
+      setTieuDeGopY('');
+      setNoiDungGopY('');
+      setThongBaoGopY({ loai: 'success', text: res.data?.message || 'Cảm ơn bạn đã gửi góp ý!' });
+    } catch (error) {
+      setThongBaoGopY({ loai: 'error', text: error.response?.data?.message || 'Chưa gửi được phản hồi. Hãy thử lại sau.' });
+    } finally {
+      setDangGuiGopY(false);
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -290,6 +322,75 @@ function Profile() {
         </form>
 
       </div>
+
+      {/* Góp ý & Chính sách sản phẩm */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <form onSubmit={xuLyGuiGopY} className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl">
+              <MessageSquarePlus className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="font-display font-semibold text-lg text-slate-800 dark:text-slate-200">{tr("Góp ý & Báo lỗi")}</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{tr("Giúp chúng tôi hoàn thiện độ chính xác OCR và trải nghiệm sản phẩm.")}</p>
+            </div>
+          </div>
+
+          {thongBaoGopY && (
+            <div role={thongBaoGopY.loai === 'error' ? 'alert' : 'status'} className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium ${thongBaoGopY.loai === 'success' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400'}`}>
+              {thongBaoGopY.loai === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+              <span>{tr(thongBaoGopY.text)}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label htmlFor="feedback-type" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">{tr("Phân loại")}</label>
+              <select id="feedback-type" value={loaiGopY} onChange={(e) => setLoaiGopY(e.target.value)} disabled={dangGuiGopY} className="min-h-11 w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-sm">
+                <option value="gop_y">{tr("Góp ý tính năng")}</option>
+                <option value="loi">{tr("Báo lỗi ứng dụng")}</option>
+                <option value="ocr">{tr("Lỗi nhận diện ảnh (OCR)")}</option>
+              </select>
+            </div>
+            <div className="sm:col-span-2">
+              <label htmlFor="feedback-title" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">{tr("Tiêu đề")}</label>
+              <input id="feedback-title" type="text" value={tieuDeGopY} onChange={(e) => setTieuDeGopY(e.target.value)} disabled={dangGuiGopY} maxLength={120} required placeholder={tr("Ví dụ: Hóa đơn quán A chưa nhận đúng ngày")} className="min-h-11 w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-3.5 py-2 text-sm" />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="feedback-content" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">{tr("Chi tiết")}</label>
+            <textarea id="feedback-content" rows={3} value={noiDungGopY} onChange={(e) => setNoiDungGopY(e.target.value)} disabled={dangGuiGopY} maxLength={2000} required placeholder={tr("Mô tả điều bạn gặp phải hoặc mong muốn cải thiện...")} className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm" />
+          </div>
+
+          <button type="submit" disabled={dangGuiGopY} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-70">
+            <Send className="w-4 h-4" aria-hidden="true" />
+            {dangGuiGopY ? tr('Đang gửi...') : tr('Gửi phản hồi')}
+          </button>
+        </form>
+
+        <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 flex flex-col justify-between gap-4">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="font-display font-semibold text-lg text-slate-800 dark:text-slate-200">{tr("Quyền riêng tư & Điều khoản")}</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{tr("Minh bạch cách lưu trữ dữ liệu và xử lý AI/OCR")}</p>
+              </div>
+            </div>
+            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              {tr("Mặc định quét ảnh chạy trên máy bạn. Ảnh hoặc nội dung tài liệu chỉ gửi tới Google Gemini khi bạn chủ động bấm nút AI Vision hoặc bật Trợ lý AI.")}
+            </p>
+          </div>
+          <Link to="/chinh-sach" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-200 dark:hover:bg-slate-700">
+            <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+            {tr("Xem Chính sách bảo mật & Điều khoản")}
+          </Link>
+        </div>
+      </div>
+
       <ModalDialog open={hienFormEmail} onClose={() => datTrangThaiDoiEmail(false)} busy={dangTaiEmail} title="Đổi email">
         <form onSubmit={xuLyDoiEmail} autoComplete="off" className="space-y-4">
           {thongBaoEmail && <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">{tr(thongBaoEmail)}</p>}

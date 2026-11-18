@@ -1,9 +1,10 @@
 import { t as tr } from '../i18n/language';
 import useLanguage from '../hooks/useLanguage';
 import { useEffect, useRef, useState } from 'react';
-import { Camera, ImagePlus, Plus, X } from 'lucide-react';
+import { Camera, ImagePlus, Plus, Sparkles, X } from 'lucide-react';
 import api from '../services/api';
 import timetableService from '../services/timetableService';
+import { scanTimetableWithAI } from '../services/visionOcr';
 import ModalDialog from './ModalDialog';
 import TimetableImagePreview from './TimetableImagePreview';
 import { useTimetableImport } from '../context/TimetableImportContext';
@@ -13,7 +14,7 @@ const inputStyle='mt-1 min-h-11 w-full min-w-0 rounded-lg border border-slate-20
 export default function TimetableImageImport({ semester: initialSemester = '', onImported, pickerOpen = false, onPickerClose = () => {} }) {
   useLanguage();
   const draft=useTimetableImport();
-  const { job, open, rows, text, image, busy, progress, message }=draft;
+  const { job, open, rows, text, image, file, busy, progress, message }=draft;
   const semester=draft.semester ?? initialSemester;
   const setOpen=value=>job.set('open',value);
   const setSemester=value=>job.set('semester',value);
@@ -75,7 +76,21 @@ export default function TimetableImageImport({ semester: initialSemester = '', o
       {!existingReady&&<button type="button" disabled={saving} onClick={()=>setRetry(value=>value+1)} className="min-h-11 text-ink-600 underline">{tr("Kiểm tra lại lịch hiện có")}</button>}
       {image&&<details><summary className="cursor-pointer py-2 text-ink-600">{tr("Xem ảnh gốc")}</summary><img src={image} alt={tr("Ảnh thời khóa biểu đã chọn")} className="mt-2 max-h-96 max-w-full rounded-xl object-contain"/></details>}
       {!busy&&(image||rows.length>0)&&<>
-        <div className="rounded-xl bg-amber-50 p-3 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">{tr("Lịch lặp hằng tuần. Bỏ chọn buổi nghỉ trước khi lưu.")}</div>
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-amber-50 p-3 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+          <span>{tr("Lịch lặp hằng tuần. Bỏ chọn buổi nghỉ trước khi lưu.")}</span>
+          {file && (
+            <button
+              type="button"
+              disabled={saving || busy}
+              onClick={() => job.readWithAI(scanTimetableWithAI)}
+              title={tr("Gửi ảnh đã nén đến Google Gemini AI để đọc chính xác hơn khi nhận diện trên máy bị sót.")}
+              className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-300 dark:hover:bg-slate-700"
+            >
+              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+              {tr("Quét lại bằng AI Vision")}
+            </button>
+          )}
+        </div>
         <label className="block max-w-md font-medium">{tr("Học kỳ")}<input value={semester} onChange={event=>{setSemester(event.target.value);setMessage('');}} disabled={saving} placeholder={tr("Ví dụ: HK1 2026–2027")} maxLength={100} className={inputStyle}/></label>
         <TimetableImagePreview rows={rows} checks={checks} saving={saving} onUpdate={update} onRemove={id=>setRows(previous=>previous.filter(item=>item.id!==id))}/>
 

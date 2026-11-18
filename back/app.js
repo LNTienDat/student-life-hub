@@ -51,7 +51,7 @@ app.use(
 
 app.use(compression());
 app.use('/api/tai-lieu', express.json({ limit: '6mb' }));
-app.use('/api/imports', express.json({ limit: '2mb' }));
+app.use('/api/imports', express.json({ limit: '4mb' }));
 app.use(express.json({ limit: '500kb' }));
 
 // Screen data and health probes have independent quotas. Auth/AI keep stricter route limits.
@@ -110,6 +110,7 @@ app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/tai-lieu', require('./src/modules/rag/rag.routes'));
 app.use('/api/nhom', nhomRoutes);
 app.use('/api/imports', require('./src/modules/imports/import.routes'));
+app.use('/api/feedback', require('./src/modules/feedback/feedback.routes'));
 
 // 404 handler cho các route API không tồn tại
 app.use((req, res, next) => {

@@ -9,7 +9,8 @@ import ConfirmModal from '../components/ConfirmModal';
 import ReceiptImport from '../components/ReceiptImport';
 import { useToast } from '../context/ToastContext';
 import { useFinanceCategories } from '../context/FinanceCategoryContext';
-import { Plus, Download, Camera, Wallet } from 'lucide-react';
+import { Plus, Download, Camera, Wallet, Sparkles } from 'lucide-react';
+import { scanReceiptWithAI } from '../services/visionOcr';
 import FinanceKpiCards from './taichinh/FinanceKpiCards';
 import BudgetSection from './taichinh/BudgetSection';
 import FinanceTrendChart from './taichinh/FinanceTrendChart';
@@ -50,7 +51,38 @@ function FinancePeriod({ period, onPeriodChange }) {
   const [original, setOriginal] = useSessionDraft('finance-original:'+period, null);
   const [receiptOpen,setReceiptOpen] = useState(false);
   const [receiptInfo,setReceiptInfo] = useState(null);
+  const [aiScanning, setAiScanning] = useState(false);
   useEffect(()=>()=>{if(receiptInfo?.imageURL)URL.revokeObjectURL(receiptInfo.imageURL);},[receiptInfo]);
+  async function rescanReceiptWithAI() {
+    if (!receiptInfo?.file || aiScanning || busy) return;
+    setAiScanning(true);
+    setFormError('');
+    try {
+      const ai = await scanReceiptWithAI(receiptInfo.file, { hash: draft?.anhHoaDonHash || '' });
+      setDraft((previous) => previous ? ({
+        ...previous,
+        loai: ai.loai || previous.loai,
+        danhMuc: ai.danhMuc || previous.danhMuc,
+        soTien: ai.soTien || previous.soTien,
+        anhHoaDonHash: ai.anhHoaDonHash || previous.anhHoaDonHash,
+        moTa: ai.moTa || previous.moTa,
+        ngayGiaoDich: ai.ngayGiaoDich || previous.ngayGiaoDich,
+      }) : previous);
+      setReceiptInfo((previous) => previous ? ({
+        ...previous,
+        text: ai.text || previous.text,
+        warnings: ai.warnings || [],
+        aiUsed: true,
+        aiError: '',
+      }) : previous);
+      hienToast('success', 'AI Vision đã đọc lại thông tin hóa đơn!');
+    } catch (error) {
+      const msg = error?.response?.data?.message || error?.message || 'Chưa quét được bằng AI Vision.';
+      setReceiptInfo((previous) => previous ? ({ ...previous, aiError: msg }) : previous);
+    } finally {
+      setAiScanning(false);
+    }
+  }
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [budgetSaving, setBudgetSaving] = useState(false);
@@ -215,11 +247,28 @@ function FinancePeriod({ period, onPeriodChange }) {
           <button type="button" disabled={busy} onClick={e => openForm(null, e.currentTarget)} className="col-span-2 md:col-auto flex min-h-11 justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 text-sm font-medium text-white shadow-md shadow-emerald-500/25 hover:shadow-lg hover:shadow-emerald-500/30 disabled:opacity-40 active:scale-[0.98] transition-all"><Plus size={17} />{tr("Thêm giao dịch")}</button>
         </div>
       </div>
-      <ReceiptImport open={receiptOpen} onClose={()=>setReceiptOpen(false)} onRecognized={(result,file)=>{setOriginal(null);setDraft({loai:'chi',danhMuc:result.danhMuc,soTien:result.soTien,anhHoaDonHash:result.anhHoaDonHash,moTa:result.moTa,ngayGiaoDich:result.ngayGiaoDich});setFormError('');setReceiptInfo({imageURL:URL.createObjectURL(file),text:result.text,warnings:result.warnings});}}/>
+      <ReceiptImport open={receiptOpen} onClose={()=>setReceiptOpen(false)} onRecognized={(result,file)=>{setOriginal(null);setDraft({loai:'chi',danhMuc:result.danhMuc,soTien:result.soTien,anhHoaDonHash:result.anhHoaDonHash,moTa:result.moTa,ngayGiaoDich:result.ngayGiaoDich});setFormError('');setReceiptInfo({imageURL:URL.createObjectURL(file),file,text:result.text,warnings:result.warnings,aiUsed:false,aiError:''});}}/>
       <FinancePeriodPicker value={period} onChange={choosePeriod} disabled={busy} />
       <div ref={formRef} className="scroll-mt-28">
         {draft&&receiptInfo&&<section aria-label={tr("Hóa đơn đang kiểm tra")} className="mb-3 space-y-2 rounded-xl border border-slate-200 bg-white p-3 text-sm dark:border-slate-700 dark:bg-slate-800">
-          <p className="font-medium text-slate-700 dark:text-slate-200">{tr("Từ hóa đơn · chưa lưu. Kiểm tra nội dung bên dưới trước khi lưu giao dịch.")}</p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="font-medium text-slate-700 dark:text-slate-200">
+              {receiptInfo.aiUsed ? tr("Từ hóa đơn (đã quét bằng AI Vision) · chưa lưu.") : tr("Từ hóa đơn · chưa lưu. Kiểm tra nội dung bên dưới trước khi lưu giao dịch.")}
+            </p>
+            {receiptInfo.file && (
+              <button
+                type="button"
+                disabled={aiScanning || busy}
+                onClick={rescanReceiptWithAI}
+                title={tr("Gửi ảnh đã nén đến Google Gemini AI để đọc chính xác hơn khi nhận diện trên máy bị sót.")}
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-200"
+              >
+                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                {aiScanning ? tr("Đang đọc bằng AI Vision…") : tr("Quét lại bằng AI Vision")}
+              </button>
+            )}
+          </div>
+          {receiptInfo.aiError && <p role="alert" className="text-rose-600 dark:text-rose-300">{tr(receiptInfo.aiError)}</p>}
           {receiptInfo.warnings.filter(message=>message.includes('ngày')?!draft.ngayGiaoDich:!draft.soTien).map(message=><p key={tr(message)} className="text-amber-700 dark:text-amber-300">{tr(message)}</p>)}
           <details><summary className="min-h-11 cursor-pointer py-2 text-ink-600 dark:text-ink-300">{tr("Xem ảnh hóa đơn")}</summary><img src={receiptInfo.imageURL} alt={tr("Hóa đơn đã chọn")} className="max-h-80 max-w-full rounded-xl object-contain"/></details>
 
