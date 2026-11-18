@@ -30,6 +30,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 
 const ChiaSeTKB = lazy(() => import('./pages/ChiaSeTKB'));
 const RandomPicker = lazy(() => import('./pages/RandomPicker'));
+const ChinhSach = lazy(() => import('./pages/ChinhSach'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 function PageLoader() {
@@ -84,6 +85,7 @@ function App() {
                     <Route path="/quen-mat-khau" element={<QuenMatKhau />} />
                     <Route path="/dat-lai-mat-khau" element={<DatLaiMatKhau />} />
                     <Route path="/chia-se-tkb/:token" element={<ChiaSeTKB />} />
+                    <Route path="/chinh-sach" element={<ChinhSach />} />
 
                     {/* Authenticated routes */}
                     <Route element={<AuthenticatedLayout />}>

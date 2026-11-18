@@ -30,6 +30,8 @@ tmp_video_review/
 
 # Generated local files
 *.log
+logs/
+back/logs/
 coverage/
 __pycache__/
 *.pyc

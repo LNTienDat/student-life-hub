@@ -9,7 +9,8 @@ import { clearCache } from '../services/apiCache';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
 import { formatDeadlineDate, deadlineToISO, deadlineInputValue, defaultDeadlineDate } from './deadline/deadlineDate';
-import { Calendar as CalendarIcon, List, Plus, X, Clock } from 'lucide-react';
+import { Calendar as CalendarIcon, CalendarPlus, List, Plus, X, Clock } from 'lucide-react';
+import { deadlinesToIcs, downloadIcs } from '../utils/icsExport';
 
 import DeadlineForm from './deadline/DeadlineForm';
 import { DEADLINE_PRIORITIES, selectDeadlines } from './deadline/deadlineUtils';
@@ -264,6 +265,16 @@ function Deadline() {
             >
               <CalendarIcon className="w-4 h-4" />{tr(" Lịch")}</button>
           </div>
+          <button
+            type="button"
+            disabled={dangTai || !tongChuaHoanThanh}
+            onClick={() => {
+              downloadIcs('deadline-lifehub.ics', deadlinesToIcs(danhSach));
+              hienToast('success', 'Đã xuất deadline (.ics)! Hãy nhập vào Google Calendar hoặc Lịch trên điện thoại.');
+            }}
+            className="flex min-h-11 justify-center items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 transition-colors"
+          >
+            <CalendarPlus className="w-4 h-4 text-violet-600 dark:text-violet-400" aria-hidden="true" />{tr("Xuất .ics")}</button>
           <button type="button" aria-expanded={hienFormThem}
             onClick={moFormThem}
             className={`flex min-h-11 justify-center items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
