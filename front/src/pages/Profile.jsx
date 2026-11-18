@@ -183,7 +183,7 @@ function Profile() {
       </div>
 
       <ProfileIdentity />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Cột 1: Thông tin tài khoản */}
         <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 relative overflow-hidden flex flex-col h-full justify-between">
@@ -325,7 +325,8 @@ function Profile() {
 
       {/* Góp ý & Chính sách sản phẩm */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <form onSubmit={xuLyGuiGopY} className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 space-y-4">
+        <form onSubmit={xuLyGuiGopY} className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 flex flex-col justify-between gap-4 h-full">
+          <div className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl">
               <MessageSquarePlus className="w-5 h-5" />
@@ -361,6 +362,7 @@ function Profile() {
           <div>
             <label htmlFor="feedback-content" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5">{tr("Chi tiết")}</label>
             <textarea id="feedback-content" rows={3} value={noiDungGopY} onChange={(e) => setNoiDungGopY(e.target.value)} disabled={dangGuiGopY} maxLength={2000} required placeholder={tr("Mô tả điều bạn gặp phải hoặc mong muốn cải thiện...")} className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl px-3.5 py-2.5 text-sm" />
+          </div>
           </div>
 
           <button type="submit" disabled={dangGuiGopY} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-70">

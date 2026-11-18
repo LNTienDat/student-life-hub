@@ -241,17 +241,17 @@ function FinancePeriod({ period, onPeriodChange }) {
           </h1>
           <p className="mt-1 text-slate-500 dark:text-slate-400">{tr("Tháng ")}{label}{tr(" · Thu trừ chi trong tháng")}</p>
         </div>
-        <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap">
-          <button type="button" onClick={exportExcel} disabled={exporting || summaryLoading || !!summaryError || !summary?.thongKe || (!summary.thongKe.tongThu && !summary.thongKe.tongChi)} className="flex min-h-11 justify-center items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"><Download size={17} />{exporting ? tr('Đang xuất…') : tr('Xuất Excel')}</button>
-          <button type="button" disabled={busy} onClick={()=>withDiscard(()=>{setDraft(null);setOriginal(null);setReceiptInfo(null);setReceiptOpen(true);},false)} className="inline-flex min-h-11 justify-center items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/50 px-4 text-sm text-emerald-700 hover:bg-emerald-100/60 disabled:opacity-50 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300 transition-colors"><Camera size={17}/>{tr("Quét hóa đơn")}</button>
-          <button type="button" disabled={busy} onClick={e => openForm(null, e.currentTarget)} className="col-span-2 md:col-auto flex min-h-11 justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 text-sm font-medium text-white shadow-md shadow-emerald-500/25 hover:shadow-lg hover:shadow-emerald-500/30 disabled:opacity-40 active:scale-[0.98] transition-all"><Plus size={17} />{tr("Thêm giao dịch")}</button>
+        <div className="grid grid-cols-2 gap-2.5 md:flex md:flex-wrap md:items-center">
+          <button type="button" onClick={exportExcel} disabled={exporting || summaryLoading || !!summaryError || !summary?.thongKe || (!summary.thongKe.tongThu && !summary.thongKe.tongChi)} className="flex min-h-11 justify-center items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-700 whitespace-nowrap transition-colors"><Download className="h-4 w-4 shrink-0" />{exporting ? tr('Đang xuất…') : tr('Xuất Excel')}</button>
+          <button type="button" disabled={busy} onClick={()=>withDiscard(()=>{setDraft(null);setOriginal(null);setReceiptInfo(null);setReceiptOpen(true);},false)} className="inline-flex min-h-11 justify-center items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/50 px-3.5 py-2.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100/60 disabled:opacity-50 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300 whitespace-nowrap transition-colors"><Camera className="h-4 w-4 shrink-0" />{tr("Quét hóa đơn")}</button>
+          <button type="button" disabled={busy} onClick={e => openForm(null, e.currentTarget)} className="col-span-2 md:col-auto flex min-h-11 justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-emerald-500/25 hover:shadow-lg hover:shadow-emerald-500/30 disabled:opacity-40 active:scale-[0.98] whitespace-nowrap transition-all"><Plus className="h-4 w-4 shrink-0" />{tr("Thêm giao dịch")}</button>
         </div>
       </div>
       <ReceiptImport open={receiptOpen} onClose={()=>setReceiptOpen(false)} onRecognized={(result,file)=>{setOriginal(null);setDraft({loai:result.loai||'chi',danhMuc:result.danhMuc,soTien:result.soTien,anhHoaDonHash:result.anhHoaDonHash,moTa:result.moTa,ngayGiaoDich:result.ngayGiaoDich});setFormError('');setReceiptInfo({imageURL:URL.createObjectURL(file),file,text:result.text,warnings:result.warnings,aiUsed:Boolean(result.aiUsed),aiError:''});}}/>
       <FinancePeriodPicker value={period} onChange={choosePeriod} disabled={busy} />
       <div ref={formRef} className="scroll-mt-28">
-        {draft&&receiptInfo&&<section aria-label={tr("Hóa đơn đang kiểm tra")} className="mb-3 space-y-2 rounded-xl border border-slate-200 bg-white p-3 text-sm dark:border-slate-700 dark:bg-slate-800">
-          <div className="flex flex-wrap items-center justify-between gap-2">
+        {draft&&receiptInfo&&<section aria-label={tr("Hóa đơn đang kiểm tra")} className="mb-3 space-y-2.5 rounded-xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-800">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
             <p className="font-medium text-slate-700 dark:text-slate-200">
               {receiptInfo.aiUsed ? tr("Từ hóa đơn (đã quét bằng AI Vision) · chưa lưu.") : tr("Từ hóa đơn · chưa lưu. Kiểm tra nội dung bên dưới trước khi lưu giao dịch.")}
             </p>
@@ -261,9 +261,9 @@ function FinancePeriod({ period, onPeriodChange }) {
                 disabled={aiScanning || busy}
                 onClick={rescanReceiptWithAI}
                 title={tr("Gửi ảnh đã nén đến Google Gemini AI để đọc chính xác hơn khi nhận diện trên máy bị sót.")}
-                className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-200"
+                className="inline-flex min-h-11 w-full sm:w-auto shrink-0 items-center justify-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-200 whitespace-nowrap"
               >
-                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
                 {aiScanning ? tr("Đang đọc bằng AI Vision…") : tr("Quét lại bằng AI Vision")}
               </button>
             )}

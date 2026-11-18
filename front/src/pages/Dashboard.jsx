@@ -88,11 +88,11 @@ function Dashboard() {
           <h1 className="break-words font-display text-2xl font-bold tracking-tight text-slate-900">{tr("Xin chào, ")}{user?.ten || tr('bạn')}!</h1>
           <p className="mt-2 text-sm text-slate-500">{new Date().toLocaleDateString(getLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
-        <div aria-label={tr("Thêm nhanh")} className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+        <div aria-label={tr("Thêm nhanh")} className="grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap">
           {[
             ['deadline', 'Thêm việc', Plus, 'border-violet-300 bg-violet-50/70 text-violet-700 hover:bg-violet-100 dark:border-violet-700/60 dark:bg-violet-950/50 dark:text-violet-300 dark:hover:bg-violet-900/60 shadow-sm', 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/30'],
             ['class', 'Thêm lịch', CalendarPlus, 'border-sky-300 bg-sky-50/70 text-sky-700 hover:bg-sky-100 dark:border-sky-700/60 dark:bg-sky-950/50 dark:text-sky-300 dark:hover:bg-sky-900/60 shadow-sm', 'bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-md shadow-sky-500/30'],
-            ['expense', 'Ghi khoản chi', Wallet, 'border-emerald-300 bg-emerald-50/70 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700/60 dark:bg-emerald-950/50 dark:text-emerald-300 dark:hover:bg-emerald-900/60 shadow-sm', 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/30'],
+            ['expense', 'Ghi khoản chi', Wallet, 'col-span-2 sm:col-auto border-emerald-300 bg-emerald-50/70 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700/60 dark:bg-emerald-950/50 dark:text-emerald-300 dark:hover:bg-emerald-900/60 shadow-sm', 'col-span-2 sm:col-auto bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/30'],
           ].map(([kind, label, Icon, baseClass, activeClass]) => (
             <button
               key={kind}
@@ -100,11 +100,11 @@ function Dashboard() {
               onClick={() => setQuickEntry(quickEntry === kind ? null : kind)}
               aria-expanded={quickEntry === kind}
               aria-pressed={quickEntry === kind}
-              className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-all duration-200 active:scale-95 ${
+              className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-semibold whitespace-nowrap transition-all duration-200 active:scale-95 ${
                 quickEntry === kind ? activeClass : baseClass
               }`}
             >
-              <Icon aria-hidden="true" className="h-4 w-4" />
+              <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
               <span>{tr(label)}</span>
             </button>
           ))}

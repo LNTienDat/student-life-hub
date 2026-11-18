@@ -240,30 +240,32 @@ function Deadline() {
             <p className="text-slate-500 dark:text-slate-400 mt-1">{tr("Bạn có ")}{tongChuaHoanThanh}{tr(" công việc cần hoàn thành")}</p>
           </div>
 
-          <div className="grid grid-cols-1 gap-2 md:flex md:flex-wrap md:items-center">
-          <div className="grid grid-cols-2 items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+          <div className="grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap sm:items-center">
+          <div className="col-span-2 grid grid-cols-2 items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl sm:w-auto">
             <button
+              type="button"
               onClick={() => setCheDoXem('list')}
               aria-label={tr("Xem dạng danh sách")}
               aria-pressed={cheDoXem === 'list'}
-              className={`flex min-h-11 justify-center items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex min-h-10 justify-center items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                 cheDoXem === 'list'
                   ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-sm font-semibold'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               }`}
             >
-              <List className="w-4 h-4" />{tr(" Danh sách")}</button>
+              <List className="w-4 h-4 shrink-0" />{tr("Danh sách")}</button>
             <button
+              type="button"
               onClick={() => setCheDoXem('calendar')}
               aria-label={tr("Xem dạng lịch")}
               aria-pressed={cheDoXem === 'calendar'}
-              className={`flex min-h-11 justify-center items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex min-h-10 justify-center items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                 cheDoXem === 'calendar'
                   ? 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-sm font-semibold'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               }`}
             >
-              <CalendarIcon className="w-4 h-4" />{tr(" Lịch")}</button>
+              <CalendarIcon className="w-4 h-4 shrink-0" />{tr("Lịch")}</button>
           </div>
           <button
             type="button"
@@ -272,18 +274,18 @@ function Deadline() {
               downloadIcs('deadline-lifehub.ics', deadlinesToIcs(danhSach));
               hienToast('success', 'Đã xuất deadline (.ics)! Hãy nhập vào Google Calendar hoặc Lịch trên điện thoại.');
             }}
-            className="flex min-h-11 justify-center items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 transition-colors"
+            className="flex min-h-11 justify-center items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 whitespace-nowrap transition-colors"
           >
-            <CalendarPlus className="w-4 h-4 text-violet-600 dark:text-violet-400" aria-hidden="true" />{tr("Xuất .ics")}</button>
+            <CalendarPlus className="w-4 h-4 shrink-0 text-violet-600 dark:text-violet-400" aria-hidden="true" />{tr("Xuất .ics")}</button>
           <button type="button" aria-expanded={hienFormThem}
             onClick={moFormThem}
-            className={`flex min-h-11 justify-center items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
+            className={`flex min-h-11 justify-center items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
               hienFormThem
                 ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                 : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-500/25 hover:shadow-lg hover:shadow-violet-500/30 active:scale-[0.98]'
             }`}
           >
-            {hienFormThem ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            {hienFormThem ? <X className="w-4 h-4 shrink-0" /> : <Plus className="w-4 h-4 shrink-0" />}
             {hienFormThem ? tr('Hủy') : tr('Thêm deadline')}
           </button>
           </div>

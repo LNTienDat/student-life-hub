@@ -253,16 +253,14 @@ function ThoiKhoaBieu() {
 
           <SemesterPicker className="order-2 md:order-3 md:col-span-2" />
 
-          <div className="order-3 md:order-2 grid w-full grid-cols-2 items-stretch gap-2.5 md:flex md:w-auto md:flex-wrap">
-            <button type="button" onClick={yeuCauXoaLich}
-              disabled={saving || dangTai || loadedSemester !== semester+':'+week || !!loadError || !baseList.length || baseList.length > 1000}
-              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-40 dark:border-rose-900/50 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-rose-950/30">
-              <Trash2 className="h-4 w-4" aria-hidden="true" />{tr("Xóa lịch hiện tại")}</button>
+          <div className="order-3 md:order-2 grid w-full grid-cols-2 items-stretch gap-2.5 md:flex md:w-auto md:flex-wrap md:items-center">
             <button
-              onClick={() => setHienModalShare(true)}
-              className="flex min-h-11 items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium text-sm transition-colors shadow-sm"
+              type="button"
+              onClick={() => setImagePickerOpen(true)}
+              className="md:order-4 inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 whitespace-nowrap transition-colors shadow-sm"
             >
-              <Share2 className="w-4 h-4 text-ink-600 dark:text-ink-400" />{tr("Chia sẻ TKB")}</button>
+              <ImagePlus className="h-4 w-4 shrink-0" aria-hidden="true" />{tr("Nhập ảnh")}
+            </button>
             <button
               type="button"
               disabled={dangTai || !baseList.length}
@@ -270,20 +268,36 @@ function ThoiKhoaBieu() {
                 downloadIcs('lich-hoc-lifehub.ics', timetableToIcs(baseList, { weekStartDate: week, semester: semester || currentSemester }));
                 hienToast('success', 'Đã xuất lịch (.ics)! Hãy nhập vào Google Calendar hoặc Lịch trên điện thoại.');
               }}
-              className="flex min-h-11 items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 font-medium text-sm transition-colors shadow-sm"
+              className="md:order-3 inline-flex min-h-11 items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 font-medium text-sm whitespace-nowrap transition-colors shadow-sm"
             >
-              <CalendarPlus className="w-4 h-4 text-sky-600 dark:text-sky-400" aria-hidden="true" />{tr("Xuất .ics")}</button>
-            <button type="button" onClick={()=>setImagePickerOpen(true)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium dark:border-slate-700 dark:bg-slate-800"><ImagePlus className="h-4 w-4"/>{tr("Nhập ảnh")}</button>
+              <CalendarPlus className="w-4 h-4 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden="true" />{tr("Xuất .ics")}
+            </button>
             <button
+              type="button"
+              onClick={() => setHienModalShare(true)}
+              className="md:order-2 inline-flex min-h-11 items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium text-sm whitespace-nowrap transition-colors shadow-sm"
+            >
+              <Share2 className="w-4 h-4 shrink-0 text-ink-600 dark:text-ink-400" aria-hidden="true" />{tr("Chia sẻ TKB")}
+            </button>
+            <button
+              type="button"
+              onClick={yeuCauXoaLich}
+              disabled={saving || dangTai || loadedSemester !== semester+':'+week || !!loadError || !baseList.length || baseList.length > 1000}
+              className="md:order-1 inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3.5 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-40 dark:border-rose-900/50 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-rose-950/30 whitespace-nowrap transition-colors"
+            >
+              <Trash2 className="h-4 w-4 shrink-0" aria-hidden="true" />{tr("Xóa lịch hiện tại")}
+            </button>
+            <button
+              type="button"
               onClick={moFormThem}
               aria-expanded={hienForm}
-              className={`flex min-h-11 items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              className={`col-span-2 md:col-auto md:order-5 flex min-h-11 items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
                 hienForm
                   ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   : 'bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 text-white shadow-md shadow-sky-500/25 hover:shadow-lg hover:shadow-sky-500/30 active:scale-[0.98]'
               }`}
             >
-              {hienForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+              {hienForm ? <X className="w-4 h-4 shrink-0" /> : <Plus className="w-4 h-4 shrink-0" />}
               {hienForm ? tr('Hủy') : tr('Thêm buổi học')}
             </button>
           </div>
