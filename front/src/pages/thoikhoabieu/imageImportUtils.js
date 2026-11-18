@@ -67,14 +67,14 @@ const roomText = text => text
 function roomFromLine(text) {
   const line = cleanedLine(text);
   const code = roomCode.exec(line);
-  const label = /^phong(?:\s*[:.-]\s*|\s+(?=[a-z]{0,3}\d))/i.exec(fold(line));
+  const label = /^(?:phong(?:\s*[:.-]\s*|\s+(?=[a-z]{0,3}\d))|p\.\s*(?=[a-z]{0,3}\d))/i.exec(fold(line));
   if (code && (code.index === 0 || /^[\d\s]+$/.test(line.slice(0, code.index)) || label)) {
     const hasRoomLabel = label || /\(\s*(?:phong|hoc\s*duong|giang\s*duong|thuc\s*hanh|ly\s*thuyet)\b/.test(fold(line));
     const building = code[1].replace(/^[il]|^1(?=\d$)/i, prefix => prefix === '1' && !hasRoomLabel ? prefix : 'I');
     return roomText(`${building}-${code[2]}${line.slice(code.index + code[0].length)}`);
   }
-  // A standalone room such as "A101", "B2-04", or "H1.201" is safe after a clock line.
-  const general = /^(?:\d+\s+)?([A-Z]{1,3}\d{1,2}\s*[-–—.]\s*\d{2,3}|[A-Z]{1,3}\d{2,4})(\s*\([^)]*\))?$/.exec(line);
+  // A standalone room such as "A101", "B2-04", "H1.201", or "Lab-01" is safe after a clock line.
+  const general = /^(?:\d+\s+)?((?:Lab|LAB)\s*[-–—.]?\s*\d{2,3}|[A-Z]{1,3}\d{1,2}\s*[-–—.]\s*\d{2,3}|[A-Z]{1,3}\d{2,4})(\s*\([^)]*\))?$/.exec(line);
   if (general && !classLabel.test(fold(general[1]))) {
     return roomText(`${general[1].replace(/\s*([-–—.])\s*/g, '$1')}${general[2] || ''}`);
   }
