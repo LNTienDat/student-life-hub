@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseDong, extractReceipt, mergeReceiptReadings, groupReceiptWords } from '../src/pages/taichinh/receiptUtils.js';
+import { findReceiptPaper } from '../src/services/receiptPreprocess.js';
 test('printed Vietnamese amount formats preserve exact integer dong; fractions and malformed separators stay unresolved',()=>{
   for(const value of ['20.000','20,000','20 000','20000','20.000,00','20,000.00','20000.00'])assert.equal(parseDong(value),20000);
   for(const value of ['20.00','20,50','-20000','20.00.000','NaN','0'])assert.equal(parseDong(value),null);
@@ -118,4 +119,56 @@ test('groupReceiptWords keeps slightly tilted left label and right-aligned amoun
   }]);
   assert.equal(rows.length, 1);
   assert.equal(extractReceipt('CÀ PHÊ HOÀNG PHÚC\nNgày: 18/02/2019', rows).soTien, '54000');
+});
+
+test('parseDong and extractReceipt repair OCR digit noise, hyphen thousand separators, and damaged total labels', () => {
+  assert.equal(parseDong('54,00O'), 54000);
+  assert.equal(parseDong('5O.OOO'), 50000);
+  assert.equal(parseDong('54-000'), 54000);
+  assert.equal(parseDong('1-620-000'), 1620000);
+  assert.equal(parseDong('-54,000'), null);
+  assert.equal(parseDong('18-02-2019'), null);
+
+  assert.equal(extractReceipt('CÀ PHÊ HOÀNG PHÚC\nNgày: 18/02/2019\nT6ng: 54,00O').soTien, '54000');
+  assert.equal(extractReceipt('SG COFFE\nNgày: 11/02/2016\nT0ng c0ng: 54-000').soTien, '54000');
+  assert.equal(extractReceipt('SG COFFE\nNgày: 11/02/2016\nTonq: 5O.OOO').soTien, '50000');
+  assert.equal(extractReceipt('SG COFFE\nNgày: 11/02/2016\nGiảm giá: -50.000\nT.toán: 3.976-000').soTien, '3976000');
+});
+
+test('mergeReceiptReadings accepts a single unambiguous alternative total when primary missed it, while rejecting conflicts', () => {
+  const missedPrimary = extractReceipt('SG COFFE\nGiờ vào: 11.02.16 20:31\nTRA GUNG');
+  const recoveredAlt = extractReceipt('SG COFFE\nGiờ vào: 11.02.16 20:31\nTổng cộng: 3.976.000');
+  const emptyAlt = extractReceipt('SG COFFE\nGiờ vào: 11.02.16 20:31');
+  const merged = mergeReceiptReadings(missedPrimary, [recoveredAlt, emptyAlt]);
+  assert.equal(merged.soTien, '3976000');
+  assert.equal(merged.hasFinalTotal, true);
+
+  const weakPrimary = extractReceipt('CÀ PHÊ HOÀNG PHÚC\nNgày: 18/02/2019\nThành tiền: 600,000');
+  const conflictingAlt = extractReceipt('CÀ PHÊ HOÀNG PHÚC\nNgày: 18/02/2019\nTổng: 500,000');
+  assert.equal(mergeReceiptReadings(weakPrimary, [conflictingAlt]).soTien, '');
+});
+
+test('findReceiptPaper extends cropping downward through shadowed receipt bottoms and still falls back on small spots', () => {
+  const width = 200, height = 200;
+  const fillBox = (buf, x0, x1, y0, y1, r, g, b) => {
+    for (let y = y0; y < y1; y++) {
+      for (let x = x0; x < x1; x++) {
+        const i = (y * width + x) * 4;
+        buf[i] = r; buf[i + 1] = g; buf[i + 2] = b; buf[i + 3] = 255;
+      }
+    }
+  };
+
+  const shadowed = new Uint8ClampedArray(width * height * 4);
+  fillBox(shadowed, 0, width, 0, height, 35, 40, 65);
+  fillBox(shadowed, 35, 165, 15, 115, 210, 208, 205);
+  fillBox(shadowed, 35, 165, 115, 185, 105, 102, 98);
+  const crop = findReceiptPaper({ data: shadowed, width, height });
+  assert.ok(crop.bottom >= 185, `expected bottom >= 185, got ${crop.bottom}`);
+  assert.ok(crop.left <= 35 && crop.right >= 165 && crop.top <= 15);
+
+  const tinySpot = new Uint8ClampedArray(width * height * 4);
+  fillBox(tinySpot, 0, width, 0, height, 35, 40, 65);
+  fillBox(tinySpot, 70, 100, 70, 100, 215, 215, 215);
+  assert.deepEqual(findReceiptPaper({ data: tinySpot, width, height }), { left: 0, top: 0, right: width, bottom: height });
 });

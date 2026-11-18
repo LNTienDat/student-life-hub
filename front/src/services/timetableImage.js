@@ -175,11 +175,11 @@ async function recognizeTimetableInternal(file, { signal, onProgress = () => {},
       const header = document.createElement('canvas');
       const factor = Math.min(6, 6000 / bitmap.width);
       header.width = Math.round(bitmap.width * factor);
-      header.height = Math.round(bitmap.height * 0.12 * factor);
+      header.height = Math.round(bitmap.height * 0.22 * factor);
       try {
         const context = header.getContext('2d');
         context.fillStyle = '#fff'; context.fillRect(0, 0, header.width, header.height);
-        context.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height * 0.12, 0, 0, header.width, header.height);
+        context.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height * 0.22, 0, 0, header.width, header.height);
         const reading = await recognize(header);
         initial.headerText = reading.text;
         let headerColumns = getTimetableColumns(reading);
@@ -228,7 +228,7 @@ async function recognizeTimetableInternal(file, { signal, onProgress = () => {},
         if (day === 'unknown' && columnIndex !== undefined) {
           const days = geometryHeaders.get(columnIndex) || new Set();
           for (const word of wordsFromOcr(data)) {
-            if (crop.top + word.bbox.y1 / crop.factor > bitmap.height * 0.12) continue;
+            if (crop.top + word.bbox.y1 / crop.factor > bitmap.height * 0.22) continue;
             const detected = imageDay(word.text);
             if (detected) days.add(detected);
           }

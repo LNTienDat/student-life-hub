@@ -7,17 +7,23 @@ export function imageDay(text) {
   const found = /^(?:t|thu)([2-7])$/.exec(normalized);
   return found ? Number(found[1]) : null;
 }
-const clockToken = '(?:\\d{1,2}\\s*[:h.;]\\s*[0-5]\\d|[0-2]\\d[0-5]\\d)';
+const clockToken = '(?:\\d{1,2}\\s*[:h.,;]\\s*[0-5]\\d|[0-2]\\d[0-5]\\d)';
 const clockPair = new RegExp(`\\b(${clockToken})\\s*(?:[-–—−~]|đến|den)\\s*(${clockToken})\\b`, 'i');
 const spacedClockPair = new RegExp(`\\b(${clockToken})\\s+(${clockToken})\\b`, 'i');
 
+const fixClockChars = text => text.replace(/[OoQ]/g, '0').replace(/[lI|]/g, '1');
+
 function readTime(text) {
   const source = String(text);
-  // A slash can be a damaged colon after a dash. Leave dates and other slashes alone.
-  const normalized = source.replace(/([-–—−]\s*\d{1,2}\s*)\/(\s*[0-5]\d\b)/g, '$1:$2');
+  // Repair O/l/I clock digits near separators, and turn a damaged post-dash slash into a colon.
+  const normalized = source
+    .replace(/(?<![\p{L}\d])([lI|OoQ\d]{1,2})(\s*[:h.,;]\s*)([lI|OoQ\d]{2})(?![\p{L}\d])/gu,
+      (_, hh, sep, mm) => `${fixClockChars(hh)}${sep}${fixClockChars(mm)}`)
+    .replace(/([-–—−]\s*)([lI|OoQ\d]{1,2})(\s*)\/(\s*[lI|OoQ0-5][lI|OoQ\d]\b)/g,
+      (_, dash, hh, s1, mm) => `${dash}${fixClockChars(hh)}${s1}:${fixClockChars(mm)}`);
   const explicit = clockPair.exec(normalized);
   const match = explicit || spacedClockPair.exec(normalized);
-  if (!match || (!explicit && !/[:h.;]/i.test(match[1] + match[2]))) return null;
+  if (!match || (!explicit && !/[:h.,;]/i.test(match[1] + match[2]))) return null;
   const range = [match[1], match[2]].map(token => {
     const digits = token.replace(/\D/g, '').padStart(4, '0');
     return `${digits.slice(0, 2)}:${digits.slice(2)}`;
@@ -67,8 +73,11 @@ function roomFromLine(text) {
     const building = code[1].replace(/^[il]|^1(?=\d$)/i, prefix => prefix === '1' && !hasRoomLabel ? prefix : 'I');
     return roomText(`${building}-${code[2]}${line.slice(code.index + code[0].length)}`);
   }
-  // A standalone room such as "A101" is safe after a clock line.
-  if (/^[A-Z]{1,3}\d{2,4}(?:\s*\([^)]*\))?$/.test(line) && !classLabel.test(fold(line))) return line.slice(0, 50);
+  // A standalone room such as "A101", "B2-04", or "H1.201" is safe after a clock line.
+  const general = /^(?:\d+\s+)?([A-Z]{1,3}\d{1,2}\s*[-–—.]\s*\d{2,3}|[A-Z]{1,3}\d{2,4})(\s*\([^)]*\))?$/.exec(line);
+  if (general && !classLabel.test(fold(general[1]))) {
+    return roomText(`${general[1].replace(/\s*([-–—.])\s*/g, '$1')}${general[2] || ''}`);
+  }
   if (label) return roomText(line.slice(label[0].length));
   return '';
 }

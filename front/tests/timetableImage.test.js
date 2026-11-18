@@ -160,3 +160,22 @@ test('extracts building I7 classroom with hoc duong label and digital transforma
   }, 2);
   assert.equal(pythonRows[0].giangVien, 'ThS. Đặng Mạnh Huy');
 });
+
+test('repairs O/l/I digits and comma clock separators, and recognizes general building room codes', () => {
+  assert.deepEqual(timeRange('O7:00 - l1,15'), ['07:00', '11:15']);
+  assert.deepEqual(timeRange('I3:OO - I7:I5'), ['13:00', '17:15']);
+
+  const b2Rows = extractImageTimetable({
+    text: 'Chuyển đổi số\nO7:00 - l1,15\nB2-04 (Phòng máy)\nGV. Nguyễn Văn An',
+  }, 2);
+  assert.equal(b2Rows.length, 1);
+  assert.equal(b2Rows[0].gioBatDau, '07:00');
+  assert.equal(b2Rows[0].gioKetThuc, '11:15');
+  assert.equal(b2Rows[0].phongHoc, 'B2-04 (Phòng máy)');
+
+  const h1Rows = extractImageTimetable({
+    text: 'Lập trình Web\n07:00 - 09:30\nH1.201',
+  }, 4);
+  assert.equal(h1Rows.length, 1);
+  assert.equal(h1Rows[0].phongHoc, 'H1.201');
+});
