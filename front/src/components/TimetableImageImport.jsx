@@ -28,7 +28,6 @@ export default function TimetableImageImport({ semester: initialSemester = '', o
   const [aiAvailable, setAiAvailable] = useState(false);
   const fileRef = useRef(null);
   const cameraRef = useRef(null);
-  const modeRef = useRef('local');
   const lock = useRef(false);
 
   useEffect(() => {
@@ -50,18 +49,14 @@ export default function TimetableImageImport({ semester: initialSemester = '', o
   }, [open, retry, job]);
 
   function cancel() { job.cancel(); }
-  function triggerPick(pickerRef, mode) {
-    modeRef.current = mode;
-    pickerRef.current?.click();
-  }
   function read(event) {
     const chosen = event.target.files?.[0];
     event.target.value = '';
     if (!chosen) return;
     setOpen(true);
     onPickerClose();
-    if (modeRef.current === 'vision') {
-      job.startWithAI(chosen, semester, scanTimetableWithAI);
+    if (aiAvailable) {
+      job.startWithAI(chosen, semester, scanTimetableWithAI, existing.map((item) => item.tenMon));
     } else {
       job.read(chosen, semester, existing.map((item) => item.tenMon));
     }
@@ -93,34 +88,36 @@ export default function TimetableImageImport({ semester: initialSemester = '', o
   return (
     <>
       <ModalDialog open={pickerOpen} onClose={onPickerClose} title={tr("Nhập lịch từ ảnh")}>
-        <p className="text-sm text-slate-500 dark:text-slate-300">{tr("Chọn ảnh rõ chữ. Kiểm tra trước khi lưu.")}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-300">
+          {aiAvailable
+            ? tr("Dùng AI Vision để tách Thứ, giờ học, phòng và giảng viên chính xác ngay từ đầu; tự động chuyển về đọc trên thiết bị nếu mất kết nối.")
+            : tr("Chọn ảnh rõ chữ. Kiểm tra trước khi lưu.")}
+        </p>
 
         {aiAvailable && (
-          <div className="mt-4 space-y-2 rounded-xl border border-indigo-200 bg-indigo-50/70 p-3 dark:border-indigo-800/70 dark:bg-indigo-950/30">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-800 dark:text-indigo-200">
-              <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <span>{tr("Quét nhanh bằng AI Vision ngay từ đầu")}</span>
-            </div>
-            <p className="text-xs text-indigo-900/80 dark:text-indigo-200/80">
-              {tr("Tự tách cột Thứ, giờ học, phòng và giảng viên chính xác hơn cho ảnh phức tạp (gửi ảnh đến Google Gemini).")}
-            </p>
-            <div className="grid grid-cols-2 gap-2.5">
-              <button type="button" disabled={busy || saving} onClick={() => triggerPick(fileRef, 'vision')} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 whitespace-nowrap">
-                <ImagePlus className="h-4 w-4 shrink-0" />{tr("Chọn ảnh · AI")}
-              </button>
-              <button type="button" disabled={busy || saving} onClick={() => triggerPick(cameraRef, 'vision')} className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-indigo-300 bg-white px-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-200 whitespace-nowrap">
-                <Camera className="h-4 w-4 shrink-0" />{tr("Chụp ảnh · AI")}
-              </button>
-            </div>
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50/70 px-3 py-2 text-xs font-medium text-indigo-800 dark:border-indigo-800/70 dark:bg-indigo-950/30 dark:text-indigo-200">
+            <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>{tr("Xử lý ảnh phức tạp nhanh và chính xác hơn (Google Gemini)")}</span>
           </div>
         )}
 
-        <div className="mt-4">
-          {aiAvailable && <p className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">{tr("Hoặc quét miễn phí trên thiết bị (không gửi ảnh ra ngoài):")}</p>}
-          <div className="grid grid-cols-2 gap-2.5">
-            <button type="button" disabled={busy || saving} onClick={() => triggerPick(fileRef, 'local')} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-ink-600 px-3 text-sm font-medium text-white disabled:opacity-50 whitespace-nowrap"><ImagePlus className="h-4 w-4 shrink-0" />{tr("Chọn ảnh")}</button>
-            <button type="button" disabled={busy || saving} onClick={() => triggerPick(cameraRef, 'local')} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-medium dark:border-slate-600 disabled:opacity-50 whitespace-nowrap"><Camera className="h-4 w-4 shrink-0" />{tr("Chụp ảnh")}</button>
-          </div>
+        <div className="mt-4 grid grid-cols-2 gap-2.5">
+          <button
+            type="button"
+            disabled={busy || saving}
+            onClick={() => fileRef.current?.click()}
+            className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-white disabled:opacity-50 whitespace-nowrap ${aiAvailable ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-ink-600 hover:bg-ink-700'}`}
+          >
+            <ImagePlus className="h-4 w-4 shrink-0" />{tr("Chọn ảnh")}
+          </button>
+          <button
+            type="button"
+            disabled={busy || saving}
+            onClick={() => cameraRef.current?.click()}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700 whitespace-nowrap"
+          >
+            <Camera className="h-4 w-4 shrink-0" />{tr("Chụp ảnh")}
+          </button>
         </div>
       </ModalDialog>
       <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={read} aria-label={tr("Chọn ảnh thời khóa biểu")} className="sr-only" disabled={busy || saving} />

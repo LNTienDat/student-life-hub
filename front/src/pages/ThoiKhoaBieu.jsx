@@ -13,9 +13,10 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import timetableService from '../services/timetableService';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
-import { Plus, X, CalendarDays, CalendarRange, CalendarCheck, ChevronLeft, ChevronRight, Share2, Trash2, ImagePlus, CalendarPlus } from 'lucide-react';
+import { Plus, CalendarDays, CalendarRange, CalendarCheck, ChevronLeft, ChevronRight, Share2, Trash2, ImagePlus, CalendarPlus } from 'lucide-react';
 import { CAC_THU, gioSangPhut } from './thoikhoabieu/timetableUtils';
-import { timetableToIcs, downloadIcs } from '../utils/icsExport';
+import { timetableToIcs, timetableGoogleCalendarUrl, downloadIcs } from '../utils/icsExport';
+import CalendarSyncModal from '../components/CalendarSyncModal';
 
 import TimetableForm from './thoikhoabieu/TimetableForm';
 import TimetableGrid from './thoikhoabieu/TimetableGrid';
@@ -27,6 +28,7 @@ function ThoiKhoaBieu() {
   useLanguage();
   const [semester] = useSemester();
   const [imagePickerOpen,setImagePickerOpen] = useState(false);
+  const [calendarSyncOpen, setCalendarSyncOpen] = useState(false);
   const [week,setWeek]=useState(()=>monday());
   const [adjusting,setAdjusting]=useState(null);
   const [adjustments,setAdjustments]=useState([]);
@@ -103,7 +105,7 @@ function ThoiKhoaBieu() {
     setGioKetThuc('09:00');
     setPhongHoc('');
     setGiangVien('');
-    setHienForm(!hienForm);
+    setHienForm(true);
   }
 
   function moFormSua(bh) {
@@ -118,7 +120,6 @@ function ThoiKhoaBieu() {
     setGioKetThuc(bh.gioKetThuc);
     setPhongHoc(bh.phongHoc || '');
     setGiangVien(bh.giangVien || '');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   async function xuLySubmit(e) {
@@ -264,13 +265,10 @@ function ThoiKhoaBieu() {
             <button
               type="button"
               disabled={dangTai || !baseList.length}
-              onClick={() => {
-                downloadIcs('lich-hoc-lifehub.ics', timetableToIcs(baseList, { weekStartDate: week, semester: semester || currentSemester }));
-                hienToast('success', 'Đã xuất lịch (.ics)! Hãy nhập vào Google Calendar hoặc Lịch trên điện thoại.');
-              }}
+              onClick={() => setCalendarSyncOpen(true)}
               className="md:order-3 inline-flex min-h-11 items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 font-medium text-sm whitespace-nowrap transition-colors shadow-sm"
             >
-              <CalendarPlus className="w-4 h-4 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden="true" />{tr("Xuất .ics")}
+              <CalendarPlus className="w-4 h-4 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden="true" />{tr("Đồng bộ lịch")}
             </button>
             <button
               type="button"
@@ -291,14 +289,10 @@ function ThoiKhoaBieu() {
               type="button"
               onClick={moFormThem}
               aria-expanded={hienForm}
-              className={`col-span-2 md:col-auto md:order-5 flex min-h-11 items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
-                hienForm
-                  ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                  : 'bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 text-white shadow-md shadow-sky-500/25 hover:shadow-lg hover:shadow-sky-500/30 active:scale-[0.98]'
-              }`}
+              className="col-span-2 md:col-auto md:order-5 flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-sky-500/25 transition-all hover:from-sky-500 hover:to-cyan-500 hover:shadow-lg hover:shadow-sky-500/30 active:scale-[0.98] whitespace-nowrap"
             >
-              {hienForm ? <X className="w-4 h-4 shrink-0" /> : <Plus className="w-4 h-4 shrink-0" />}
-              {hienForm ? tr('Hủy') : tr('Thêm buổi học')}
+              <Plus className="w-4 h-4 shrink-0" />
+              {tr('Thêm buổi học')}
             </button>
           </div>
         </div>
@@ -372,6 +366,32 @@ function ThoiKhoaBieu() {
         isOpen={hienModalShare}
         onClose={() => setHienModalShare(false)}
       />}
+
+      {calendarSyncOpen && (
+        <CalendarSyncModal
+          open={calendarSyncOpen}
+          onClose={() => setCalendarSyncOpen(false)}
+          title="Đồng bộ thời khóa biểu"
+          subtitle="Thêm từng môn lặp hằng tuần vào Google Calendar Web hoặc nhập toàn bộ file .ics."
+          items={baseList
+            .map((item) => {
+              const url = timetableGoogleCalendarUrl(item, { weekStartDate: week, semester: semester || currentSemester });
+              if (!url) return null;
+              const thuLabel = CAC_THU.find((t) => t.gia === Number(item.thu))?.ten || '';
+              return {
+                id: item.id,
+                label: item.tenMon,
+                meta: [tr(thuLabel), `${item.gioBatDau}–${item.gioKetThuc}`, item.phongHoc].filter(Boolean).join(' · '),
+                url,
+              };
+            })
+            .filter(Boolean)}
+          onDownloadIcs={() => {
+            downloadIcs('lich-hoc-lifehub.ics', timetableToIcs(baseList, { weekStartDate: week, semester: semester || currentSemester }));
+            hienToast('success', 'Đã tải file .ics! Mở trang Nhập Google Calendar để đưa vào lịch.');
+          }}
+        />
+      )}
 
       {/* Modal xác nhận xóa hiện đại */}
       <ConfirmModal

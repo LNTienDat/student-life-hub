@@ -115,3 +115,25 @@ test('next week returns all days rather than silently answering today', async ()
  test.each(['Mai học môn gì?', 'Mai có lịch không?', 'Ngày mai mình học môn nào?', 'Hôm nay có học không?'])('recognizes natural schedule question: %s', question => {
   expect(timChuDe(question)).toEqual(['lichHoc']);
  });
+
+test('finance summary includes all-time, yearly (2020), and historical monthly (T10) totals without leaking notes', async () => {
+  prisma.giaoDich.groupBy.mockResolvedValue([]);
+  prisma.giaoDich.findMany = jest.fn().mockResolvedValue([
+    { loai: 'chi', danhMuc: 'an_uong', soTien: 150000, ngayGiaoDich: new Date('2026-10-15T05:00:00Z') },
+    { loai: 'thu', danhMuc: 'luong', soTien: 500000, ngayGiaoDich: new Date('2020-05-10T05:00:00Z') },
+  ]);
+  const data = await layDuLieuSinhVien(42, ['taiChinh'], now);
+  expect(data.taiChinh.soGiaoDich).toBe(0);
+  expect(data.taiChinh.toanThoiGian).toMatchObject({ tongThu: 500000, tongChi: 150000, soDu: 350000, soGiaoDich: 2 });
+  expect(data.taiChinh.theoNam).toEqual([
+    { nam: 2026, tongThu: 0, tongChi: 150000, soDu: -150000, soGiaoDich: 1 },
+    { nam: 2020, tongThu: 500000, tongChi: 0, soDu: 500000, soGiaoDich: 1 },
+  ]);
+  expect(data.taiChinh.cacThangCoGiaoDich).toHaveLength(2);
+  expect(data.taiChinh.cacThangCoGiaoDich[0]).toMatchObject({ thang: 10, nam: 2026, tongChi: 150000, soGiaoDich: 1 });
+  expect(JSON.stringify(data)).not.toMatch(/matKhau|email|idNguoiDung|moTa/);
+  const offlineReply = traLoiDuLieu(data, 'Tóm tắt thu chi toàn bộ thời gian');
+  expect(offlineReply).toContain('Tổng hợp toàn bộ thời gian');
+  expect(offlineReply).toContain('2020');
+  expect(offlineReply).toContain('T10/2026');
+});

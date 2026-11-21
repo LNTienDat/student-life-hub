@@ -42,13 +42,78 @@ function timChuDe(text) {
   return topics;
 }
 
+function vietnamDateOnly(date) {
+  const p = vietnamParts(date);
+  return `${p.year}-${String(p.month).padStart(2, '0')}-${String(p.day).padStart(2, '0')}`;
+}
+
+function tongHopTaiChinhLichSu(allTransactions, labels) {
+  if (!Array.isArray(allTransactions) || !allTransactions.length) {
+    return {
+      toanThoiGian: { tongThu: 0, tongChi: 0, soDu: 0, soGiaoDich: 0, tuNgay: null, denNgay: null },
+      theoNam: [],
+      cacThangCoGiaoDich: [],
+    };
+  }
+  const byYear = new Map();
+  const byMonth = new Map();
+  let minDay = null;
+  let maxDay = null;
+  for (const tx of allTransactions) {
+    const p = vietnamParts(tx.ngayGiaoDich);
+    const day = `${p.year}-${String(p.month).padStart(2, '0')}-${String(p.day).padStart(2, '0')}`;
+    if (!minDay || day < minDay) minDay = day;
+    if (!maxDay || day > maxDay) maxDay = day;
+    if (!byYear.has(p.year)) byYear.set(p.year, []);
+    byYear.get(p.year).push(tx);
+    const monthKey = `${p.year}-${String(p.month).padStart(2, '0')}`;
+    if (!byMonth.has(monthKey)) byMonth.set(monthKey, { thang: p.month, nam: p.year, list: [], chiCat: new Map() });
+    const entry = byMonth.get(monthKey);
+    entry.list.push(tx);
+    if (tx.loai === 'chi') {
+      const catName = labels[tx.danhMuc] || 'Khác';
+      entry.chiCat.set(catName, (entry.chiCat.get(catName) || 0) + Number(tx.soTien || 0));
+    }
+  }
+  const overall = thongKeTaiChinhService(allTransactions);
+  const theoNam = [...byYear.entries()]
+    .sort((a, b) => b[0] - a[0])
+    .map(([nam, list]) => {
+      const s = thongKeTaiChinhService(list);
+      return { nam, tongThu: s.tongThu, tongChi: s.tongChi, soDu: s.soDu, soGiaoDich: list.length };
+    });
+  const cacThangCoGiaoDich = [...byMonth.values()]
+    .sort((a, b) => (b.nam - a.nam) || (b.thang - a.thang))
+    .slice(0, 24)
+    .map(m => {
+      const s = thongKeTaiChinhService(m.list);
+      return {
+        thang: m.thang,
+        nam: m.nam,
+        tongThu: s.tongThu,
+        tongChi: s.tongChi,
+        soDu: s.soDu,
+        soGiaoDich: m.list.length,
+        chiTheoDanhMuc: [...m.chiCat.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 8)
+          .map(([danhMuc, soTien]) => ({ danhMuc, soTien })),
+      };
+    });
+  return {
+    toanThoiGian: { tongThu: overall.tongThu, tongChi: overall.tongChi, soDu: overall.soDu, soGiaoDich: allTransactions.length, tuNgay: minDay || vietnamDateOnly(allTransactions[0].ngayGiaoDich), denNgay: maxDay || vietnamDateOnly(allTransactions[0].ngayGiaoDich) },
+    theoNam,
+    cacThangCoGiaoDich,
+  };
+}
+
 // All reads use the authenticated user. No raw transactions, email, password, IDs or notes enter the AI summary.
 async function layDuLieuSinhVien(userId, topics = CHU_DE, now = new Date()) {
   const vn = vietnamParts(now);
   const { from, to } = monthRange(vn.month, vn.year);
   const tomorrow = new Date(now.getTime() + 86400000);
   const nextWeek = new Date(now.getTime() + CHATBOT.CONTEXT_DEADLINE_DAYS * 86400000);
-  const result = { capNhatLuc: now.toISOString(), muiGio: 'Asia/Ho_Chi_Minh', phamVi: 'GPA/deadline: tất cả học kỳ; thu/chi: tháng hiện tại; lịch học: tuần trước, tuần này và tuần sau của kỳ đang học, có điều chỉnh theo ngày. Lịch dự kiến, không phải điểm danh.' };
+  const result = { capNhatLuc: now.toISOString(), muiGio: 'Asia/Ho_Chi_Minh', phamVi: 'GPA/deadline: tất cả học kỳ; thu/chi: tháng hiện tại kèm tổng hợp toàn thời gian, từng năm và các tháng có phát sinh giao dịch; lịch học: tuần trước, tuần này và tuần sau của kỳ đang học, có điều chỉnh theo ngày. Lịch dự kiến, không phải điểm danh.' };
   const jobs = [];
   if (topics.includes('hocTap')) jobs.push((async () => {
     const courses = await prisma.monHoc.findMany({ where: { idNguoiDung: userId }, select: { ten: true, tinChi: true, diems: { select: { diem: true, trongSo: true } } } });
@@ -73,16 +138,25 @@ async function layDuLieuSinhVien(userId, topics = CHU_DE, now = new Date()) {
     result.deadline = { tongQuaHan, tongSapToi, soNgaySapToi: CHATBOT.CONTEXT_DEADLINE_DAYS, quaHan: quaHan.map(clean), sapToi: sapToi.map(clean) };
   })());
   if (topics.includes('taiChinh')) jobs.push((async () => {
-    const [groups, budgets, labels] = await Promise.all([
+    const [groups, budgets, labels, allTransactions] = await Promise.all([
       prisma.giaoDich.groupBy({ by: ['loai', 'danhMuc'], where: { idNguoiDung: userId, ngayGiaoDich: { gte: from, lt: to } }, _sum: { soTien: true }, _count: { _all: true } }),
       prisma.nganSach.findMany({ where: { idNguoiDung: userId, thang: vn.month, nam: vn.year }, select: { danhMuc: true, soTienToiDa: true } }),
       categoryLabels(userId),
+      typeof prisma.giaoDich.findMany === 'function'
+        ? prisma.giaoDich.findMany({
+          where: { idNguoiDung: userId },
+          select: { loai: true, danhMuc: true, soTien: true, ngayGiaoDich: true },
+          orderBy: { ngayGiaoDich: 'desc' },
+        })
+        : [],
     ]);
     const transactions = groups.map(g => ({ loai: g.loai, danhMuc: g.danhMuc, soTien: g._sum.soTien || 0 }));
     const { tongThu, tongChi, soDu } = thongKeTaiChinhService(transactions);
+    const hasHistory = Array.isArray(allTransactions) && allTransactions.length > 0;
     result.taiChinh = {
       thang: vn.month, nam: vn.year, tongThu, tongChi, soDu, soGiaoDich: groups.reduce((sum, g) => sum + g._count._all, 0),
       nganSach: kiemTraNganSachService(budgets, transactions.filter(g => g.loai === 'chi')).map(b => ({ danhMuc: labels[b.danhMuc] || 'Khác', hanMuc: b.hanMuc, daChi: b.daChi, vuot: b.vuotNganSach })),
+      ...(hasHistory ? tongHopTaiChinhLichSu(allTransactions, labels) : {}),
     };
   })());
   if (topics.includes('lichHoc')) jobs.push((async () => {
@@ -120,9 +194,24 @@ function traLoiDuLieu(data, text) {
   }
   if (data.taiChinh) {
     const f = data.taiChinh;
-    parts.push('**Thu/chi tháng ' + f.thang + '/' + f.nam + '**', 'Thu: ' + formatTien(f.tongThu) + ' · Chi: ' + formatTien(f.tongChi), 'Số dư trong tháng: **' + formatTien(f.soDu) + '** (thu trừ chi).');
-    if (!f.soGiaoDich) parts.push('Chưa có giao dịch trong tháng này.');
-    if (/ngan sach/.test(chuanHoa(text))) parts.push(f.nganSach.length ? f.nganSach.map(b => '- ' + b.danhMuc + ': đã chi ' + formatTien(b.daChi) + '/' + formatTien(b.hanMuc) + (b.vuot ? ' — vượt ngân sách' : '')).join('\n') : 'Bạn chưa đặt ngân sách tháng này.');
+    const q = chuanHoa(text);
+    const wantsAllTime = /toan bo|tat ca|toan thoi gian|lich su|cac nam|tu truoc|tong hop/.test(q);
+    if (!wantsAllTime || !f.toanThoiGian?.soGiaoDich) {
+      parts.push('**Thu/chi tháng ' + f.thang + '/' + f.nam + '**', 'Thu: ' + formatTien(f.tongThu) + ' · Chi: ' + formatTien(f.tongChi), 'Số dư trong tháng: **' + formatTien(f.soDu) + '** (thu trừ chi).');
+      if (!f.soGiaoDich) parts.push('Chưa có giao dịch trong tháng này.');
+    }
+    if ((wantsAllTime || !f.soGiaoDich) && f.toanThoiGian?.soGiaoDich) {
+      const all = f.toanThoiGian;
+      parts.push('**Tổng hợp toàn bộ thời gian** (' + all.soGiaoDich + ' giao dịch' + (all.tuNgay && all.denNgay ? ', từ ' + all.tuNgay + ' đến ' + all.denNgay : '') + ')');
+      parts.push('Thu: ' + formatTien(all.tongThu) + ' · Chi: ' + formatTien(all.tongChi) + ' · Số dư: **' + formatTien(all.soDu) + '**');
+      if (f.theoNam?.length) {
+        parts.push('Theo năm: ' + f.theoNam.map(y => y.nam + ' (Thu ' + formatTien(y.tongThu) + ', Chi ' + formatTien(y.tongChi) + ', ' + y.soGiaoDich + ' GD)').join('; ') + '.');
+      }
+      if (f.cacThangCoGiaoDich?.length) {
+        parts.push('Các tháng có giao dịch gần nhất: ' + f.cacThangCoGiaoDich.slice(0, 6).map(m => 'T' + m.thang + '/' + m.nam + ' (Thu ' + formatTien(m.tongThu) + ', Chi ' + formatTien(m.tongChi) + ')').join('; ') + '.');
+      }
+    }
+    if (/ngan sach/.test(q)) parts.push(f.nganSach.length ? f.nganSach.map(b => '- ' + b.danhMuc + ': đã chi ' + formatTien(b.daChi) + '/' + formatTien(b.hanMuc) + (b.vuot ? ' — vượt ngân sách' : '')).join('\n') : 'Bạn chưa đặt ngân sách tháng này.');
   }
   if (data.lichHoc) {
     const period = khoangLich(text, new Date(data.capNhatLuc));

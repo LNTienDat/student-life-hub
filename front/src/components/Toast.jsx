@@ -8,11 +8,11 @@ export default function Toast({ toast, onClose }) {
   return (
     <AnimatePresence>
       {toast && (
-        <div role="status" aria-live="polite" className="fixed top-6 left-1/2 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 z-[120] pointer-events-none">
+        <div role="status" aria-live="polite" className="fixed top-[72px] right-4 sm:right-6 w-[calc(100vw-2rem)] max-w-sm z-[120] pointer-events-none">
           <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            initial={{ opacity: 0, x: 20, scale: 0.96 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 20, scale: 0.96 }}
             transition={{ duration: 0.2 }}
             className={`pointer-events-auto flex w-full items-center gap-3 px-4 py-2 rounded-2xl shadow-xl border backdrop-blur-md text-sm font-medium ${
               toast.type === 'error'

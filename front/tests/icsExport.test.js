@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { timetableToIcs, deadlinesToIcs } from '../src/utils/icsExport.js';
+import { timetableToIcs, deadlinesToIcs, timetableGoogleCalendarUrl, deadlineGoogleCalendarUrl } from '../src/utils/icsExport.js';
 
 test('timetableToIcs exports valid RFC 5545 recurring weekly classes with room, lecturer, and reminder', () => {
   const ics = timetableToIcs(
@@ -75,4 +75,33 @@ test('deadlinesToIcs exports pending deadlines in Vietnam time and skips complet
   assert.match(ics, /TRIGGER:-PT2H/);
   assert.doesNotMatch(ics, /Việc đã xong/);
   assert.doesNotMatch(ics, /Việc đã xóa/);
+});
+
+test('Google Calendar template URLs include recurring timetable rule and pending deadlines without Outlook dependency', () => {
+  const classUrl = timetableGoogleCalendarUrl(
+    {
+      id: 11,
+      tenMon: 'Lập trình Python',
+      thu: 2,
+      gioBatDau: '07:00',
+      gioKetThuc: '09:30',
+      phongHoc: 'I2-04',
+      giangVien: 'ThS. A',
+    },
+    { weekStartDate: '2026-11-16', weeks: 15, semester: 'HK1' }
+  );
+  assert.match(classUrl, /^https:\/\/calendar\.google\.com\/calendar\/render\?/);
+  assert.match(classUrl, /action=TEMPLATE/);
+  assert.match(classUrl, /dates=20261116T070000%2F20261116T093000/);
+  assert.match(classUrl, /RRULE%3AFREQ%3DWEEKLY%3BCOUNT%3D15%3BBYDAY%3DMO/);
+  assert.match(classUrl, /ctz=Asia%2FHo_Chi_Minh/);
+
+  const taskUrl = deadlineGoogleCalendarUrl({
+    id: 1,
+    tieuDe: 'Nộp bài',
+    hanChot: '2026-11-20T16:59:00.000Z',
+    trangThai: 'dang_dien_hanh',
+  });
+  assert.match(taskUrl, /dates=20261120T235900%2F20261121T002900/);
+  assert.equal(deadlineGoogleCalendarUrl({ id: 2, tieuDe: 'Xong', hanChot: '2026-11-20T16:59:00.000Z', trangThai: 'hoan_thanh' }), '');
 });

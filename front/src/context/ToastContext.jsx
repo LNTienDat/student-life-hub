@@ -14,7 +14,7 @@ export function ToastProvider({ children }) {
     timerRef.current = setTimeout(() => {
       setToast(null);
       timerRef.current = null;
-    }, 3500);
+    }, 2600);
   }, []);
 
   const dongToast = useCallback(() => {
