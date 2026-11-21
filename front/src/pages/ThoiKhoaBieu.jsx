@@ -108,6 +108,12 @@ function ThoiKhoaBieu() {
     setHienForm(true);
   }
 
+  function dongForm() {
+    if (saveLock.current) return;
+    setHienForm(false);
+    setDangSuaId(null);
+  }
+
   function moFormSua(bh) {
     if (saveLock.current) return;
     bh=baseList.find(item=>item.id===bh.id)||bh;
@@ -329,7 +335,7 @@ function ThoiKhoaBieu() {
           onGiangVienChange={setGiangVien}
           onSubmit={xuLySubmit}
           saving={saving}
-          onCancel={moFormThem}
+          onCancel={dongForm}
         />
 
         {loadError ? <DataLoadError message={loadError} onRetry={taiDuLieu} /> : dangTai || loadedSemester !== semester+':'+week ? (

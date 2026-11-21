@@ -42,11 +42,11 @@ export default function TimetableImageImport({ semester: initialSemester = '', o
   }, [pickerOpen]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open && !pickerOpen) return;
     let active = true;
     timetableService.layThoiKhoaBieu().then(({ data }) => { if (active) { setExisting(data.thoiKhoaBieu || []); setExistingReady(true); } }).catch(() => { if (active) job.set('message', 'Chưa tải được lịch hiện có. Bấm kiểm tra lại để tiếp tục.'); });
     return () => { active = false; };
-  }, [open, retry, job]);
+  }, [open, pickerOpen, retry, job]);
 
   function cancel() { job.cancel(); }
   function read(event) {

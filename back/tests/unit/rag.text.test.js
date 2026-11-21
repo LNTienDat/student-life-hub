@@ -109,3 +109,21 @@ test('comprehensive chapter query pulls consecutive chunks until the next chapte
   expect(joined).toContain('20. Python được phát triển theo giấy phép PSFL');
   expect(joined).not.toContain('Chương 2: LẬP TRÌNH CĂN BẢN');
 });
+
+test('chapter retrieval uses document title tokens when chunks omit the filename keyword', () => {
+  const sparseDoc = {
+    id: 99,
+    tieuDe: 'Lap_Trinh_PYTHON',
+    tenTep: 'Lap_Trinh_PYTHON.pdf',
+    cacDoan: [
+      { id: 1, thuTu: 1, trang: 1, noiDung: 'Chương 1: TỔNG QUAN\n1. Khái niệm chương trình dịch.\n2. Biên dịch và thông dịch.' },
+      { id: 2, thuTu: 2, trang: 1, noiDung: '19. Xử lý ngày tháng.\n20. Giấy phép PSFL.' },
+      { id: 3, thuTu: 3, trang: 2, noiDung: 'Chương 2: BIẾN VÀ KIỂU DỮ LIỆU\n1. Khai báo biến.' },
+    ],
+  };
+  const hits = retrieve([sparseDoc], 'file lập trình python, chương 1 có mấy câu hỏi', 6);
+  const joined = hits.map(h => h.noiDung).join('\n');
+  expect(joined).toContain('Chương 1: TỔNG QUAN');
+  expect(joined).toContain('20. Giấy phép PSFL.');
+  expect(joined).not.toContain('Chương 2: BIẾN VÀ KIỂU DỮ LIỆU');
+});

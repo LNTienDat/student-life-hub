@@ -82,3 +82,13 @@ test('quota failure falls back to real requested facts without retrying provider
   expect(ai.hoiGemini).toHaveBeenCalledTimes(1);
   expect(res.json.mock.calls[0][0]).toMatchObject({ nguon: 'du_lieu', traLoi: expect.stringContaining('tra cứu trực tiếp') });
 });
+
+test('historical finance questions bypass RAG guide and route to finance data', async () => {
+  service.timChuDe.mockReturnValue([]);
+  service.traLoiDuLieu.mockReturnValue('**Thu/chi năm 2020**');
+  const res = response();
+  await guiTinNhan({ user: { id: 42 }, body: { tinNhan: 'Tóm tắt thu chi năm 2020 và t10', cheDo: 'auto' } }, res);
+  expect(answerDocumentQuestion).not.toHaveBeenCalled();
+  expect(service.layDuLieuSinhVien).toHaveBeenCalledWith(42, ['taiChinh']);
+  expect(res.json.mock.calls[0][0]).toMatchObject({ nguon: 'du_lieu', traLoi: '**Thu/chi năm 2020**' });
+});

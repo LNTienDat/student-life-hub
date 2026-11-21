@@ -102,29 +102,40 @@ function retrieve(documents, question, limit = 4) {
     || /\b(?:may cau|bao nhieu cau|tong (?:so )?cau|bao nhieu muc|liet ke|tom tat|toan bo|day du|tat ca)\b/.test(normQuestion);
   const qVec = embedText(question);
   const qConcepts = conceptIds(question);
-  const chunks = documents.flatMap(doc => doc.cacDoan.map(chunk => {
-    const tokens = terms(chunk.noiDung);
-    const frequencies = new Map();
-    tokens.forEach(token => frequencies.set(token, (frequencies.get(token) || 0) + 1));
-    const fullText = doc.tieuDe + ' ' + chunk.noiDung;
-    const vector = Array.isArray(chunk.vector) && chunk.vector.length === VECTOR_DIM ? chunk.vector : embedText(fullText);
-    return { doc, chunk, frequencies, length: tokens.length || 1, titleTerms: new Set(terms(doc.tieuDe)), vector, concepts: conceptIds(fullText) };
-  }));
+  const chunks = documents.flatMap(doc => {
+    const docTitleTokens = new Set([...terms(doc.tieuDe || ''), ...terms(doc.tenTep || '')]);
+    return doc.cacDoan.map(chunk => {
+      const tokens = terms(chunk.noiDung);
+      const frequencies = new Map();
+      tokens.forEach(token => frequencies.set(token, (frequencies.get(token) || 0) + 1));
+      const fullText = doc.tieuDe + ' ' + chunk.noiDung;
+      const vector = Array.isArray(chunk.vector) && chunk.vector.length === VECTOR_DIM ? chunk.vector : embedText(fullText);
+      return { doc, chunk, frequencies, length: tokens.length || 1, titleTerms: docTitleTokens, vector, concepts: conceptIds(fullText) };
+    });
+  });
   if (!chunks.length) return [];
   const average = chunks.reduce((sum, chunk) => sum + chunk.length, 0) / chunks.length;
   const frequency = new Map(query.map(term => [term, chunks.filter(c => c.frequencies.has(term)).length]));
   const ranked = chunks.map(c => {
-    let score = 0, matches = 0;
+    let score = 0, matches = 0, titleOnlyMatches = 0;
     for (const term of query) {
       const tf = c.frequencies.get(term) || 0;
-      if (!tf) continue;
+      const inTitle = c.titleTerms.has(term);
+      if (!tf) {
+        if (inTitle) {
+          titleOnlyMatches++;
+          score += 0.6;
+        }
+        continue;
+      }
       matches++;
       const idf = Math.log(1 + (chunks.length - frequency.get(term) + 0.5) / (frequency.get(term) + 0.5));
       score += idf * tf * 2.2 / (tf + 1.2 * (0.25 + 0.75 * c.length / average));
-      if (c.titleTerms.has(term)) score += idf * 0.5;
+      if (inTitle) score += idf * 0.5;
     }
     const normChunk = normalize(c.chunk.noiDung);
-    if (chapterMatch && new RegExp(`\\bchuong\\s*${chapterMatch[1]}\\b`).test(normChunk)) {
+    const matchesTargetChapter = Boolean(chapterMatch && new RegExp(`\\bchuong\\s*${chapterMatch[1]}\\b`).test(normChunk));
+    if (matchesTargetChapter) {
       score += 3.5;
     }
     const semantic = Math.max(0, cosineSimilarity(qVec, c.vector));
@@ -133,8 +144,9 @@ function retrieve(documents, question, limit = 4) {
     const coverage = matches / query.length;
     const lexicalPass = matches >= (query.length >= 6 ? 3 : Math.min(2, query.length)) && coverage >= (query.length >= 6 ? 0.5 : 0.65);
     const hybridPass = conceptMatches >= 1 && semantic >= 0.35 && ((matches >= 1 && (matches + conceptMatches * 2) / query.length >= 0.5) || (semantic >= 0.5 && conceptMatches * 2 >= query.length));
-    return { ...c, score, coverage, matches, semantic, lexicalPass, hybridPass };
-  }).filter(c => (c.lexicalPass || c.hybridPass) && c.score > 0)
+    const chapterPass = matchesTargetChapter && (matches >= 2 || (matches >= 1 && titleOnlyMatches >= 1));
+    return { ...c, score, coverage, matches, semantic, lexicalPass, hybridPass, chapterPass };
+  }).filter(c => (c.lexicalPass || c.hybridPass || c.chapterPass) && c.score > 0)
     .sort((a, b) => b.score - a.score || String(a.doc.id).localeCompare(String(b.doc.id)) || a.chunk.thuTu - b.chunk.thuTu);
 
   if (!ranked.length) return [];
@@ -148,9 +160,12 @@ function retrieve(documents, question, limit = 4) {
       let startIdx = anchorIdx;
       if (chapterMatch) {
         const targetHeader = new RegExp(`\\bchuong\\s*${chapterMatch[1]}\\b`);
-        for (let i = anchorIdx; i >= Math.max(0, anchorIdx - 3); i--) {
+        const otherHeader = new RegExp(`(?:^|\\n)\\s*chuong\\s*(?!${chapterMatch[1]}\\b)\\d+\\b`);
+        for (let i = anchorIdx; i >= Math.max(0, anchorIdx - 8); i--) {
+          const normCandidate = normalize(docChunks[i].noiDung);
+          if (i < anchorIdx && otherHeader.test(normCandidate) && !targetHeader.test(normCandidate)) break;
           startIdx = i;
-          if (targetHeader.test(normalize(docChunks[i].noiDung))) break;
+          if (targetHeader.test(normCandidate)) break;
         }
       }
       const nextChapter = chapterMatch ? new RegExp(`(?:^|\\n)\\s*chuong\\s*(?!${chapterMatch[1]}\\b)\\d+\\b`) : null;
