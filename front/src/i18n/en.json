@@ -971,5 +971,22 @@
   "Chọn ảnh · AI": "Choose · AI",
   "Chụp ảnh · AI": "Camera · AI",
   "Hoặc quét miễn phí trên thiết bị (không gửi ảnh ra ngoài):": "Or scan free on your device (keeps photos private):",
-  "Đang đọc bằng AI Vision…": "Reading with AI Vision…"
+  "Đang đọc bằng AI Vision…": "Reading with AI Vision…",
+  "Dùng AI Vision để đọc nhanh và chính xác ngay từ đầu; tự động chuyển về đọc trên thiết bị nếu mất kết nối.": "Uses AI Vision for fast, accurate reading right away; automatically falls back to on-device OCR if offline.",
+  "Đọc chính xác ảnh nghiêng, thiếu sáng hoặc chữ mờ (Google Gemini)": "Accurately reads tilted, dim, or blurry photos (Google Gemini)",
+  "Dùng AI Vision để tách Thứ, giờ học, phòng và giảng viên chính xác ngay từ đầu; tự động chuyển về đọc trên thiết bị nếu mất kết nối.": "Uses AI Vision to parse weekdays, times, rooms, and lecturers right away; falls back to on-device OCR if offline.",
+  "Xử lý ảnh phức tạp nhanh và chính xác hơn (Google Gemini)": "Handles complex table layouts faster and more accurately (Google Gemini)",
+  "Đồng bộ lịch": "Sync calendar",
+  "Đồng bộ thời khóa biểu": "Sync timetable",
+  "Thêm từng môn lặp hằng tuần vào Google Calendar Web hoặc nhập toàn bộ file .ics.": "Add recurring weekly classes directly to Google Calendar Web or import the full .ics file.",
+  "Đồng bộ deadline lên lịch": "Sync deadlines to calendar",
+  "Thêm từng hạn chót chưa hoàn thành lên Google Calendar Web hoặc nhập hàng loạt bằng file .ics.": "Add pending deadlines directly to Google Calendar Web or batch import via .ics file.",
+  "Mẹo tránh phải đăng nhập Outlook trên Windows: không nhấp đúp file .ics trong máy. Hãy bấm thêm trực tiếp vào Google Calendar Web hoặc mở trang Nhập Google Calendar bên dưới.": "Tip to avoid Outlook login on Windows: do not double-click the .ics file. Add directly to Google Calendar Web or use the Google Calendar Import page below.",
+  "Mở nhanh từng mục trên Google Calendar Web": "Quick-add each item on Google Calendar Web",
+  "Thêm vào Google Calendar": "Add to Google Calendar",
+  "Hoặc nhập toàn bộ bằng file .ics (2 bước)": "Or batch import with .ics file (2 steps)",
+  "Bước 1 tải file .ics về máy, Bước 2 mở trang Nhập của Google Calendar trên trình duyệt rồi kéo file vừa tải vào.": "Step 1: download the .ics file. Step 2: open Google Calendar Import in your browser and drag the file in.",
+  "1. Tải file .ics": "1. Download .ics file",
+  "Đã tải file .ics": "Downloaded .ics file",
+  "2. Mở trang Nhập Google Calendar": "2. Open Google Calendar Import"
 }

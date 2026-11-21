@@ -23,7 +23,7 @@ export function createTimetableImportJob(recognize, urls = URL) {
         if (current === version) update({ message: error.message || 'Không đọc được ảnh. Hãy thử lại.' });
       } finally { if (current === version) update({ busy: false }); }
     },
-    async startWithAI(file, semester, recognizeAI) {
+    async startWithAI(file, semester, recognizeAI, knownSubjects = []) {
       controller?.abort(); const current = ++version; controller = new AbortController();
       if (state.image) urls.revokeObjectURL(state.image);
       update({ open: true, semester, rows: [], text: '', image: urls.createObjectURL(file), file, busy: true, progress: 50, message: 'Đang gửi ảnh đến AI Vision để đọc thời khóa biểu…' });
@@ -37,8 +37,32 @@ export function createTimetableImportJob(recognize, urls = URL) {
           message: result.rows.length ? `AI Vision đã nhận ${result.rows.length} buổi. Kiểm tra lại trước khi lưu.` : 'AI Vision chưa tìm thấy buổi học rõ ràng trong ảnh này.',
         });
       } catch (error) {
+        if (current !== version) return;
+        const status = error?.response?.status;
+        const shouldFallback = !controller.signal.aborted && (!status || status >= 500 || status === 429);
+        const fallbackMsg = error?.response?.data?.message || error?.message || 'Chưa quét được bằng AI Vision.';
+        if (shouldFallback && typeof recognize === 'function') {
+          try {
+            update({ progress: 0, message: 'AI Vision tạm gián đoạn — đang tự chuyển sang nhận diện trên thiết bị…' });
+            const localResult = await recognize(file, {
+              knownSubjects,
+              signal: controller.signal,
+              onProgress: progress => { if (current === version) update({ progress }); },
+            });
+            if (current !== version) return;
+            update({
+              rows: localResult.rows,
+              text: localResult.text,
+              message: localResult.rows.length
+                ? `AI Vision tạm gián đoạn (${fallbackMsg}) — đã nhận ${localResult.rows.length} buổi trên thiết bị.`
+                : `AI Vision tạm gián đoạn (${fallbackMsg}) và chưa nhận rõ buổi học trên thiết bị.`,
+            });
+            return;
+          } catch {
+            // Fall through to showing error message
+          }
+        }
         if (current === version) {
-          const fallbackMsg = error?.response?.data?.message || error?.message || 'Chưa quét được bằng AI Vision. Hãy thử lại hoặc quét trên thiết bị.';
           update({ message: fallbackMsg });
         }
       } finally { if (current === version) update({ busy: false }); }

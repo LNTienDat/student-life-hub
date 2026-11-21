@@ -96,6 +96,10 @@ function contentHash(pages) { return createHash('sha256').update(pages.map(p => 
 function retrieve(documents, question, limit = 4) {
   const query = [...new Set(terms(question))].slice(0, 50);
   if (!query.length) return [];
+  const normQuestion = normalize(question);
+  const chapterMatch = /\bchuong\s*(\d+)\b/.exec(normQuestion);
+  const wantsComprehensive = Boolean(chapterMatch)
+    || /\b(?:may cau|bao nhieu cau|tong (?:so )?cau|bao nhieu muc|liet ke|tom tat|toan bo|day du|tat ca)\b/.test(normQuestion);
   const qVec = embedText(question);
   const qConcepts = conceptIds(question);
   const chunks = documents.flatMap(doc => doc.cacDoan.map(chunk => {
@@ -119,6 +123,10 @@ function retrieve(documents, question, limit = 4) {
       score += idf * tf * 2.2 / (tf + 1.2 * (0.25 + 0.75 * c.length / average));
       if (c.titleTerms.has(term)) score += idf * 0.5;
     }
+    const normChunk = normalize(c.chunk.noiDung);
+    if (chapterMatch && new RegExp(`\\bchuong\\s*${chapterMatch[1]}\\b`).test(normChunk)) {
+      score += 3.5;
+    }
     const semantic = Math.max(0, cosineSimilarity(qVec, c.vector));
     const conceptMatches = [...qConcepts].filter(id => c.concepts.has(id)).length;
     if (matches > 0 || conceptMatches > 0) score += semantic * 1.8 + conceptMatches * 0.9;
@@ -128,13 +136,41 @@ function retrieve(documents, question, limit = 4) {
     return { ...c, score, coverage, matches, semantic, lexicalPass, hybridPass };
   }).filter(c => (c.lexicalPass || c.hybridPass) && c.score > 0)
     .sort((a, b) => b.score - a.score || String(a.doc.id).localeCompare(String(b.doc.id)) || a.chunk.thuTu - b.chunk.thuTu);
+
+  if (!ranked.length) return [];
+
   const selected = [];
-  const counts = new Map();
-  for (const item of ranked) {
-    if (item.score < ranked[0].score * 0.45 || (counts.get(item.doc.id) || 0) >= 2) continue;
-    if (selected.some(c => c.chunk.noiDung === item.chunk.noiDung)) continue;
-    selected.push(item); counts.set(item.doc.id, (counts.get(item.doc.id) || 0) + 1);
-    if (selected.length === limit) break;
+  if (wantsComprehensive) {
+    const anchor = ranked[0];
+    const docChunks = [...(anchor.doc.cacDoan || [])].sort((a, b) => a.thuTu - b.thuTu);
+    const anchorIdx = docChunks.findIndex((c) => c.thuTu === anchor.chunk.thuTu);
+    if (anchorIdx >= 0) {
+      let startIdx = anchorIdx;
+      if (chapterMatch) {
+        const targetHeader = new RegExp(`\\bchuong\\s*${chapterMatch[1]}\\b`);
+        for (let i = anchorIdx; i >= Math.max(0, anchorIdx - 3); i--) {
+          startIdx = i;
+          if (targetHeader.test(normalize(docChunks[i].noiDung))) break;
+        }
+      }
+      const nextChapter = chapterMatch ? new RegExp(`(?:^|\\n)\\s*chuong\\s*(?!${chapterMatch[1]}\\b)\\d+\\b`) : null;
+      const maxSpan = Math.max(limit, 8);
+      for (let i = startIdx; i < docChunks.length && selected.length < maxSpan; i++) {
+        const nextMatch = i > startIdx && nextChapter ? nextChapter.exec(normalize(docChunks[i].noiDung)) : null;
+        if (nextMatch && nextMatch.index === 0) break;
+        selected.push({ doc: anchor.doc, chunk: docChunks[i] });
+        if (nextMatch) break;
+      }
+    }
+  } else {
+    const counts = new Map();
+    const maxPerDoc = Math.min(4, limit);
+    for (const item of ranked) {
+      if (item.score < ranked[0].score * 0.45 || (counts.get(item.doc.id) || 0) >= maxPerDoc) continue;
+      if (selected.some(c => c.chunk.noiDung === item.chunk.noiDung)) continue;
+      selected.push(item); counts.set(item.doc.id, (counts.get(item.doc.id) || 0) + 1);
+      if (selected.length === limit) break;
+    }
   }
   return selected.map(({ doc, chunk }, i) => ({
     ma: 'S' + (i + 1), idTaiLieu: doc.id, tieuDe: doc.tieuDe, tenTep: doc.tenTep,

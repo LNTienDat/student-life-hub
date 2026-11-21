@@ -167,6 +167,59 @@ export function deadlinesToIcs(deadlines = [], { now = new Date() } = {}) {
   return buildCalendarShell('Deadline - LifeHub', events, now);
 }
 
+export const GOOGLE_CALENDAR_IMPORT_URL = 'https://calendar.google.com/calendar/r/settings/export';
+
+export function timetableGoogleCalendarUrl(item, { weekStartDate, weeks = 15, semester = '', now = new Date() } = {}) {
+  const thu = Number(item?.thu);
+  const byDay = ICS_WEEKDAYS[thu];
+  const startClock = String(item?.gioBatDau || '').trim();
+  const endClock = String(item?.gioKetThuc || '').trim();
+  if (!byDay || !CLOCK_RE.test(startClock) || !CLOCK_RE.test(endClock) || endClock <= startClock) return '';
+
+  const startMonday = /^\d{4}-\d{2}-\d{2}$/.test(String(weekStartDate || ''))
+    ? weekStartDate
+    : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(now);
+  const eventDate = addCalendarDays(startMonday, thu - 2);
+  if (!eventDate) return '';
+
+  const count = Math.max(1, Math.min(52, Number(weeks) || 15));
+  const summary = String(item?.tenMon || '').trim() || 'Buổi học';
+  const descParts = [];
+  if (item?.giangVien) descParts.push(`Giảng viên: ${item.giangVien}`);
+  if (item?.hocKy || semester) descParts.push(`Học kỳ: ${item.hocKy || semester}`);
+
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: summary,
+    dates: `${formatIcsLocal(eventDate, startClock)}/${formatIcsLocal(eventDate, endClock)}`,
+    ctz: 'Asia/Ho_Chi_Minh',
+    recur: `RRULE:FREQ=WEEKLY;COUNT=${count};BYDAY=${byDay}`,
+  });
+  if (item?.phongHoc) params.set('location', item.phongHoc);
+  if (descParts.length) params.set('details', descParts.join('\n'));
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+export function deadlineGoogleCalendarUrl(item) {
+  if (!item || item.trangThai === 'hoan_thanh' || item.xoaLuc) return '';
+  const due = vietnamDateTimeParts(item.hanChot);
+  if (!due) return '';
+  const endDue = vietnamDateTimeParts(due.endDate.toISOString());
+  const summary = `[Deadline] ${String(item.tieuDe || 'Công việc').trim()}`;
+  const descParts = [];
+  if (item.monHoc?.ten) descParts.push(`Môn học: ${item.monHoc.ten}`);
+  if (item.moTa) descParts.push(item.moTa);
+
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: summary,
+    dates: `${formatIcsLocal(due.dateStr, due.clock)}/${formatIcsLocal(endDue.dateStr, endDue.clock)}`,
+    ctz: 'Asia/Ho_Chi_Minh',
+  });
+  if (descParts.length) params.set('details', descParts.join('\n'));
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
 export function downloadIcs(filename, content) {
   const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);

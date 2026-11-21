@@ -10,7 +10,8 @@ import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
 import { formatDeadlineDate, deadlineToISO, deadlineInputValue, defaultDeadlineDate } from './deadline/deadlineDate';
 import { Calendar as CalendarIcon, CalendarPlus, List, Plus, X, Clock } from 'lucide-react';
-import { deadlinesToIcs, downloadIcs } from '../utils/icsExport';
+import { deadlinesToIcs, deadlineGoogleCalendarUrl, downloadIcs } from '../utils/icsExport';
+import CalendarSyncModal from '../components/CalendarSyncModal';
 
 import DeadlineForm from './deadline/DeadlineForm';
 import { DEADLINE_PRIORITIES, selectDeadlines } from './deadline/deadlineUtils';
@@ -33,6 +34,7 @@ function Deadline() {
   const [hienFormThem, setHienFormThem] = useSessionDraft('Deadline.jsx:hienFormThem', false);
   const [dangSuaId, setDangSuaId] = useSessionDraft('Deadline.jsx:dangSuaId', null);
   const [cheDoXem, setCheDoXem] = useState('list'); // 'list' | 'calendar'
+  const [calendarSyncOpen, setCalendarSyncOpen] = useState(false);
 
   // Calendar state
   const [thangXemLich, setThangXemLich] = useState(() => {
@@ -270,13 +272,10 @@ function Deadline() {
           <button
             type="button"
             disabled={dangTai || !tongChuaHoanThanh}
-            onClick={() => {
-              downloadIcs('deadline-lifehub.ics', deadlinesToIcs(danhSach));
-              hienToast('success', 'Đã xuất deadline (.ics)! Hãy nhập vào Google Calendar hoặc Lịch trên điện thoại.');
-            }}
+            onClick={() => setCalendarSyncOpen(true)}
             className="flex min-h-11 justify-center items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 whitespace-nowrap transition-colors"
           >
-            <CalendarPlus className="w-4 h-4 shrink-0 text-violet-600 dark:text-violet-400" aria-hidden="true" />{tr("Xuất .ics")}</button>
+            <CalendarPlus className="w-4 h-4 shrink-0 text-violet-600 dark:text-violet-400" aria-hidden="true" />{tr("Đồng bộ lịch")}</button>
           <button type="button" aria-expanded={hienFormThem}
             onClick={moFormThem}
             className={`flex min-h-11 justify-center items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
@@ -365,6 +364,32 @@ function Deadline() {
           </article>)}{!daXoa.length && <p className="text-sm text-slate-500">{tr("Chưa có việc đã xóa.")}</p>}</div>
         </details>}
       </div>
+
+      {/* Modal đồng bộ Google Calendar / .ics */}
+      {calendarSyncOpen && (
+        <CalendarSyncModal
+          open={calendarSyncOpen}
+          onClose={() => setCalendarSyncOpen(false)}
+          title="Đồng bộ deadline lên lịch"
+          subtitle="Thêm từng hạn chót chưa hoàn thành lên Google Calendar Web hoặc nhập hàng loạt bằng file .ics."
+          items={danhSach
+            .map((item) => {
+              const url = deadlineGoogleCalendarUrl(item);
+              if (!url) return null;
+              return {
+                id: item.id,
+                label: item.tieuDe,
+                meta: [formatDeadlineDate(item.hanChot), item.monHoc?.ten].filter(Boolean).join(' · '),
+                url,
+              };
+            })
+            .filter(Boolean)}
+          onDownloadIcs={() => {
+            downloadIcs('deadline-lifehub.ics', deadlinesToIcs(danhSach));
+            hienToast('success', 'Đã tải file .ics! Mở trang Nhập Google Calendar để đưa vào lịch.');
+          }}
+        />
+      )}
 
       {/* Modal xác nhận xóa hiện đại */}
       <ConfirmModal

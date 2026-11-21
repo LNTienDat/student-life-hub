@@ -56,3 +56,56 @@ test('hybrid semantic retrieval finds synonymous scholarship rules and verifiedA
   );
   expect(verified?.duThongTin).toBe(true);
 });
+
+test('comprehensive chapter query pulls consecutive chunks until the next chapter header', () => {
+  const ch1Part1 = [
+    'GIẢI ĐÁP BÀI TẬP LẬP TRÌNH PYTHON (CHƯƠNG 1 - 6)',
+    'Chương 1: TỔNG QUAN VỀ NGÔN NGỮ LẬP TRÌNH PYTHON',
+    '1. Trình bày khái niệm chương trình dịch.',
+    '2. Phân biệt biên dịch và thông dịch.',
+    '3. Nêu các đặc điểm của Python.',
+    '4. Python được dùng trong lĩnh vực nào?',
+    '5. Cài đặt môi trường Anaconda.',
+    '6. IDE phổ biến cho Python.',
+  ].join('\n');
+  const ch1Part2 = [
+    '7. Biến trong Python khai báo thế nào?',
+    '8. Kiểu dữ liệu cơ bản.',
+    '9. Ép kiểu tường minh.',
+    '10. Toán tử số học.',
+    '11. Hàm input() và print().',
+    '12. Ghi chú nhiều dòng.',
+  ].join('\n');
+  const ch1Part3 = [
+    '13. Giải thích lệnh "$pip install spyder" và vai trò của nó.',
+    '14. Kiểm tra phiên bản Python đã cài đặt.',
+    '15. Trình bày cú pháp đúng để nhập mô-đun.',
+    '16. Import mô-đun math cho sqrt(), pow().',
+    '17. Mô-đun random().',
+    '18. Mô-đun os.',
+    '19. Mô-đun datetime hoặc time.',
+    '20. Python được phát triển theo giấy phép PSFL nào và tổ chức nào phê duyệt?',
+  ].join('\n');
+  const ch2 = [
+    'Chương 2: LẬP TRÌNH CĂN BẢN',
+    '1. Kết quả đoạn mã x=y=z="Orange".',
+    '2. Câu lệnh điều kiện if-else.',
+  ].join('\n');
+  const pythonDoc = {
+    id: 88,
+    tieuDe: 'Lap_Trinh_PYTHON',
+    tenTep: 'Lap_Trinh_PYTHON.pdf',
+    cacDoan: [
+      { id: 1, thuTu: 1, trang: 1, noiDung: ch1Part1 },
+      { id: 2, thuTu: 2, trang: 1, noiDung: ch1Part2 },
+      { id: 3, thuTu: 3, trang: 2, noiDung: ch1Part3 },
+      { id: 4, thuTu: 4, trang: 2, noiDung: ch2 },
+    ],
+  };
+  const hits = retrieve([pythonDoc], 'file lập trình python, chương 1 có mấy câu hỏi', 6);
+  const joined = hits.map(h => h.noiDung).join('\n');
+  expect(joined).toContain('Chương 1: TỔNG QUAN');
+  expect(joined).toContain('13. Giải thích lệnh');
+  expect(joined).toContain('20. Python được phát triển theo giấy phép PSFL');
+  expect(joined).not.toContain('Chương 2: LẬP TRÌNH CĂN BẢN');
+});
