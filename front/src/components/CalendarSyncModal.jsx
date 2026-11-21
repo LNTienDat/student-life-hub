@@ -16,13 +16,18 @@ export default function CalendarSyncModal({
   useLanguage();
   const [downloaded, setDownloaded] = useState(false);
 
+  function handleClose() {
+    setDownloaded(false);
+    onClose?.();
+  }
+
   function handleDownload() {
     onDownloadIcs?.();
     setDownloaded(true);
   }
 
   return (
-    <ModalDialog open={open} onClose={onClose} title={title} wide>
+    <ModalDialog open={open} onClose={handleClose} title={title} wide>
       <div className="space-y-4 text-sm">
         {subtitle && <p className="text-slate-600 dark:text-slate-300">{tr(subtitle)}</p>}
 

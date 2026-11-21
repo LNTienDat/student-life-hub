@@ -3,6 +3,14 @@ const { CHATBOT } = require('../../constants');
 const { layDuLieuSinhVien, timChuDe, traLoiDuLieu } = require('./chatbot.service');
 const { cauHinhAI, hoiGemini } = require('./gemini.service');
 
+function isFinancePeriodQuery(text) {
+  const q = String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll('đ', 'd').toLowerCase();
+  if (/tu van|goi y|ke hoach|lam sao|cach |huong dan|ra sao|the nao|\b(?:nhap|them|sua|xoa|quet)\b/.test(q)) return false;
+  const hasFinance = /thu chi|chi tieu|chi bao nhieu|tong chi|tong thu|thu nhap|so du|ngan sach|tai chinh|giao dich/.test(q);
+  const hasPeriod = /thang truoc|thang sau|nam ngoai|\b(?:thang|t)\s*(?:1[0-2]|0?[1-9])\b|\b(?:19|20)\d{2}\b|toan bo|tat ca|toan thoi gian|lich su|cac nam/.test(q);
+  return hasFinance && hasPeriod;
+}
+
 function trangThaiChatbot(req, res) {
   const { sanSang, model } = cauHinhAI();
   res.set('Cache-Control', 'no-store');
@@ -16,7 +24,8 @@ async function guiTinNhan(req, res) {
   if (!Array.isArray(lichSu) || lichSu.length > CHATBOT.MAX_HISTORY_LENGTH || lichSu.some(t => !t || !['user', 'bot'].includes(t.vaiTro) || typeof t.noiDung !== 'string' || !t.noiDung.trim() || t.noiDung.length > CHATBOT.MAX_MESSAGE_LENGTH) || lichSu.reduce((n, t) => n + t.noiDung.length, 0) > CHATBOT.MAX_HISTORY_CHARACTERS) return res.status(400).json({ message: 'Lịch sử trò chuyện quá dài hoặc không hợp lệ. Hãy bắt đầu cuộc trò chuyện mới.' });
   try {
     if (cheDo === 'auto') {
-      const topics = timChuDe(tinNhan);
+      const rawTopics = timChuDe(tinNhan);
+      const topics = rawTopics.length ? rawTopics : (isFinancePeriodQuery(tinNhan) ? ['taiChinh'] : []);
       if (topics.length) {
         const useAI = dungAI === true && dongYGuiAI === true && dungDuLieuCaNhan === true && cauHinhAI().sanSang;
         const data = useAI ? await layDuLieuSinhVien(req.user.id) : await layDuLieuSinhVien(req.user.id, topics);
@@ -49,8 +58,9 @@ async function guiTinNhan(req, res) {
     }
     if (cheDo === 'tai_lieu') return res.json(await answerDocumentQuestion(req.user.id, tinNhan.trim(), { dungAI, dongYGuiAI }));
     if (cheDo === 'du_lieu') {
-      const topics = timChuDe(tinNhan);
-      if (!topics.length) return res.json({ nguon: 'du_lieu', traLoi: 'Mình tra cứu được GPA, deadline quá hạn và 7 ngày tới, thu/chi tháng này, lịch học hôm qua, hôm nay, ngày mai và tuần trước/này/sau. Để tư vấn hoặc lập kế hoạch, bật AI trong Tùy chọn trợ lý.' });
+      const rawTopics = timChuDe(tinNhan);
+      const topics = rawTopics.length ? rawTopics : (isFinancePeriodQuery(tinNhan) ? ['taiChinh'] : []);
+      if (!topics.length) return res.json({ nguon: 'du_lieu', traLoi: 'Mình tra cứu được GPA, deadline quá hạn và 7 ngày tới, thu/chi (tháng này, các tháng trước, từng năm và toàn bộ thời gian), lịch học hôm qua, hôm nay, ngày mai và tuần trước/này/sau. Để tư vấn hoặc lập kế hoạch, bật AI trong Tùy chọn trợ lý.' });
       const data = await layDuLieuSinhVien(req.user.id, topics);
       return res.json({ nguon: 'du_lieu', traLoi: traLoiDuLieu(data, tinNhan), capNhatLuc: data.capNhatLuc });
     }

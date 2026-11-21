@@ -255,7 +255,7 @@ function FinancePeriod({ period, onPeriodChange }) {
             <p className="font-medium text-slate-700 dark:text-slate-200">
               {receiptInfo.aiUsed ? tr("Từ hóa đơn (đã quét bằng AI Vision) · chưa lưu.") : tr("Từ hóa đơn · chưa lưu. Kiểm tra nội dung bên dưới trước khi lưu giao dịch.")}
             </p>
-            {receiptInfo.file && (
+            {receiptInfo.file && (!receiptInfo.aiUsed || receiptInfo.aiError) && (
               <button
                 type="button"
                 disabled={aiScanning || busy}

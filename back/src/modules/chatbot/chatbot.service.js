@@ -177,6 +177,76 @@ async function layDuLieuSinhVien(userId, topics = CHU_DE, now = new Date()) {
   return result;
 }
 
+function formatChiDanhMuc(list) {
+  if (!list?.length) return '';
+  return ' Chi theo danh mục: ' + list.map(c => c.danhMuc + ' ' + formatTien(c.soTien)).join(', ') + '.';
+}
+
+function answerFinanceData(f, q) {
+  const parts = [];
+  const monthMatch = /\b(?:thang|t)\s*(1[0-2]|0?[1-9])(?:\s*[\/-]\s*(20\d{2}|19\d{2}))?\b/.exec(q);
+  const yearOnlyMatch = /\b(?:nam\s+)?(20\d{2}|19\d{2})\b/.exec(q);
+  const wantsPrevMonth = /thang truoc/.test(q);
+  const wantsLastYear = /nam ngoai/.test(q);
+  const wantsAllTime = /toan bo|tat ca|toan thoi gian|lich su|cac nam|tu truoc|tong hop/.test(q);
+
+  if (monthMatch || wantsPrevMonth) {
+    let targetMonth = wantsPrevMonth ? (f.thang === 1 ? 12 : f.thang - 1) : Number(monthMatch[1]);
+    let targetYear = wantsPrevMonth ? (f.thang === 1 ? f.nam - 1 : f.nam) : (monthMatch[2] ? Number(monthMatch[2]) : (yearOnlyMatch ? Number(yearOnlyMatch[1]) : null));
+    const matches = (f.cacThangCoGiaoDich || []).filter(m => m.thang === targetMonth && (targetYear ? m.nam === targetYear : true));
+    if (matches.length) {
+      for (const m of matches.slice(0, 3)) {
+        parts.push('**Thu/chi tháng ' + m.thang + '/' + m.nam + '** (' + m.soGiaoDich + ' giao dịch)');
+        parts.push('Thu: ' + formatTien(m.tongThu) + ' · Chi: ' + formatTien(m.tongChi) + ' · Số dư: **' + formatTien(m.soDu) + '**.' + formatChiDanhMuc(m.chiTheoDanhMuc));
+      }
+      return parts;
+    }
+    const label = targetMonth + (targetYear ? '/' + targetYear : '');
+    parts.push('Chưa có giao dịch nào trong tháng ' + label + '.');
+    if (f.cacThangCoGiaoDich?.length) {
+      parts.push('Các tháng có dữ liệu: ' + f.cacThangCoGiaoDich.slice(0, 6).map(m => 'T' + m.thang + '/' + m.nam).join(', ') + '.');
+    }
+    return parts;
+  }
+
+  if (yearOnlyMatch || wantsLastYear) {
+    const targetYear = wantsLastYear ? f.nam - 1 : Number(yearOnlyMatch[1]);
+    const yearSummary = (f.theoNam || []).find(y => y.nam === targetYear);
+    if (yearSummary) {
+      parts.push('**Thu/chi năm ' + yearSummary.nam + '** (' + yearSummary.soGiaoDich + ' giao dịch)');
+      parts.push('Thu: ' + formatTien(yearSummary.tongThu) + ' · Chi: ' + formatTien(yearSummary.tongChi) + ' · Số dư: **' + formatTien(yearSummary.soDu) + '**.');
+      const monthsInYear = (f.cacThangCoGiaoDich || []).filter(m => m.nam === targetYear);
+      if (monthsInYear.length) {
+        parts.push('Chi tiết các tháng: ' + monthsInYear.map(m => 'T' + m.thang + ' (Thu ' + formatTien(m.tongThu) + ', Chi ' + formatTien(m.tongChi) + ')').join('; ') + '.');
+      }
+      return parts;
+    }
+    parts.push('Chưa có giao dịch nào trong năm ' + targetYear + '.');
+    if (f.theoNam?.length) {
+      parts.push('Các năm có dữ liệu: ' + f.theoNam.map(y => y.nam).join(', ') + '.');
+    }
+    return parts;
+  }
+
+  if (!wantsAllTime || !f.toanThoiGian?.soGiaoDich) {
+    parts.push('**Thu/chi tháng ' + f.thang + '/' + f.nam + '**', 'Thu: ' + formatTien(f.tongThu) + ' · Chi: ' + formatTien(f.tongChi), 'Số dư trong tháng: **' + formatTien(f.soDu) + '** (thu trừ chi).');
+    if (!f.soGiaoDich) parts.push('Chưa có giao dịch trong tháng này.');
+  }
+  if ((wantsAllTime || !f.soGiaoDich) && f.toanThoiGian?.soGiaoDich) {
+    const all = f.toanThoiGian;
+    parts.push('**Tổng hợp toàn bộ thời gian** (' + all.soGiaoDich + ' giao dịch' + (all.tuNgay && all.denNgay ? ', từ ' + all.tuNgay + ' đến ' + all.denNgay : '') + ')');
+    parts.push('Thu: ' + formatTien(all.tongThu) + ' · Chi: ' + formatTien(all.tongChi) + ' · Số dư: **' + formatTien(all.soDu) + '**');
+    if (f.theoNam?.length) {
+      parts.push('Theo năm: ' + f.theoNam.map(y => y.nam + ' (Thu ' + formatTien(y.tongThu) + ', Chi ' + formatTien(y.tongChi) + ', ' + y.soGiaoDich + ' GD)').join('; ') + '.');
+    }
+    if (f.cacThangCoGiaoDich?.length) {
+      parts.push('Các tháng có giao dịch gần nhất: ' + f.cacThangCoGiaoDich.slice(0, 6).map(m => 'T' + m.thang + '/' + m.nam + ' (Thu ' + formatTien(m.tongThu) + ', Chi ' + formatTien(m.tongChi) + ')').join('; ') + '.');
+    }
+  }
+  if (/ngan sach/.test(q)) parts.push(f.nganSach.length ? f.nganSach.map(b => '- ' + b.danhMuc + ': đã chi ' + formatTien(b.daChi) + '/' + formatTien(b.hanMuc) + (b.vuot ? ' — vượt ngân sách' : '')).join('\n') : 'Bạn chưa đặt ngân sách tháng này.');
+  return parts;
+}
+
 function traLoiDuLieu(data, text) {
   const parts = [];
   if (data.hocTap) {
@@ -193,25 +263,7 @@ function traLoiDuLieu(data, text) {
     if (d.tongQuaHan > 5 || d.tongSapToi > 5) parts.push('Hiển thị tối đa 5 việc mỗi nhóm. Mở Deadline để xem đầy đủ.');
   }
   if (data.taiChinh) {
-    const f = data.taiChinh;
-    const q = chuanHoa(text);
-    const wantsAllTime = /toan bo|tat ca|toan thoi gian|lich su|cac nam|tu truoc|tong hop/.test(q);
-    if (!wantsAllTime || !f.toanThoiGian?.soGiaoDich) {
-      parts.push('**Thu/chi tháng ' + f.thang + '/' + f.nam + '**', 'Thu: ' + formatTien(f.tongThu) + ' · Chi: ' + formatTien(f.tongChi), 'Số dư trong tháng: **' + formatTien(f.soDu) + '** (thu trừ chi).');
-      if (!f.soGiaoDich) parts.push('Chưa có giao dịch trong tháng này.');
-    }
-    if ((wantsAllTime || !f.soGiaoDich) && f.toanThoiGian?.soGiaoDich) {
-      const all = f.toanThoiGian;
-      parts.push('**Tổng hợp toàn bộ thời gian** (' + all.soGiaoDich + ' giao dịch' + (all.tuNgay && all.denNgay ? ', từ ' + all.tuNgay + ' đến ' + all.denNgay : '') + ')');
-      parts.push('Thu: ' + formatTien(all.tongThu) + ' · Chi: ' + formatTien(all.tongChi) + ' · Số dư: **' + formatTien(all.soDu) + '**');
-      if (f.theoNam?.length) {
-        parts.push('Theo năm: ' + f.theoNam.map(y => y.nam + ' (Thu ' + formatTien(y.tongThu) + ', Chi ' + formatTien(y.tongChi) + ', ' + y.soGiaoDich + ' GD)').join('; ') + '.');
-      }
-      if (f.cacThangCoGiaoDich?.length) {
-        parts.push('Các tháng có giao dịch gần nhất: ' + f.cacThangCoGiaoDich.slice(0, 6).map(m => 'T' + m.thang + '/' + m.nam + ' (Thu ' + formatTien(m.tongThu) + ', Chi ' + formatTien(m.tongChi) + ')').join('; ') + '.');
-      }
-    }
-    if (/ngan sach/.test(q)) parts.push(f.nganSach.length ? f.nganSach.map(b => '- ' + b.danhMuc + ': đã chi ' + formatTien(b.daChi) + '/' + formatTien(b.hanMuc) + (b.vuot ? ' — vượt ngân sách' : '')).join('\n') : 'Bạn chưa đặt ngân sách tháng này.');
+    parts.push(...answerFinanceData(data.taiChinh, chuanHoa(text)));
   }
   if (data.lichHoc) {
     const period = khoangLich(text, new Date(data.capNhatLuc));

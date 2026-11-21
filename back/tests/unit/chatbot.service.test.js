@@ -136,4 +136,15 @@ test('finance summary includes all-time, yearly (2020), and historical monthly (
   expect(offlineReply).toContain('Tổng hợp toàn bộ thời gian');
   expect(offlineReply).toContain('2020');
   expect(offlineReply).toContain('T10/2026');
+
+  const octReply = traLoiDuLieu(data, 'T10 chi bao nhiêu?');
+  expect(octReply).toContain('tháng 10/2026');
+  expect(octReply).toContain('150 000 đ');
+
+  const y2020Reply = traLoiDuLieu(data, 'Thu chi năm 2020 thế nào?');
+  expect(y2020Reply).toContain('năm 2020');
+  expect(y2020Reply).toContain('500 000 đ');
+
+  const emptyMonthReply = traLoiDuLieu(data, 'Thu chi t9 thế nào?');
+  expect(emptyMonthReply).toContain('Chưa có giao dịch nào trong tháng 9');
 });
