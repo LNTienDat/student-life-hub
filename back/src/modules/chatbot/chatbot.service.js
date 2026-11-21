@@ -84,7 +84,7 @@ function tongHopTaiChinhLichSu(allTransactions, labels) {
     });
   const cacThangCoGiaoDich = [...byMonth.values()]
     .sort((a, b) => (b.nam - a.nam) || (b.thang - a.thang))
-    .slice(0, 24)
+    .slice(0, 36)
     .map(m => {
       const s = thongKeTaiChinhService(m.list);
       return {
@@ -228,11 +228,14 @@ function answerFinanceData(f, q) {
     return parts;
   }
 
+  const asksCurrentMonthOnly = /\bthang nay\b/.test(q);
+  const hasOtherPeriodTx = (f.toanThoiGian?.soGiaoDich || 0) > (f.soGiaoDich || 0);
+
   if (!wantsAllTime || !f.toanThoiGian?.soGiaoDich) {
     parts.push('**Thu/chi tháng ' + f.thang + '/' + f.nam + '**', 'Thu: ' + formatTien(f.tongThu) + ' · Chi: ' + formatTien(f.tongChi), 'Số dư trong tháng: **' + formatTien(f.soDu) + '** (thu trừ chi).');
     if (!f.soGiaoDich) parts.push('Chưa có giao dịch trong tháng này.');
   }
-  if ((wantsAllTime || !f.soGiaoDich) && f.toanThoiGian?.soGiaoDich) {
+  if ((wantsAllTime || !f.soGiaoDich || (!asksCurrentMonthOnly && hasOtherPeriodTx)) && f.toanThoiGian?.soGiaoDich) {
     const all = f.toanThoiGian;
     parts.push('**Tổng hợp toàn bộ thời gian** (' + all.soGiaoDich + ' giao dịch' + (all.tuNgay && all.denNgay ? ', từ ' + all.tuNgay + ' đến ' + all.denNgay : '') + ')');
     parts.push('Thu: ' + formatTien(all.tongThu) + ' · Chi: ' + formatTien(all.tongChi) + ' · Số dư: **' + formatTien(all.soDu) + '**');
@@ -240,7 +243,7 @@ function answerFinanceData(f, q) {
       parts.push('Theo năm: ' + f.theoNam.map(y => y.nam + ' (Thu ' + formatTien(y.tongThu) + ', Chi ' + formatTien(y.tongChi) + ', ' + y.soGiaoDich + ' GD)').join('; ') + '.');
     }
     if (f.cacThangCoGiaoDich?.length) {
-      parts.push('Các tháng có giao dịch gần nhất: ' + f.cacThangCoGiaoDich.slice(0, 6).map(m => 'T' + m.thang + '/' + m.nam + ' (Thu ' + formatTien(m.tongThu) + ', Chi ' + formatTien(m.tongChi) + ')').join('; ') + '.');
+      parts.push('Các tháng có giao dịch gần nhất: ' + f.cacThangCoGiaoDich.slice(0, 12).map(m => 'T' + m.thang + '/' + m.nam + ' (Thu ' + formatTien(m.tongThu) + ', Chi ' + formatTien(m.tongChi) + ')').join('; ') + '.');
     }
   }
   if (/ngan sach/.test(q)) parts.push(f.nganSach.length ? f.nganSach.map(b => '- ' + b.danhMuc + ': đã chi ' + formatTien(b.daChi) + '/' + formatTien(b.hanMuc) + (b.vuot ? ' — vượt ngân sách' : '')).join('\n') : 'Bạn chưa đặt ngân sách tháng này.');

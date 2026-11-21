@@ -148,3 +148,19 @@ test('finance summary includes all-time, yearly (2020), and historical monthly (
   const emptyMonthReply = traLoiDuLieu(data, 'Thu chi t9 thế nào?');
   expect(emptyMonthReply).toContain('Chưa có giao dịch nào trong tháng 9');
 });
+
+test('generic finance query includes all-time and historical periods even when current month also has transactions', async () => {
+  prisma.giaoDich.groupBy.mockResolvedValue([{ loai: 'chi', danhMuc: 'an_uong', _sum: { soTien: 20000 }, _count: { _all: 1 } }]);
+  prisma.giaoDich.findMany = jest.fn().mockResolvedValue([
+    { loai: 'chi', danhMuc: 'an_uong', soTien: 20000, ngayGiaoDich: new Date('2026-11-21T05:00:00Z') },
+    { loai: 'chi', danhMuc: 'an_uong', soTien: 317900, ngayGiaoDich: new Date('2026-10-28T05:00:00Z') },
+    { loai: 'chi', danhMuc: 'an_uong', soTien: 85000, ngayGiaoDich: new Date('2018-11-17T05:00:00Z') },
+  ]);
+  const data = await layDuLieuSinhVien(42, ['taiChinh'], now);
+  const reply = traLoiDuLieu(data, 'mục thu chi thôi');
+  expect(reply).toContain('tháng 11/2026');
+  expect(reply).toContain('Tổng hợp toàn bộ thời gian');
+  expect(reply).toContain('422 900 đ');
+  expect(reply).toContain('2018');
+  expect(reply).toContain('T10/2026');
+});
