@@ -988,5 +988,8 @@
   "Bước 1 tải file .ics về máy, Bước 2 mở trang Nhập của Google Calendar trên trình duyệt rồi kéo file vừa tải vào.": "Step 1: download the .ics file. Step 2: open Google Calendar Import in your browser and drag the file in.",
   "1. Tải file .ics": "1. Download .ics file",
   "Đã tải file .ics": "Downloaded .ics file",
-  "2. Mở trang Nhập Google Calendar": "2. Open Google Calendar Import"
+  "2. Mở trang Nhập Google Calendar": "2. Open Google Calendar Import",
+  "Kéo để di chuyển khung trò chuyện": "Drag to move chat window",
+  "Trợ lý đang trả lời… Kéo để di chuyển": "Assistant is replying… Drag to move",
+  "Mở trợ lý LifeHub (kéo để di chuyển)": "Open LifeHub Assistant (drag to move)"
 }

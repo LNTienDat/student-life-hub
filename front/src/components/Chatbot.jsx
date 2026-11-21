@@ -3,9 +3,34 @@ import useLanguage from '../hooks/useLanguage';
 import { useState, useRef, useEffect, useId } from 'react';
 import { Link } from 'react-router-dom';
 import DocumentSources from './DocumentSources';
-import { MessageCircle, X, Send, RotateCcw, FileText } from 'lucide-react';
+import { MessageCircle, X, Send, RotateCcw, FileText, GripVertical } from 'lucide-react';
 import api from '../services/api';
 import { chatbotHistory } from '../services/chatbotHistory';
+
+const POS_STORAGE_KEY = 'slh:chatbot-pos';
+
+function loadSavedPosition() {
+  try {
+    const raw = localStorage.getItem(POS_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.left === 'number' && Number.isFinite(parsed.left) && typeof parsed?.top === 'number' && Number.isFinite(parsed.top)) {
+      return { left: parsed.left, top: parsed.top };
+    }
+  } catch { /* Ignore invalid saved position */ }
+  return null;
+}
+
+function clampPosition(pos, width, height, viewport) {
+  if (!pos) return null;
+  const margin = 8;
+  const maxLeft = Math.max(margin, viewport.width - width - margin);
+  const maxTop = Math.max(margin, viewport.height - height - margin);
+  return {
+    left: Math.min(Math.max(margin, pos.left), maxLeft),
+    top: Math.min(Math.max(margin, pos.top), maxTop),
+  };
+}
 
 const GOI_Y = [
   'Hôm nay học gì & deadline sắp tới?',
@@ -32,8 +57,14 @@ function Chatbot({ userId }) {
   const [tinNhans, setTinNhans] = useState([LOI_CHAO]);
   const [noiDungNhap, setNoiDungNhap] = useState('');
   const [dangGui, setDangGui] = useState(false);
+  const [coTinMoi, setCoTinMoi] = useState(false);
   const [loi, setLoi] = useState(null);
   const [trangThai, setTrangThai] = useState(null);
+  const [pos, setPos] = useState(loadSavedPosition);
+  const [viewport, setViewport] = useState(() => ({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1280,
+    height: typeof window !== 'undefined' ? window.innerHeight : 720,
+  }));
   const consentKey = userId == null ? null : `slh:chatbot-ai-consent:${userId}`;
   const [quyenAI, setQuyenAI] = useState(() => {
     try {
@@ -49,11 +80,25 @@ function Chatbot({ userId }) {
   const danhSachRef = useRef(null);
   const inputRef = useRef(null);
   const launcherRef = useRef(null);
+  const wrapperRef = useRef(null);
   const daMo = useRef(false);
+  const moChatRef = useRef(moChat);
   const requestRef = useRef(null);
+  const dragRef = useRef(null);
+  const movedRef = useRef(false);
   const dialogId = useId();
   const titleId = useId();
   const inputId = useId();
+
+  useEffect(() => { moChatRef.current = moChat; }, [moChat]);
+
+  useEffect(() => {
+    function onResize() {
+      setViewport({ width: window.innerWidth, height: window.innerHeight });
+    }
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   function doiDongY(value) {
     setQuyenAI(value);
@@ -91,7 +136,7 @@ function Chatbot({ userId }) {
     }
     window.addEventListener('keydown', keydown);
     return () => {
-      cancelAnimationFrame(frame); statusRequest.abort(); requestRef.current?.abort();
+      cancelAnimationFrame(frame); statusRequest.abort();
       window.removeEventListener('keydown', keydown);
     };
   }, [moChat]);
@@ -104,9 +149,62 @@ function Chatbot({ userId }) {
     }
   }, [moChat]);
 
+  function openChat() {
+    setMoChat(true);
+    setCoTinMoi(false);
+  }
+
+  function startDrag(event) {
+    if (event.button !== undefined && event.button !== 0) return;
+    const rect = wrapperRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const drag = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startLeft: rect.left,
+      startTop: rect.top,
+      width: rect.width,
+      height: rect.height,
+    };
+    dragRef.current = drag;
+    movedRef.current = false;
+    let latestPos = null;
+
+    function onMove(ev) {
+      if (ev.pointerId !== drag.pointerId) return;
+      const dx = ev.clientX - drag.startX;
+      const dy = ev.clientY - drag.startY;
+      if (!movedRef.current && Math.hypot(dx, dy) <= 5) return;
+      movedRef.current = true;
+      latestPos = clampPosition(
+        { left: drag.startLeft + dx, top: drag.startTop + dy },
+        drag.width,
+        drag.height,
+        { width: window.innerWidth, height: window.innerHeight }
+      );
+      setPos(latestPos);
+    }
+
+    function onEnd(ev) {
+      if (ev.pointerId !== drag.pointerId) return;
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onEnd);
+      window.removeEventListener('pointercancel', onEnd);
+      dragRef.current = null;
+      if (latestPos) {
+        try { localStorage.setItem(POS_STORAGE_KEY, JSON.stringify(latestPos)); } catch { /* Optional */ }
+      }
+    }
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onEnd);
+    window.addEventListener('pointercancel', onEnd);
+  }
+
   function batDauMoi() {
     requestRef.current?.abort(); requestRef.current = null;
-    setDangGui(false); setLoi(null); setNoiDungNhap(''); setTinNhans([LOI_CHAO]);
+    setDangGui(false); setCoTinMoi(false); setLoi(null); setNoiDungNhap(''); setTinNhans([LOI_CHAO]);
   }
 
   async function guiTinNhan(text) {
@@ -122,26 +220,44 @@ function Chatbot({ userId }) {
       const res = await api.post('/chatbot/hoi-dap', {
         tinNhan: content, lichSu, cheDo: 'auto', dongYGuiAI: dongY, dungDuLieuCaNhan: dungDuLieu, dungAI: dongY,
       }, { signal: controller.signal, timeout: 25000 });
-      if (!controller.signal.aborted) setTinNhans(prev => [...prev, { vaiTro: 'bot', noiDung: res.data.traLoi, ...res.data }]);
+      if (!controller.signal.aborted) {
+        setTinNhans(prev => [...prev, { vaiTro: 'bot', noiDung: res.data.traLoi, ...res.data }]);
+        if (!moChatRef.current) setCoTinMoi(true);
+      }
     } catch (error) {
       if (!controller.signal.aborted) {
         setTinNhans(truoc);
         setLoi({ text: content, message: error.response?.data?.message || 'Chưa nhận được câu trả lời. Hãy kiểm tra kết nối và thử lại.' });
+        if (!moChatRef.current) setCoTinMoi(true);
       }
     } finally {
       if (requestRef.current === controller) { requestRef.current = null; setDangGui(false); }
     }
   }
 
+  const panelW = moChat ? (viewport.width >= 640 ? 420 : Math.max(280, viewport.width - 24)) : 56;
+  const panelH = moChat ? Math.min(640, Math.max(320, viewport.height - 32)) : 56;
+  const safePos = clampPosition(pos, panelW, panelH, viewport);
+
   return (
-    <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-3 lg:bottom-5 lg:right-5 z-40">
+    <div
+      ref={wrapperRef}
+      style={safePos ? { left: safePos.left, top: safePos.top } : undefined}
+      className={safePos ? 'fixed z-40' : 'fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-3 lg:bottom-5 lg:right-5 z-40'}
+    >
       {moChat && (
-        <section id={dialogId} role="dialog" aria-labelledby={titleId} className="flex flex-col w-[calc(100vw-1.5rem)] sm:w-[420px] h-[640px] max-h-[calc(100dvh-7rem)] lg:max-h-[calc(100dvh-2rem)] rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-2xl overflow-hidden">
-          <header className="flex shrink-0 items-center gap-1.5 px-4 py-2 border-b dark:border-gray-700">
+        <section id={dialogId} role="dialog" aria-labelledby={titleId} className="flex flex-col w-[calc(100vw-1.5rem)] sm:w-[420px] h-[640px] max-h-[calc(100dvh-2rem)] rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-2xl overflow-hidden">
+          <header
+            onPointerDown={startDrag}
+            title={tr("Kéo để di chuyển khung trò chuyện")}
+            className="flex shrink-0 cursor-move touch-none select-none items-center gap-1.5 px-3 py-2 border-b dark:border-gray-700"
+          >
+            <GripVertical size={16} aria-hidden="true" className="shrink-0 text-gray-400" />
             <MessageCircle size={20} aria-hidden="true" className="shrink-0 text-ink-600 dark:text-ink-300" />
             <h2 id={titleId} className="font-semibold flex-1 truncate text-sm sm:text-base">{tr("Trợ lý LifeHub")}</h2>
             <Link
               to="/tai-lieu"
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={() => setMoChat(false)}
               className="px-2 py-1.5 rounded-lg text-ink-600 hover:text-ink-700 dark:text-ink-300 hover:bg-gray-100 dark:hover:bg-gray-700 inline-flex items-center gap-1 text-xs font-medium transition-colors"
               title={tr("Mở kho tài liệu")}
@@ -149,8 +265,8 @@ function Chatbot({ userId }) {
               <FileText size={15} />
               <span className="hidden sm:inline">{tr("Tài liệu")}</span>
             </Link>
-            <button type="button" onClick={() => batDauMoi()} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" aria-label={tr("Cuộc trò chuyện mới")} title={tr("Cuộc trò chuyện mới")}><RotateCcw size={16} /></button>
-            <button type="button" onClick={() => setMoChat(false)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" aria-label={tr("Đóng trợ lý")}><X size={18} /></button>
+            <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={() => batDauMoi()} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" aria-label={tr("Cuộc trò chuyện mới")} title={tr("Cuộc trò chuyện mới")}><RotateCcw size={16} /></button>
+            <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={() => setMoChat(false)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" aria-label={tr("Đóng trợ lý")}><X size={18} /></button>
           </header>
           <details className="shrink-0 border-b border-gray-200 px-4 text-xs dark:border-gray-700">
             <summary className="min-h-11 cursor-pointer py-3 text-gray-500 dark:text-gray-300">{tr("Tùy chọn trợ lý")}</summary>
@@ -187,7 +303,37 @@ function Chatbot({ userId }) {
           </form>
         </section>
       )}
-      {!moChat && <button ref={launcherRef} type="button" onClick={() => setMoChat(true)} className="w-14 h-14 rounded-full bg-ink-600 dark:bg-ink-500 text-white shadow-xl flex items-center justify-center" aria-label={tr("Mở trợ lý LifeHub")} aria-haspopup="dialog" aria-expanded={moChat} aria-controls={dialogId}><MessageCircle size={25} /></button>}
+      {!moChat && (
+        <button
+          ref={launcherRef}
+          type="button"
+          onPointerDown={startDrag}
+          onClick={() => {
+            if (movedRef.current) {
+              movedRef.current = false;
+              return;
+            }
+            openChat();
+          }}
+          title={dangGui ? tr("Trợ lý đang trả lời… Kéo để di chuyển") : tr("Mở trợ lý LifeHub (kéo để di chuyển)")}
+          className="relative w-14 h-14 cursor-grab active:cursor-grabbing touch-none rounded-full bg-ink-600 dark:bg-ink-500 text-white shadow-xl flex items-center justify-center transition-transform hover:scale-105"
+          aria-label={tr("Mở trợ lý LifeHub")}
+          aria-haspopup="dialog"
+          aria-expanded={moChat}
+          aria-controls={dialogId}
+        >
+          <MessageCircle size={25} />
+          {dangGui && (
+            <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-300 opacity-80" />
+              <span className="relative inline-flex h-3.5 w-3.5 rounded-full border-2 border-white bg-amber-400" />
+            </span>
+          )}
+          {!dangGui && coTinMoi && (
+            <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500" />
+          )}
+        </button>
+      )}
     </div>
   );
 }
