@@ -307,7 +307,7 @@ function MonHoc() {
   async function xuLyXuatBangDiem() {
     try {
       setDangXuatPDF(true);
-      const res = await academicService.xuatBangDiemPDF(semester);
+      const res = await academicService.xuatBangDiemPDF(semester, gradePrefs.scaleId);
       const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = url;

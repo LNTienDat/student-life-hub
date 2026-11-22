@@ -4,7 +4,7 @@ const { serializable, httpError } = require('../../utils/transaction.util');
 const prisma = require('../../prismaClient');
 const PDFDocument = require('pdfkit');
 const path = require('path');
-const { tinhDiemMon } = require('../../utils/grade.util');
+const { tinhDiemMon, quyDoiHe4, quyDoiDiemChu } = require('../../utils/grade.util');
 const { ACADEMIC } = require('../../constants');
 const { finiteNumber } = require('../../utils/number.util');
 const {
@@ -275,20 +275,28 @@ async function xuatBangDiemPDF(req, res) {
       orderBy: { hocKy: 'asc' },
     }), req.query.hocKy);
 
-    // Tính điểm từng môn (thang 10, có trọng số) - dùng đúng công thức của tinhGPA
+    // Tính điểm từng môn (thang 10, hệ 4 và điểm chữ theo quy chuẩn chọn)
+    const scaleId = typeof req.query.scale === 'string' && req.query.scale ? req.query.scale : '8_level';
     let tongDiemTinChi = 0;
+    let tongDiemHe4TinChi = 0;
     let tongTinChi = 0;
     const hangMonHoc = monHocs.map((mon) => {
       const { diemTrungBinh: tempDiem, tongTrongSo } = tinhDiemMon(mon.diems);
       let diemMon = null;
+      let diemHe4 = null;
+      let diemChu = null;
       if (tongTrongSo > 0) {
         diemMon = tempDiem;
+        diemHe4 = quyDoiHe4(tempDiem, scaleId);
+        diemChu = quyDoiDiemChu(tempDiem, scaleId);
         tongDiemTinChi += diemMon * mon.tinChi;
+        tongDiemHe4TinChi += diemHe4 * mon.tinChi;
         tongTinChi += mon.tinChi;
       }
-      return { ...mon, diemMon };
+      return { ...mon, diemMon, diemHe4, diemChu };
     });
     const gpa = tongTinChi > 0 ? (tongDiemTinChi / tongTinChi).toFixed(2) : null;
+    const gpaHe4 = tongTinChi > 0 ? (tongDiemHe4TinChi / tongTinChi).toFixed(2) : null;
 
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
     doc.registerFont('FontViet', duongDanFontThuong);
@@ -309,10 +317,10 @@ async function xuatBangDiemPDF(req, res) {
     doc.moveDown();
 
     const startX = 40;
-    const colWidths = [220, 60, 90, 90];
+    const colWidths = [200, 48, 82, 70, 95];
     doc.fontSize(10).font('FontViet-Bold');
     let y = doc.y;
-    ['Môn học', 'Tín chỉ', 'Học kỳ', 'Điểm (thang 10)'].forEach((h, i) => {
+    ['Môn học', 'Tín chỉ', 'Học kỳ', 'Thang 10', 'Hệ 4 / Chữ'].forEach((h, i) => {
       const x = startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
       doc.text(h, x, y, { width: colWidths[i] });
     });
@@ -330,6 +338,7 @@ async function xuatBangDiemPDF(req, res) {
         String(mon.tinChi),
         mon.hocKy || '',
         mon.diemMon !== null ? mon.diemMon.toFixed(2) : '-',
+        mon.diemHe4 !== null ? `${mon.diemHe4.toFixed(1)} (${mon.diemChu})` : '-',
       ];
       rowData.forEach((val, i) => {
         const x = startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
@@ -340,6 +349,7 @@ async function xuatBangDiemPDF(req, res) {
 
     doc.moveDown();
     doc.font('FontViet-Bold').fontSize(12).text(`GPA tích lũy (thang 10): ${gpa ?? 'Chưa có dữ liệu'}`);
+    doc.text(`GPA tích lũy (hệ 4): ${gpaHe4 ?? 'Chưa có dữ liệu'}`);
     doc.text(`Tổng số tín chỉ đã tính: ${tongTinChi}`);
 
     doc.end();
@@ -392,8 +402,9 @@ async function nhapHangLoatMonVaDiem(req, res) {
         include: { diems: true },
       });
       const existingMap = new Map(existing.map((m) => [subjectKey(m.ten, m.hocKy), m]));
+      const existingIds = new Set(existing.map((m) => m.id));
+      const updatedSubjectIds = new Set();
       let createdSubjects = 0;
-      let updatedSubjects = 0;
       let createdGrades = 0;
       let skippedGrades = 0;
 
@@ -429,15 +440,13 @@ async function nhapHangLoatMonVaDiem(req, res) {
             createdGrades++;
             addedForThisSubject++;
           }
-          if (addedForThisSubject > 0 && !existing.includes(subject)) {
-            // New subject already counted in createdSubjects
-          } else if (addedForThisSubject > 0) {
-            updatedSubjects++;
+          if (addedForThisSubject > 0 && existingIds.has(subject.id)) {
+            updatedSubjectIds.add(subject.id);
           }
         }
       }
 
-      return { createdSubjects, updatedSubjects, createdGrades, skippedGrades };
+      return { createdSubjects, updatedSubjects: updatedSubjectIds.size, createdGrades, skippedGrades };
     });
 
     return res.status(201).json({ message: 'Đã lưu danh sách môn học và điểm số.', ...summary });

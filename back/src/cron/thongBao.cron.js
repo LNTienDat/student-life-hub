@@ -17,7 +17,8 @@ async function nhacDeadlineQuaEmail(idNguoiDungLoc = null) {
     const deadlines = await prisma.deadline.findMany({
       where: {
         ...(idNguoiDungLoc ? { idNguoiDung: idNguoiDungLoc } : {}),
-        trangThai: 'dang_dien_hanh',
+        xoaLuc: null,
+        trangThai: { not: 'hoan_thanh' },
         hanChot: { gte: now, lte: gioiHan },
       },
       include: { nguoiDung: { select: { id: true, ten: true, email: true } }, monHoc: true },

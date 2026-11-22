@@ -81,7 +81,7 @@ export default function TaiLieu() {
   const documents = data ? [data.huongDan, ...data.taiLieus] : [];
   return (
     <div className="w-full min-w-0 space-y-6">
-      <Link to="/dashboard" className="inline-flex min-h-11 items-center gap-2 text-sm text-slate-600"><ArrowLeft size={16} />{tr("Về Hôm nay")}</Link>
+      <Link to="/dashboard" className="inline-flex min-h-11 items-center gap-2 text-sm text-slate-600 dark:text-slate-300 dark:hover:text-white"><ArrowLeft size={16} />{tr("Về Hôm nay")}</Link>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
@@ -92,29 +92,29 @@ export default function TaiLieu() {
         </div>
         <button type="button" disabled={busy} onClick={() => setShowForm(v => !v)} aria-expanded={showForm} className={BUTTON + ' bg-ink-600 text-white'}><Plus size={18} />{showForm ? tr('Thu gọn') : tr('Thêm tài liệu')}</button>
       </header>
-      {showForm && <form onSubmit={submit} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700">
+      {showForm && <form onSubmit={submit} className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
         <fieldset disabled={busy} className="space-y-4">
           <label className="block text-sm font-medium">{tr("Tên tài liệu")}<input autoFocus required maxLength={160} value={title} onChange={e => setTitle(e.target.value)} placeholder={tr("Ví dụ: Quy chế học tập của trường")} className={FIELD} /></label>
           <label className="block text-sm font-medium">{tr("Chọn PDF, TXT hoặc MD")}<input ref={input} type="file" accept=".pdf,.txt,.md" onChange={e => { const next = e.target.files?.[0] || null; setFile(next); if (next && !title) setTitle(next.name.replace(/\.[^.]+$/, '').slice(0, 160)); }} className={FIELD} /></label>
-          <p className="text-xs text-slate-500">{tr("Tối đa 4 MB, PDF có chữ tối đa 100 trang. PDF chụp/scan chưa hỗ trợ. Bạn có thể dán nội dung nếu đọc tệp không thành công.")}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{tr("Tối đa 4 MB, PDF có chữ tối đa 100 trang. PDF chụp/scan chưa hỗ trợ. Bạn có thể dán nội dung nếu đọc tệp không thành công.")}</p>
           {file ? <button type="button" className={BUTTON} onClick={() => { setFile(null); if (input.current) input.current.value = ''; }}>{tr("Bỏ tệp, dùng nội dung nhập")}</button>
             : <label className="block text-sm font-medium">{tr("Hoặc dán nội dung")}<textarea required minLength={40} maxLength={200000} rows={8} value={text} onChange={e => setText(e.target.value)} className={FIELD} placeholder={tr("Nội dung từ tài liệu của bạn, ít nhất 40 ký tự…")} /></label>}
-          <p className="text-xs text-slate-500">{tr("Nội dung được lưu để tìm kiếm. Chỉ khi bạn chọn nhờ AI giải thích và đồng ý, các đoạn liên quan mới được gửi đến Google.")}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{tr("Nội dung được lưu để tìm kiếm. Chỉ khi bạn chọn nhờ AI giải thích và đồng ý, các đoạn liên quan mới được gửi đến Google.")}</p>
           <button type="submit" className={BUTTON + ' bg-ink-600 text-white'}>{busy ? tr('Đang đọc và lưu…') : tr('Lưu tài liệu')}</button>
         </fieldset>
       </form>}
-      {error && <div role="alert" className="rounded-xl bg-rose-50 p-4 text-sm text-rose-800"><p>{tr(error)}</p><button className="mt-2 min-h-11 underline" onClick={() => setRevision(n => n + 1)}>{tr("Tải lại danh sách")}</button></div>}
+      {error && <div role="alert" className="rounded-xl bg-rose-50 p-4 text-sm text-rose-800 dark:bg-rose-950/50 dark:text-rose-200"><p>{tr(error)}</p><button className="mt-2 min-h-11 underline" onClick={() => setRevision(n => n + 1)}>{tr("Tải lại danh sách")}</button></div>}
       {!data && !error && <p role="status">{tr("Đang tải tài liệu…")}</p>}
-      {data && <p className="text-xs text-slate-500">{data.taiLieus.length}/{data.gioiHan.soTaiLieu}{tr(" tài liệu riêng · ")}{data.gioiHan.kyTuDaDung.toLocaleString(getLocale())}/{data.gioiHan.tongKyTu.toLocaleString(getLocale())}{tr(" ký tự")}</p>}
+      {data && <p className="text-xs text-slate-500 dark:text-slate-400">{data.taiLieus.length}/{data.gioiHan.soTaiLieu}{tr(" tài liệu riêng · ")}{data.gioiHan.kyTuDaDung.toLocaleString(getLocale())}/{data.gioiHan.tongKyTu.toLocaleString(getLocale())}{tr(" ký tự")}</p>}
       <div className="space-y-3">
-        {documents.map(doc => <article key={doc.id} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700">
-          <FileText size={22} className="mt-2 shrink-0 text-ink-500" />
-          <div className="min-w-0 flex-1"><h2 className="break-words font-semibold">{doc.tieuDe}</h2><p className="mt-1 break-words text-xs text-slate-500">{doc.tenTep}{tr(" · ")}{doc.soTrang} {doc.macDinh ? tr('mục hướng dẫn') : tr('trang/phần')}</p>
+        {documents.map(doc => <article key={doc.id} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+          <FileText size={22} className="mt-2 shrink-0 text-ink-500 dark:text-ink-300" />
+          <div className="min-w-0 flex-1"><h2 className="break-words font-semibold">{doc.tieuDe}</h2><p className="mt-1 break-words text-xs text-slate-500 dark:text-slate-400">{doc.tenTep}{tr(" · ")}{doc.soTrang} {doc.macDinh ? tr('mục hướng dẫn') : tr('trang/phần')}</p>
             <button type="button" className={BUTTON + ' mt-3'} onClick={() => open(doc.id)}><BookOpen size={16} />{tr("Đọc nội dung")}</button></div>
-          {!doc.macDinh && <button type="button" disabled={busy} onClick={() => setDeleting(doc)} aria-label={tr('Xóa tài liệu ') + doc.tieuDe} className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600"><Trash2 size={18} /></button>}
+          {!doc.macDinh && <button type="button" disabled={busy} onClick={() => setDeleting(doc)} aria-label={tr('Xóa tài liệu ') + doc.tieuDe} className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"><Trash2 size={18} /></button>}
         </article>)}
       </div>
-      <p className="text-sm text-slate-500">{tr("Mở trợ lý ở góc màn hình → ")}<strong>{tr("Hỏi tài liệu")}</strong>{tr(". Ví dụ: “LifeHub tính GPA như thế nào?”")}</p>
+      <p className="text-sm text-slate-500 dark:text-slate-400">{tr("Mở trợ lý ở góc màn hình và đặt câu hỏi trực tiếp về nội dung tài liệu. Ví dụ: “LifeHub tính GPA như thế nào?”")}</p>
       <ModalDialog open={Boolean(docID)} onClose={close} title={selected && String(selected.id) === docID ? selected.tieuDe : tr('Nội dung tài liệu')}>
         {(loadingDoc || (!selected && !viewError)) && <p role="status">{tr("Đang mở tài liệu…")}</p>}
         {viewError && <p role="alert" className="text-rose-600">{viewError}</p>}

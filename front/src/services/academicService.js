@@ -15,7 +15,7 @@ export const academicService = {
   canhBaoMonNguyCo: (nguong = 5.0, hocKy) => api.get('/academic/canh-bao', { params: { nguong, hocKy } }),
   gpaTheoKy: (scale) => api.get('/academic/gpa-theo-ky', { params: { scale } }),
   duDoanDiem: (idMonHoc, data) => api.post(`/academic/mon-hoc/${idMonHoc}/du-doan`, data),
-  xuatBangDiemPDF: (hocKy) => api.get('/academic/xuat-bang-diem', { responseType: 'blob', params: { hocKy }, timeout: 60000 }),
+  xuatBangDiemPDF: (hocKy, scale) => api.get('/academic/xuat-bang-diem', { responseType: 'blob', params: { hocKy, scale }, timeout: 60000 }),
 };
 
 export default academicService;

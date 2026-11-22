@@ -93,7 +93,7 @@ function FinancePeriod({ period, onPeriodChange }) {
   const saveLock = useRef(false), deleteLock = useRef(false), exportLock = useRef(false);
   const { hienToast } = useToast();
   const busy = saving || budgetSaving || confirm.isLoading;
-  const listKey = JSON.stringify([period, searchScope, customPeriod, searchMonth, searchYear, filters, page, revision, retry]);
+  const listKey = JSON.stringify([period, searchScope, customPeriod, searchMonth, searchYear, filters, page, pageSize, revision, retry]);
   const listReady = list.key === listKey;
   const dirty = draft && JSON.stringify(draft) !== JSON.stringify(transactionDraft(original, period));
 

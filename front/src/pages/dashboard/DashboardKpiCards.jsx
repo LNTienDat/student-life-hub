@@ -4,19 +4,22 @@ import { Link } from 'react-router-dom';
 import { GraduationCap, CalendarDays, Wallet } from 'lucide-react';
 import { dinhDangTien } from '../../utils/formatters';
 
-export default function DashboardKpiCards({ gpa, gpaHe4, deadlinesSapToi = [], thongKeTaiChinh, deadlineUnavailable, semester }) {
+export default function DashboardKpiCards({ gpa, gpaHe4, displayMode = 'both', deadlinesSapToi = [], thongKeTaiChinh, deadlineUnavailable, semester }) {
   useLanguage();
+  const prefer4 = displayMode === '4' && gpaHe4 != null;
   const gpaHint = gpa == null
     ? 'Chưa có điểm'
-    : gpaHe4 != null
-      ? `Thang 4: ${Number(gpaHe4).toFixed(2)}`
-      : 'Tạm tính từ điểm đã nhập';
+    : prefer4
+      ? `Thang 10: ${Number(gpa).toFixed(2)}`
+      : gpaHe4 != null
+        ? `Thang 4: ${Number(gpaHe4).toFixed(2)}`
+        : 'Tạm tính từ điểm đã nhập';
   const cards = [
     {
       to: '/mon-hoc',
       title: `GPA ${semester ? 'học kỳ' : 'tích lũy'}`,
-      value: gpa == null ? '—' : Number(gpa).toFixed(2),
-      unit: '/ 10',
+      value: gpa == null ? '—' : prefer4 ? Number(gpaHe4).toFixed(2) : Number(gpa).toFixed(2),
+      unit: prefer4 ? '/ 4' : '/ 10',
       hint: gpaHint,
       Icon: GraduationCap,
       cardBorder: 'border-blue-200 dark:border-blue-800/60 hover:border-blue-400 dark:hover:border-blue-500',

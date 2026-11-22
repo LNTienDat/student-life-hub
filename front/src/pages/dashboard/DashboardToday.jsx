@@ -63,8 +63,8 @@ export default function DashboardToday({ userId, semester }) {
   return (
     <section aria-labelledby="today-heading" className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 id="today-heading" className="text-base font-semibold text-slate-900">{tr("Trong ngày")}</h2>
-        <button type="button" disabled={loading} onClick={() => { setNow(new Date()); setRevision((value) => value + 1); }} aria-label={tr("Làm mới lịch và công việc")} title={tr("Làm mới")} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 disabled:opacity-50"><RefreshCw aria-hidden="true" className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /></button>
+        <h2 id="today-heading" className="text-base font-semibold text-slate-900 dark:text-white">{tr("Trong ngày")}</h2>
+        <button type="button" disabled={loading} onClick={() => { setNow(new Date()); setRevision((value) => value + 1); }} aria-label={tr("Làm mới lịch và công việc")} title={tr("Làm mới")} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800"><RefreshCw aria-hidden="true" className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /></button>
       </div>
 
       <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2">

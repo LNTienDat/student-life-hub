@@ -103,22 +103,22 @@ function Layout({ children }) {
               <Bell aria-hidden="true" className="h-5 w-5" />
               {soChuaXem > 0 && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500" />}
             </button>
-            {chuongMo && <section id="notification-panel" aria-label={tr("Thông báo")} className="absolute right-0 top-full z-10 mt-3 w-80 max-w-[calc(100vw-6rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
-              <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3"><h2 className="text-sm font-semibold text-slate-900">{tr("Thông báo (")}{soChuaXem})</h2><button type="button" className="shell-icon" onClick={() => setChuongMo(false)} aria-label={tr("Đóng thông báo")}><X className="h-4 w-4" /></button></div>
-              {thongBaos.length > 0 && <button type="button" onClick={() => remember(thongBaos.map(item => item.id))} className="min-h-11 px-4 text-xs font-semibold text-ink-600">{tr("Đánh dấu tất cả đã đọc")}</button>}
+            {chuongMo && <section id="notification-panel" aria-label={tr("Thông báo")} className="absolute right-0 top-full z-10 mt-3 w-80 max-w-[calc(100vw-6rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
+              <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3 dark:border-slate-700"><h2 className="text-sm font-semibold text-slate-900 dark:text-white">{tr("Thông báo (")}{soChuaXem})</h2><button type="button" className="shell-icon" onClick={() => setChuongMo(false)} aria-label={tr("Đóng thông báo")}><X className="h-4 w-4" /></button></div>
+              {thongBaos.length > 0 && <button type="button" onClick={() => remember(thongBaos.map(item => item.id))} className="min-h-11 px-4 text-xs font-semibold text-ink-600 dark:text-ink-300">{tr("Đánh dấu tất cả đã đọc")}</button>}
               <div className="max-h-[60dvh] overflow-y-auto">
-                {notificationError ? <p role="alert" className="p-5 text-sm text-rose-600">{tr("Chưa tải được thông báo. Kiểm tra kết nối rồi mở lại trang.")}</p>
-                  : thongBaos.length === 0 ? <p className="p-6 text-center text-sm text-slate-500">{tr("Bạn chưa có thông báo mới.")}</p>
-                    : thongBaos.map(item => <button type="button" key={item.id} onClick={() => { remember([item.id]); setChuongMo(false); navigate(item.loai === 'deadline' ? '/deadline' : item.loai === 'hoc_tap' ? '/mon-hoc' : '/tai-chinh'); }} className={`flex w-full items-start gap-3 border-t border-slate-100 px-4 py-3 text-left ${!daXemId.includes(item.id) ? 'bg-ink-50' : 'hover:bg-slate-50'}`}>
-                      <span className="mt-0.5 shrink-0">{iconFor(item.loai)}</span><span className="min-w-0"><span className="block break-words text-sm font-semibold text-slate-800">{item.loai === 'deadline' ? item.tieuDe.replace(/^Deadline sắp hết hạn:\s*/u, 'Deadline: ') : item.tieuDe}</span><span className="mt-1 block break-words text-xs leading-relaxed text-slate-500">{item.loai === 'deadline' ? dinhDangNgay(item.thoiGian) || tr('Chưa xác định ngày') : item.moTa}</span></span>
+                {notificationError ? <p role="alert" className="p-5 text-sm text-rose-600 dark:text-rose-400">{tr("Chưa tải được thông báo. Kiểm tra kết nối rồi mở lại trang.")}</p>
+                  : thongBaos.length === 0 ? <p className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">{tr("Bạn chưa có thông báo mới.")}</p>
+                    : thongBaos.map(item => <button type="button" key={item.id} onClick={() => { remember([item.id]); setChuongMo(false); navigate(item.loai === 'deadline' ? '/deadline' : item.loai === 'hoc_tap' ? '/mon-hoc' : '/tai-chinh'); }} className={`flex w-full items-start gap-3 border-t border-slate-100 px-4 py-3 text-left dark:border-slate-700 ${!daXemId.includes(item.id) ? 'bg-ink-50 dark:bg-slate-700/50' : 'hover:bg-slate-50 dark:hover:bg-slate-700/40'}`}>
+                      <span className="mt-0.5 shrink-0">{iconFor(item.loai)}</span><span className="min-w-0"><span className="block break-words text-sm font-semibold text-slate-800 dark:text-slate-100">{item.loai === 'deadline' ? item.tieuDe.replace(/^Deadline sắp hết hạn:\s*/u, 'Deadline: ') : item.tieuDe}</span><span className="mt-1 block break-words text-xs leading-relaxed text-slate-500 dark:text-slate-400">{item.loai === 'deadline' ? dinhDangNgay(item.thoiGian) || tr('Chưa xác định ngày') : item.moTa}</span></span>
                     </button>)}
               </div>
             </section>}
           </div>
           <button type="button" onClick={doiTheme} className="shell-icon" aria-label={theme === 'dark' ? tr('Chuyển sang giao diện sáng') : tr('Chuyển sang giao diện tối')} title={theme === 'dark' ? tr('Giao diện sáng') : tr('Giao diện tối')}>{theme === 'dark' ? <Sun aria-hidden="true" className="h-5 w-5" /> : <Moon aria-hidden="true" className="h-5 w-5" />}</button>
-          <Link to="/ho-so" title={user?.ten} aria-label={tr("Hồ sơ của {0}", user?.ten || 'bạn')} className="ml-2 hidden min-w-0 items-center gap-2 border-l border-slate-200 pl-3 lg:flex">
+          <Link to="/ho-so" title={user?.ten} aria-label={tr("Hồ sơ của {0}", user?.ten || 'bạn')} className="ml-2 hidden min-w-0 items-center gap-2 border-l border-slate-200 pl-3 dark:border-slate-700 lg:flex">
             <Avatar value={user?.avatar} name={user?.ten} size="h-8 w-8" />
-            <span className="hidden max-w-24 truncate text-sm font-medium text-slate-700 xl:block">{user?.ten}</span>
+            <span className="hidden max-w-24 truncate text-sm font-medium text-slate-700 dark:text-slate-200 xl:block">{user?.ten}</span>
           </Link>
         </div>
       </div>

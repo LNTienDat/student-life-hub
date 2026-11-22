@@ -25,6 +25,7 @@ export default function TranscriptImportModal({
   const fileRef = useRef(null);
   const cameraRef = useRef(null);
   const abortRef = useRef(null);
+  const imageUrlRef = useRef('');
 
   const [aiAvailable, setAiAvailable] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -43,10 +44,15 @@ export default function TranscriptImportModal({
     return () => { active = false; };
   }, [open]);
 
+  useEffect(() => () => {
+    abortRef.current?.abort();
+    if (imageUrlRef.current) URL.revokeObjectURL(imageUrlRef.current);
+  }, []);
+
   function resetAndClose() {
     if (saving) return;
     abortRef.current?.abort();
-    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    if (imageUrlRef.current) { URL.revokeObjectURL(imageUrlRef.current); imageUrlRef.current = ''; }
     setBusy(false);
     setError('');
     setImagePreview('');
@@ -61,8 +67,10 @@ export default function TranscriptImportModal({
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-    if (imagePreview) URL.revokeObjectURL(imagePreview);
-    setImagePreview(URL.createObjectURL(file));
+    if (imageUrlRef.current) URL.revokeObjectURL(imageUrlRef.current);
+    const nextUrl = URL.createObjectURL(file);
+    imageUrlRef.current = nextUrl;
+    setImagePreview(nextUrl);
     setBusy(true);
     setError('');
     try {
@@ -172,7 +180,7 @@ export default function TranscriptImportModal({
       onImported?.();
       setSaving(false);
       abortRef.current?.abort();
-      if (imagePreview) URL.revokeObjectURL(imagePreview);
+      if (imageUrlRef.current) { URL.revokeObjectURL(imageUrlRef.current); imageUrlRef.current = ''; }
       setImagePreview('');
       setRows([]);
       onClose?.();

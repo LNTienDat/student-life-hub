@@ -37,7 +37,7 @@ function SubjectCard({
   onDeleteSubject,
 }) {
   useLanguage();
-  const [gradeScale, setGradeScale] = useState(defaultInputScale);
+  const [gradeScale, setGradeScale] = useState(() => (dangSuaDiemId ? '10' : defaultInputScale));
 
   const { diem10: diemTrungBinh10, totalWeight } = calcSubjectAverage10(mon.diems);
   const hasScore = diemTrungBinh10 !== null;

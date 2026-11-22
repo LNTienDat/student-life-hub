@@ -161,6 +161,7 @@ async function deadlineSapToi(req, res) {
     const danhSach = await prisma.deadline.findMany({
       where: {
         idNguoiDung,
+        xoaLuc: null,
         trangThai: { not: DEADLINE.TRANG_THAI_HOAN_THANH },
         ...(req.query.hocKy ? { OR: [{ monHoc: { hocKy: String(req.query.hocKy) } }, { idMonHoc: null }] } : {}),
         hanChot: { gte: now, lte: gioiHan },

@@ -91,4 +91,15 @@ test('historical finance questions bypass RAG guide and route to finance data', 
   expect(answerDocumentQuestion).not.toHaveBeenCalled();
   expect(service.layDuLieuSinhVien).toHaveBeenCalledWith(42, ['taiChinh']);
   expect(res.json.mock.calls[0][0]).toMatchObject({ nguon: 'du_lieu', traLoi: '**Thu/chi năm 2020**' });
+
+  for (const question of ['Thu chi tháng 10 thế nào?', 'Thu chi năm 2020 ra sao?']) {
+    jest.clearAllMocks();
+    service.timChuDe.mockReturnValue([]);
+    service.layDuLieuSinhVien.mockResolvedValue({ capNhatLuc: 'now' });
+    service.traLoiDuLieu.mockReturnValue('OK');
+    const r = response();
+    await guiTinNhan({ user: { id: 42 }, body: { tinNhan: question, cheDo: 'auto' } }, r);
+    expect(answerDocumentQuestion).not.toHaveBeenCalled();
+    expect(service.layDuLieuSinhVien).toHaveBeenCalledWith(42, ['taiChinh']);
+  }
 });

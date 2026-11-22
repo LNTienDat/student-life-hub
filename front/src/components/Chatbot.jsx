@@ -85,6 +85,7 @@ function Chatbot({ userId }) {
   const moChatRef = useRef(moChat);
   const requestRef = useRef(null);
   const dragRef = useRef(null);
+  const dragCleanupRef = useRef(null);
   const movedRef = useRef(false);
   const dialogId = useId();
   const titleId = useId();
@@ -140,7 +141,10 @@ function Chatbot({ userId }) {
       window.removeEventListener('keydown', keydown);
     };
   }, [moChat]);
-  useEffect(() => () => requestRef.current?.abort(), []);
+  useEffect(() => () => {
+    requestRef.current?.abort();
+    dragCleanupRef.current?.();
+  }, []);
   useEffect(() => {
     if (moChat) daMo.current = true;
     else if (daMo.current) {
@@ -158,6 +162,7 @@ function Chatbot({ userId }) {
     if (event.button !== undefined && event.button !== 0) return;
     const rect = wrapperRef.current?.getBoundingClientRect();
     if (!rect) return;
+    dragCleanupRef.current?.();
     const drag = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -186,17 +191,23 @@ function Chatbot({ userId }) {
       setPos(latestPos);
     }
 
-    function onEnd(ev) {
-      if (ev.pointerId !== drag.pointerId) return;
+    function cleanup() {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onEnd);
       window.removeEventListener('pointercancel', onEnd);
+      if (dragCleanupRef.current === cleanup) dragCleanupRef.current = null;
+    }
+
+    function onEnd(ev) {
+      if (ev.pointerId !== drag.pointerId) return;
+      cleanup();
       dragRef.current = null;
       if (latestPos) {
         try { localStorage.setItem(POS_STORAGE_KEY, JSON.stringify(latestPos)); } catch { /* Optional */ }
       }
     }
 
+    dragCleanupRef.current = cleanup;
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onEnd);
     window.addEventListener('pointercancel', onEnd);

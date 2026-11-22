@@ -22,6 +22,7 @@ async function layThongBao(req, res) {
       prisma.deadline.findMany({
         where: {
           idNguoiDung,
+          xoaLuc: null,
           trangThai: { not: 'hoan_thanh' },
           hanChot: { lte: gioiHan },
         },

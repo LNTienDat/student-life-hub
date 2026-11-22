@@ -17,6 +17,14 @@ export default function GradePredictorModal({ mon, open, onClose, scaleId = '8_l
   useLanguage();
   const { diem10, totalWeight } = calcSubjectAverage10(mon?.diems || []);
   const remainingWeight = Math.max(0, Math.round((100 - totalWeight) * 100) / 100);
+  const presets = scaleId === '9_level'
+    ? [
+        { label: 'Qua môn (D · 4.0)', score10: '4.0' },
+        { label: 'Trung bình (C · 5.5)', score10: '5.5' },
+        { label: 'Khá (B · 7.0)', score10: '7.0' },
+        { label: 'Xuất sắc (A+ · 9.0)', score10: '9.0' },
+      ]
+    : TARGET_PRESETS;
 
   const [target, setTarget] = useState('7.0');
   const [busy, setBusy] = useState(false);
@@ -61,11 +69,11 @@ export default function GradePredictorModal({ mon, open, onClose, scaleId = '8_l
           <div className="space-y-2">
             <span className="block text-xs font-medium text-slate-600 dark:text-slate-300">{tr("Chọn nhanh mục tiêu tổng kết môn")}</span>
             <div className="grid grid-cols-2 gap-2">
-              {TARGET_PRESETS.map((p) => (
+              {presets.map((p) => (
                 <button
                   key={p.score10}
                   type="button"
-                  onClick={() => { setTarget(p.score10); calculate(p.score10); }}
+                  onClick={() => { setTarget(p.score10); setError(''); calculate(p.score10); }}
                   className={`min-h-10 rounded-xl border px-3 py-1.5 text-left text-xs font-medium transition-colors ${target === p.score10 ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-950/50 dark:text-indigo-200' : 'border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300'}`}
                 >
                   {tr(p.label)}
@@ -86,7 +94,7 @@ export default function GradePredictorModal({ mon, open, onClose, scaleId = '8_l
                 max="10"
                 step="0.1"
                 value={target}
-                onChange={(e) => setTarget(e.target.value)}
+                onChange={(e) => { setTarget(e.target.value); setError(''); }}
                 className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white"
               />
             </label>

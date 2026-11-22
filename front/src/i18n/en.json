@@ -1070,5 +1070,8 @@
   "Còn lại ({0}%)": "Remaining ({0}%)",
   "Quy đổi chuẩn lưu bảng điểm:": "Normalized 10-pt stored:",
   "+ Thêm cột điểm": "+ Add grade",
-  "✏️ Sửa: ": "✏️ Edit: "
+  "✏️ Sửa: ": "✏️ Edit: ",
+  "Nhập đủ Học kỳ và Tín chỉ (1–20) cho các môn đang chọn.": "Enter Semester and Credits (1–20) for all selected subjects.",
+  "Xuất sắc (A+ · 9.0)": "High Distinction (A+ · 9.0)",
+  "Mở trợ lý ở góc màn hình và đặt câu hỏi trực tiếp về nội dung tài liệu. Ví dụ: “LifeHub tính GPA như thế nào?”": "Open the assistant in the corner and ask questions directly about your documents. E.g. “How does LifeHub calculate GPA?”"
 }

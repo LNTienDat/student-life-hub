@@ -5,7 +5,7 @@ const { cauHinhAI, hoiGemini } = require('./gemini.service');
 
 function isFinancePeriodQuery(text) {
   const q = String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll('đ', 'd').toLowerCase();
-  if (/tu van|goi y|ke hoach|lam sao|cach |huong dan|ra sao|the nao|\b(?:nhap|them|sua|xoa|quet)\b/.test(q)) return false;
+  if (/tu van|goi y|ke hoach|lam sao|cach |huong dan|nhu the nao|\b(?:nhap|them|sua|xoa|quet)\b/.test(q)) return false;
   const hasFinance = /thu chi|chi tieu|chi bao nhieu|tong chi|tong thu|thu nhap|so du|ngan sach|tai chinh|giao dich/.test(q);
   const hasPeriod = /thang truoc|thang sau|nam ngoai|\b(?:thang|t)\s*(?:1[0-2]|0?[1-9])\b|\b(?:19|20)\d{2}\b|toan bo|tat ca|toan thoi gian|lich su|cac nam/.test(q);
   return hasFinance && hasPeriod;

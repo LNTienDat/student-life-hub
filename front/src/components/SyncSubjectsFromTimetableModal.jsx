@@ -153,19 +153,26 @@ export default function SyncSubjectsFromTimetableModal({
           </div>
         )}
 
-        <div className="flex justify-end gap-2.5 pt-2">
-          <button type="button" disabled={saving} onClick={onClose} className="min-h-11 rounded-xl px-4 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
-            {tr("Đóng")}
-          </button>
-          <button
-            type="button"
-            disabled={saving || loading || !selected.length || invalid}
-            onClick={handleImport}
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-emerald-600 px-5 font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-          >
-            <CalendarSync className="h-4 w-4 shrink-0" />
-            {saving ? tr('Đang lưu…') : tr("Thêm {0} môn đã chọn", selected.length)}
-          </button>
+        <div className="flex flex-col gap-2 pt-2">
+          {selected.length > 0 && invalid && (
+            <p role="alert" className="text-xs text-rose-600 dark:text-rose-300">
+              {tr("Nhập đủ Học kỳ và Tín chỉ (1–20) cho các môn đang chọn.")}
+            </p>
+          )}
+          <div className="flex justify-end gap-2.5">
+            <button type="button" disabled={saving} onClick={onClose} className="min-h-11 rounded-xl px-4 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">
+              {tr("Đóng")}
+            </button>
+            <button
+              type="button"
+              disabled={saving || loading || !selected.length || invalid}
+              onClick={handleImport}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-emerald-600 px-5 font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+            >
+              <CalendarSync className="h-4 w-4 shrink-0" />
+              {saving ? tr('Đang lưu…') : tr("Thêm {0} môn đã chọn", selected.length)}
+            </button>
+          </div>
         </div>
       </div>
     </ModalDialog>

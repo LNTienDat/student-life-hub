@@ -37,8 +37,8 @@ test('semester keeps old lowercase and unassigned timetable entries visible but 
   expect(prisma.thoiKhoaBieu.findMany).toHaveBeenCalledWith(expect.objectContaining({where:{idNguoiDung:42}}));
   expect(res.json.mock.calls[0][0].thoiKhoaBieu.map(item=>item.id)).toEqual([1,2]);
 });
-test('pending and waiting tasks both remain in upcoming deadlines', async () => {
+test('pending and waiting tasks both remain in upcoming deadlines and exclude soft-deleted tasks', async () => {
   prisma.deadline.findMany.mockResolvedValue([]);
   await deadline.deadlineSapToi({ user: { id: 42 }, query: { hocKy: 'HK1' } }, response());
-  expect(prisma.deadline.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ idNguoiDung: 42, trangThai: { not: 'hoan_thanh' } }) }));
+  expect(prisma.deadline.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ idNguoiDung: 42, xoaLuc: null, trangThai: { not: 'hoan_thanh' } }) }));
 });

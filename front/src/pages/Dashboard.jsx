@@ -10,6 +10,7 @@ import { academicService } from '../services/academicService';
 import { deadlineService } from '../services/deadlineService';
 import { financeService } from '../services/financeService';
 import { Plus, CalendarPlus, Wallet } from 'lucide-react';
+import { loadGradePrefs } from '../utils/gradeScale';
 
 import DashboardKpiCards from './dashboard/DashboardKpiCards';
 import DashboardToday from './dashboard/DashboardToday';
@@ -57,8 +58,9 @@ function Dashboard() {
   const [result, setResult] = useState(null);
   const [retry, setRetry] = useState(0);
   const [quickEntry, setQuickEntry] = useState(null);
+  const [gradePrefs] = useState(loadGradePrefs);
 
-  const queryKey = `${revision}:${semester}:${retry}:${user?.id}`;
+  const queryKey = `${revision}:${semester}:${retry}:${user?.id}:${gradePrefs.scaleId}`;
   const data = result?.key === queryKey ? result.data : {};
   const errors = result?.key === queryKey ? result.errors : [];
   const loading = result?.key !== queryKey || !result.done;
@@ -66,7 +68,7 @@ function Dashboard() {
     let active = true;
     const update = (change) => setResult((previous) => change(previous?.key === queryKey ? previous : { key: queryKey, data: {}, errors: [], done: false }));
     const sources = [
-      ['gpa', () => academicService.tinhGPA(semester), (r) => r.data.hasGrades === false ? null : { gpa: r.data.gpa, gpaHe4: r.data.gpaHe4 }],
+      ['gpa', () => academicService.tinhGPA(semester, gradePrefs.scaleId), (r) => r.data.hasGrades === false ? null : { gpa: r.data.gpa, gpaHe4: r.data.gpaHe4 }],
       ['deadlinesSapToi', () => deadlineService.layDeadlineSapToi(7, semester), (r) => r.data.deadlines || []],
       ['thongKeTaiChinh', () => financeService.layThongKe(), (r) => r.data],
     ];
@@ -79,14 +81,14 @@ function Dashboard() {
       }
     })).then(() => { if (active) update((previous) => ({ ...previous, done: true })); });
     return () => { active = false; };
-  }, [queryKey, semester]);
+  }, [queryKey, semester, gradePrefs.scaleId]);
 
   return (
     <div className="w-full min-w-0 space-y-6">
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="min-w-0">
-          <h1 className="break-words font-display text-2xl font-bold tracking-tight text-slate-900">{tr("Xin chào, ")}{user?.ten || tr('bạn')}!</h1>
-          <p className="mt-2 text-sm text-slate-500">{new Date().toLocaleDateString(getLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          <h1 className="break-words font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{tr("Xin chào, ")}{user?.ten || tr('bạn')}!</h1>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{new Date().toLocaleDateString(getLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
         <div aria-label={tr("Thêm nhanh")} className="grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap">
           {[
@@ -113,13 +115,13 @@ function Dashboard() {
 
       {quickEntry && <QuickEntry key={quickEntry} kind={quickEntry} onClose={() => setQuickEntry(null)} />}
 
-      {errors.length > 0 && <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 flex flex-wrap justify-between gap-2">
+      {errors.length > 0 && <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200 flex flex-wrap justify-between gap-2">
         <span>{tr("Một số số liệu chưa tải được. Các mục còn lại vẫn sử dụng được.")}</span>
         <button onClick={() => setRetry((value) => value + 1)} className="font-semibold underline">{tr("Thử lại")}</button>
       </div>}
       {loading && Object.keys(data).length === 0 ? <PageSkeleton /> : <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-5">
         <section aria-label={tr("Tổng quan")}>
-        <DashboardKpiCards gpa={data.gpa?.gpa !== undefined ? data.gpa.gpa : data.gpa} gpaHe4={data.gpa?.gpaHe4} deadlinesSapToi={data.deadlinesSapToi} thongKeTaiChinh={data.thongKeTaiChinh} itemVariants={itemVariants} deadlineUnavailable={!data.deadlinesSapToi} semester={semester} /></section>
+        <DashboardKpiCards gpa={data.gpa?.gpa !== undefined ? data.gpa.gpa : data.gpa} gpaHe4={data.gpa?.gpaHe4} displayMode={gradePrefs.displayMode} deadlinesSapToi={data.deadlinesSapToi} thongKeTaiChinh={data.thongKeTaiChinh} itemVariants={itemVariants} deadlineUnavailable={!data.deadlinesSapToi} semester={semester} /></section>
         <DashboardToday key={user?.id} userId={user?.id} semester={currentSemester} />
       </motion.div>}
 
