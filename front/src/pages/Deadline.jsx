@@ -8,6 +8,8 @@ import deadlineService from '../services/deadlineService';
 import { clearCache } from '../services/apiCache';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
+import { predictDeadlinePriority, trainDeadlineSample, syncDeadlineHistory } from '../services/edgeAiService';
 import { formatDeadlineDate, deadlineToISO, deadlineInputValue, defaultDeadlineDate } from './deadline/deadlineDate';
 import { Calendar as CalendarIcon, CalendarPlus, List, Plus, Clock } from 'lucide-react';
 import { deadlinesToIcs, deadlineGoogleCalendarUrl, downloadIcs } from '../utils/icsExport';
@@ -63,6 +65,8 @@ function Deadline() {
   });
 
   const { hienToast } = useToast();
+  const { user } = useAuth();
+  const [edgeRev, setEdgeRev] = useState(0);
 
   const loadVersion = useRef(0);
   const taiDuLieu = useCallback(() => {
@@ -85,6 +89,20 @@ function Deadline() {
     taiDuLieu();
     return () => { counter.current++; };
   }, [taiDuLieu, externalRevision]);
+
+  useEffect(() => {
+    if (!user?.id || !danhSach.length) return;
+    syncDeadlineHistory(user.id, danhSach);
+  }, [user?.id, danhSach]);
+
+  const edgePrediction = useMemo(() => {
+    if (edgeRev < 0 || !hienFormThem || tieuDe.trim().length < 2) return null;
+    return predictDeadlinePriority({
+      userId: user?.id,
+      title: tieuDe,
+      hanChot,
+    });
+  }, [user?.id, hienFormThem, tieuDe, hanChot, edgeRev]);
 
   useEffect(() => {
     const refresh = () => { if (document.visibilityState === 'visible' && !saveLock.current) taiDuLieu(); };
@@ -154,6 +172,17 @@ function Deadline() {
       } else {
         await deadlineService.themDeadline(data);
         hienToast('success', `Đã tạo deadline "${tieuDe}"!`);
+      }
+      if (user?.id && data.tieuDe?.trim()) {
+        trainDeadlineSample({
+          userId: user.id,
+          tieuDe: data.tieuDe,
+          hanChot: data.hanChot,
+          doUuTien: data.doUuTien,
+          wasPredictedLabel: edgePrediction?.label || null,
+          weight: edgePrediction && edgePrediction.label !== data.doUuTien ? 3 : 2,
+        });
+        setEdgeRev((v) => v + 1);
       }
       clearCache('dashboard_cache');
       setHienFormThem(false);
@@ -305,6 +334,8 @@ function Deadline() {
           onSubmit={xuLySubmit}
           saving={saving}
           onCancel={dongForm}
+          edgePrediction={edgePrediction}
+          onApplyEdgePrediction={() => edgePrediction && setDoUuTien(edgePrediction.label)}
         />
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">

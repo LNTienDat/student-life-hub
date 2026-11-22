@@ -8,6 +8,7 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { User, Lock, Save, KeyRound, CheckCircle2, AlertCircle, Mail, LogOut, MessageSquarePlus, ShieldCheck, Send } from 'lucide-react';
 import ProfileIdentity from './profile/ProfileIdentity';
+import EdgeAiStatusCard from '../components/EdgeAiStatusCard';
 
 function Profile() {
   useLanguage();
@@ -322,6 +323,9 @@ function Profile() {
         </form>
 
       </div>
+
+      {/* EdgeAI trên thiết bị */}
+      <EdgeAiStatusCard />
 
       {/* Góp ý & Chính sách sản phẩm */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

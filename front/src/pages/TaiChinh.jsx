@@ -1,16 +1,18 @@
 import { t as tr, getLocale } from '../i18n/language';
 import useLanguage from '../hooks/useLanguage';
 import useSessionDraft from '../hooks/useSessionDraft';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { getCache, setCache } from '../services/apiCache';
 import useDataRevision from '../hooks/useDataRevision';
 import financeService from '../services/financeService';
 import ConfirmModal from '../components/ConfirmModal';
 import ReceiptImport from '../components/ReceiptImport';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import { useFinanceCategories } from '../context/FinanceCategoryContext';
 import { Plus, Download, Camera, Wallet, Sparkles } from 'lucide-react';
 import { scanReceiptWithAI } from '../services/visionOcr';
+import { predictFinanceCategory, trainFinanceSample, syncFinanceHistory } from '../services/edgeAiService';
 import FinanceKpiCards from './taichinh/FinanceKpiCards';
 import BudgetSection from './taichinh/BudgetSection';
 import FinanceTrendChart from './taichinh/FinanceTrendChart';
@@ -36,7 +38,9 @@ function FinancePeriod({ period, onPeriodChange }) {
   const [summaryLoading, setSummaryLoading] = useState(true);
   const [retry, setRetry] = useState(0);
   const revision = useDataRevision();
+  const { user } = useAuth();
   const { label: categoryLabel, categories } = useFinanceCategories();
+  const [edgeRev, setEdgeRev] = useState(0);
   const [filters, setFilters] = useState({ timKiem: '', locLoai: '', locDanhMuc: '' });
   const [searchScope, setSearchScope] = useState('month');
   const [customPeriod, setCustomPeriod] = useState(period);
@@ -158,6 +162,22 @@ function FinancePeriod({ period, onPeriodChange }) {
     // A budget draft is independent of the transaction form and is not discarded here.
     if (dirty) withDiscard(open, false); else if (!busy) open();
   }
+  useEffect(() => {
+    if (!user?.id || !list.rows.length) return;
+    syncFinanceHistory(user.id, list.rows);
+  }, [user?.id, list.rows]);
+
+  const edgePrediction = useMemo(() => {
+    if (edgeRev < 0 || !draft || String(draft.moTa || '').trim().length < 2) return null;
+    return predictFinanceCategory({
+      userId: user?.id,
+      text: draft.moTa,
+      amount: draft.soTien,
+      loai: draft.loai,
+      categories,
+    });
+  }, [user?.id, draft, categories, edgeRev]);
+
   function closeForm() {
     const close = () => { setDraft(null); setOriginal(null); setReceiptInfo(null); setFormError(''); returnFocus.current?.isConnected && returnFocus.current.focus({ preventScroll: true }); };
     if (dirty) withDiscard(close, false); else if (!busy) close();
@@ -175,6 +195,18 @@ function FinancePeriod({ period, onPeriodChange }) {
     try {
       if (original) await financeService.suaGiaoDich(original.id, payload);
       else await financeService.themGiaoDich({...payload,...(allowDuplicate?{choPhepTrungHoaDon:true}:{})});
+      if (user?.id && payload.moTa?.trim()) {
+        trainFinanceSample({
+          userId: user.id,
+          loai: payload.loai,
+          danhMuc: payload.danhMuc,
+          moTa: payload.moTa,
+          soTien: payload.soTien,
+          wasPredictedLabel: edgePrediction?.label || null,
+          weight: edgePrediction && edgePrediction.label !== payload.danhMuc ? 3 : 2,
+        });
+        setEdgeRev((v) => v + 1);
+      }
       setDraft(null); setOriginal(null); setReceiptInfo(null);
       if (!original) setPage(1);
       hienToast('success', original ? 'Đã cập nhật giao dịch.' : 'Đã thêm giao dịch.');
@@ -277,7 +309,10 @@ function FinancePeriod({ period, onPeriodChange }) {
         <TransactionForm hienFormGD={!!draft} {...(draft || {})} editing={!!original} error={formError} originalCategory={original?.loai === 'thu' ? original.danhMuc : null}
           onLoaiChange={value => updateDraft('loai', value)} onDanhMucChange={value => updateDraft('danhMuc', value)}
           onSoTienChange={value => updateDraft('soTien', value)} onMoTaChange={value => updateDraft('moTa', value)}
-          onNgayGiaoDichChange={value => updateDraft('ngayGiaoDich', value)} onSubmit={saveTransaction} onCancel={closeForm} dangLuu={saving} />
+          onNgayGiaoDichChange={value => updateDraft('ngayGiaoDich', value)} onSubmit={saveTransaction} onCancel={closeForm} dangLuu={saving}
+          edgePrediction={edgePrediction}
+          edgeCategoryLabel={edgePrediction ? categoryLabel(edgePrediction.label, draft?.loai) : ''}
+          onApplyEdgePrediction={() => edgePrediction && updateDraft('danhMuc', edgePrediction.label)} />
       </div>
       {summaryError && <div role="alert" className="rounded-xl bg-rose-50 p-4 text-sm text-rose-800 dark:bg-rose-950 dark:text-rose-200">{summaryError}<button type="button" onClick={reload} className="ml-2 min-h-11 underline">{tr("Thử tải lại số liệu")}</button></div>}
       {summaryLoading && !summary ? <PageSkeleton /> : summary && <div aria-busy={summaryLoading}>
