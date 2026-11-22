@@ -1,6 +1,7 @@
 const dns = require('node:dns');
-const { FINANCE, THOIKHOABIEU } = require('../../constants');
+const { FINANCE, THOIKHOABIEU, ACADEMIC } = require('../../constants');
 const { cauHinhAI } = require('../chatbot/gemini.service');
+const { convertInputToScale10 } = require('../../utils/grade.util');
 
 const MAX_IMAGE_BYTES = 2.5 * 1024 * 1024;
 const VISION_TIMEOUT_MS = 20000;
@@ -34,8 +35,8 @@ function validClock(value) {
 
 function parseVisionInput(body = {}) {
   const { kind, imageBase64, mimeType = 'image/jpeg', dongYGuiAI } = body || {};
-  if (!['receipt', 'timetable'].includes(kind)) {
-    throw visionError(400, 'OCR_AI_KIND', 'Loại ảnh quét AI chỉ hỗ trợ receipt hoặc timetable.');
+  if (!['receipt', 'timetable', 'transcript'].includes(kind)) {
+    throw visionError(400, 'OCR_AI_KIND', 'Loại ảnh quét AI chỉ hỗ trợ receipt hoặc timetable hoặc transcript.');
   }
   if (dongYGuiAI !== true) {
     throw visionError(400, 'OCR_AI_CONSENT', 'Cần xác nhận đồng ý gửi ảnh đến Google AI trước khi quét.');
@@ -109,7 +110,104 @@ function normalizeTimetableAi(raw, model) {
   return { rows, nguon: 'ai_vision', model };
 }
 
+function normalizeTranscriptAi(raw, model) {
+  const rawRows = Array.isArray(raw?.rows) ? raw.rows : [];
+  const rows = [];
+  for (const item of rawRows.slice(0, 120)) {
+    const ten = cleanText(item?.tenMon, 100);
+    if (!ten) continue;
+    const rawCredits = Number(item?.tinChi);
+    const hasCredits = Number.isInteger(rawCredits) && rawCredits >= ACADEMIC.MIN_TIN_CHI_MON && rawCredits <= ACADEMIC.MAX_TIN_CHI_MON;
+    const tinChi = hasCredits ? rawCredits : 3;
+    const hocKy = cleanText(item?.hocKy, 100);
+
+    const rawGrades = Array.isArray(item?.diems) ? item.diems : [];
+    const diems = [];
+    for (const g of rawGrades.slice(0, 10)) {
+      const loaiDanhGia = cleanText(g?.loaiDanhGia, 60) || 'Tổng kết';
+      const inputScale = ['10', '4', 'letter'].includes(String(g?.scale)) ? String(g.scale) : '10';
+      const diemRaw = g?.diem;
+      const converted = convertInputToScale10({ value: diemRaw, inputScale, gradeScale: '8_level' });
+      if (!Number.isFinite(converted)) continue;
+      let weight = Number(g?.trongSo);
+      if (!Number.isFinite(weight) || weight <= 0 || weight > 100) {
+        weight = rawGrades.length === 1 ? 100 : Math.round((100 / rawGrades.length) * 100) / 100;
+      }
+      diems.push({
+        loaiDanhGia,
+        diem: converted,
+        rawValue: String(diemRaw ?? ''),
+        inputScale,
+        trongSo: weight,
+      });
+    }
+
+    // Clamp total weight to 100% cleanly if AI emitted slightly over 100%
+    const totalWeight = diems.reduce((sum, g) => sum + g.trongSo, 0);
+    if (totalWeight > 100 && diems.length > 0) {
+      const factor = 100 / totalWeight;
+      diems.forEach((g) => { g.trongSo = Math.max(1, Math.round(g.trongSo * factor * 100) / 100); });
+    }
+
+    rows.push({
+      ten,
+      tinChi,
+      tinChiMacDinh: !hasCredits,
+      hocKy,
+      diems,
+    });
+  }
+  return { rows, nguon: 'ai_vision', model };
+}
+
 function buildVisionRequest(kind) {
+  if (kind === 'transcript') {
+    return {
+      prompt: [
+        'Hãy đọc ảnh bảng điểm / kết quả học tập sinh viên (từ cổng đào tạo, PDF hoặc bảng điểm giữa kỳ/cuối kỳ) và trích xuất danh sách từng môn học kèm cột điểm thành JSON.',
+        'Quy tắc:',
+        '- tenMon: Tên môn học tiếng Việt chính xác (bỏ mã học phần thừa nếu có).',
+        '- tinChi: Số tín chỉ (số nguyên 1..20; nếu ảnh không ghi cột tín chỉ thì trả 0).',
+        '- hocKy: Tên học kỳ nếu có trên bảng (ví dụ "HK1 2025-2026"), không thấy thì trả chuỗi rỗng "".',
+        '- diems: Mảng các cột điểm đã có của môn (bỏ qua cột trống hoặc chưa có điểm):',
+        '  + loaiDanhGia: Tên cột điểm (ví dụ "Chuyên cần", "Quá trình", "Giữa kỳ", "Thực hành", "Cuối kỳ", "Tổng kết").',
+        '  + diem: Giá trị điểm dưới dạng chuỗi (ví dụ "8.5", "3.5", "B+").',
+        '  + scale: "10" nếu là thang điểm 10, "4" nếu là thang điểm 4, "letter" nếu là điểm chữ (A+, A, B+, B, C+, C, D+, D, F).',
+        '  + trongSo: Phần trăm trọng số (0 < trongSo <= 100). Nếu chỉ có 1 điểm tổng kết cuối cùng hãy để 100; nếu không ghi trọng số hãy suy hợp lý sao cho tổng <= 100.',
+      ].join('\n'),
+      schema: {
+        type: 'OBJECT',
+        required: ['rows'],
+        properties: {
+          rows: {
+            type: 'ARRAY',
+            items: {
+              type: 'OBJECT',
+              required: ['tenMon', 'tinChi', 'hocKy', 'diems'],
+              properties: {
+                tenMon: { type: 'STRING' },
+                tinChi: { type: 'INTEGER' },
+                hocKy: { type: 'STRING' },
+                diems: {
+                  type: 'ARRAY',
+                  items: {
+                    type: 'OBJECT',
+                    required: ['loaiDanhGia', 'diem', 'scale', 'trongSo'],
+                    properties: {
+                      loaiDanhGia: { type: 'STRING' },
+                      diem: { type: 'STRING' },
+                      scale: { type: 'STRING' },
+                      trongSo: { type: 'NUMBER' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+  }
   if (kind === 'receipt') {
     return {
       prompt: [
@@ -179,7 +277,7 @@ async function extractWithVisionAI(body, deps = {}) {
   const { prompt, schema } = buildVisionRequest(kind);
   const generationConfig = {
     temperature: 0.1,
-    maxOutputTokens: kind === 'receipt' ? 500 : 2048,
+    maxOutputTokens: kind === 'receipt' ? 500 : 3072,
     responseMimeType: 'application/json',
     responseSchema: schema,
   };
@@ -227,7 +325,11 @@ async function extractWithVisionAI(body, deps = {}) {
     } catch {
       throw visionError(422, 'OCR_AI_INVALID_JSON', 'Phản hồi AI không đúng định dạng dữ liệu. Hãy thử quét lại.');
     }
-    return kind === 'receipt' ? normalizeReceiptAi(parsed, config.model) : normalizeTimetableAi(parsed, config.model);
+    return kind === 'receipt'
+      ? normalizeReceiptAi(parsed, config.model)
+      : kind === 'transcript'
+        ? normalizeTranscriptAi(parsed, config.model)
+        : normalizeTimetableAi(parsed, config.model);
   } catch (error) {
     if (typeof error.code === 'string' && error.code.startsWith('OCR_AI_')) throw error;
     if (['TimeoutError', 'AbortError'].includes(error.name)) {
@@ -241,5 +343,6 @@ module.exports = {
   parseVisionInput,
   normalizeReceiptAi,
   normalizeTimetableAi,
+  normalizeTranscriptAi,
   extractWithVisionAI,
 };

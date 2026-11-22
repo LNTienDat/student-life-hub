@@ -1,4 +1,4 @@
-const { tinhDiemMon, quyDoiHe4 } = require('../../src/utils/grade.util');
+const { tinhDiemMon, quyDoiHe4, quyDoiDiemChu, convertInputToScale10 } = require('../../src/utils/grade.util');
 
 describe('Grade Util Tests', () => {
   describe('tinhDiemMon()', () => {
@@ -54,6 +54,27 @@ describe('Grade Util Tests', () => {
     test('quy đổi điểm liệt / rớt môn (< 4.0 -> 0.0)', () => {
       expect(quyDoiHe4(3.9)).toBe(0);
       expect(quyDoiHe4(0)).toBe(0);
+    });
+  });
+
+  describe('8-level / 9-level scales & input conversion', () => {
+    test('quy đổi đúng chuẩn 8 bậc (có B+, C+, D+) và điểm chữ', () => {
+      expect(quyDoiHe4(8.2, '8_level')).toBe(3.5);
+      expect(quyDoiDiemChu(8.2, '8_level')).toBe('B+');
+      expect(quyDoiHe4(6.7, '8_level')).toBe(2.5);
+      expect(quyDoiDiemChu(6.7, '8_level')).toBe('C+');
+      expect(quyDoiHe4(5.1, '8_level')).toBe(1.5);
+      expect(quyDoiDiemChu(5.1, '8_level')).toBe('D+');
+      expect(quyDoiHe4(8.7, '9_level')).toBe(3.7);
+      expect(quyDoiDiemChu(9.2, '9_level')).toBe('A+');
+    });
+
+    test('convertInputToScale10 chuyển đổi chính xác từ thang 10, thang 4 và điểm chữ', () => {
+      expect(convertInputToScale10({ value: '8.4', inputScale: '10' })).toBe(8.4);
+      expect(convertInputToScale10({ value: '3.5', inputScale: '4', gradeScale: '8_level' })).toBe(8);
+      expect(convertInputToScale10({ value: 'B+', inputScale: 'letter', gradeScale: '8_level' })).toBe(8);
+      expect(convertInputToScale10({ value: 'A+', inputScale: 'letter', gradeScale: '9_level' })).toBe(9);
+      expect(Number.isNaN(convertInputToScale10({ value: '4.5', inputScale: '4' }))).toBe(true);
     });
   });
 });

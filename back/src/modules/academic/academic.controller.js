@@ -180,7 +180,7 @@ async function tinhGPA(req, res) {
       include: { diems: true },
     }), req.query.hocKy);
 
-    res.json(tinhGPAService(monHocs));
+    res.json(tinhGPAService(monHocs, req.query.scale || '5_level'));
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Lỗi server' });
@@ -255,7 +255,7 @@ async function gpaTheoKy(req, res) {
       include: { diems: true },
     }), req.query.hocKy);
 
-    const theoKy = gpaTheoKyService(monHocs);
+    const theoKy = gpaTheoKyService(monHocs, req.query.scale || '5_level');
     res.json({ theoKy });
   } catch (error) {
     console.error(error);
@@ -349,6 +349,104 @@ async function xuatBangDiemPDF(req, res) {
   }
 }
 
+async function nhapHangLoatMonVaDiem(req, res) {
+  try {
+    const items = Array.isArray(req.body?.items) ? req.body.items : [];
+    if (!items.length || items.length > 100) {
+      return res.status(400).json({ message: 'Chọn từ 1 đến 100 môn học để lưu.' });
+    }
+
+    const sanitized = [];
+    for (const raw of items) {
+      const ten = typeof raw?.ten === 'string' ? raw.ten.trim() : '';
+      const hocKy = typeof raw?.hocKy === 'string' ? normalizeSemester(raw.hocKy) : '';
+      const tinChi = finiteNumber(raw?.tinChi);
+      if (!ten || ten.length > 100 || !hocKy || hocKy.length > 100 || !Number.isInteger(tinChi) || tinChi < ACADEMIC.MIN_TIN_CHI_MON || tinChi > ACADEMIC.MAX_TIN_CHI_MON) {
+        return res.status(400).json({ message: `Thông tin môn "${ten || 'trống'}" không hợp lệ (kiểm tra tên, học kỳ, tín chỉ 1–${ACADEMIC.MAX_TIN_CHI_MON}).` });
+      }
+      const rawGrades = Array.isArray(raw?.diems) ? raw.diems : [];
+      const diems = [];
+      let sumWeight = 0;
+      for (const g of rawGrades) {
+        const loaiDanhGia = typeof g?.loaiDanhGia === 'string' ? g.loaiDanhGia.trim().slice(0, 60) : '';
+        const diem = finiteNumber(g?.diem);
+        const trongSo = finiteNumber(g?.trongSo);
+        if (!loaiDanhGia || !Number.isFinite(diem) || diem < 0 || diem > 10 || !Number.isFinite(trongSo) || trongSo <= 0 || trongSo > 100) {
+          return res.status(400).json({ message: `Cột điểm "${loaiDanhGia || 'trống'}" của môn "${ten}" không hợp lệ.` });
+        }
+        sumWeight += trongSo;
+        diems.push({ loaiDanhGia, diem: Math.round(diem * 100) / 100, trongSo: Math.round(trongSo * 100) / 100 });
+      }
+      if (sumWeight > 100 + 1e-8) {
+        return res.status(400).json({ message: `Tổng trọng số điểm của môn "${ten}" vượt quá 100%.` });
+      }
+      sanitized.push({ ten, tinChi, hocKy, diems });
+    }
+
+    const subjectKey = (ten, hocKy) => `${ten.normalize('NFC').toLocaleLowerCase('vi')}::${normalizeSemester(hocKy).normalize('NFC').toLocaleLowerCase('vi')}`;
+    const gradeKey = (label) => String(label || '').trim().normalize('NFC').toLocaleLowerCase('vi');
+
+    const summary = await serializable(prisma, async (tx) => {
+      const existing = await tx.monHoc.findMany({
+        where: { idNguoiDung: req.user.id },
+        include: { diems: true },
+      });
+      const existingMap = new Map(existing.map((m) => [subjectKey(m.ten, m.hocKy), m]));
+      let createdSubjects = 0;
+      let updatedSubjects = 0;
+      let createdGrades = 0;
+      let skippedGrades = 0;
+
+      for (const item of sanitized) {
+        const key = subjectKey(item.ten, item.hocKy);
+        let subject = existingMap.get(key);
+        if (!subject) {
+          subject = await tx.monHoc.create({
+            data: { ten: item.ten, tinChi: item.tinChi, hocKy: item.hocKy, idNguoiDung: req.user.id },
+            include: { diems: true },
+          });
+          existingMap.set(key, subject);
+          createdSubjects++;
+        }
+
+        if (item.diems.length) {
+          const currentLabels = new Set((subject.diems || []).map((d) => gradeKey(d.loaiDanhGia)));
+          let currentWeight = (subject.diems || []).reduce((sum, d) => sum + Number(d.trongSo), 0);
+          let addedForThisSubject = 0;
+
+          for (const g of item.diems) {
+            const gKey = gradeKey(g.loaiDanhGia);
+            if (currentLabels.has(gKey) || currentWeight + g.trongSo > 100 + 1e-8) {
+              skippedGrades++;
+              continue;
+            }
+            const created = await tx.diem.create({
+              data: { idMonHoc: subject.id, loaiDanhGia: g.loaiDanhGia, diem: g.diem, trongSo: g.trongSo },
+            });
+            subject.diems.push(created);
+            currentLabels.add(gKey);
+            currentWeight += g.trongSo;
+            createdGrades++;
+            addedForThisSubject++;
+          }
+          if (addedForThisSubject > 0 && !existing.includes(subject)) {
+            // New subject already counted in createdSubjects
+          } else if (addedForThisSubject > 0) {
+            updatedSubjects++;
+          }
+        }
+      }
+
+      return { createdSubjects, updatedSubjects, createdGrades, skippedGrades };
+    });
+
+    return res.status(201).json({ message: 'Đã lưu danh sách môn học và điểm số.', ...summary });
+  } catch (error) {
+    console.error(error);
+    return res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Chưa lưu được danh sách môn học.' });
+  }
+}
+
 module.exports = {
   themMonHoc,
   layDanhSachMonHoc,
@@ -362,4 +460,5 @@ module.exports = {
   canhBaoMonNguyCo,
   gpaTheoKy,
   xuatBangDiemPDF,
+  nhapHangLoatMonVaDiem,
 };

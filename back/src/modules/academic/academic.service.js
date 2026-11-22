@@ -13,14 +13,14 @@ const { ACADEMIC } = require('../../constants');
  * @param {Array} monHocs - Danh sách môn học kèm mảng diems
  * @returns {{ gpa: string, gpaHe4: string, chiTiet: Array, hasGrades: boolean }}
  */
-function tinhGPAService(monHocs) {
+function tinhGPAService(monHocs, scaleId = '5_level') {
   let tongDiemTinChi = 0;
   let tongDiemHe4TinChi = 0;
   let tongTinChi = 0;
 
   const chiTiet = monHocs.map((mon) => {
     const { diemTrungBinh: diemMon, tongTrongSo } = tinhDiemMon(mon.diems);
-    const diemHe4 = quyDoiHe4(diemMon);
+    const diemHe4 = quyDoiHe4(diemMon, scaleId);
 
     if (tongTrongSo > 0) {
       tongDiemTinChi += diemMon * mon.tinChi;
@@ -66,7 +66,7 @@ function canhBaoMonNguyCoService(monHocs, nguong = ACADEMIC.DEFAULT_NGUONG_CANH_
  * @param {Array} monHocs - Danh sách môn học kèm mảng diems
  * @returns {Array} Mảng các { hocKy, gpa }
  */
-function gpaTheoKyService(monHocs) {
+function gpaTheoKyService(monHocs, scaleId = '5_level') {
   const theoKy = {};
 
   monHocs.forEach((source) => {
@@ -78,7 +78,7 @@ function gpaTheoKyService(monHocs) {
       theoKy[mon.hocKy] = { tongDiemTinChi: 0, tongDiemHe4TinChi: 0, tongTinChi: 0 };
     }
     theoKy[mon.hocKy].tongDiemTinChi += diemMon * mon.tinChi;
-    theoKy[mon.hocKy].tongDiemHe4TinChi += quyDoiHe4(diemMon) * mon.tinChi;
+    theoKy[mon.hocKy].tongDiemHe4TinChi += quyDoiHe4(diemMon, scaleId) * mon.tinChi;
     theoKy[mon.hocKy].tongTinChi += mon.tinChi;
   });
 

@@ -2,6 +2,7 @@ const {
   parseVisionInput,
   normalizeReceiptAi,
   normalizeTimetableAi,
+  normalizeTranscriptAi,
   extractWithVisionAI,
 } = require('../../src/modules/imports/visionOcr.service');
 
@@ -129,5 +130,38 @@ describe('visionOcr.service', () => {
     expect(receipt.ngayGiaoDich).toBe('2019-02-18');
     expect(receipt.moTa).toBe('CÀ PHÊ HOÀNG PHÚC');
     expect(receipt.nguon).toBe('ai_vision');
+  });
+
+  test('normalizes AI transcript output across 10-point, 4-point, and letter grades safely', () => {
+    const parsed = parseVisionInput({ kind: 'transcript', dongYGuiAI: true, imageBase64: sampleBase64 });
+    expect(parsed.kind).toBe('transcript');
+
+    const normalized = normalizeTranscriptAi({
+      rows: [
+        {
+          tenMon: 'Cơ sở dữ liệu',
+          tinChi: 3,
+          hocKy: 'HK1 2025-2026',
+          diems: [
+            { loaiDanhGia: 'Giữa kỳ', diem: '8.5', scale: '10', trongSo: 30 },
+            { loaiDanhGia: 'Cuối kỳ', diem: '3.5', scale: '4', trongSo: 70 },
+          ],
+        },
+        {
+          tenMon: 'Tiếng Anh 1',
+          tinChi: 0,
+          hocKy: '',
+          diems: [{ loaiDanhGia: 'Tổng kết', diem: 'B+', scale: 'letter', trongSo: 100 }],
+        },
+      ],
+    }, 'gemini-3.5-flash-lite');
+
+    expect(normalized.nguon).toBe('ai_vision');
+    expect(normalized.rows).toHaveLength(2);
+    expect(normalized.rows[0].diems[0].diem).toBe(8.5);
+    expect(normalized.rows[0].diems[1].diem).toBe(8);
+    expect(normalized.rows[1].tinChi).toBe(3);
+    expect(normalized.rows[1].tinChiMacDinh).toBe(true);
+    expect(normalized.rows[1].diems[0].diem).toBe(8);
   });
 });

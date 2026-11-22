@@ -87,3 +87,29 @@ export async function scanTimetableWithAI(file, { signal } = {}) {
   }));
   return { rows, text: `AI Vision (${data.model || 'Gemini'}): đã trích xuất ${rows.length} buổi học.` };
 }
+
+export async function scanTranscriptWithAI(file, { signal } = {}) {
+  const { mimeType, imageBase64 } = await compressImageForVision(file, { maxEdge: 1900, quality: 0.9 });
+  const { data } = await api.post(
+    '/imports/ocr-ai',
+    { kind: 'transcript', dongYGuiAI: true, mimeType, imageBase64 },
+    { signal }
+  );
+  const rows = (data.rows || []).map((row, idx) => ({
+    id: globalThis.crypto?.randomUUID ? crypto.randomUUID() : `tr-${Date.now()}-${idx}`,
+    selected: true,
+    ten: row.ten || '',
+    tinChi: row.tinChi || 3,
+    tinChiMacDinh: Boolean(row.tinChiMacDinh),
+    hocKy: row.hocKy || '',
+    diems: (row.diems || []).map((g, gi) => ({
+      id: globalThis.crypto?.randomUUID ? crypto.randomUUID() : `gr-${Date.now()}-${idx}-${gi}`,
+      loaiDanhGia: g.loaiDanhGia || 'Tổng kết',
+      rawValue: g.rawValue ?? String(g.diem ?? ''),
+      inputScale: ['10', '4', 'letter'].includes(g.inputScale) ? g.inputScale : '10',
+      diem: Number(g.diem),
+      trongSo: Number(g.trongSo) || 100,
+    })),
+  }));
+  return { rows, model: data.model || 'Gemini' };
+}

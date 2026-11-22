@@ -16,11 +16,13 @@ const {
   canhBaoMonNguyCo,
   gpaTheoKy,
   xuatBangDiemPDF,
+  nhapHangLoatMonVaDiem,
 } = require('./academic.controller');
 
 router.use(xacThuc);
 
 router.post('/mon-hoc', themMonHoc);
+router.post('/mon-hoc/import-batch', nhapHangLoatMonVaDiem);
 router.get('/mon-hoc', layDanhSachMonHoc);
 router.put('/mon-hoc/:id', suaMonHoc);
 router.delete('/mon-hoc/:id', xoaMonHoc);
