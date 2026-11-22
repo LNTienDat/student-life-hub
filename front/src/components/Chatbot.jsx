@@ -7,7 +7,7 @@ import AgentActionCard from './AgentActionCard';
 import { MessageCircle, X, Send, RotateCcw, FileText, GripVertical, Mic, MicOff } from 'lucide-react';
 import api from '../services/api';
 import { chatbotHistory } from '../services/chatbotHistory';
-import { createVoiceSession, isSpeechRecognitionSupported } from '../utils/speechRecognition';
+import { createVoiceSession, isSpeechRecognitionSupported, mergeVoiceTranscript } from '../utils/speechRecognition';
 
 const POS_STORAGE_KEY = 'slh:chatbot-pos';
 
@@ -251,17 +251,19 @@ function Chatbot({ userId }) {
     if (!speechSupported || dangGui) return;
     setVoiceError('');
     setDangGhiAm(true);
+    const baseDraft = noiDungNhap;
     const session = createVoiceSession({
       lang: language === 'en' ? 'en-US' : 'vi-VN',
-      onInterim: (transcript) => setNoiDungNhap(transcript),
+      onInterim: (transcript) => setNoiDungNhap(mergeVoiceTranscript(baseDraft, transcript)),
       onFinal: (transcript) => {
-        setNoiDungNhap(transcript);
-        if (transcript) guiTinNhan(transcript);
+        setNoiDungNhap(mergeVoiceTranscript(baseDraft, transcript));
+        requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
       },
       onError: (msg) => setVoiceError(msg),
       onEnd: () => {
         setDangGhiAm(false);
         voiceSessionRef.current = null;
+        requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
       },
     });
     voiceSessionRef.current = session;

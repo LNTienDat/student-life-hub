@@ -17,6 +17,14 @@ export function mapSpeechError(code) {
   return 'Chưa nhận diện được giọng nói. Hãy thử lại.';
 }
 
+export function mergeVoiceTranscript(existingDraft = '', transcript = '') {
+  const base = String(existingDraft || '').trim();
+  const spoken = String(transcript || '').trim();
+  if (!spoken) return base;
+  if (!base) return spoken;
+  return `${base} ${spoken}`;
+}
+
 export function createVoiceSession({
   lang = 'vi-VN',
   onInterim = null,

@@ -4,6 +4,7 @@ import {
   createVoiceSession,
   isSpeechRecognitionSupported,
   mapSpeechError,
+  mergeVoiceTranscript,
 } from '../src/utils/speechRecognition.js';
 
 function createMockWindow({ webkit = false } = {}) {
@@ -146,4 +147,11 @@ test('createVoiceSession handles abort and missing browser support safely', () =
   }).start();
   assert.equal(unsupportedErrors.length, 1);
   assert.equal(unsupportedEnded, true);
+});
+
+test('mergeVoiceTranscript keeps spoken draft editable and appends cleanly to existing input', () => {
+  assert.equal(mergeVoiceTranscript('', 'Ghi chi 45k trà sữa hôm nay'), 'Ghi chi 45k trà sữa hôm nay');
+  assert.equal(mergeVoiceTranscript('Ghi chi', '45k trà sữa'), 'Ghi chi 45k trà sữa');
+  assert.equal(mergeVoiceTranscript('  Tạo deadline ', ' nộp báo cáo ngày mai  '), 'Tạo deadline nộp báo cáo ngày mai');
+  assert.equal(mergeVoiceTranscript('Ghi chi 30k', ''), 'Ghi chi 30k');
 });
