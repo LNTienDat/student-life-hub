@@ -8,6 +8,7 @@ import ImportPanel from '../components/ImportPanel';
 import TranscriptImportModal from '../components/TranscriptImportModal';
 import SyncSubjectsFromTimetableModal from '../components/SyncSubjectsFromTimetableModal';
 import GradePredictorModal from '../components/GradePredictorModal';
+import WhatIfGpaModal from '../components/WhatIfGpaModal';
 import { useCurrentSemester } from '../context/SemesterContext';
 import { useSemester } from '../hooks/useSemester';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
@@ -15,7 +16,7 @@ import academicService from '../services/academicService';
 import { clearCache } from '../services/apiCache';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
-import { BookOpen, Plus, Target, Download, Camera, CalendarSync, FileSpreadsheet, SlidersHorizontal } from 'lucide-react';
+import { BookOpen, Plus, Target, Download, Camera, CalendarSync, FileSpreadsheet, SlidersHorizontal, TrendingUp } from 'lucide-react';
 import {
   GRADE_SCALE_PRESETS,
   loadGradePrefs,
@@ -48,6 +49,7 @@ function MonHoc() {
   const [syncTimetableOpen, setSyncTimetableOpen] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
   const [predictSubject, setPredictSubject] = useState(null);
+  const [whatIfOpen, setWhatIfOpen] = useState(false);
 
   const [monThemDiemId, setMonThemDiemId] = useSessionDraft('MonHoc.jsx:monThemDiemId', null);
   const [dangSuaDiemId, setDangSuaDiemId] = useSessionDraft('MonHoc.jsx:dangSuaDiemId', null);
@@ -348,6 +350,13 @@ function MonHoc() {
           <div className="order-3 md:order-2 grid grid-cols-2 items-stretch gap-2 md:flex md:flex-wrap md:items-center">
             <button
               type="button"
+              onClick={() => setWhatIfOpen(true)}
+              className="flex min-h-11 justify-center items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/70 px-3.5 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200 whitespace-nowrap transition-colors"
+            >
+              <TrendingUp className="h-4 w-4 shrink-0" />{tr("Giả lập GPA")}
+            </button>
+            <button
+              type="button"
               onClick={() => setTranscriptOpen(true)}
               className="flex min-h-11 justify-center items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-200 whitespace-nowrap transition-colors"
             >
@@ -578,6 +587,16 @@ function MonHoc() {
           mon={predictSubject}
           open={Boolean(predictSubject)}
           onClose={() => setPredictSubject(null)}
+          scaleId={gradePrefs.scaleId}
+        />
+      )}
+
+      {whatIfOpen && (
+        <WhatIfGpaModal
+          key={`whatif:${whatIfOpen}:${gradePrefs.scaleId}`}
+          open={whatIfOpen}
+          onClose={() => setWhatIfOpen(false)}
+          subjects={danhSach}
           scaleId={gradePrefs.scaleId}
         />
       )}

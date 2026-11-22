@@ -14,6 +14,7 @@ const {
   kiemTraNganSach,
   xuHuongNThang,
   xuatBaoCaoTaiChinhExcel,
+  duBaoTaiChinh,
 } = require('./finance.controller');
 
 router.use(xacThuc);
@@ -35,6 +36,7 @@ router.get('/ngan-sach', kiemTraNganSach);
 router.delete('/ngan-sach/:id', xoaNganSach);
 
 router.get('/xu-huong', xuHuongNThang);
+router.get('/du-bao', duBaoTaiChinh);
 router.get('/xuat-bao-cao', xuatBaoCaoTaiChinhExcel);
 
 module.exports = router;

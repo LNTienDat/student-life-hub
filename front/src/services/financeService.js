@@ -24,6 +24,10 @@ export const financeService = {
     if (thang && nam) { params.set('thang', thang); params.set('nam', nam); }
     return api.get(`/finance/xu-huong?${params}`);
   },
+  layDuBao: (thang, nam) => {
+    const q = thang && nam ? `?thang=${thang}&nam=${nam}` : '';
+    return api.get(`/finance/du-bao${q}`);
+  },
   xuatBaoCaoExcel: (thang, nam) => {
     const q = thang && nam ? `?thang=${thang}&nam=${nam}` : '';
     return api.get(`/finance/xuat-bao-cao${q}`, { responseType: 'blob', timeout: 60000 });

@@ -17,6 +17,7 @@ import FinanceKpiCards from './taichinh/FinanceKpiCards';
 import BudgetSection from './taichinh/BudgetSection';
 import FinanceTrendChart from './taichinh/FinanceTrendChart';
 import FinancePeriodPicker from './taichinh/FinancePeriodPicker';
+import FinanceForecastCard from './taichinh/FinanceForecastCard';
 import TransactionForm from './taichinh/TransactionForm';
 import TransactionTable from './taichinh/TransactionTable';
 import { PageSkeleton } from '../components/Skeleton';
@@ -34,6 +35,7 @@ function FinancePeriod({ period, onPeriodChange }) {
   const label = thang + '/' + nam;
   const cacheKey = 'finance_cache:' + period;
   const [summary, setSummary] = useState(() => getCache(cacheKey));
+  const [forecast, setForecast] = useState(null);
   const [summaryError, setSummaryError] = useState('');
   const [summaryLoading, setSummaryLoading] = useState(true);
   const [retry, setRetry] = useState(0);
@@ -107,12 +109,16 @@ function FinancePeriod({ period, onPeriodChange }) {
     const timer = setTimeout(async () => {
       setSummaryLoading(true); setSummaryError('');
       try {
-        const [stats, budgets, trend] = await Promise.all([
-          financeService.layThongKe(thang, nam), financeService.layNganSach(thang, nam), financeService.layXuHuong(6, thang, nam),
+        const [stats, budgets, trend, forecastRes] = await Promise.all([
+          financeService.layThongKe(thang, nam),
+          financeService.layNganSach(thang, nam),
+          financeService.layXuHuong(6, thang, nam),
+          financeService.layDuBao(thang, nam).catch(() => null),
         ]);
         if (!active) return;
         const value = financeSummary(stats.data, budgets.data, trend.data);
         setSummary(value); setCache(cacheKey, value);
+        setForecast(forecastRes?.data || null);
       } catch (error) {
         if (active) setSummaryError(error.response?.data?.message || 'Chưa tải được số liệu. Thông tin đang hiển thị có thể chưa cập nhật.');
       } finally { if (active) setSummaryLoading(false); }
@@ -324,6 +330,11 @@ function FinancePeriod({ period, onPeriodChange }) {
             onBusyChange={setBudgetSaving} onDirtyChange={setBudgetDirty} disabled={saving || confirm.isLoading} />
           <FinanceTrendChart xuHuong={summary.xuHuong} periodLabel={label} />
         </div>
+        {forecast && (
+          <div className="mt-6">
+            <FinanceForecastCard duBao={forecast} periodLabel={label} />
+          </div>
+        )}
       </div>}
       <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 overflow-hidden">
         <div className="space-y-2 px-4 pt-4 md:px-6">

@@ -12,6 +12,7 @@ const {
   thongKeTaiChinhService,
   kiemTraNganSachService,
 } = require('./finance.service');
+const { analyzeFinancePredictions } = require('./analytics.service');
 
 const { validCategory, categoryLabels } = require('./category.service');
 
@@ -442,7 +443,40 @@ async function xoaNganSach(req,res) {
   }catch{res.status(500).json({message:'Chưa gỡ được ngân sách.'});}
 }
 
+async function duBaoTaiChinh(req, res) {
+  try {
+    const idNguoiDung = req.user.id;
+    const { thang, nam, from, to } = readPeriod(req.query);
+    const totalPrevMonths = nam * 12 + (thang - 1) - 6;
+    const histYear = Math.floor(totalPrevMonths / 12);
+    const histMonth = ((totalPrevMonths % 12) + 12) % 12 + 1;
+    const { from: histStart } = monthRange(histMonth, histYear);
+
+    const [monthExpenses, historyExpenses, budgets] = await Promise.all([
+      prisma.giaoDich.findMany({
+        where: { idNguoiDung, loai: 'chi', ngayGiaoDich: { gte: from, lt: to } },
+        select: { id: true, danhMuc: true, soTien: true, moTa: true, ngayGiaoDich: true },
+        orderBy: { ngayGiaoDich: 'desc' },
+      }),
+      prisma.giaoDich.findMany({
+        where: { idNguoiDung, loai: 'chi', ngayGiaoDich: { gte: histStart, lt: from } },
+        select: { id: true, danhMuc: true, soTien: true, ngayGiaoDich: true },
+      }),
+      prisma.nganSach.findMany({
+        where: { idNguoiDung, thang, nam },
+        select: { id: true, danhMuc: true, soTienToiDa: true },
+      }),
+    ]);
+
+    return res.json(analyzeFinancePredictions({ monthExpenses, historyExpenses, budgets, thang, nam }));
+  } catch (error) {
+    console.error(error);
+    return res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : 'Chưa tải được dữ liệu dự báo.' });
+  }
+}
+
 module.exports = {
+  duBaoTaiChinh,
   xoaNganSach,
   themGiaoDich,
   layDanhSachGiaoDich,
