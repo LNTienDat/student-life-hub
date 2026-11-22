@@ -13,10 +13,11 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import timetableService from '../services/timetableService';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../context/ToastContext';
-import { Plus, CalendarDays, CalendarRange, CalendarCheck, ChevronLeft, ChevronRight, Share2, Trash2, ImagePlus, CalendarPlus } from 'lucide-react';
+import { Plus, CalendarDays, CalendarRange, CalendarCheck, ChevronLeft, ChevronRight, Share2, Trash2, ImagePlus, CalendarPlus, Sparkles } from 'lucide-react';
 import { CAC_THU, gioSangPhut } from './thoikhoabieu/timetableUtils';
 import { timetableToIcs, timetableGoogleCalendarUrl, downloadIcs } from '../utils/icsExport';
 import CalendarSyncModal from '../components/CalendarSyncModal';
+import StudyPlannerModal from '../components/StudyPlannerModal';
 
 import TimetableForm from './thoikhoabieu/TimetableForm';
 import TimetableGrid from './thoikhoabieu/TimetableGrid';
@@ -29,6 +30,7 @@ function ThoiKhoaBieu() {
   const [semester] = useSemester();
   const [imagePickerOpen,setImagePickerOpen] = useState(false);
   const [calendarSyncOpen, setCalendarSyncOpen] = useState(false);
+  const [plannerOpen, setPlannerOpen] = useState(false);
   const [week,setWeek]=useState(()=>monday());
   const [adjusting,setAdjusting]=useState(null);
   const [adjustments,setAdjustments]=useState([]);
@@ -263,6 +265,13 @@ function ThoiKhoaBieu() {
           <div className="order-3 md:order-2 grid w-full grid-cols-2 items-stretch gap-2.5 md:flex md:w-auto md:flex-wrap md:items-center">
             <button
               type="button"
+              onClick={() => setPlannerOpen(true)}
+              className="col-span-2 md:col-auto md:order-5 inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-200 whitespace-nowrap transition-colors shadow-sm"
+            >
+              <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />{tr("Xếp lịch ôn AI")}
+            </button>
+            <button
+              type="button"
               onClick={() => setImagePickerOpen(true)}
               className="md:order-4 inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 whitespace-nowrap transition-colors shadow-sm"
             >
@@ -295,7 +304,7 @@ function ThoiKhoaBieu() {
               type="button"
               onClick={moFormThem}
               aria-expanded={hienForm}
-              className="col-span-2 md:col-auto md:order-5 flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-sky-500/25 transition-all hover:from-sky-500 hover:to-cyan-500 hover:shadow-lg hover:shadow-sky-500/30 active:scale-[0.98] whitespace-nowrap"
+              className="col-span-2 md:col-auto md:order-6 flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-sky-500/25 transition-all hover:from-sky-500 hover:to-cyan-500 hover:shadow-lg hover:shadow-sky-500/30 active:scale-[0.98] whitespace-nowrap"
             >
               <Plus className="w-4 h-4 shrink-0" />
               {tr('Thêm buổi học')}
@@ -396,6 +405,15 @@ function ThoiKhoaBieu() {
             downloadIcs('lich-hoc-lifehub.ics', timetableToIcs(baseList, { weekStartDate: week, semester: semester || currentSemester }));
             hienToast('success', 'Đã tải file .ics! Mở trang Nhập Google Calendar để đưa vào lịch.');
           }}
+        />
+      )}
+
+      {plannerOpen && (
+        <StudyPlannerModal
+          open={plannerOpen}
+          onClose={() => setPlannerOpen(false)}
+          weekStart={week}
+          semester={semester || currentSemester}
         />
       )}
 

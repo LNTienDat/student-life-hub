@@ -220,6 +220,29 @@ export function deadlineGoogleCalendarUrl(item) {
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
+export function studySessionGoogleCalendarUrl(session) {
+  const ngayHoc = String(session?.ngayHoc || '').trim();
+  const startClock = String(session?.gioBatDau || '').trim();
+  const endClock = String(session?.gioKetThuc || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ngayHoc) || !CLOCK_RE.test(startClock) || !CLOCK_RE.test(endClock) || endClock <= startClock) {
+    return '';
+  }
+  const summary = String(session?.tieuDe || 'Phiên ôn tập').trim();
+  const descParts = [];
+  if (session?.monHoc) descParts.push(`Môn học: ${session.monHoc}`);
+  if (Array.isArray(session?.reasons) && session.reasons.length) {
+    descParts.push(`Lý do xếp lịch:\n- ${session.reasons.join('\n- ')}`);
+  }
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: summary,
+    dates: `${formatIcsLocal(ngayHoc, startClock)}/${formatIcsLocal(ngayHoc, endClock)}`,
+    ctz: 'Asia/Ho_Chi_Minh',
+  });
+  if (descParts.length) params.set('details', descParts.join('\n'));
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
 export function downloadIcs(filename, content) {
   const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);

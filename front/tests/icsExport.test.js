@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { timetableToIcs, deadlinesToIcs, timetableGoogleCalendarUrl, deadlineGoogleCalendarUrl } from '../src/utils/icsExport.js';
+import { timetableToIcs, deadlinesToIcs, timetableGoogleCalendarUrl, deadlineGoogleCalendarUrl, studySessionGoogleCalendarUrl } from '../src/utils/icsExport.js';
 
 test('timetableToIcs exports valid RFC 5545 recurring weekly classes with room, lecturer, and reminder', () => {
   const ics = timetableToIcs(
@@ -104,4 +104,17 @@ test('Google Calendar template URLs include recurring timetable rule and pending
   });
   assert.match(taskUrl, /dates=20261120T235900%2F20261121T002900/);
   assert.equal(deadlineGoogleCalendarUrl({ id: 2, tieuDe: 'Xong', hanChot: '2026-11-20T16:59:00.000Z', trangThai: 'hoan_thanh' }), '');
+
+  const studyUrl = studySessionGoogleCalendarUrl({
+    tieuDe: 'Ôn tập: Python',
+    ngayHoc: '2026-11-24',
+    gioBatDau: '19:00',
+    gioKetThuc: '20:30',
+    monHoc: 'Python',
+    reasons: ['Tránh 2 buổi học trong Thứ 3'],
+  });
+  assert.match(studyUrl, /^https:\/\/calendar\.google\.com\/calendar\/render\?/);
+  assert.match(studyUrl, /dates=20261124T190000%2F20261124T203000/);
+  assert.match(studyUrl, /ctz=Asia%2FHo_Chi_Minh/);
+  assert.equal(studySessionGoogleCalendarUrl({ ngayHoc: '2026-11-24', gioBatDau: '20:00', gioKetThuc: '19:00' }), '');
 });

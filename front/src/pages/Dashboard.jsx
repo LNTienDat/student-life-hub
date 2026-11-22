@@ -9,8 +9,9 @@ import QuickEntry from './dashboard/QuickEntry';
 import { academicService } from '../services/academicService';
 import { deadlineService } from '../services/deadlineService';
 import { financeService } from '../services/financeService';
-import { Plus, CalendarPlus, Wallet } from 'lucide-react';
+import { Plus, CalendarPlus, Wallet, Sparkles } from 'lucide-react';
 import { loadGradePrefs } from '../utils/gradeScale';
+import StudyPlannerModal from '../components/StudyPlannerModal';
 
 import DashboardKpiCards from './dashboard/DashboardKpiCards';
 import DashboardToday from './dashboard/DashboardToday';
@@ -58,6 +59,7 @@ function Dashboard() {
   const [result, setResult] = useState(null);
   const [retry, setRetry] = useState(0);
   const [quickEntry, setQuickEntry] = useState(null);
+  const [plannerOpen, setPlannerOpen] = useState(false);
   const [gradePrefs] = useState(loadGradePrefs);
 
   const queryKey = `${revision}:${semester}:${retry}:${user?.id}:${gradePrefs.scaleId}`;
@@ -110,10 +112,19 @@ function Dashboard() {
               <span>{tr(label)}</span>
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setPlannerOpen(true)}
+            className="col-span-2 sm:col-auto inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-indigo-300 bg-indigo-50/70 px-3.5 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-700/60 dark:bg-indigo-950/50 dark:text-indigo-300 dark:hover:bg-indigo-900/60 shadow-sm whitespace-nowrap transition-all duration-200 active:scale-95"
+          >
+            <Sparkles aria-hidden="true" className="h-4 w-4 shrink-0" />
+            <span>{tr("Xếp lịch ôn AI")}</span>
+          </button>
         </div>
       </header>
 
       {quickEntry && <QuickEntry key={quickEntry} kind={quickEntry} onClose={() => setQuickEntry(null)} />}
+      {plannerOpen && <StudyPlannerModal open={plannerOpen} onClose={() => setPlannerOpen(false)} semester={currentSemester} onApplied={() => setRetry((value) => value + 1)} />}
 
       {errors.length > 0 && <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200 flex flex-wrap justify-between gap-2">
         <span>{tr("Một số số liệu chưa tải được. Các mục còn lại vẫn sử dụng được.")}</span>

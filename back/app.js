@@ -111,6 +111,7 @@ app.use('/api/tai-lieu', require('./src/modules/rag/rag.routes'));
 app.use('/api/nhom', nhomRoutes);
 app.use('/api/imports', require('./src/modules/imports/import.routes'));
 app.use('/api/feedback', require('./src/modules/feedback/feedback.routes'));
+app.use('/api/planner', require('./src/modules/planner/planner.routes'));
 
 // 404 handler cho các route API không tồn tại
 app.use((req, res, next) => {
