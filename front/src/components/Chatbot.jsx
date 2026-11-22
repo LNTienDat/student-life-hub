@@ -3,9 +3,11 @@ import useLanguage from '../hooks/useLanguage';
 import { useState, useRef, useEffect, useId } from 'react';
 import { Link } from 'react-router-dom';
 import DocumentSources from './DocumentSources';
-import { MessageCircle, X, Send, RotateCcw, FileText, GripVertical } from 'lucide-react';
+import AgentActionCard from './AgentActionCard';
+import { MessageCircle, X, Send, RotateCcw, FileText, GripVertical, Mic, MicOff } from 'lucide-react';
 import api from '../services/api';
 import { chatbotHistory } from '../services/chatbotHistory';
+import { createVoiceSession, isSpeechRecognitionSupported } from '../utils/speechRecognition';
 
 const POS_STORAGE_KEY = 'slh:chatbot-pos';
 
@@ -34,9 +36,10 @@ function clampPosition(pos, width, height, viewport) {
 
 const GOI_Y = [
   'Hôm nay học gì & deadline sắp tới?',
+  'Ghi chi 45k trà sữa hôm nay',
+  'Tạo deadline nộp báo cáo ngày mai ưu tiên cao',
   'Giúp mình lập kế hoạch học tuần này',
   'Tháng này chi tiêu bao nhiêu?',
-  'Tư vấn cách ôn thi đại học & chọn ngành',
   'Cách tính điểm GPA theo quy chế?',
 ];
 const LOI_CHAO = { vaiTro: 'bot', noiDung: 'Chào bạn! Mình có thể tra cứu lịch học, deadline, thu chi, giải đáp quy định từ tài liệu tải lên hoặc tư vấn kế hoạch, định hướng học tập bằng AI. Bạn cần mình hỗ trợ gì nào?' };
@@ -52,7 +55,7 @@ function renderMarkdown(text) {
 }
 
 function Chatbot({ userId }) {
-  useLanguage();
+  const { language } = useLanguage();
   const [moChat, setMoChat] = useState(false);
   const [tinNhans, setTinNhans] = useState([LOI_CHAO]);
   const [noiDungNhap, setNoiDungNhap] = useState('');
@@ -60,6 +63,8 @@ function Chatbot({ userId }) {
   const [coTinMoi, setCoTinMoi] = useState(false);
   const [loi, setLoi] = useState(null);
   const [trangThai, setTrangThai] = useState(null);
+  const [dangGhiAm, setDangGhiAm] = useState(false);
+  const [voiceError, setVoiceError] = useState('');
   const [pos, setPos] = useState(loadSavedPosition);
   const [viewport, setViewport] = useState(() => ({
     width: typeof window !== 'undefined' ? window.innerWidth : 1280,
@@ -84,12 +89,14 @@ function Chatbot({ userId }) {
   const daMo = useRef(false);
   const moChatRef = useRef(moChat);
   const requestRef = useRef(null);
+  const voiceSessionRef = useRef(null);
   const dragRef = useRef(null);
   const dragCleanupRef = useRef(null);
   const movedRef = useRef(false);
   const dialogId = useId();
   const titleId = useId();
   const inputId = useId();
+  const speechSupported = isSpeechRecognitionSupported();
 
   useEffect(() => { moChatRef.current = moChat; }, [moChat]);
 
@@ -132,7 +139,11 @@ function Chatbot({ userId }) {
       .then(res => setTrangThai(res.data)).catch(error => { if (error.code !== 'ERR_CANCELED') setTrangThai({ loi: true }); });
     function keydown(event) {
       if (event.key === 'Escape' && !event.defaultPrevented && !document.querySelector('[aria-modal="true"]')) {
-        event.preventDefault(); setMoChat(false);
+        event.preventDefault();
+        voiceSessionRef.current?.abort();
+        voiceSessionRef.current = null;
+        setDangGhiAm(false);
+        setMoChat(false);
       }
     }
     window.addEventListener('keydown', keydown);
@@ -144,6 +155,7 @@ function Chatbot({ userId }) {
   useEffect(() => () => {
     requestRef.current?.abort();
     dragCleanupRef.current?.();
+    voiceSessionRef.current?.abort();
   }, []);
   useEffect(() => {
     if (moChat) daMo.current = true;
@@ -213,12 +225,52 @@ function Chatbot({ userId }) {
     window.addEventListener('pointercancel', onEnd);
   }
 
+  function abortVoice() {
+    voiceSessionRef.current?.abort();
+    voiceSessionRef.current = null;
+    setDangGhiAm(false);
+  }
+
+  function closeChat() {
+    abortVoice();
+    setMoChat(false);
+  }
+
   function batDauMoi() {
+    abortVoice();
+    setVoiceError('');
     requestRef.current?.abort(); requestRef.current = null;
     setDangGui(false); setCoTinMoi(false); setLoi(null); setNoiDungNhap(''); setTinNhans([LOI_CHAO]);
   }
 
+  function toggleVoice() {
+    if (dangGhiAm || voiceSessionRef.current) {
+      voiceSessionRef.current?.stop();
+      return;
+    }
+    if (!speechSupported || dangGui) return;
+    setVoiceError('');
+    setDangGhiAm(true);
+    const session = createVoiceSession({
+      lang: language === 'en' ? 'en-US' : 'vi-VN',
+      onInterim: (transcript) => setNoiDungNhap(transcript),
+      onFinal: (transcript) => {
+        setNoiDungNhap(transcript);
+        if (transcript) guiTinNhan(transcript);
+      },
+      onError: (msg) => setVoiceError(msg),
+      onEnd: () => {
+        setDangGhiAm(false);
+        voiceSessionRef.current = null;
+      },
+    });
+    voiceSessionRef.current = session;
+    session.start();
+  }
+
   async function guiTinNhan(text) {
+    abortVoice();
+    setVoiceError('');
     const content = text.trim();
     if (!content || content.length > 2000 || requestRef.current) return;
     const controller = new AbortController();
@@ -269,7 +321,7 @@ function Chatbot({ userId }) {
             <Link
               to="/tai-lieu"
               onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => setMoChat(false)}
+              onClick={closeChat}
               className="px-2 py-1.5 rounded-lg text-ink-600 hover:text-ink-700 dark:text-ink-300 hover:bg-gray-100 dark:hover:bg-gray-700 inline-flex items-center gap-1 text-xs font-medium transition-colors"
               title={tr("Mở kho tài liệu")}
             >
@@ -277,11 +329,11 @@ function Chatbot({ userId }) {
               <span className="hidden sm:inline">{tr("Tài liệu")}</span>
             </Link>
             <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={() => batDauMoi()} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" aria-label={tr("Cuộc trò chuyện mới")} title={tr("Cuộc trò chuyện mới")}><RotateCcw size={16} /></button>
-            <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={() => setMoChat(false)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" aria-label={tr("Đóng trợ lý")}><X size={18} /></button>
+            <button type="button" onPointerDown={(e) => e.stopPropagation()} onClick={closeChat} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700" aria-label={tr("Đóng trợ lý")}><X size={18} /></button>
           </header>
           <details className="shrink-0 border-b border-gray-200 px-4 text-xs dark:border-gray-700">
             <summary className="min-h-11 cursor-pointer py-3 text-gray-500 dark:text-gray-300">{tr("Tùy chọn trợ lý")}</summary>
-            <Link to="/tai-lieu" onClick={() => setMoChat(false)} className="inline-flex min-h-11 items-center font-semibold text-ink-600 underline dark:text-ink-200">{tr("Quản lý tài liệu")}</Link>
+            <Link to="/tai-lieu" onClick={closeChat} className="inline-flex min-h-11 items-center font-semibold text-ink-600 underline dark:text-ink-200">{tr("Quản lý tài liệu")}</Link>
             {trangThai?.aiSanSang ? <>
               <label className="mb-2 flex min-h-11 items-start gap-2"><input type="checkbox" checked={dongY} onChange={e => doiDongY(e.target.checked ? 'yes' : null)} className="mt-1 h-4 w-4 shrink-0"/><span>{tr("Cho phép AI hỗ trợ khi cần. Câu hỏi, hội thoại AI và đoạn tài liệu liên quan sẽ gửi đến Google; gói miễn phí có thể dùng nội dung để cải thiện sản phẩm.")}</span></label>
               <label className="mb-2 flex min-h-11 items-start gap-2"><input type="checkbox" disabled={!dongY} checked={dungDuLieu} onChange={e => doiDongY(e.target.checked ? 'with-data' : 'yes')} className="mt-1 h-4 w-4 shrink-0"/>{tr("Cho phép gửi tóm tắt lịch học, deadline, GPA và thu/chi đến Google để AI tư vấn khi cần.")}</label>
@@ -291,9 +343,10 @@ function Chatbot({ userId }) {
             {tinNhans.map((tin, i) => (
               <div key={i} className={'flex ' + (tin.vaiTro === 'user' ? 'justify-end' : 'justify-start')}>
                 <div className={'max-w-[92%] break-words [overflow-wrap:anywhere] rounded-xl px-3 py-2 text-sm ' + (tin.vaiTro === 'user' ? 'bg-ink-600 text-white' : 'bg-gray-100 dark:bg-gray-700')}>
-                  {tin.nguon && <div className="text-[11px] mb-1 text-gray-500 dark:text-gray-300">{tin.nguon === 'rag' ? tr('AI dựa trên tài liệu') : tin.nguon === 'tai_lieu' ? tr('Tra cứu tài liệu') : tin.nguon === 'ai' ? tr('Gợi ý từ AI') : tr('Dữ liệu LifeHub')}{tin.capNhatLuc && ' · ' + new Date(tin.capNhatLuc).toLocaleTimeString(getLocale(), { hour: '2-digit', minute: '2-digit' })}</div>}
+                  {tin.nguon && <div className="text-[11px] mb-1 text-gray-500 dark:text-gray-300">{tin.nguon === 'rag' ? tr('AI dựa trên tài liệu') : tin.nguon === 'tai_lieu' ? tr('Tra cứu tài liệu') : tin.nguon === 'ai' ? tr('Gợi ý từ AI') : tin.nguon === 'agent' ? tr('AI Agent · Đề xuất thao tác') : tr('Dữ liệu LifeHub')}{tin.capNhatLuc && ' · ' + new Date(tin.capNhatLuc).toLocaleTimeString(getLocale(), { hour: '2-digit', minute: '2-digit' })}</div>}
                   {tin.vaiTro === 'bot' ? renderMarkdown(tin === LOI_CHAO ? tr(tin.noiDung) : tin.noiDung) : tin.noiDung}
-                  <DocumentSources sources={tin.thamKhao} onOpen={() => setMoChat(false)} />
+                  {tin.hanhDong && <AgentActionCard action={tin.hanhDong} userId={userId} onNavigate={closeChat} />}
+                  <DocumentSources sources={tin.thamKhao} onOpen={closeChat} />
                   {tin.biRutGon && <p className="mt-2 text-xs">{tr("Câu trả lời đã rút gọn. Bạn có thể hỏi tiếp từng ý.")}</p>}
                 </div>
               </div>
@@ -307,9 +360,44 @@ function Chatbot({ userId }) {
               <p>{tr(loi.message)}</p><button type="button" onClick={() => guiTinNhan(loi.text)} className="underline min-h-11">{tr("Thử lại câu hỏi")}</button>
             </div>}
           </div>
+          {voiceError && (
+            <div role="status" className="shrink-0 mx-3 mb-2 flex items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-800 dark:border-amber-800/70 dark:bg-amber-950/50 dark:text-amber-200">
+              <span>{tr(voiceError)}</span>
+              <button type="button" onClick={() => setVoiceError('')} className="p-0.5 text-amber-700 hover:text-amber-900 dark:text-amber-300" aria-label={tr("Đóng thông báo giọng nói")}>
+                <X size={14} />
+              </button>
+            </div>
+          )}
           <form onSubmit={e => { e.preventDefault(); guiTinNhan(noiDungNhap); }} className="shrink-0 border-t dark:border-gray-700 p-3 flex gap-2">
             <label htmlFor={inputId} className="sr-only">{tr("Câu hỏi cho trợ lý")}</label>
-            <input id={inputId} ref={inputRef} type="text" value={noiDungNhap} onChange={e => setNoiDungNhap(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && e.nativeEvent.isComposing) e.preventDefault(); }} maxLength={2000} disabled={dangGui} autoComplete="off" placeholder={tr("Hỏi trợ lý LifeHub…")} className="min-w-0 flex-1 min-h-11 rounded-xl border dark:border-gray-600 bg-transparent px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-400" />
+            <input
+              id={inputId}
+              ref={inputRef}
+              type="text"
+              value={noiDungNhap}
+              onChange={e => setNoiDungNhap(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && e.nativeEvent.isComposing) e.preventDefault(); }}
+              maxLength={2000}
+              disabled={dangGui}
+              autoComplete="off"
+              placeholder={dangGhiAm ? tr("Đang nghe… Hãy nói lệnh hoặc câu hỏi") : tr("Hỏi trợ lý LifeHub…")}
+              className="min-w-0 flex-1 min-h-11 rounded-xl border dark:border-gray-600 bg-transparent px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ink-400"
+            />
+            <button
+              type="button"
+              onClick={toggleVoice}
+              disabled={!speechSupported || dangGui}
+              aria-pressed={dangGhiAm}
+              aria-label={dangGhiAm ? tr("Dừng ghi âm giọng nói") : tr("Ra lệnh bằng giọng nói")}
+              title={!speechSupported ? tr("Trình duyệt chưa hỗ trợ nhập liệu giọng nói") : dangGhiAm ? tr("Dừng ghi âm") : tr("Nói để nhập hoặc ra lệnh (Voice-to-Action)")}
+              className={`w-11 h-11 shrink-0 rounded-xl flex items-center justify-center transition-colors disabled:opacity-40 ${
+                dangGhiAm
+                  ? 'bg-rose-600 text-white animate-pulse'
+                  : 'border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              {dangGhiAm ? <MicOff size={18} /> : <Mic size={18} />}
+            </button>
             <button type="submit" disabled={dangGui || !noiDungNhap.trim()} aria-label={tr("Gửi tin nhắn")} className="w-11 h-11 shrink-0 rounded-xl bg-ink-600 text-white flex items-center justify-center disabled:opacity-40"><Send size={19} /></button>
           </form>
         </section>

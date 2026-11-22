@@ -2,6 +2,7 @@ const { answerDocumentQuestion } = require('../rag/rag.service');
 const { CHATBOT } = require('../../constants');
 const { layDuLieuSinhVien, timChuDe, traLoiDuLieu } = require('./chatbot.service');
 const { cauHinhAI, hoiGemini } = require('./gemini.service');
+const { isActionCommandIntent, proposeAgentAction } = require('./agent.service');
 
 function isFinancePeriodQuery(text) {
   const q = String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll('đ', 'd').toLowerCase();
@@ -14,7 +15,7 @@ function isFinancePeriodQuery(text) {
 function trangThaiChatbot(req, res) {
   const { sanSang, model } = cauHinhAI();
   res.set('Cache-Control', 'no-store');
-  return res.json({ aiSanSang: sanSang, model, duLieuSanSang: true, ragSanSang: true, coCheRag: 'hybrid-bm25-vector-64d-verified' });
+  return res.json({ aiSanSang: sanSang, model, duLieuSanSang: true, ragSanSang: true, agentSanSang: true, coCheRag: 'hybrid-bm25-vector-64d-verified' });
 }
 async function guiTinNhan(req, res) {
   res.set('Cache-Control', 'no-store');
@@ -24,6 +25,14 @@ async function guiTinNhan(req, res) {
   if (!Array.isArray(lichSu) || lichSu.length > CHATBOT.MAX_HISTORY_LENGTH || lichSu.some(t => !t || !['user', 'bot'].includes(t.vaiTro) || typeof t.noiDung !== 'string' || !t.noiDung.trim() || t.noiDung.length > CHATBOT.MAX_MESSAGE_LENGTH) || lichSu.reduce((n, t) => n + t.noiDung.length, 0) > CHATBOT.MAX_HISTORY_CHARACTERS) return res.status(400).json({ message: 'Lịch sử trò chuyện quá dài hoặc không hợp lệ. Hãy bắt đầu cuộc trò chuyện mới.' });
   try {
     if (cheDo === 'auto') {
+      if (isActionCommandIntent(tinNhan)) {
+        const proposal = await proposeAgentAction({
+          tinNhan: tinNhan.trim(),
+          dungAI: dungAI === true,
+          dongYGuiAI: dongYGuiAI === true,
+        });
+        if (proposal) return res.json(proposal);
+      }
       const rawTopics = timChuDe(tinNhan);
       const topics = rawTopics.length ? rawTopics : (isFinancePeriodQuery(tinNhan) ? ['taiChinh'] : []);
       if (topics.length) {
