@@ -35,13 +35,13 @@ export default function FinanceForecastCard({ duBao, periodLabel }) {
               {tr('Dự báo chi tiêu & Phát hiện bất thường')}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {tr('Tháng {0} · Phân tích thống kê định lượng', periodLabel)}
+              {tr('Tháng {0}', periodLabel)}
             </p>
           </div>
         </div>
         <span className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 dark:border-indigo-800/70 dark:bg-indigo-950/60 dark:text-indigo-300">
           <Activity className="h-3.5 w-3.5" aria-hidden="true" />
-          {tr('Burn Rate · Z-score / IQR')}
+          {tr('Dự báo')}
         </span>
       </div>
 
@@ -170,7 +170,7 @@ export default function FinanceForecastCard({ duBao, periodLabel }) {
       ) : (
         <p className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
           <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>{tr('Chưa phát hiện khoản chi bất thường (Z-score & IQR ổn định).')}</span>
+          <span>{tr('Chưa phát hiện khoản chi bất thường.')}</span>
         </p>
       )}
 

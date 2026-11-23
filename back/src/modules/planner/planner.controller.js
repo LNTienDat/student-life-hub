@@ -127,7 +127,7 @@ async function luuKeHoachThanhDeadline(req, res) {
       const prefixTitle = tieuDe.startsWith('[Ôn tập]') ? tieuDe : `[Ôn tập] ${tieuDe}`;
       const finalTitle = `${prefixTitle} (${gioBatDau}–${gioKetThuc})`.slice(0, 200);
       const reasons = Array.isArray(s?.reasons) ? s.reasons.map((r) => String(r || '').trim()).filter(Boolean) : [];
-      const moTa = reasons.length ? `Lịch Neuro-Symbolic AI:\n- ${reasons.join('\n- ')}` : 'Phiên ôn tập từ Neuro-Symbolic AI';
+      const moTa = reasons.length ? `Lịch ôn tập:\n- ${reasons.join('\n- ')}` : 'Phiên ôn tập tự động';
       const doUuTien = ['cao', 'binh_thuong', 'thap'].includes(s?.priorityLevel) ? s.priorityLevel : 'binh_thuong';
 
       normalized.push({

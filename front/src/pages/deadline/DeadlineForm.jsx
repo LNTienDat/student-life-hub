@@ -75,7 +75,7 @@ export default function DeadlineForm({
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-violet-200/80 bg-violet-50/70 px-3 py-2 text-xs text-violet-900 dark:border-violet-800/70 dark:bg-violet-950/40 dark:text-violet-200">
                 <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                   <Cpu className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-300" aria-hidden="true" />
-                  <span>{tr("EdgeAI (trên máy · {0}ms): gợi ý", edgePrediction.latencyMs)}</span>
+                  <span>{tr("Gợi ý:")}</span>
                   <strong className="font-semibold">{edgePriorityLabel}</strong>
                   <span>({pct}%)</span>
                   {edgePrediction.topFeatures?.length > 0 && (
@@ -97,7 +97,7 @@ export default function DeadlineForm({
             ) : (
               <p className="flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-300">
                 <Cpu className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <span>{tr("EdgeAI khớp “{0}” · {1}% · {2}ms · offline", edgePriorityLabel, pct, edgePrediction.latencyMs)}</span>
+                <span>{tr("Đúng như gợi ý: “{0}”", edgePriorityLabel)}</span>
               </p>
             )
           )}

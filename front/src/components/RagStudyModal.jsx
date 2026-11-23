@@ -30,6 +30,12 @@ import { calculateSM2, SM2_QUALITY } from '../utils/sm2';
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D'];
 
+function clampCount(value) {
+  const n = Math.round(Number(value));
+  if (!Number.isFinite(n) || n <= 0) return 6;
+  return Math.min(20, Math.max(3, n));
+}
+
 export default function RagStudyModal({ open, onClose, doc = null, initialTab = 'generate' }) {
   useLanguage();
   const { user } = useAuth();
@@ -100,10 +106,12 @@ export default function RagStudyModal({ open, onClose, doc = null, initialTab = 
 
     setLoading(true);
     setError('');
+    const count = clampCount(soLuong);
+    setSoLuong(count);
     try {
       const res = await generateRagStudyPack(
         doc.id,
-        { soLuong: Number(soLuong) || 6, chuDe: chuDe.trim(), dungAI },
+        { soLuong: count, chuDe: chuDe.trim(), dungAI },
         { signal: controller.signal },
       );
       if (controller.signal.aborted) return;
@@ -134,9 +142,9 @@ export default function RagStudyModal({ open, onClose, doc = null, initialTab = 
     setSavedToDeck(true);
     setSm2Rev((v) => v + 1);
     if (result.added > 0) {
-      hienToast('success', tr('Đã lưu {0} thẻ vào bộ ôn tập SM-2.', result.added));
+      hienToast('success', tr('Đã lưu {0} thẻ vào bộ ôn tập.', result.added));
     } else {
-      hienToast('info', tr('Các thẻ này đã có sẵn trong bộ ôn tập SM-2 của bạn.'));
+      hienToast('info', tr('Các thẻ này đã có sẵn trong bộ ôn tập của bạn.'));
     }
   }
 
@@ -147,7 +155,7 @@ export default function RagStudyModal({ open, onClose, doc = null, initialTab = 
     setSm2Flipped(false);
     setSm2Rev((v) => v + 1);
     if (updated?.needsRelearn) {
-      hienToast('info', tr('Đã đặt lại nhịp SM-2 — thẻ sẽ lặp lại vào ngày mai.'));
+      hienToast('info', tr('Thẻ sẽ được ôn lại vào ngày mai.'));
     }
   }
 
@@ -170,7 +178,7 @@ export default function RagStudyModal({ open, onClose, doc = null, initialTab = 
 
   const modalTitle = doc
     ? tr('Ôn tập · {0}', doc.tieuDe)
-    : tr('Ôn tập SM-2 Spaced Repetition');
+    : tr('Ôn tập thẻ ghi nhớ');
 
   return (
     <ModalDialog
@@ -185,7 +193,7 @@ export default function RagStudyModal({ open, onClose, doc = null, initialTab = 
     >
       <div className="space-y-4">
         {doc && (
-          <div role="tablist" aria-label={tr('Chế độ ôn tập RAG')} className="inline-flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-900">
+          <div role="tablist" aria-label={tr('Chế độ ôn tập')} className="inline-flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-900">
             <button
               type="button"
               role="tab"
@@ -212,7 +220,7 @@ export default function RagStudyModal({ open, onClose, doc = null, initialTab = 
               }`}
             >
               <BrainCircuit className="h-4 w-4" aria-hidden="true" />
-              <span>{tr('Ôn tập SM-2')}</span>
+              <span>{tr('Ôn tập')}</span>
               <span className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
                 tab === 'sm2'
                   ? 'bg-white/20 text-white'
@@ -243,18 +251,39 @@ export default function RagStudyModal({ open, onClose, doc = null, initialTab = 
                   />
                 </label>
                 <label className="block text-xs font-medium text-slate-600 dark:text-slate-300">
-                  {tr('Số câu / thẻ')}
-                  <select
+                  {tr('Số câu hỏi (3–20)')}
+                  <input
+                    type="number"
+                    min={3}
+                    max={20}
+                    step={1}
+                    inputMode="numeric"
                     value={soLuong}
                     disabled={loading}
-                    onChange={(e) => setSoLuong(Number(e.target.value))}
+                    onChange={(e) => setSoLuong(e.target.value === '' ? '' : Number(e.target.value))}
+                    onBlur={() => setSoLuong((v) => clampCount(v))}
                     className="mt-1 min-h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                  >
-                    {[4, 6, 8, 10].map((n) => (
-                      <option key={n} value={n}>{n}</option>
-                    ))}
-                  </select>
+                  />
                 </label>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={tr('Chọn nhanh số câu hỏi')}>
+                <span className="text-xs text-slate-500 dark:text-slate-400">{tr('Chọn nhanh:')}</span>
+                {[5, 10, 15, 20].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    disabled={loading}
+                    aria-pressed={Number(soLuong) === n}
+                    onClick={() => setSoLuong(n)}
+                    className={`min-h-8 rounded-lg border px-3 text-xs font-semibold transition-colors disabled:opacity-50 ${
+                      Number(soLuong) === n
+                        ? 'border-indigo-500 bg-indigo-600 text-white'
+                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                    }`}
+                  >
+                    {tr('{0} câu', n)}
+                  </button>
+                ))}
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -266,7 +295,7 @@ export default function RagStudyModal({ open, onClose, doc = null, initialTab = 
                     onChange={(e) => setDungAI(e.target.checked)}
                     className="h-4 w-4 rounded accent-indigo-600"
                   />
-                  <span>{tr('Dùng Gemini AI tổng hợp (tự chuyển bộ tách RAG cục bộ nếu ngoại tuyến)')}</span>
+                  <span>{tr('Dùng AI để tạo câu hỏi hay hơn')}</span>
                 </label>
                 <button
                   type="submit"
@@ -309,10 +338,6 @@ export default function RagStudyModal({ open, onClose, doc = null, initialTab = 
                       {tr('Trắc nghiệm ({0})', quizzes.length)}
                     </button>
                   </div>
-
-                  <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-200">
-                    {pack.engine === 'gemini-rag' ? tr('Gemini RAG') : tr('Local RAG Extractor')}
-                  </span>
                 </div>
 
                 {subTab === 'flashcards' && activeCard && (
@@ -373,7 +398,7 @@ export default function RagStudyModal({ open, onClose, doc = null, initialTab = 
                           className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                         >
                           <BrainCircuit className="h-4 w-4" aria-hidden="true" />
-                          {savedToDeck ? tr('Đã lưu vào bộ SM-2') : tr('Lưu vào bộ ôn tập SM-2')}
+                          {savedToDeck ? tr('Đã lưu vào bộ ôn tập') : tr('Lưu vào bộ ôn tập')}
                         </button>
                         {savedToDeck && (
                           <button
@@ -535,7 +560,7 @@ export default function RagStudyModal({ open, onClose, doc = null, initialTab = 
                 {sm2Flipped && (
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      {tr('Mức độ ghi nhớ của bạn (SM-2 sẽ tự tính ngày lặp tiếp theo):')}
+                      {tr('Bạn nhớ thẻ này thế nào? (hệ thống tự hẹn ngày ôn lại)')}
                     </p>
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                       {[
@@ -566,12 +591,12 @@ export default function RagStudyModal({ open, onClose, doc = null, initialTab = 
                 <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">
                   {deckStats.total === 0
-                    ? tr('Chưa có thẻ SM-2 nào được lưu.')
+                    ? tr('Chưa có thẻ ôn tập nào được lưu.')
                     : tr('Tuyệt vời! Bạn đã hoàn thành toàn bộ thẻ cần ôn hôm nay.')}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {deckStats.total === 0
-                    ? tr('Hãy tạo Flashcard từ một tài liệu bất kỳ rồi bấm Lưu vào bộ ôn tập SM-2.')
+                    ? tr('Hãy tạo Flashcard từ một tài liệu bất kỳ rồi bấm Lưu vào bộ ôn tập.')
                     : tr('Lịch ôn tiếp theo: {0}', nextScheduledDate || '—')}
                 </p>
               </div>

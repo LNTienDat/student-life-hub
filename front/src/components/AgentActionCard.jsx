@@ -180,7 +180,7 @@ export default function AgentActionCard({ action, userId, onNavigate }) {
       }
 
       setStatus('executed');
-      hienToast('success', 'AI Agent đã thực thi thao tác!');
+      hienToast('success', 'Đã thực hiện thao tác!');
     } catch (err) {
       setStatus('pending');
       setError(err?.response?.data?.message || err?.message || 'Chưa thực thi được thao tác. Hãy kiểm tra lại thông tin.');
@@ -221,9 +221,6 @@ export default function AgentActionCard({ action, userId, onNavigate }) {
   }
 
   const busy = status === 'executing';
-  const engineLabel = action.engine === 'gemini-function-calling'
-    ? tr('Gemini Function Calling')
-    : tr('Local Agent Parser');
 
   return (
     <form
@@ -235,9 +232,6 @@ export default function AgentActionCard({ action, userId, onNavigate }) {
           <Bot className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span>{tr(action.label)}</span>
         </div>
-        <span className="rounded-md bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:text-indigo-300">
-          {engineLabel}
-        </span>
       </div>
 
       {action.tool === 'create_transaction' && (

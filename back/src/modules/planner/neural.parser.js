@@ -165,7 +165,7 @@ async function parseNaturalConstraints({ prompt = '', subjectNames = [], useAI =
       constraints: merged,
       summary: typeof parsed.summary === 'string' && parsed.summary.trim()
         ? parsed.summary.trim().slice(0, 220)
-        : 'AI đã trích xuất ràng buộc và chuyển sang bộ giải toán học Symbolic.',
+        : 'Đã hiểu yêu cầu và xếp lịch phù hợp.',
     };
   } catch {
     return {

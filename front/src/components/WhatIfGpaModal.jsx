@@ -59,7 +59,7 @@ export default function WhatIfGpaModal({ open, onClose, subjects = [], scaleId =
     <ModalDialog
       open={open}
       onClose={onClose}
-      title={tr('Giả lập GPA tương lai (What-If Simulator)')}
+      title={tr('Giả lập GPA tương lai')}
       wide
     >
       <div className="space-y-4">
@@ -88,7 +88,7 @@ export default function WhatIfGpaModal({ open, onClose, subjects = [], scaleId =
 
           <div className="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-4 dark:border-indigo-800/70 dark:bg-indigo-950/30">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-medium text-indigo-700 dark:text-indigo-300">{tr('GPA giả lập (What-If)')}</p>
+              <p className="text-xs font-medium text-indigo-700 dark:text-indigo-300">{tr('GPA giả lập')}</p>
               {simulation.deltaGpa4 !== null && simulation.deltaGpa4 !== 0 && (
                 <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                   simulation.deltaGpa4 > 0

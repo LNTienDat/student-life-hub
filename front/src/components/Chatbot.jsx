@@ -345,7 +345,7 @@ function Chatbot({ userId }) {
             {tinNhans.map((tin, i) => (
               <div key={i} className={'flex ' + (tin.vaiTro === 'user' ? 'justify-end' : 'justify-start')}>
                 <div className={'max-w-[92%] break-words [overflow-wrap:anywhere] rounded-xl px-3 py-2 text-sm ' + (tin.vaiTro === 'user' ? 'bg-ink-600 text-white' : 'bg-gray-100 dark:bg-gray-700')}>
-                  {tin.nguon && <div className="text-[11px] mb-1 text-gray-500 dark:text-gray-300">{tin.nguon === 'rag' ? tr('AI dựa trên tài liệu') : tin.nguon === 'tai_lieu' ? tr('Tra cứu tài liệu') : tin.nguon === 'ai' ? tr('Gợi ý từ AI') : tin.nguon === 'agent' ? tr('AI Agent · Đề xuất thao tác') : tr('Dữ liệu LifeHub')}{tin.capNhatLuc && ' · ' + new Date(tin.capNhatLuc).toLocaleTimeString(getLocale(), { hour: '2-digit', minute: '2-digit' })}</div>}
+                  {tin.nguon && <div className="text-[11px] mb-1 text-gray-500 dark:text-gray-300">{tin.nguon === 'rag' ? tr('AI dựa trên tài liệu') : tin.nguon === 'tai_lieu' ? tr('Tra cứu tài liệu') : tin.nguon === 'ai' ? tr('Gợi ý từ AI') : tin.nguon === 'agent' ? tr('Đề xuất thao tác') : tr('Dữ liệu LifeHub')}{tin.capNhatLuc && ' · ' + new Date(tin.capNhatLuc).toLocaleTimeString(getLocale(), { hour: '2-digit', minute: '2-digit' })}</div>}
                   {tin.vaiTro === 'bot' ? renderMarkdown(tin === LOI_CHAO ? tr(tin.noiDung) : tin.noiDung) : tin.noiDung}
                   {tin.hanhDong && <AgentActionCard action={tin.hanhDong} userId={userId} onNavigate={closeChat} />}
                   <DocumentSources sources={tin.thamKhao} onOpen={closeChat} />
@@ -391,7 +391,7 @@ function Chatbot({ userId }) {
               disabled={!speechSupported || dangGui}
               aria-pressed={dangGhiAm}
               aria-label={dangGhiAm ? tr("Dừng ghi âm giọng nói") : tr("Ra lệnh bằng giọng nói")}
-              title={!speechSupported ? tr("Trình duyệt chưa hỗ trợ nhập liệu giọng nói") : dangGhiAm ? tr("Dừng ghi âm") : tr("Nói để nhập hoặc ra lệnh (Voice-to-Action)")}
+              title={!speechSupported ? tr("Trình duyệt chưa hỗ trợ nhập liệu giọng nói") : dangGhiAm ? tr("Dừng ghi âm") : tr("Nói để nhập nội dung")}
               className={`w-11 h-11 shrink-0 rounded-xl flex items-center justify-center transition-colors disabled:opacity-40 ${
                 dangGhiAm
                   ? 'bg-rose-600 text-white animate-pulse'

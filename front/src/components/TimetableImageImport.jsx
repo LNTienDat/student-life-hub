@@ -97,7 +97,7 @@ export default function TimetableImageImport({ semester: initialSemester = '', o
         {aiAvailable && (
           <div className="mt-3 flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50/70 px-3 py-2 text-xs font-medium text-indigo-800 dark:border-indigo-800/70 dark:bg-indigo-950/30 dark:text-indigo-200">
             <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span>{tr("Xử lý ảnh phức tạp nhanh và chính xác hơn (Google Gemini)")}</span>
+            <span>{tr("Xử lý ảnh phức tạp nhanh và chính xác hơn")}</span>
           </div>
         )}
 
@@ -138,7 +138,7 @@ export default function TimetableImageImport({ semester: initialSemester = '', o
                     type="button"
                     disabled={saving || busy}
                     onClick={() => job.readWithAI(scanTimetableWithAI)}
-                    title={tr("Gửi ảnh đã nén đến Google Gemini AI để đọc chính xác hơn khi nhận diện trên máy bị sót.")}
+                    title={tr("Đọc lại ảnh bằng AI để chính xác hơn.")}
                     className="inline-flex min-h-10 w-full sm:w-auto shrink-0 items-center justify-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-700 dark:bg-slate-800 dark:text-indigo-300 dark:hover:bg-slate-700 whitespace-nowrap"
                   >
                     <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />

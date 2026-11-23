@@ -106,21 +106,20 @@ export default function TaiLieu() {
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{tr("Kho tài liệu")}</h1>
-            <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-600 dark:bg-indigo-950/70 dark:text-indigo-300">Hybrid RAG · BM25 + Vector 64D</span>
           </div>
           <p className="mt-2 max-w-xl text-sm text-slate-500 dark:text-slate-400">{tr("Thêm tài liệu để trợ lý tìm nội dung và dẫn nguồn. Tài liệu bạn nhập chỉ thuộc tài khoản của bạn.")}</p>
         </div>
         <button type="button" disabled={busy} onClick={() => setShowForm(v => !v)} aria-expanded={showForm} className={BUTTON + ' bg-ink-600 text-white'}><Plus size={18} />{showForm ? tr('Thu gọn') : tr('Thêm tài liệu')}</button>
       </header>
       {globalDeckStats.total > 0 && (
-        <section aria-label={tr("Bộ thẻ ôn tập SM-2")} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-200/80 bg-indigo-50/70 px-4 py-3 dark:border-indigo-800/70 dark:bg-indigo-950/40">
+        <section aria-label={tr("Bộ thẻ ôn tập")} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-indigo-200/80 bg-indigo-50/70 px-4 py-3 dark:border-indigo-800/70 dark:bg-indigo-950/40">
           <div className="flex items-center gap-3">
             <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-900/60 dark:text-indigo-300">
               <BrainCircuit className="h-5 w-5" aria-hidden="true" />
             </span>
             <div>
               <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                {tr("Bộ thẻ ôn tập SM-2 · {0} thẻ cần ôn hôm nay", globalDeckStats.dueNow)}
+                {tr("Bộ thẻ ôn tập · {0} thẻ cần ôn hôm nay", globalDeckStats.dueNow)}
               </p>
               <p className="text-xs text-slate-600 dark:text-slate-300">
                 {tr("Đã thuộc {0}/{1} thẻ · Ease Factor TB: {2}", globalDeckStats.mastered, globalDeckStats.total, globalDeckStats.avgEaseFactor)}
@@ -133,7 +132,7 @@ export default function TaiLieu() {
             className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 text-xs font-semibold text-white hover:bg-indigo-700 transition-colors"
           >
             <BrainCircuit className="h-4 w-4" aria-hidden="true" />
-            {tr("Ôn tập SM-2 ngay")}
+            {tr("Ôn tập ngay")}
           </button>
         </section>
       )}

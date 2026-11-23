@@ -298,7 +298,7 @@ function FinancePeriod({ period, onPeriodChange }) {
                 type="button"
                 disabled={aiScanning || busy}
                 onClick={rescanReceiptWithAI}
-                title={tr("Gửi ảnh đã nén đến Google Gemini AI để đọc chính xác hơn khi nhận diện trên máy bị sót.")}
+                title={tr("Đọc lại ảnh bằng AI để chính xác hơn.")}
                 className="inline-flex min-h-11 w-full sm:w-auto shrink-0 items-center justify-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-200 whitespace-nowrap"
               >
                 <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />

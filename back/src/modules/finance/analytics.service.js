@@ -193,7 +193,7 @@ function detectSpendingAnomalies({ monthExpenses = [], historyExpenses = [], tha
       scope,
       method,
       severity,
-      reason: `Gấp ${ratioToMean}x mức trung bình (${Math.round(baselineMean).toLocaleString('vi-VN')}đ)${hitZ ? ` · Z-score ${zScore}` : ' · vượt ngưỡng IQR'}`,
+      reason: `Gấp ${ratioToMean}x mức chi trung bình (${Math.round(baselineMean).toLocaleString('vi-VN')}đ)`,
     });
   }
 

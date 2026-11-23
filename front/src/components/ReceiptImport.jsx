@@ -100,7 +100,7 @@ export default function ReceiptImport({ open, onClose, onRecognized }) {
       {aiAvailable && (
         <div className="mt-3 flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50/70 px-3 py-2 text-xs font-medium text-indigo-800 dark:border-indigo-800/70 dark:bg-indigo-950/30 dark:text-indigo-200">
           <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>{tr("Đọc chính xác ảnh nghiêng, thiếu sáng hoặc chữ mờ (Google Gemini)")}</span>
+          <span>{tr("Đọc chính xác ảnh nghiêng, thiếu sáng hoặc chữ mờ")}</span>
         </div>
       )}
 

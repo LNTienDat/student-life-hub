@@ -67,12 +67,12 @@ export default function EdgeAiStatusCard() {
     if (!user?.id || !stats.totalSamples) return;
     resetEdgeAiModel(user.id);
     setRev((v) => v + 1);
-    setNotice('Đã đặt lại dữ liệu EdgeAI đã học.');
+    setNotice('Đã đặt lại dữ liệu gợi ý đã học.');
   }
 
   return (
     <section
-      aria-label={tr('EdgeAI trên thiết bị')}
+      aria-label={tr('Gợi ý thông minh')}
       className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/60 space-y-5"
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -82,16 +82,16 @@ export default function EdgeAiStatusCard() {
           </div>
           <div>
             <h2 className="font-display font-semibold text-lg text-slate-800 dark:text-slate-200">
-              {tr('EdgeAI trên thiết bị')}
+              {tr('Gợi ý thông minh')}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {tr('Tự học thói quen phân loại thu/chi và độ ưu tiên deadline ngay trên trình duyệt.')}
+              {tr('Tự học thói quen phân loại thu/chi và độ ưu tiên deadline của bạn.')}
             </p>
           </div>
         </div>
         <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-300">
           <WifiOff className="h-3.5 w-3.5" aria-hidden="true" />
-          {tr('100% Offline · 0 request mạng')}
+          {tr('Dùng được khi không có mạng')}
         </span>
       </div>
 
@@ -123,7 +123,7 @@ export default function EdgeAiStatusCard() {
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
             {tr('Thử nghiệm suy luận ngoại tuyến')}
           </span>
-          <div role="group" aria-label={tr('Chế độ thử EdgeAI')} className="inline-flex rounded-xl border border-slate-200 bg-white p-0.5 dark:border-slate-700 dark:bg-slate-800">
+          <div role="group" aria-label={tr('Chế độ thử gợi ý')} className="inline-flex rounded-xl border border-slate-200 bg-white p-0.5 dark:border-slate-700 dark:bg-slate-800">
             {[
               ['chi', 'Chi tiêu'],
               ['thu', 'Thu nhập'],
@@ -154,7 +154,7 @@ export default function EdgeAiStatusCard() {
             if (notice) setNotice('');
           }}
           placeholder={tr('Thử gõ: trà sữa 45k, đổ xăng, thi cuối kỳ...')}
-          aria-label={tr('Nhập thử nội dung cho EdgeAI')}
+          aria-label={tr('Nhập thử nội dung để xem gợi ý')}
           className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
         />
 

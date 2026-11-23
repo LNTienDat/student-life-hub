@@ -387,7 +387,7 @@ function Profile() {
               </div>
             </div>
             <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-              {tr("Mặc định quét ảnh chạy trên máy bạn. Ảnh hoặc nội dung tài liệu chỉ gửi tới Google Gemini khi bạn chủ động bấm nút AI Vision hoặc bật Trợ lý AI.")}
+              {tr("Mặc định quét ảnh chạy trên máy bạn. Ảnh hoặc nội dung tài liệu chỉ gửi tới AI khi bạn chủ động bấm nút đọc bằng AI hoặc bật Trợ lý AI.")}
             </p>
           </div>
           <Link to="/chinh-sach" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-200 dark:hover:bg-slate-700">

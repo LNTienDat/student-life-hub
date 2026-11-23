@@ -396,7 +396,7 @@ async function callGeminiStudyGenerator(doc, chunks, count, chuDe) {
 
   const generationConfig = {
     temperature: 0.2,
-    maxOutputTokens: 2048,
+    maxOutputTokens: Math.min(8192, 800 + count * 380),
     responseMimeType: 'application/json',
     responseSchema: STUDY_SCHEMA,
   };
@@ -436,7 +436,7 @@ async function generateStudyPack(idNguoiDung, docId, options = {}) {
     throw httpError(400, 'Chủ đề ôn tập tối đa 160 ký tự.');
   }
   const rawCount = Number(soLuong);
-  const count = Number.isFinite(rawCount) ? Math.min(12, Math.max(3, Math.round(rawCount))) : 6;
+  const count = Number.isFinite(rawCount) ? Math.min(20, Math.max(3, Math.round(rawCount))) : 6;
   const allowAI = dungAI !== false;
 
   const doc = await documentService.readDocument(idNguoiDung, docId);

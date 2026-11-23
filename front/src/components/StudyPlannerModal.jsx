@@ -114,15 +114,6 @@ export default function StudyPlannerModal({
   return (
     <ModalDialog open={open} onClose={onClose} busy={saving || loading} wide title="Xếp lịch ôn tập thông minh">
       <div className="space-y-4 text-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-indigo-200 bg-indigo-50/70 px-3.5 py-2.5 text-xs text-indigo-900 dark:border-indigo-800/70 dark:bg-indigo-950/30 dark:text-indigo-200">
-          <div className="flex items-center gap-2 font-semibold">
-            <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span>Neuro-Symbolic AI · Constraint Solver</span>
-          </div>
-          <span className="opacity-85">
-            {tr("AI hiểu yêu cầu tự nhiên, bộ giải toán học bảo đảm 0 trùng lịch lên lớp.")}
-          </span>
-        </div>
 
         <form onSubmit={handleGenerate} className="space-y-3">
           <div>
@@ -158,7 +149,7 @@ export default function StudyPlannerModal({
           <details className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-900/40">
             <summary className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
               <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
-              {tr("Tùy chỉnh ràng buộc cứng (Symbolic)")}
+              {tr("Tùy chỉnh thêm")}
             </summary>
             <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 text-xs">
               <label className="text-slate-600 dark:text-slate-300">
@@ -205,7 +196,7 @@ export default function StudyPlannerModal({
               </div>
               <label className="col-span-2 sm:col-span-3 flex items-center gap-2 text-slate-600 dark:text-slate-300">
                 <input type="checkbox" checked={useAI} onChange={(e) => setUseAI(e.target.checked)} className="h-4 w-4 accent-indigo-600 rounded" />
-                <span>{tr("Dùng Gemini Neural Parser hiểu câu tự nhiên (tự chuyển bộ luật nội bộ nếu ngoại tuyến)")}</span>
+                <span>{tr("Dùng AI để hiểu yêu cầu của bạn")}</span>
               </label>
             </div>
           </details>
@@ -231,8 +222,8 @@ export default function StudyPlannerModal({
                 <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                 <span>
                   {plan.neural?.source === 'neural_gemini'
-                    ? tr('Neural Gemini + Symbolic Solver')
-                    : tr('Symbolic Constraint Solver')}
+                    ? tr('Đã tạo lịch ôn')
+                    : tr('Đã tạo lịch ôn')}
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
