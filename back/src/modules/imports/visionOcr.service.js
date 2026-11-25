@@ -122,24 +122,54 @@ function normalizeTranscriptAi(raw, model) {
     const hocKy = cleanText(item?.hocKy, 100);
 
     const rawGrades = Array.isArray(item?.diems) ? item.diems : [];
-    const diems = [];
+    const parsedGrades = [];
     for (const g of rawGrades.slice(0, 10)) {
       const loaiDanhGia = cleanText(g?.loaiDanhGia, 60) || 'Tổng kết';
       const inputScale = ['10', '4', 'letter'].includes(String(g?.scale)) ? String(g.scale) : '10';
       const diemRaw = g?.diem;
       const converted = convertInputToScale10({ value: diemRaw, inputScale, gradeScale: '8_level' });
       if (!Number.isFinite(converted)) continue;
-      let weight = Number(g?.trongSo);
-      if (!Number.isFinite(weight) || weight <= 0 || weight > 100) {
-        weight = rawGrades.length === 1 ? 100 : Math.round((100 / rawGrades.length) * 100) / 100;
-      }
-      diems.push({
+      parsedGrades.push({
         loaiDanhGia,
         diem: converted,
         rawValue: String(diemRaw ?? ''),
         inputScale,
-        trongSo: weight,
+        rawWeight: Number(g?.trongSo),
       });
+    }
+
+    // Scale fractional weights (e.g. 0.4 / 0.6 / 1.0) to percentages (40 / 60 / 100)
+    const positiveWeights = parsedGrades.map((g) => g.rawWeight).filter((w) => Number.isFinite(w) && w > 0);
+    const usesFractions = positiveWeights.length > 0 && positiveWeights.every((w) => w <= 1);
+    let diems = parsedGrades.map((g) => {
+      let weight = g.rawWeight;
+      if (usesFractions && Number.isFinite(weight) && weight > 0 && weight <= 1) {
+        weight = Math.round(weight * 10000) / 100;
+      }
+      if (!Number.isFinite(weight) || weight <= 0 || weight > 100) {
+        weight = parsedGrades.length === 1 ? 100 : Math.round((100 / parsedGrades.length) * 100) / 100;
+      }
+      return {
+        loaiDanhGia: g.loaiDanhGia,
+        diem: g.diem,
+        rawValue: g.rawValue,
+        inputScale: g.inputScale,
+        trongSo: weight,
+      };
+    });
+
+    // Drop redundant "Tổng kết" summary column when component grades already sum to ~100%
+    if (diems.length >= 2) {
+      const isSummaryLabel = (label) => /^(tong ket|diem tong ket|tong|tk|final|overall)$/i.test(
+        String(label || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').trim()
+      );
+      const components = diems.filter((g) => !isSummaryLabel(g.loaiDanhGia));
+      if (components.length >= 1 && components.length < diems.length) {
+        const compSum = components.reduce((sum, g) => sum + g.trongSo, 0);
+        if (compSum >= 95 && compSum <= 105) {
+          diems = components;
+        }
+      }
     }
 
     // Clamp total weight to 100% cleanly if AI emitted slightly over 100%
@@ -169,11 +199,11 @@ function buildVisionRequest(kind) {
         '- tenMon: Tên môn học tiếng Việt chính xác (bỏ mã học phần thừa nếu có).',
         '- tinChi: Số tín chỉ (số nguyên 1..20; nếu ảnh không ghi cột tín chỉ thì trả 0).',
         '- hocKy: Tên học kỳ nếu có trên bảng (ví dụ "HK1 2025-2026"), không thấy thì trả chuỗi rỗng "".',
-        '- diems: Mảng các cột điểm đã có của môn (bỏ qua cột trống hoặc chưa có điểm):',
+        '- diems: Mảng các cột điểm thành phần đã có của môn (nếu có cả cột thành phần lẫn cột Tổng kết, CHỈ lấy các cột thành phần sao cho tổng trọng số <= 100; chỉ lấy Tổng kết 100% khi không có cột thành phần):',
         '  + loaiDanhGia: Tên cột điểm (ví dụ "Chuyên cần", "Quá trình", "Giữa kỳ", "Thực hành", "Cuối kỳ", "Tổng kết").',
         '  + diem: Giá trị điểm dưới dạng chuỗi (ví dụ "8.5", "3.5", "B+").',
         '  + scale: "10" nếu là thang điểm 10, "4" nếu là thang điểm 4, "letter" nếu là điểm chữ (A+, A, B+, B, C+, C, D+, D, F).',
-        '  + trongSo: Phần trăm trọng số (0 < trongSo <= 100). Nếu chỉ có 1 điểm tổng kết cuối cùng hãy để 100; nếu không ghi trọng số hãy suy hợp lý sao cho tổng <= 100.',
+        '  + trongSo: Số phần trăm từ 1 đến 100 (ví dụ 40 hoặc 60, KHÔNG dùng số thập phân 0.4). Tổng các cột <= 100.',
       ].join('\n'),
       schema: {
         type: 'OBJECT',
@@ -288,24 +318,29 @@ async function extractWithVisionAI(body, deps = {}) {
   try {
     dns.setDefaultResultOrder('ipv4first');
     const fetchImpl = deps.fetchImpl || fetch;
-    const response = await fetchImpl(
-      `https://generativelanguage.googleapis.com/v1beta/models/${config.model}:generateContent`,
-      {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${config.model}:generateContent`;
+    const payload = JSON.stringify({
+      contents: [{
+        role: 'user',
+        parts: [
+          { text: prompt },
+          { inlineData: { mimeType, data: base64Data } },
+        ],
+      }],
+      generationConfig,
+    });
+
+    let response;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      response = await fetchImpl(endpoint, {
         method: 'POST',
         signal: AbortSignal.timeout(VISION_TIMEOUT_MS),
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': config.key },
-        body: JSON.stringify({
-          contents: [{
-            role: 'user',
-            parts: [
-              { text: prompt },
-              { inlineData: { mimeType, data: base64Data } },
-            ],
-          }],
-          generationConfig,
-        }),
-      }
-    );
+        body: payload,
+      });
+      if (response.status !== 503 || attempt === 1) break;
+      await new Promise((r) => setTimeout(r, 700));
+    }
 
     if (!response.ok) {
       if (response.status === 429) throw visionError(429, 'OCR_AI_QUOTA', 'AI Vision đang hết hạn mức hoặc quá tải. Bạn vui lòng thử lại sau hoặc chỉnh tay.');

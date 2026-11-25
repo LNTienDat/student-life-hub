@@ -155,7 +155,7 @@ export default function FinanceForecastCard({ duBao, periodLabel }) {
                     ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
                     : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
                 }`}>
-                  {tx.method.toUpperCase()}
+                  {tx.severity === 'high' ? tr('Tăng đột biến') : tr('Cao bất thường')}
                 </span>
               </li>
             ))}

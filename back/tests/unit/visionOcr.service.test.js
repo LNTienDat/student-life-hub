@@ -164,4 +164,26 @@ describe('visionOcr.service', () => {
     expect(normalized.rows[1].tinChiMacDinh).toBe(true);
     expect(normalized.rows[1].diems[0].diem).toBe(8);
   });
+
+  test('converts fractional weights and drops redundant Tổng kết summary column when components total 100%', () => {
+    const normalized = normalizeTranscriptAi({
+      rows: [
+        {
+          tenMon: 'Trí tuệ nhân tạo',
+          tinChi: 3,
+          hocKy: 'HK1-2025',
+          diems: [
+            { loaiDanhGia: 'Giữa kỳ', diem: '8.5', scale: '10', trongSo: 0.4 },
+            { loaiDanhGia: 'Cuối kỳ', diem: '9.0', scale: '10', trongSo: 0.6 },
+            { loaiDanhGia: 'Tổng kết', diem: '8.8', scale: '10', trongSo: 1.0 },
+          ],
+        },
+      ],
+    }, 'gemini-3.5-flash-lite');
+
+    expect(normalized.rows[0].diems).toEqual([
+      { loaiDanhGia: 'Giữa kỳ', diem: 8.5, rawValue: '8.5', inputScale: '10', trongSo: 40 },
+      { loaiDanhGia: 'Cuối kỳ', diem: 9, rawValue: '9.0', inputScale: '10', trongSo: 60 },
+    ]);
+  });
 });

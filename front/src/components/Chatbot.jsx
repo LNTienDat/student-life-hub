@@ -347,7 +347,15 @@ function Chatbot({ userId }) {
                 <div className={'max-w-[92%] break-words [overflow-wrap:anywhere] rounded-xl px-3 py-2 text-sm ' + (tin.vaiTro === 'user' ? 'bg-ink-600 text-white' : 'bg-gray-100 dark:bg-gray-700')}>
                   {tin.nguon && <div className="text-[11px] mb-1 text-gray-500 dark:text-gray-300">{tin.nguon === 'rag' ? tr('AI dựa trên tài liệu') : tin.nguon === 'tai_lieu' ? tr('Tra cứu tài liệu') : tin.nguon === 'ai' ? tr('Gợi ý từ AI') : tin.nguon === 'agent' ? tr('Đề xuất thao tác') : tr('Dữ liệu LifeHub')}{tin.capNhatLuc && ' · ' + new Date(tin.capNhatLuc).toLocaleTimeString(getLocale(), { hour: '2-digit', minute: '2-digit' })}</div>}
                   {tin.vaiTro === 'bot' ? renderMarkdown(tin === LOI_CHAO ? tr(tin.noiDung) : tin.noiDung) : tin.noiDung}
-                  {tin.hanhDong && <AgentActionCard action={tin.hanhDong} userId={userId} onNavigate={closeChat} />}
+                  {tin.hanhDong && (
+                    <AgentActionCard
+                      action={tin.hanhDong}
+                      userId={userId}
+                      onNavigate={closeChat}
+                      initialState={tin.actionState}
+                      onStateChange={(nextState) => setTinNhans((prev) => prev.map((item, idx) => (idx === i ? { ...item, actionState: nextState } : item)))}
+                    />
+                  )}
                   <DocumentSources sources={tin.thamKhao} onOpen={closeChat} />
                   {tin.biRutGon && <p className="mt-2 text-xs">{tr("Câu trả lời đã rút gọn. Bạn có thể hỏi tiếp từng ý.")}</p>}
                 </div>

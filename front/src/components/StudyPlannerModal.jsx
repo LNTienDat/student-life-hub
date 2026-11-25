@@ -65,6 +65,17 @@ export default function StudyPlannerModal({
   async function handleGenerate(e) {
     if (e) e.preventDefault();
     if (loading || saving) return;
+    const startH = Number(earliestHour);
+    const endH = Number(latestHour);
+    const sessionMin = Number(sessionMinutes) || 90;
+    if (!Number.isFinite(startH) || !Number.isFinite(endH) || startH < 5 || startH > 22 || endH < 8 || endH > 24) {
+      setError('Khung giờ hợp lệ từ 05:00 đến 24:00.');
+      return;
+    }
+    if (endH <= startH || (endH - startH) * 60 < sessionMin) {
+      setError(`Giờ kết thúc (${endH}h) phải lớn hơn giờ bắt đầu (${startH}h) và đủ cho ít nhất ${sessionMin} phút mỗi phiên.`);
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -75,9 +86,9 @@ export default function StudyPlannerModal({
         useAI,
         dongYGuiAI: useAI,
         constraints: {
-          earliestHour: Number(earliestHour),
-          latestHour: Number(latestHour),
-          sessionMinutes: Number(sessionMinutes),
+          earliestHour: startH,
+          latestHour: endH,
+          sessionMinutes: sessionMin,
           totalSessionsTarget: Number(totalSessionsTarget),
           maxSessionsPerDay: Number(maxSessionsPerDay),
           avoidWeekdays,

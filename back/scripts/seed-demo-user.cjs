@@ -239,7 +239,7 @@ async function seedDemoUser() {
     where: { idNguoiDung: userId },
   });
 
-  const now = new Date('2026-11-22T12:00:00.000Z');
+  const now = new Date();
   const addDays = (days, hour = 16) => {
     const d = new Date(now);
     d.setUTCDate(d.getUTCDate() + days);
@@ -337,7 +337,7 @@ async function seedDemoUser() {
     });
   }
 
-  // 5. Tạo Ngân sách & Giao dịch Tài chính (Có giao dịch thường ngày + 1 giao dịch đột biến Z-Score > 2.5)
+  // 5. Tạo Ngân sách & Giao dịch Tài chính (Có giao dịch thường ngày + 1 giao dịch đột biến để test Phát hiện bất thường)
   await prisma.nganSach.deleteMany({
     where: { idNguoiDung: userId, thang: 11, nam: 2026 },
   });
@@ -345,9 +345,9 @@ async function seedDemoUser() {
   const budgetsNov2026 = [
     { danhMuc: 'an_uong', soTienToiDa: 1800000, thang: 11, nam: 2026 },
     { danhMuc: 'di_lai', soTienToiDa: 500000, thang: 11, nam: 2026 },
-    { danhMuc: 'hoc_tap', soTienToiDa: 2200000, thang: 11, nam: 2026 },
+    { danhMuc: 'hoc_phi', soTienToiDa: 2200000, thang: 11, nam: 2026 },
     { danhMuc: 'giai_tri', soTienToiDa: 600000, thang: 11, nam: 2026 },
-    { danhMuc: 'sinh_hoat', soTienToiDa: 1200000, thang: 11, nam: 2026 },
+    { danhMuc: 'tro', soTienToiDa: 1200000, thang: 11, nam: 2026 },
   ];
 
   for (const b of budgetsNov2026) {
@@ -356,44 +356,51 @@ async function seedDemoUser() {
     });
   }
 
-  // Xóa các giao dịch mẫu cũ của tháng 10 & 11/2026 để nạp bộ giao dịch chuẩn chỉnh
+  // Xóa các giao dịch mẫu cũ của tháng 10 & 11/2026 (hoặc mã danh mục cũ không chuẩn) để nạp bộ giao dịch chuẩn
   await prisma.giaoDich.deleteMany({
     where: {
       idNguoiDung: userId,
-      ngayGiaoDich: {
-        gte: new Date('2026-10-01T00:00:00.000Z'),
-        lte: new Date('2026-11-30T23:59:59.000Z'),
-      },
+      OR: [
+        {
+          ngayGiaoDich: {
+            gte: new Date('2026-10-01T00:00:00.000Z'),
+            lte: new Date('2026-11-30T23:59:59.000Z'),
+          },
+        },
+        {
+          danhMuc: { in: ['hoc_tap', 'sinh_hoat', 'gia_dinh', 'luong_part_time'] },
+        },
+      ],
     },
   });
 
   const transactionsData = [
     // Tháng 10/2026 (Để test tra cứu lịch sử nhiều tháng & biểu đồ xu hướng)
     { loai: 'thu', danhMuc: 'hoc_bong', soTien: 2000000, moTa: 'Học bổng khuyến khích học tập', ngayGiaoDich: new Date('2026-10-05T08:00:00.000Z') },
-    { loai: 'thu', danhMuc: 'gia_dinh', soTien: 4000000, moTa: 'Gia đình gửi tiền sinh hoạt tháng 10', ngayGiaoDich: new Date('2026-10-02T09:00:00.000Z') },
-    { loai: 'chi', danhMuc: 'sinh_hoat', soTien: 1200000, moTa: 'Tiền phòng KTX & điện nước tháng 10', ngayGiaoDich: new Date('2026-10-06T10:00:00.000Z') },
+    { loai: 'thu', danhMuc: 'tro_cap', soTien: 4000000, moTa: 'Gia đình gửi tiền sinh hoạt tháng 10', ngayGiaoDich: new Date('2026-10-02T09:00:00.000Z') },
+    { loai: 'chi', danhMuc: 'tro', soTien: 1200000, moTa: 'Tiền phòng KTX & điện nước tháng 10', ngayGiaoDich: new Date('2026-10-06T10:00:00.000Z') },
     { loai: 'chi', danhMuc: 'an_uong', soTien: 450000, moTa: 'Đi siêu thị Co.opmart mua đồ ăn tuần', ngayGiaoDich: new Date('2026-10-12T11:30:00.000Z') },
-    { loai: 'chi', danhMuc: 'hoc_tap', soTien: 280000, moTa: 'Mua sách giáo trình Xử lý ảnh & Python', ngayGiaoDich: new Date('2026-10-18T14:20:00.000Z') },
+    { loai: 'chi', danhMuc: 'hoc_phi', soTien: 280000, moTa: 'Mua sách giáo trình Xử lý ảnh & Python', ngayGiaoDich: new Date('2026-10-18T14:20:00.000Z') },
     { loai: 'chi', danhMuc: 'di_lai', soTien: 150000, moTa: 'Đổ xăng & vé xe buýt tháng 10', ngayGiaoDich: new Date('2026-10-25T16:00:00.000Z') },
 
-    // Tháng 11/2026 (Chuỗi chi tiêu đều đặn ~40k-95k/lần + 1 khoản chi đột biến để kích hoạt Z-score & IQR Anomaly Detection)
-    { loai: 'thu', danhMuc: 'gia_dinh', soTien: 4500000, moTa: 'Trợ cấp sinh hoạt gia đình tháng 11', ngayGiaoDich: new Date('2026-11-01T08:30:00.000Z') },
-    { loai: 'thu', danhMuc: 'luong_part_time', soTien: 1800000, moTa: 'Thù lao trợ giảng phòng Lab Python', ngayGiaoDich: new Date('2026-11-10T09:15:00.000Z') },
+    // Tháng 11/2026 (Chuỗi chi tiêu đều đặn ~40k-95k/lần + 1 khoản chi đột biến để kích hoạt cảnh báo bất thường)
+    { loai: 'thu', danhMuc: 'tro_cap', soTien: 4500000, moTa: 'Trợ cấp sinh hoạt gia đình tháng 11', ngayGiaoDich: new Date('2026-11-01T08:30:00.000Z') },
+    { loai: 'thu', danhMuc: 'luong', soTien: 1800000, moTa: 'Thù lao trợ giảng phòng Lab Python', ngayGiaoDich: new Date('2026-11-10T09:15:00.000Z') },
     { loai: 'chi', danhMuc: 'an_uong', soTien: 45000, moTa: 'Cơm tấm sườn bì chả buổi trưa', ngayGiaoDich: new Date('2026-11-02T05:15:00.000Z') },
     { loai: 'chi', danhMuc: 'di_lai', soTien: 70000, moTa: 'Đổ xăng RON 95 Petrolimex', ngayGiaoDich: new Date('2026-11-03T10:20:00.000Z') },
     { loai: 'chi', danhMuc: 'an_uong', soTien: 55000, moTa: 'Bún bò Huế & trà đá căn tin', ngayGiaoDich: new Date('2026-11-05T05:30:00.000Z') },
-    { loai: 'chi', danhMuc: 'hoc_tap', soTien: 65000, moTa: 'In ấn đề cương ôn tập & đóng bìa báo cáo', ngayGiaoDich: new Date('2026-11-07T08:00:00.000Z') },
+    { loai: 'chi', danhMuc: 'hoc_phi', soTien: 65000, moTa: 'In ấn đề cương ôn tập & đóng bìa báo cáo', ngayGiaoDich: new Date('2026-11-07T08:00:00.000Z') },
     { loai: 'chi', danhMuc: 'giai_tri', soTien: 95000, moTa: 'Vé xem phim CGV cuối tuần', ngayGiaoDich: new Date('2026-11-08T13:00:00.000Z') },
     { loai: 'chi', danhMuc: 'an_uong', soTien: 48000, moTa: 'Trà sữa Phúc Long học nhóm', ngayGiaoDich: new Date('2026-11-10T07:45:00.000Z') },
-    { loai: 'chi', danhMuc: 'sinh_hoat', soTien: 85000, moTa: 'Mua nước giặt & đồ dùng cá nhân', ngayGiaoDich: new Date('2026-11-12T11:00:00.000Z') },
+    { loai: 'chi', danhMuc: 'tro', soTien: 85000, moTa: 'Mua nước giặt & đồ dùng cá nhân', ngayGiaoDich: new Date('2026-11-12T11:00:00.000Z') },
     { loai: 'chi', danhMuc: 'an_uong', soTien: 60000, moTa: 'Cơm gà xối mỡ & nước cam', ngayGiaoDich: new Date('2026-11-14T05:20:00.000Z') },
     { loai: 'chi', danhMuc: 'di_lai', soTien: 80000, moTa: 'Đổ xăng đi học tuần mới', ngayGiaoDich: new Date('2026-11-16T01:30:00.000Z') },
     { loai: 'chi', danhMuc: 'an_uong', soTien: 50000, moTa: 'Phở bò tái nạm buổi sáng', ngayGiaoDich: new Date('2026-11-18T01:15:00.000Z') },
     { loai: 'chi', danhMuc: 'giai_tri', soTien: 59000, moTa: 'Gia hạn gói Spotify Student', ngayGiaoDich: new Date('2026-11-19T09:00:00.000Z') },
     { loai: 'chi', danhMuc: 'an_uong', soTien: 45000, moTa: 'Mua bánh mì & cà phê sữa sáng nay', ngayGiaoDich: new Date('2026-11-21T01:30:00.000Z') },
     { loai: 'chi', danhMuc: 'di_lai', soTien: 30000, moTa: 'Vé gửi xe tháng tại trường', ngayGiaoDich: new Date('2026-11-21T04:00:00.000Z') },
-    // Khoản chi đột biến (Outlier) để test Z-Score & IQR Anomaly Detection
-    { loai: 'chi', danhMuc: 'hoc_tap', soTien: 1850000, moTa: 'Nâng cấp RAM 16GB & ổ cứng SSD NVMe phục vụ chạy mô hình AI', ngayGiaoDich: new Date('2026-11-20T09:30:00.000Z') },
+    // Khoản chi đột biến (Outlier) để test phát hiện bất thường
+    { loai: 'chi', danhMuc: 'hoc_phi', soTien: 1850000, moTa: 'Nâng cấp RAM 16GB & ổ cứng SSD NVMe phục vụ chạy mô hình AI', ngayGiaoDich: new Date('2026-11-20T09:30:00.000Z') },
   ];
 
   for (const tx of transactionsData) {

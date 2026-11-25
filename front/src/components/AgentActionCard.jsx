@@ -29,15 +29,21 @@ function splitDeadlineValue(raw) {
   return { dueDate: value, dueTime: '' };
 }
 
-export default function AgentActionCard({ action, userId, onNavigate }) {
+export default function AgentActionCard({ action, userId, onNavigate, initialState = null, onStateChange = null }) {
   useLanguage();
   const { categories } = useFinanceCategories();
   const { currentSemester } = useCurrentSemester();
   const { hienToast } = useToast();
 
-  const [status, setStatus] = useState('pending'); // 'pending' | 'executing' | 'executed' | 'cancelled'
+  const [status, setStatus] = useState(() => {
+    const saved = initialState?.status;
+    return saved === 'executed' || saved === 'cancelled' ? saved : 'pending';
+  }); // 'pending' | 'executing' | 'executed' | 'cancelled'
   const [error, setError] = useState('');
   const [fields, setFields] = useState(() => {
+    if (initialState?.fields && typeof initialState.fields === 'object') {
+      return { ...initialState.fields };
+    }
     const params = { ...(action?.params || {}) };
     if (action?.tool === 'create_deadline') {
       const { dueDate, dueTime } = splitDeadlineValue(params.hanChot);
@@ -73,11 +79,15 @@ export default function AgentActionCard({ action, userId, onNavigate }) {
   function updateField(key, value) {
     setError('');
     setFields((prev) => {
+      let next;
       if (key === 'loai' && value !== prev.loai) {
         const nextCat = value === 'thu' ? 'luong' : 'an_uong';
-        return { ...prev, loai: value, danhMuc: nextCat };
+        next = { ...prev, loai: value, danhMuc: nextCat };
+      } else {
+        next = { ...prev, [key]: value };
       }
-      return { ...prev, [key]: value };
+      onStateChange?.({ status, fields: next });
+      return next;
     });
   }
 
@@ -180,6 +190,7 @@ export default function AgentActionCard({ action, userId, onNavigate }) {
       }
 
       setStatus('executed');
+      onStateChange?.({ status: 'executed', fields });
       hienToast('success', 'Đã thực hiện thao tác!');
     } catch (err) {
       setStatus('pending');
@@ -355,7 +366,10 @@ export default function AgentActionCard({ action, userId, onNavigate }) {
         <button
           type="button"
           disabled={busy}
-          onClick={() => setStatus('cancelled')}
+          onClick={() => {
+            setStatus('cancelled');
+            onStateChange?.({ status: 'cancelled', fields });
+          }}
           className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-600 px-3 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-700"
         >
           <X className="h-3.5 w-3.5" aria-hidden="true" />
