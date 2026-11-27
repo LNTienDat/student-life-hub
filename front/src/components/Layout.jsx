@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import useDataRevision from '../hooks/useDataRevision';
 import api from '../services/api';
+import { startAiSyncBridge } from '../services/aiSyncService';
 import { dinhDangNgay } from '../utils/formatters';
 import Chatbot from './Chatbot';
 import { useTimetableImport } from '../context/TimetableImportContext';
@@ -56,6 +57,11 @@ function Layout({ children }) {
     const timer = setInterval(() => { if (document.visibilityState === 'visible') refresh(); }, 5 * 60 * 1000);
     return () => { active = false; clearInterval(timer); };
   }, [revision, user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return undefined;
+    return startAiSyncBridge(user.id);
+  }, [user?.id]);
 
   useEffect(() => {
     function closeOutside(event) {

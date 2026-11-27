@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('node:crypto');
 const cors = require('cors');
 const { corsOrigins } = require('./src/corsOrigins');
 const helmet = require('helmet');
@@ -39,6 +40,7 @@ if (process.env.TRUST_PROXY === 'true') {
 app.use(helmet({ contentSecurityPolicy: { directives: {
   scriptSrc: ["'self'", "'wasm-unsafe-eval'"],
   workerSrc: ["'self'"],
+  imgSrc: ["'self'", "data:", "blob:"],
 } } }));
 
 // Chỉ cho phép đúng domain frontend gọi API
@@ -74,6 +76,12 @@ if (!deployment.serveFrontend) {
   app.get('/', (req, res) => res.send('Backend đang chạy ngon lành!'));
 }
 
+function safeEqual(a, b) {
+  const hashA = crypto.createHash('sha256').update(String(a)).digest();
+  const hashB = crypto.createHash('sha256').update(String(b)).digest();
+  return crypto.timingSafeEqual(hashA, hashB);
+}
+
 // Middleware xác thực bảo vệ Swagger UI khi có cấu hình biến môi trường
 function swaggerAuthMiddleware(req, res, next) {
   const user = process.env.SWAGGER_USER;
@@ -87,9 +95,15 @@ function swaggerAuthMiddleware(req, res, next) {
   }
 
   const credentials = Buffer.from(authHeader.slice(6), 'base64').toString('utf8');
-  const [inputUser, inputPass] = credentials.split(':');
-  if (inputUser === user && inputPass === pass) {
-    return next();
+  const sep = credentials.indexOf(':');
+  if (sep !== -1) {
+    const inputUser = credentials.slice(0, sep);
+    const inputPass = credentials.slice(sep + 1);
+    const userOk = safeEqual(inputUser, user);
+    const passOk = safeEqual(inputPass, pass);
+    if (userOk && passOk) {
+      return next();
+    }
   }
 
   res.set('WWW-Authenticate', 'Basic realm="LifeHub API Documentation"');
@@ -112,6 +126,7 @@ app.use('/api/nhom', nhomRoutes);
 app.use('/api/imports', require('./src/modules/imports/import.routes'));
 app.use('/api/feedback', require('./src/modules/feedback/feedback.routes'));
 app.use('/api/planner', require('./src/modules/planner/planner.routes'));
+app.use('/api/sync', require('./src/modules/sync/sync.routes'));
 
 // 404 handler cho các route API không tồn tại
 app.use((req, res, next) => {

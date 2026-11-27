@@ -8,6 +8,8 @@ const prisma = require('../../src/prismaClient');
 const deadline = require('../../src/modules/deadline/deadline.controller');
 const academic = require('../../src/modules/academic/academic.controller');
 const timetable = require('../../src/modules/thoikhoabieu/thoikhoabieu.controller');
+const thongbao = require('../../src/modules/thongbao/thongbao.controller');
+const emailUtil = require('../../src/utils/email.util');
 const response = () => { const res = { status: jest.fn(), json: jest.fn() }; res.status.mockReturnValue(res); return res; };
 beforeEach(() => jest.clearAllMocks());
 test('checklist update cannot modify a deadline belonging to another user', async () => {
@@ -41,4 +43,20 @@ test('pending and waiting tasks both remain in upcoming deadlines and exclude so
   prisma.deadline.findMany.mockResolvedValue([]);
   await deadline.deadlineSapToi({ user: { id: 42 }, query: { hocKy: 'HK1' } }, response());
   expect(prisma.deadline.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ idNguoiDung: 42, xoaLuc: null, trangThai: { not: 'hoan_thanh' } }) }));
+});
+test('testCronDeadline preserves email error code and responds with 503 when email is unconfigured', async () => {
+  prisma.deadline.findMany.mockResolvedValue([
+    { id: 1, idNguoiDung: 42, tieuDe: 'Bài tập', hanChot: new Date(), nguoiDung: { id: 42, ten: 'An', email: 'an@example.com' }, monHoc: null },
+  ]);
+  const spy = jest.spyOn(emailUtil, 'guiEmail').mockRejectedValueOnce(Object.assign(new Error('Email delivery unavailable'), { code: 'EMAIL_CONFIG' }));
+  const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    const res = response();
+    await thongbao.testCronDeadline({ user: { id: 42 } }, res);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json.mock.calls[0][0].message).toContain('chưa được cấu hình');
+  } finally {
+    spy.mockRestore();
+    errSpy.mockRestore();
+  }
 });

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Cpu, RotateCcw, WifiOff } from 'lucide-react';
+import { Cloud, Cpu, RotateCcw, WifiOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFinanceCategories } from '../context/FinanceCategoryContext';
 import useLanguage from '../hooks/useLanguage';
 import { t as tr } from '../i18n/language';
+import { pushResetEdgeModel } from '../services/aiSyncService';
 import {
   getEdgeAiStats,
   predictDeadlinePriority,
@@ -66,6 +67,7 @@ export default function EdgeAiStatusCard() {
   function handleReset() {
     if (!user?.id || !stats.totalSamples) return;
     resetEdgeAiModel(user.id);
+    pushResetEdgeModel();
     setRev((v) => v + 1);
     setNotice('Đã đặt lại dữ liệu gợi ý đã học.');
   }
@@ -89,10 +91,16 @@ export default function EdgeAiStatusCard() {
             </p>
           </div>
         </div>
-        <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-300">
-          <WifiOff className="h-3.5 w-3.5" aria-hidden="true" />
-          {tr('Dùng được khi không có mạng')}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-300">
+            <WifiOff className="h-3.5 w-3.5" aria-hidden="true" />
+            {tr('Dùng được khi không có mạng')}
+          </span>
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 dark:border-indigo-800/70 dark:bg-indigo-950/50 dark:text-indigo-300">
+            <Cloud className="h-3.5 w-3.5" aria-hidden="true" />
+            {tr('Tự động đồng bộ tài khoản')}
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

@@ -31,10 +31,10 @@ function resolveStorage(explicitStorage) {
   return null;
 }
 
-function notifyListeners(userId) {
+function notifyListeners(userId, meta = { source: 'local' }) {
   for (const fn of listeners) {
     try {
-      fn(userId);
+      fn(userId, meta);
     } catch {
       // Never break callers if a subscriber fails.
     }
@@ -282,6 +282,96 @@ export function resetEdgeAiModel(userId, task = null, storage = null) {
     }
     notifyListeners(userId);
     return true;
+  } catch {
+    return false;
+  }
+}
+
+const EDGE_TASKS = ['finance_chi', 'finance_thu', 'deadline_priority'];
+
+function compareTaskRichness(taskA, taskB) {
+  const diffSamples = (taskA?.userSamples || 0) - (taskB?.userSamples || 0);
+  if (diffSamples !== 0) return diffSamples;
+  const diffFeedback = (taskA?.feedbackTotal || 0) - (taskB?.feedbackTotal || 0);
+  if (diffFeedback !== 0) return diffFeedback;
+  const diffSeen = (taskA?.seenIds?.length || 0) - (taskB?.seenIds?.length || 0);
+  if (diffSeen !== 0) return diffSeen;
+  return Object.keys(taskA?.tokenCounts || {}).length - Object.keys(taskB?.tokenCounts || {}).length;
+}
+
+export function exportEdgeModel(userId, storage = null) {
+  if (!isValidUserId(userId)) return null;
+  const { model } = loadModel(userId, storage);
+  const stats = model.getStats();
+  if (stats.totalSamples === 0 && stats.vocabSize === 0) return null;
+  return model.serialize(userId);
+}
+
+export function mergeEdgeModels(localSerialized, remoteSerialized, userId) {
+  const validLocal = Boolean(localSerialized && localSerialized.version === 1 && localSerialized.tasks);
+  const localNorm = createEdgeModel(validLocal ? localSerialized : null).serialize(userId);
+  const validRemote = Boolean(
+    remoteSerialized
+    && remoteSerialized.version === 1
+    && remoteSerialized.tasks
+    && typeof remoteSerialized.tasks === 'object',
+  );
+
+  if (!validRemote) {
+    const hasLocalSamples = EDGE_TASKS.some(
+      (task) => (localNorm.tasks[task]?.userSamples || 0) > 0 || Object.keys(localNorm.tasks[task]?.tokenCounts || {}).length > 0,
+    );
+    return {
+      model: localNorm,
+      changedLocal: false,
+      needsPush: hasLocalSamples,
+    };
+  }
+
+  const remoteNorm = createEdgeModel(remoteSerialized).serialize(userId);
+  const localUpdated = Number.isFinite(localSerialized?.updatedAt) ? localSerialized.updatedAt : 0;
+  const remoteUpdated = Number.isFinite(remoteSerialized?.updatedAt) ? remoteSerialized.updatedAt : 0;
+
+  const mergedTasks = {};
+  let changedLocal = false;
+  let needsPush = false;
+
+  for (const task of EDGE_TASKS) {
+    const lTask = localNorm.tasks[task];
+    const rTask = remoteNorm.tasks[task];
+    const cmp = compareTaskRichness(rTask, lTask);
+    if (cmp > 0 || (cmp === 0 && remoteUpdated > localUpdated && (rTask?.userSamples || 0) > 0)) {
+      mergedTasks[task] = rTask;
+      changedLocal = true;
+    } else if (cmp < 0) {
+      mergedTasks[task] = lTask;
+      needsPush = true;
+    } else {
+      mergedTasks[task] = lTask;
+    }
+  }
+
+  const model = createEdgeModel({
+    version: 1,
+    userId: isValidUserId(userId) ? userId : null,
+    tasks: mergedTasks,
+  }).serialize(isValidUserId(userId) ? userId : null);
+
+  return {
+    model,
+    changedLocal,
+    needsPush,
+  };
+}
+
+export function replaceEdgeModelFromSync(userId, serialized, storage = null) {
+  const store = resolveStorage(storage);
+  if (!store || !isValidUserId(userId) || !serialized || typeof serialized !== 'object') return false;
+  try {
+    const model = createEdgeModel(serialized);
+    const ok = saveModel(userId, model, store);
+    if (ok) notifyListeners(userId, { source: 'sync' });
+    return ok;
   } catch {
     return false;
   }

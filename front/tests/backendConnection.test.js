@@ -119,6 +119,10 @@ test('AI provider timeout preserves its useful message and does not wake the bac
   const api=createApiClient({connection:gate});
   api.defaults.adapter=async config=>{throw new axios.AxiosError('AI timed out','ERR_BAD_RESPONSE',config,null,{status:504,data:{code:'CHATBOT_TIMEOUT',message:'AI timed out'},config});};
   await assert.rejects(api.post('/chatbot/hoi-dap',{}),e=>e.response.data.message==='AI timed out');
+  api.defaults.adapter=async config=>{throw new axios.AxiosError('Vision busy','ERR_BAD_RESPONSE',config,null,{status:502,data:{code:'OCR_AI_PROVIDER',message:'Vision busy'},config});};
+  await assert.rejects(api.post('/imports/ocr-ai',{}),e=>e.response.data.message==='Vision busy');
+  api.defaults.adapter=async config=>{throw new axios.AxiosError('Vision timeout','ERR_BAD_RESPONSE',config,null,{status:504,data:{code:'OCR_AI_TIMEOUT',message:'Vision timeout'},config});};
+  await assert.rejects(api.post('/imports/ocr-ai',{}),e=>e.response.data.message==='Vision timeout');
   assert.equal(unavailable,0);
 });
 

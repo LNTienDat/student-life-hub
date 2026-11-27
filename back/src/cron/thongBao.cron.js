@@ -74,7 +74,7 @@ async function nhacDeadlineQuaEmail(idNguoiDungLoc = null) {
         failures.push(err);
       }
     }
-    if (failures.length) throw new Error('Không gửi được một hoặc nhiều email. Vui lòng thử lại sau.');
+    if (failures.length) throw Object.assign(new Error('Không gửi được một hoặc nhiều email. Vui lòng thử lại sau.'), failures[0]?.code ? { code: failures[0].code } : {});
   } catch (error) {
     if (idNguoiDungLoc) throw error;
     console.error('[Cron] Lỗi khi chạy nhacDeadlineQuaEmail:', error);
@@ -175,7 +175,7 @@ async function canhBaoNganSachQuaEmail(idNguoiDungLoc = null) {
         failures.push(err);
       }
     }
-    if (failures.length) throw new Error('Không gửi được một hoặc nhiều email. Vui lòng thử lại sau.');
+    if (failures.length) throw Object.assign(new Error('Không gửi được một hoặc nhiều email. Vui lòng thử lại sau.'), failures[0]?.code ? { code: failures[0].code } : {});
   } catch (error) {
     if (idNguoiDungLoc) throw error;
     console.error('[Cron] Lỗi khi chạy canhBaoNganSachQuaEmail:', error);

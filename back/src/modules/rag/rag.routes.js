@@ -1,6 +1,8 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const auth = require('../../middlewares/auth.middleware');
+const { validateBody } = require('../../middlewares/validate.middleware');
+const { generateStudyPackSchema } = require('./rag.schemas');
 const service = require('./document.service');
 const studyService = require('./study.service');
 const router = express.Router();
@@ -22,7 +24,7 @@ router.param('id', (req, res, next, id) => {
 });
 router.get('/', handle(async (req, res) => res.json(await service.listDocuments(req.user.id))));
 router.post('/', uploadLimit, handle(async (req, res) => res.status(201).json({ taiLieu: await service.addDocument(req.user.id, req.body) })));
-router.post('/:id/tao-on-tap', studyLimit, handle(async (req, res) => res.json(await studyService.generateStudyPack(req.user.id, req.params.id, req.body || {}))));
+router.post('/:id/tao-on-tap', studyLimit, validateBody(generateStudyPackSchema), handle(async (req, res) => res.json(await studyService.generateStudyPack(req.user.id, req.params.id, req.body || {}))));
 router.get('/:id', handle(async (req, res) => res.json({ taiLieu: await service.readDocument(req.user.id, req.params.id) })));
 router.delete('/:id', handle(async (req, res) => {
   if (req.params.id === 'huong-dan-lifehub') return res.status(400).json({ message: 'Hướng dẫn sản phẩm được quản lý cùng phiên bản LifeHub.' });

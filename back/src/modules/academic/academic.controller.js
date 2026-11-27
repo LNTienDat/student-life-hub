@@ -313,7 +313,7 @@ async function xuatBangDiemPDF(req, res) {
     doc.text(`Email: ${nguoiDung?.email || ''}`);
     if (nguoiDung?.truong) doc.text(`Trường: ${nguoiDung.truong}`);
     if (nguoiDung?.nganh) doc.text(`Ngành: ${nguoiDung.nganh}`);
-    doc.text(`Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`);
+    doc.text(`Ngày xuất: ${new Date().toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}`);
     doc.moveDown();
 
     const startX = 40;
@@ -329,7 +329,7 @@ async function xuatBangDiemPDF(req, res) {
 
     hangMonHoc.forEach((mon) => {
       y = doc.y;
-      if (y > 750) {
+      if (y > 740) {
         doc.addPage();
         y = doc.y;
       }
@@ -340,11 +340,13 @@ async function xuatBangDiemPDF(req, res) {
         mon.diemMon !== null ? mon.diemMon.toFixed(2) : '-',
         mon.diemHe4 !== null ? `${mon.diemHe4.toFixed(1)} (${mon.diemChu})` : '-',
       ];
+      let maxY = y;
       rowData.forEach((val, i) => {
         const x = startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
         doc.text(val, x, y, { width: colWidths[i] });
+        if (doc.y > maxY) maxY = doc.y;
       });
-      doc.moveDown(0.6);
+      doc.y = maxY + 6;
     });
 
     doc.moveDown();

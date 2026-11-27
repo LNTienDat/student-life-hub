@@ -485,6 +485,89 @@ async function seedDemoUser() {
     });
   }
 
+  // 8. Tạo Bộ thẻ ôn tập (BoTheOnTap) mẫu nếu tài khoản chưa có bộ thẻ đồng bộ
+  const existingDeck = await prisma.boTheOnTap.findUnique({ where: { idNguoiDung: userId } });
+  if (!existingDeck) {
+    const sampleDoc = await prisma.taiLieuRag.findFirst({
+      where: { idNguoiDung: userId },
+      orderBy: { id: 'desc' },
+      select: { id: true, tieuDe: true },
+    });
+    const docId = sampleDoc ? String(sampleDoc.id) : 'huong-dan-lifehub';
+    const docTitle = sampleDoc ? sampleDoc.tieuDe : 'Tài liệu ôn tập';
+    const todayKey = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
+
+    await prisma.boTheOnTap.create({
+      data: {
+        idNguoiDung: userId,
+        phienBan: 1,
+        tongLuotOn: 4,
+        cacThe: [
+          {
+            id: 'seed_sm2_1',
+            docId,
+            docTitle,
+            matTruoc: 'Trình biên dịch và trình thông dịch khác nhau như thế nào?',
+            matSau: 'Trình biên dịch dịch toàn bộ mã nguồn sang mã máy trước khi chạy; trình thông dịch dịch và thực thi từng lệnh.',
+            trang: 1,
+            trichDan: 'Chương 1: Tổng quan về ngôn ngữ lập trình Python',
+            repetitions: 1,
+            interval: 1,
+            easeFactor: 2.5,
+            nextReviewAt: todayKey,
+            lastReviewedAt: null,
+            lapses: 0,
+          },
+          {
+            id: 'seed_sm2_2',
+            docId,
+            docTitle,
+            matTruoc: 'Mô-đun nào trong Python cung cấp các hàm toán học sqrt(), pow(), exp()?',
+            matSau: 'Mô-đun chuẩn math (import math).',
+            trang: 1,
+            trichDan: 'Sử dụng import math để gọi math.sqrt(), math.pow(), math.exp().',
+            repetitions: 2,
+            interval: 6,
+            easeFactor: 2.6,
+            nextReviewAt: todayKey,
+            lastReviewedAt: null,
+            lapses: 0,
+          },
+          {
+            id: 'seed_sm2_3',
+            docId,
+            docTitle,
+            matTruoc: 'Cách kiểm tra nhanh phiên bản Python đang cài đặt trên máy?',
+            matSau: 'Chạy lệnh python --version hoặc python -V trong cửa sổ dòng lệnh.',
+            trang: 1,
+            trichDan: 'Gõ lệnh python --version hoặc python -V trên Terminal.',
+            repetitions: 0,
+            interval: 0,
+            easeFactor: 2.5,
+            nextReviewAt: todayKey,
+            lastReviewedAt: null,
+            lapses: 0,
+          },
+          {
+            id: 'seed_sm2_4',
+            docId: 'huong-dan-lifehub',
+            docTitle: 'Hướng dẫn sử dụng LifeHub',
+            matTruoc: 'LifeHub tính GPA tích lũy theo nguyên tắc nào?',
+            matSau: 'Nhân điểm tổng kết của từng môn đã đủ trọng số với số tín chỉ, sau đó chia cho tổng số tín chỉ tích lũy trên cả thang 10 và thang 4.',
+            trang: 1,
+            trichDan: 'Quy đổi song song GPA thang 10 và thang 4 theo số tín chỉ.',
+            repetitions: 1,
+            interval: 1,
+            easeFactor: 2.5,
+            nextReviewAt: todayKey,
+            lastReviewedAt: null,
+            lapses: 0,
+          },
+        ],
+      },
+    });
+  }
+
   const summary = await prisma.nguoiDung.findUnique({
     where: { id: userId },
     select: {
@@ -492,6 +575,12 @@ async function seedDemoUser() {
       ten: true,
       hocKyHienTai: true,
       hocKyDaLuu: true,
+      boTheOnTap: {
+        select: {
+          tongLuotOn: true,
+          capNhatLuc: true,
+        },
+      },
       _count: {
         select: {
           monHocs: true,

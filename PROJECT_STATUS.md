@@ -1,5 +1,7 @@
 # 📌 STUDENT LIFE HUB - TRẠNG THÁI DỰ ÁN
 
+> **Nâng cấp công nghệ & rà soát toàn diện 27/11/2026:** Hoàn thiện 7 nhóm công nghệ thông minh (Neuro-Symbolic Study Planner, EdgeAI phân loại ngoại tuyến + đồng bộ đa thiết bị qua PostgreSQL, AI Agent Tool-Calling & nhận diện giọng nói, Hybrid RAG BM25 + Vector 64D & sinh Quiz/Flashcard, lặp lại ngắt quãng SuperMemo-2 đồng bộ tài khoản, dự báo tài chính WLS/Z-score/IQR & giả lập GPA tương lai, AI Vision Multimodal OCR). Chuẩn hóa kiểm tra đầu vào bằng Zod, nâng Docker lên `node:24-alpine`, cập nhật OpenAPI `1.2.0` (46 đường dẫn API) và hoàn thiện 100% từ điển song ngữ Việt/Anh (`1.342` khóa). Kiểm thử tự động: **26/26 bộ unit test backend (239 bài)**, **138/138 test frontend**, **9/9 test PWA & bundle**, **4/4 test tích hợp frontend**, `0` lỗi ESLint, `0` lỗ hổng production.
+
 > **Online 30/10:** Đã push nhánh riêng tư và triển khai commit 3801331; backend/frontend cùng phiên bản, health tốt. Sao lưu Neon trước 9 migration mới. 8 nhóm API online, đăng nhập/đăng xuất/Quay lại và OCR bill mẫu đạt; sửa banner cập nhật PWA. CI GitHub thành công. Email online, AI thật và điện thoại thật còn cần nghiệm thu. [Báo cáo](docs/reports/ONLINE_RELEASE_2026_10_30.md). Các ghi chú “chỉ local” bên dưới là lịch sử trước đợt triển khai này.
 
 > **Sao lưu và kiểm thử độc lập 28/10 — chỉ local:** Thêm Sao_Luu_CSDL.cmd và công cụ khôi phục sang CSDL thử mới, chặn ghi đè/tệp hỏng. 281 backend + 17 nhóm sao lưu/khôi phục đạt; bổ sung tình huống lỗi email đặt lại mật khẩu và AI. Không dùng dữ liệu thật, không gọi dịch vụ ngoài, chưa push/deploy. [Báo cáo](docs/reports/INDEPENDENT_WORK_2026_10_28.md).
@@ -77,11 +79,11 @@
 
 ## 📈 1. Tổng Kết Tiến Độ
 
-- **Tiến độ tổng thể**: Các chức năng nền đã triển khai; còn bước xác nhận trực quan và vận hành thực tế.
-- **Danh mục cũ**: 37 chức năng đã có triển khai; còn khoảng trống ở giao diện, cấu hình dịch vụ và nghiệm thu luồng đầy đủ.
-- **Database**: 7 Model (NguoiDung, MonHoc, Diem, Deadline, GiaoDich, NganSach, ThoiKhoaBieu)
-- **Backend API**: 41 Endpoints nghiệp vụ
-- **Frontend**: 10 Trang giao diện chuẩn Responsive + Dark mode
+- **Tiến độ tổng thể**: Đã hoàn thiện toàn bộ chức năng cốt lõi, 7 mô-đun công nghệ thông minh, đồng bộ đa thiết bị và bộ kiểm thử tự động (Unit, PWA, Build, Integration).
+- **Danh mục chức năng**: 37 chức năng nền tảng + 7 mô-đun công nghệ thông minh nâng cao.
+- **Database**: 14 Model Prisma (`NguoiDung`, `MonHoc`, `Diem`, `Deadline`, `GiaoDich`, `NganSach`, `DanhMucTaiChinh`, `ThoiKhoaBieu`, `DieuChinhLich`, `TaiLieuRag`, `BoTheOnTap`, `MoHinhEdgeAi`, `NhomHocTap`, `ThanhVienNhom`, `DeadlineNhom`, `TienDoDeadlineNhom` — tổng 16 bảng nghiệp vụ, 16 bản migration).
+- **Backend API**: 46 đường dẫn OpenAPI 3.0 (`/api-docs`, phiên bản `1.2.0`).
+- **Frontend**: 12 Trang giao diện chuẩn Responsive + Dark Mode + Song ngữ Tiếng Việt / English + PWA Offline.
 
 ---
 

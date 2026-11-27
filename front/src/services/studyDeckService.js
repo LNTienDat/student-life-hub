@@ -43,10 +43,10 @@ function fallbackCardId(docId, matTruoc, index) {
   return `sm2_${docId}_${Date.now()}_${index}_${normalizeFront(matTruoc).slice(0, 12)}`;
 }
 
-function notifyListeners(userId) {
+function notifyListeners(userId, meta = { source: 'local' }) {
   for (const fn of listeners) {
     try {
-      fn(userId);
+      fn(userId, meta);
     } catch {
       // Never break callers if a subscriber fails.
     }
@@ -220,4 +220,129 @@ export function getDeckStats(userId, docId = null, now = Date.now(), explicitSto
     ...getDeckSummary(scoped, vietnamTodayKey(now)),
     totalReviews: deck.totalReviews || 0,
   };
+}
+
+function isValidCardShape(card) {
+  return Boolean(
+    card
+    && typeof card.id === 'string'
+    && card.id.trim()
+    && typeof card.matTruoc === 'string'
+    && card.matTruoc.trim()
+    && typeof card.matSau === 'string'
+    && card.matSau.trim(),
+  );
+}
+
+function reviewTimestampMs(card) {
+  if (!card?.lastReviewedAt) return 0;
+  const parsed = Date.parse(card.lastReviewedAt);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function compareCardProgress(cardA, cardB) {
+  const timeDiff = reviewTimestampMs(cardA) - reviewTimestampMs(cardB);
+  if (timeDiff !== 0) return timeDiff;
+  const repDiff = (Number(cardA?.repetitions) || 0) - (Number(cardB?.repetitions) || 0);
+  if (repDiff !== 0) return repDiff;
+  return (Number(cardA?.interval) || 0) - (Number(cardB?.interval) || 0);
+}
+
+function cardRecencyMs(card) {
+  const reviewed = reviewTimestampMs(card);
+  const created = card?.createdAt ? (Date.parse(card.createdAt) || 0) : 0;
+  return Math.max(reviewed, created);
+}
+
+export function mergeStudyDecks(localDeck, remoteDeck, userId) {
+  const localCards = Array.isArray(localDeck?.cards) ? localDeck.cards.filter(isValidCardShape) : [];
+  const validRemote = Boolean(remoteDeck && Array.isArray(remoteDeck.cards));
+  const remoteCards = validRemote ? remoteDeck.cards.filter(isValidCardShape) : [];
+
+  const localMap = new Map();
+  for (const card of localCards) {
+    const key = `${String(card.docId ?? 'doc')}::${normalizeFront(card.matTruoc)}`;
+    if (!localMap.has(key)) localMap.set(key, card);
+  }
+
+  const remoteMap = new Map();
+  for (const card of remoteCards) {
+    const key = `${String(card.docId ?? 'doc')}::${normalizeFront(card.matTruoc)}`;
+    if (!remoteMap.has(key)) remoteMap.set(key, card);
+  }
+
+  const mergedMap = new Map();
+  let changedLocal = false;
+  let needsPush = false;
+
+  for (const [key, localCard] of localMap.entries()) {
+    const remoteCard = remoteMap.get(key);
+    if (!remoteCard) {
+      mergedMap.set(key, localCard);
+      needsPush = true;
+      continue;
+    }
+    const diff = compareCardProgress(remoteCard, localCard);
+    if (diff > 0) {
+      mergedMap.set(key, remoteCard);
+      changedLocal = true;
+    } else if (diff < 0) {
+      mergedMap.set(key, localCard);
+      needsPush = true;
+    } else {
+      mergedMap.set(key, localCard);
+    }
+  }
+
+  for (const [key, remoteCard] of remoteMap.entries()) {
+    if (!localMap.has(key)) {
+      mergedMap.set(key, remoteCard);
+      changedLocal = true;
+    }
+  }
+
+  let mergedCards = [...mergedMap.values()];
+  if (mergedCards.length > MAX_CARDS) {
+    mergedCards = mergedCards
+      .slice()
+      .sort((a, b) => cardRecencyMs(a) - cardRecencyMs(b))
+      .slice(-MAX_CARDS);
+  }
+
+  const localTotal = Number.isInteger(localDeck?.totalReviews) && localDeck.totalReviews >= 0 ? localDeck.totalReviews : 0;
+  const remoteTotal = validRemote && Number.isInteger(remoteDeck.totalReviews) && remoteDeck.totalReviews >= 0
+    ? remoteDeck.totalReviews
+    : 0;
+  const totalReviews = Math.max(localTotal, remoteTotal);
+
+  if (remoteTotal > localTotal) changedLocal = true;
+  if (!validRemote) {
+    needsPush = mergedCards.length > 0 || totalReviews > 0;
+  } else if (localTotal > remoteTotal) {
+    needsPush = true;
+  }
+
+  return {
+    deck: {
+      version: 1,
+      userId: isValidUserId(userId) ? userId : null,
+      cards: mergedCards,
+      totalReviews,
+    },
+    changedLocal,
+    needsPush,
+  };
+}
+
+export function replaceDeckFromSync(userId, deck, explicitStorage = null) {
+  if (!isValidUserId(userId) || !deck || !Array.isArray(deck.cards)) return false;
+  const sanitized = {
+    version: 1,
+    userId,
+    totalReviews: Number.isInteger(deck.totalReviews) && deck.totalReviews >= 0 ? deck.totalReviews : 0,
+    cards: deck.cards.filter(isValidCardShape).slice(-MAX_CARDS),
+  };
+  const ok = saveDeck(userId, sanitized, explicitStorage);
+  if (ok) notifyListeners(userId, { source: 'sync' });
+  return ok;
 }

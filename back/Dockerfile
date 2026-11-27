@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:24-alpine AS base
 
 WORKDIR /app
 
@@ -19,4 +19,4 @@ ENV PORT=5000
 
 EXPOSE 5000
 
-CMD ["node", "app.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node app.js"]

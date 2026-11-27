@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Student Life Hub API",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "Hệ thống API backend quản lý toàn diện đời sống sinh viên (Học tập, Deadline, Tài chính, Thời khóa biểu, Trợ lý AI và Thông báo tự động)."
   },
   "servers": [
@@ -66,6 +66,238 @@
             "type": "string",
             "format": "byte",
             "description": "Nội dung tệp mã hóa base64. Dùng lại cùng tệp khi xác nhận nhập."
+          }
+        }
+      },
+      "SyncSm2Deck": {
+        "type": "object",
+        "required": [
+          "version",
+          "cards"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "totalReviews": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "cards": {
+            "type": "array",
+            "maxItems": 400,
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "docId",
+                "matTruoc",
+                "matSau"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "docId": {
+                  "type": "string"
+                },
+                "docTitle": {
+                  "type": "string"
+                },
+                "matTruoc": {
+                  "type": "string"
+                },
+                "matSau": {
+                  "type": "string"
+                },
+                "trang": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "trichDan": {
+                  "type": "string"
+                },
+                "repetitions": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "interval": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "easeFactor": {
+                  "type": "number",
+                  "minimum": 1.3
+                },
+                "nextReviewAt": {
+                  "type": "string",
+                  "example": "2026-11-27"
+                },
+                "lastReviewedAt": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "lapses": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "needsRelearn": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "SyncEdgeModel": {
+        "type": "object",
+        "required": [
+          "version",
+          "tasks"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "updatedAt": {
+            "type": "number"
+          },
+          "tasks": {
+            "type": "object",
+            "required": [
+              "finance_chi",
+              "finance_thu",
+              "deadline_priority"
+            ],
+            "properties": {
+              "finance_chi": {
+                "type": "object"
+              },
+              "finance_thu": {
+                "type": "object"
+              },
+              "deadline_priority": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      "PlannerGenerateRequest": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "maxLength": 600
+          },
+          "weekStart": {
+            "type": "string",
+            "example": "2026-11-23"
+          },
+          "semester": {
+            "type": "string",
+            "example": "HK1 - 2026"
+          },
+          "useAI": {
+            "type": "boolean",
+            "default": true
+          },
+          "dongYGuiAI": {
+            "type": "boolean",
+            "default": false
+          },
+          "constraints": {
+            "type": "object"
+          }
+        }
+      },
+      "StudyPackRequest": {
+        "type": "object",
+        "properties": {
+          "soLuong": {
+            "type": "integer",
+            "minimum": 3,
+            "maximum": 20,
+            "default": 6
+          },
+          "chuDe": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "dungAI": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "VisionOcrRequest": {
+        "type": "object",
+        "required": [
+          "kind",
+          "imageBase64",
+          "dongYGuiAI"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "receipt",
+              "timetable",
+              "transcript"
+            ]
+          },
+          "mimeType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp"
+            ]
+          },
+          "imageBase64": {
+            "type": "string",
+            "format": "byte"
+          },
+          "dongYGuiAI": {
+            "type": "boolean"
+          }
+        }
+      },
+      "FeedbackRequest": {
+        "type": "object",
+        "required": [
+          "tieuDe",
+          "noiDung"
+        ],
+        "properties": {
+          "loai": {
+            "type": "string",
+            "enum": [
+              "loi",
+              "gop_y",
+              "ocr"
+            ],
+            "default": "gop_y"
+          },
+          "tieuDe": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 120
+          },
+          "noiDung": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 2000
+          },
+          "trang": {
+            "type": "string",
+            "maxLength": 120
           }
         }
       }
@@ -748,6 +980,726 @@
           },
           "429": {
             "description": "Quá 15 yêu cầu/phút."
+          }
+        }
+      }
+    },
+    "/api/version": {
+      "get": {
+        "summary": "Thông tin phiên bản bản dựng hiện tại của ứng dụng",
+        "tags": [
+          "System"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Phiên bản và mã commit phát hành"
+          }
+        }
+      }
+    },
+    "/api/auth/ho-so": {
+      "get": {
+        "summary": "Lấy thông tin hồ sơ người dùng hiện tại",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Thông tin hồ sơ"
+          }
+        }
+      },
+      "put": {
+        "summary": "Cập nhật hồ sơ và ảnh đại diện người dùng",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Hồ sơ đã cập nhật"
+          }
+        }
+      }
+    },
+    "/api/auth/doi-mat-khau": {
+      "put": {
+        "summary": "Đổi mật khẩu tài khoản hiện tại",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Đổi mật khẩu thành công"
+          }
+        }
+      }
+    },
+    "/api/hoc-ky/kiem-tra-xoa": {
+      "get": {
+        "summary": "Kiểm tra số lượng môn học, deadline và lịch học bị ảnh hưởng khi xóa học kỳ",
+        "tags": [
+          "Semester"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "hocKy",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thống kê dữ liệu thuộc học kỳ"
+          }
+        }
+      }
+    },
+    "/api/hoc-ky": {
+      "delete": {
+        "summary": "Xóa một học kỳ và toàn bộ dữ liệu học kỳ theo tùy chọn",
+        "tags": [
+          "Semester"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "hocKy",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Đã xóa học kỳ"
+          }
+        }
+      }
+    },
+    "/api/finance/danh-muc": {
+      "get": {
+        "summary": "Lấy danh sách danh mục thu/chi mặc định và tùy chỉnh của tài khoản",
+        "tags": [
+          "Finance"
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách danh mục tài chính"
+          }
+        }
+      },
+      "post": {
+        "summary": "Thêm danh mục tài chính tùy chỉnh mới",
+        "tags": [
+          "Finance"
+        ],
+        "responses": {
+          "201": {
+            "description": "Tạo danh mục thành công"
+          }
+        }
+      }
+    },
+    "/api/finance/danh-muc/{ma}": {
+      "put": {
+        "summary": "Cập nhật tên, biểu tượng hoặc trạng thái hiển thị của danh mục",
+        "tags": [
+          "Finance"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ma",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Đã cập nhật danh mục"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Ẩn hoặc xóa danh mục tài chính tùy chỉnh",
+        "tags": [
+          "Finance"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ma",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Đã xóa hoặc ẩn danh mục"
+          }
+        }
+      }
+    },
+    "/api/finance/du-bao": {
+      "get": {
+        "summary": "Dự báo chi tiêu cuối tháng (WLS), phát hiện khoản chi bất thường (MAD) và ngân sách rủi ro",
+        "tags": [
+          "Finance"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "thang",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 12
+            }
+          },
+          {
+            "in": "query",
+            "name": "nam",
+            "schema": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Kết quả dự báo tài chính"
+          }
+        }
+      }
+    },
+    "/api/finance/ngan-sach/{id}": {
+      "delete": {
+        "summary": "Gỡ một hạn mức ngân sách theo ID",
+        "tags": [
+          "Finance"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Đã gỡ ngân sách"
+          }
+        }
+      }
+    },
+    "/api/thoi-khoa-bieu/share/public/{token}": {
+      "get": {
+        "summary": "Xem thời khóa biểu công khai theo liên kết chia sẻ đã phát hành",
+        "tags": [
+          "Timetable"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thời khóa biểu công khai theo học kỳ đã chọn"
+          },
+          "404": {
+            "description": "Liên kết không tồn tại hoặc đã tắt"
+          }
+        }
+      }
+    },
+    "/api/thoi-khoa-bieu/share/trang-thai": {
+      "get": {
+        "summary": "Kiểm tra trạng thái liên kết chia sẻ thời khóa biểu",
+        "tags": [
+          "Timetable"
+        ],
+        "responses": {
+          "200": {
+            "description": "Trạng thái chia sẻ và token hiện tại"
+          }
+        }
+      }
+    },
+    "/api/thoi-khoa-bieu/share/bat": {
+      "post": {
+        "summary": "Bật hoặc tạo mới liên kết chia sẻ thời khóa biểu cho một học kỳ",
+        "tags": [
+          "Timetable"
+        ],
+        "responses": {
+          "200": {
+            "description": "Đã bật chia sẻ và trả về liên kết"
+          }
+        }
+      }
+    },
+    "/api/thoi-khoa-bieu/share/tat": {
+      "post": {
+        "summary": "Tắt liên kết chia sẻ thời khóa biểu công khai",
+        "tags": [
+          "Timetable"
+        ],
+        "responses": {
+          "200": {
+            "description": "Đã tắt chia sẻ"
+          }
+        }
+      }
+    },
+    "/api/chatbot/trang-thai": {
+      "get": {
+        "summary": "Kiểm tra trạng thái sẵn sàng của trợ lý AI",
+        "tags": [
+          "Chatbot"
+        ],
+        "responses": {
+          "200": {
+            "description": "Trạng thái AI và tên model"
+          }
+        }
+      }
+    },
+    "/api/tai-lieu": {
+      "get": {
+        "summary": "Lấy danh sách tài liệu học tập trong kho RAG và giới hạn lưu trữ",
+        "tags": [
+          "RAG & Study"
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách tài liệu và tài liệu hướng dẫn tích hợp"
+          }
+        }
+      },
+      "post": {
+        "summary": "Tải lên tài liệu PDF/TXT/MD hoặc dán văn bản để tách đoạn và lập chỉ mục BM25 + Vector",
+        "tags": [
+          "RAG & Study"
+        ],
+        "responses": {
+          "201": {
+            "description": "Đã lưu và lập chỉ mục tài liệu"
+          },
+          "400": {
+            "description": "Tệp hoặc nội dung không hợp lệ"
+          }
+        }
+      }
+    },
+    "/api/tai-lieu/{id}": {
+      "get": {
+        "summary": "Đọc chi tiết nội dung và các đoạn đã trích xuất của một tài liệu",
+        "tags": [
+          "RAG & Study"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID số nguyên hoặc huong-dan-lifehub"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chi tiết tài liệu và danh sách đoạn"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Xóa tài liệu khỏi kho cá nhân",
+        "tags": [
+          "RAG & Study"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Đã xóa tài liệu khỏi kho"
+          }
+        }
+      }
+    },
+    "/api/tai-lieu/{id}/tao-on-tap": {
+      "post": {
+        "summary": "Sinh bộ Flashcard và câu hỏi trắc nghiệm 4 lựa chọn từ tài liệu bằng Gemini hoặc bộ trích xuất cục bộ",
+        "tags": [
+          "RAG & Study"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID tài liệu hoặc huong-dan-lifehub"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudyPackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Danh sách flashcards và quizzes có trích dẫn trang"
+          },
+          "400": {
+            "description": "Dữ liệu yêu cầu không hợp lệ"
+          }
+        }
+      }
+    },
+    "/api/planner/generate": {
+      "post": {
+        "summary": "Tạo lịch ôn tập tối ưu trong tuần tránh trùng lịch học bằng Neuro-Symbolic solver",
+        "tags": [
+          "Study Planner"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlannerGenerateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Danh sách phiên ôn tập đề xuất và tóm tắt ràng buộc"
+          },
+          "400": {
+            "description": "Dữ liệu đầu vào không hợp lệ"
+          }
+        }
+      }
+    },
+    "/api/planner/apply-deadlines": {
+      "post": {
+        "summary": "Lưu các phiên ôn tập đã chọn thành Deadline cá nhân",
+        "tags": [
+          "Study Planner"
+        ],
+        "responses": {
+          "201": {
+            "description": "Đã lưu các phiên ôn tập vào Deadline"
+          },
+          "400": {
+            "description": "Danh sách phiên không hợp lệ"
+          }
+        }
+      }
+    },
+    "/api/imports/ocr-ai/status": {
+      "get": {
+        "summary": "Kiểm tra trạng thái sẵn sàng của chế độ quét ảnh bằng AI Vision",
+        "tags": [
+          "Import"
+        ],
+        "responses": {
+          "200": {
+            "description": "Trạng thái aiSanSang và model"
+          }
+        }
+      }
+    },
+    "/api/imports/ocr-ai": {
+      "post": {
+        "summary": "Quét ảnh hóa đơn, thời khóa biểu hoặc bảng điểm bằng AI Vision khi người dùng đồng ý",
+        "tags": [
+          "Import"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VisionOcrRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dữ liệu trích xuất có cấu trúc"
+          },
+          "400": {
+            "description": "Ảnh hoặc xác nhận chưa hợp lệ"
+          }
+        }
+      }
+    },
+    "/api/sync/sm2": {
+      "get": {
+        "summary": "Tải bộ thẻ ôn tập ghi nhớ đã đồng bộ của tài khoản",
+        "tags": [
+          "Sync"
+        ],
+        "responses": {
+          "200": {
+            "description": "Trạng thái bộ thẻ (null nếu chưa đồng bộ)"
+          }
+        }
+      },
+      "put": {
+        "summary": "Lưu đồng bộ bộ thẻ ôn tập ghi nhớ lên PostgreSQL (tối đa 400 thẻ)",
+        "tags": [
+          "Sync"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncSm2Deck"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bộ thẻ đã lưu và dấu thời gian cập nhật"
+          },
+          "400": {
+            "description": "Dữ liệu thẻ không hợp lệ"
+          },
+          "413": {
+            "description": "Kích thước dữ liệu vượt giới hạn"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Xóa bản sao bộ thẻ ôn tập đồng bộ trên máy chủ",
+        "tags": [
+          "Sync"
+        ],
+        "responses": {
+          "200": {
+            "description": "Đã xóa bản sao đồng bộ"
+          }
+        }
+      }
+    },
+    "/api/sync/edge-ai": {
+      "get": {
+        "summary": "Tải dữ liệu gợi ý phân loại cá nhân hóa đã đồng bộ",
+        "tags": [
+          "Sync"
+        ],
+        "responses": {
+          "200": {
+            "description": "Dữ liệu mô hình gợi ý (null nếu chưa đồng bộ)"
+          }
+        }
+      },
+      "put": {
+        "summary": "Lưu đồng bộ dữ liệu gợi ý phân loại thu/chi và ưu tiên deadline lên PostgreSQL",
+        "tags": [
+          "Sync"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncEdgeModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dữ liệu mô hình gợi ý đã đồng bộ"
+          },
+          "400": {
+            "description": "Dữ liệu không hợp lệ"
+          },
+          "413": {
+            "description": "Kích thước vượt giới hạn"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Đặt lại và xóa bản sao dữ liệu gợi ý đồng bộ của tài khoản",
+        "tags": [
+          "Sync"
+        ],
+        "responses": {
+          "200": {
+            "description": "Đã đặt lại dữ liệu gợi ý đồng bộ"
+          }
+        }
+      }
+    },
+    "/api/feedback": {
+      "post": {
+        "summary": "Gửi góp ý hoặc báo lỗi trực tiếp từ ứng dụng",
+        "tags": [
+          "Feedback"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Đã ghi nhận phản hồi"
+          },
+          "400": {
+            "description": "Tiêu đề hoặc nội dung chưa đủ độ dài"
+          }
+        }
+      }
+    },
+    "/api/nhom": {
+      "get": {
+        "summary": "Lấy danh sách nhóm học tập mà sinh viên tham gia",
+        "tags": [
+          "Study Groups"
+        ],
+        "responses": {
+          "200": {
+            "description": "Danh sách nhóm học tập"
+          }
+        }
+      }
+    },
+    "/api/nhom/tao": {
+      "post": {
+        "summary": "Tạo nhóm học tập mới và sinh mã mời tham gia",
+        "tags": [
+          "Study Groups"
+        ],
+        "responses": {
+          "201": {
+            "description": "Đã tạo nhóm học tập"
+          }
+        }
+      }
+    },
+    "/api/nhom/tham-gia": {
+      "post": {
+        "summary": "Tham gia nhóm học tập bằng mã mời",
+        "tags": [
+          "Study Groups"
+        ],
+        "responses": {
+          "200": {
+            "description": "Tham gia nhóm thành công"
+          }
+        }
+      }
+    },
+    "/api/nhom/{id}": {
+      "get": {
+        "summary": "Xem chi tiết thành viên và deadline chung của nhóm",
+        "tags": [
+          "Study Groups"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thông tin chi tiết nhóm"
+          }
+        }
+      },
+      "put": {
+        "summary": "Cập nhật tên hoặc mô tả nhóm (Trưởng nhóm)",
+        "tags": [
+          "Study Groups"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Đã cập nhật nhóm"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Giải tán nhóm học tập (Trưởng nhóm)",
+        "tags": [
+          "Study Groups"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Đã giải tán nhóm"
           }
         }
       }

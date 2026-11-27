@@ -109,4 +109,27 @@ describe('Swagger documentation protection (Basic Auth)', () => {
       .set('Authorization', 'Basic ' + Buffer.from('admin:secret_password_123').toString('base64'));
     expect(validAuth.status).not.toBe(401);
   });
+
+  test('swagger specification stays valid OpenAPI 3.0 and documents core and newly added modules', () => {
+    const swaggerDoc = require('../../src/docs/swagger.json');
+    expect(swaggerDoc.openapi).toBe('3.0.0');
+    expect(swaggerDoc.info.version).toBe('1.2.0');
+    const paths = swaggerDoc.paths || {};
+    for (const expectedPath of [
+      '/api/version',
+      '/api/hoc-ky',
+      '/api/hoc-ky/kiem-tra-xoa',
+      '/api/finance/du-bao',
+      '/api/tai-lieu/{id}/tao-on-tap',
+      '/api/planner/generate',
+      '/api/planner/apply-deadlines',
+      '/api/imports/ocr-ai',
+      '/api/sync/sm2',
+      '/api/sync/edge-ai',
+      '/api/feedback',
+      '/api/nhom/tao',
+    ]) {
+      expect(paths[expectedPath]).toBeDefined();
+    }
+  });
 });

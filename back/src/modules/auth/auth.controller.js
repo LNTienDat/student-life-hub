@@ -296,7 +296,11 @@ async function datLaiMatKhau(req, res) {
     }
 
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-    if (tokenHash !== nguoiDung.resetPasswordToken) {
+    const storedHash = nguoiDung.resetPasswordToken;
+    const hashValid =
+      tokenHash.length === storedHash.length &&
+      crypto.timingSafeEqual(Buffer.from(tokenHash, 'utf8'), Buffer.from(storedHash, 'utf8'));
+    if (!hashValid) {
       return res.status(400).json({ message: 'Liên kết không hợp lệ' });
     }
 

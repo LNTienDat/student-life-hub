@@ -41,6 +41,8 @@ model NguoiDung {
   nhomThamGia         ThanhVienNhom[]
   deadlineNhomsTao    DeadlineNhom[]      @relation("NguoiTaoDeadlineNhom")
   tienDoDeadlineNhoms TienDoDeadlineNhom[]
+  boTheOnTap          BoTheOnTap?
+  moHinhEdgeAi        MoHinhEdgeAi?
 }
 
 model MonHoc {
@@ -261,4 +263,25 @@ model DieuChinhLich {
   @@unique([idBuoiHoc,ngayGoc])
   @@index([idNguoiDung,ngayGoc])
   @@index([idNguoiDung,ngayMoi])
+}
+
+model BoTheOnTap {
+  id          Int       @id @default(autoincrement())
+  idNguoiDung Int       @unique
+  phienBan    Int       @default(1)
+  tongLuotOn  Int       @default(0)
+  cacThe      Json      @default("[]")
+  capNhatLuc  DateTime  @default(now()) @updatedAt
+
+  nguoiDung   NguoiDung @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
+}
+
+model MoHinhEdgeAi {
+  id          Int       @id @default(autoincrement())
+  idNguoiDung Int       @unique
+  phienBan    Int       @default(1)
+  duLieu      Json      @default("{}")
+  capNhatLuc  DateTime  @default(now()) @updatedAt
+
+  nguoiDung   NguoiDung @relation(fields: [idNguoiDung], references: [id], onDelete: Cascade)
 }

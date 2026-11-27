@@ -344,9 +344,13 @@ async function xuatBaoCaoTaiChinhExcel(req, res) {
     const { thang, nam } = req.query;
 
     const where = { idNguoiDung };
+    let periodThang = null;
+    let periodNam = null;
     if (thang !== undefined || nam !== undefined) {
-      const { from, to } = readPeriod(req.query, true);
-      where.ngayGiaoDich = { gte: from, lt: to };
+      const period = readPeriod(req.query, true);
+      periodThang = period.thang;
+      periodNam = period.nam;
+      where.ngayGiaoDich = { gte: period.from, lt: period.to };
     }
 
     const giaoDichs = await prisma.giaoDich.findMany({
@@ -410,7 +414,7 @@ async function xuatBaoCaoTaiChinhExcel(req, res) {
 
     // Sheet 3: Tổng kết
     const sheet3 = workbook.addWorksheet('Tổng kết');
-    sheet3.addRow(['Kỳ báo cáo', thang && nam ? `Tháng ${thang}/${nam}` : 'Toàn bộ']);
+    sheet3.addRow(['Kỳ báo cáo', periodThang && periodNam ? `Tháng ${periodThang}/${periodNam}` : 'Toàn bộ']);
     sheet3.addRow(['Tổng thu', tongThu]);
     sheet3.addRow(['Tổng chi', tongChi]);
     sheet3.addRow(['Số dư', tongThu - tongChi]);
@@ -423,7 +427,7 @@ async function xuatBaoCaoTaiChinhExcel(req, res) {
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     );
-    const tenFile = thang && nam ? `bao-cao-tai-chinh-${thang}-${nam}.xlsx` : 'bao-cao-tai-chinh.xlsx';
+    const tenFile = periodThang && periodNam ? `bao-cao-tai-chinh-${periodThang}-${periodNam}.xlsx` : 'bao-cao-tai-chinh.xlsx';
     res.setHeader('Content-Disposition', `attachment; filename="${tenFile}"`);
 
     await workbook.xlsx.write(res);

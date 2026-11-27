@@ -9,7 +9,7 @@ function userError(error, config, message = error.message) {
 }
 function availabilityError(error) {
   // Provider errors must not mark the LifeHub backend as offline.
-  if (error.response?.data?.code?.startsWith('CHATBOT_')) return false;
+  if (error.response?.data?.code?.startsWith('CHATBOT_') || error.response?.data?.code?.startsWith('OCR_AI_')) return false;
   if (axios.isCancel(error) || error.code === 'ERR_BACKEND_UNAVAILABLE') return false;
   return error.code === 'ERR_BACKEND_HTML'
     || (!error.response && ['ERR_NETWORK', 'ECONNABORTED', 'ETIMEDOUT'].includes(error.code))
@@ -61,7 +61,7 @@ export function createApiClient({ baseURL = '/api', connection } = {}) {
     }
     const status = error.response?.status;
     if (typeof window !== 'undefined') {
-      const publicPaths = ['/login', '/register', '/quen-mat-khau', '/dat-lai-mat-khau'];
+      const publicPaths = ['/login', '/register', '/quen-mat-khau', '/dat-lai-mat-khau', '/chia-se-tkb', '/chinh-sach'];
       if ((status === 401 || (status === 403 && error.response?.data?.code === 'AUTH_INVALID'))
         && !publicPaths.some(path => window.location.pathname.startsWith(path)) && !redirecting) {
         redirecting = true;
@@ -78,8 +78,8 @@ export function createApiClient({ baseURL = '/api', connection } = {}) {
     }
     connection?.enabled && connection.confirmReady();
     if (['post', 'put', 'patch', 'delete'].includes(response.config.method)
-      && /^\/(academic|deadline|finance|thoi-khoa-bieu|imports|hoc-ky)(\/|$)/.test(response.config.url)
-      && !response.config.url.includes('/preview') && !response.config.url.endsWith('/du-doan')) notifyDataChanged();
+      && /^\/(academic|deadline|finance|thoi-khoa-bieu|imports|hoc-ky|planner\/apply-deadlines)(\/|$)/.test(response.config.url)
+      && !response.config.url.includes('/ocr-ai') && !response.config.url.includes('/preview') && !response.config.url.endsWith('/du-doan')) notifyDataChanged();
     return response;
   }, handleError);
   return api;

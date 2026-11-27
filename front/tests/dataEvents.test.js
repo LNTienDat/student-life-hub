@@ -15,15 +15,20 @@ test('successful mutations clear stale caches; preview, reads, prediction and fa
   setCache('dashboard_cache', { gpa: 'old' });
   await api.get('/academic/gpa');
   await api.post('/imports/preview');
+  await api.post('/imports/ocr-ai');
   await api.post('/academic/mon-hoc/1/du-doan');
   assert.equal(changes, 0);
   assert.ok(getCache('dashboard_cache'));
   await api.put('/academic/diem/1', { diem: 9 });
   assert.equal(changes, 1);
   assert.equal(getCache('dashboard_cache'), null);
+  setCache('dashboard_cache', { gpa: 'stale' });
+  await api.post('/planner/apply-deadlines', { sessions: [] });
+  assert.equal(changes, 2);
+  assert.equal(getCache('dashboard_cache'), null);
   api.defaults.adapter = async () => { throw new Error('offline'); };
   await assert.rejects(api.post('/deadline', {}));
-  assert.equal(changes, 1);
+  assert.equal(changes, 2);
   let requests = 0;
   api.defaults.adapter = async () => { requests++; throw new Error('should not send'); };
   window.navigator = { onLine: false };
@@ -33,16 +38,16 @@ test('successful mutations clear stale caches; preview, reads, prediction and fa
   setCache('finance_cache', { stale: true });
   const event = Object.assign(new Event('storage'), { key: 'slh:data-changed' });
   window.dispatchEvent(event);
-  assert.equal(changes, 2);
+  assert.equal(changes, 3);
   assert.equal(getCache('finance_cache'), null);
   document.visibilityState = 'hidden';
   document.dispatchEvent(new Event('visibilitychange'));
-  assert.equal(changes, 2);
+  assert.equal(changes, 3);
   document.visibilityState = 'visible';
   document.dispatchEvent(new Event('visibilitychange'));
-  assert.equal(changes, 3);
+  assert.equal(changes, 4);
   stop(); notifyDataChanged();
-  assert.equal(changes, 3);
+  assert.equal(changes, 4);
 });
 
 test('external-only listeners refresh other tabs and foreground return without repeating own writes', () => {
